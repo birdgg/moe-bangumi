@@ -6,7 +6,7 @@ use crate::{handlers, openapi::ApiDoc, state::AppState};
 
 pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .routes(routes!(handlers::list_todos, handlers::create_todo))
+        .routes(routes!(handlers::search_bangumi))
         .with_state(state)
         .split_for_parts();
 

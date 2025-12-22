@@ -1,17 +1,15 @@
 use utoipa::OpenApi;
 
-use crate::models::{CreateTodo, Todo};
-
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "Todo API",
+        title = "Moe API",
         version = "1.0.0",
-        description = "A simple Todo REST API built with Axum"
+        description = "A Bangumi search API built with Axum"
     ),
     tags(
-        (name = "todos", description = "Todo management endpoints")
+        (name = "search", description = "Bangumi search endpoints")
     ),
-    components(schemas(Todo, CreateTodo))
+    components(schemas(bgmtv::SearchSubjectsResponse, bgmtv::Subject))
 )]
 pub struct ApiDoc;

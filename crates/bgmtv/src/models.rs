@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use utoipa::ToSchema;
 
 /// BGM.tv subject type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize_repr, Deserialize_repr)]
@@ -33,7 +34,7 @@ pub struct SearchFilter {
 }
 
 /// Search response from POST /v0/search/subjects
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SearchSubjectsResponse {
     pub total: i64,
     pub limit: i64,
@@ -41,14 +42,30 @@ pub struct SearchSubjectsResponse {
     pub data: Vec<Subject>,
 }
 
+/// Platform type for subjects
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ToSchema)]
+pub enum Platform {
+    #[serde(rename = "TV")]
+    TV,
+    #[serde(rename = "Web")]
+    Web,
+    #[serde(rename = "DLC")]
+    DLC,
+    #[serde(rename = "剧场版")]
+    Movie,
+    #[serde(other)]
+    #[default]
+    Unknown,
+}
+
 /// Subject item in search results
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Subject {
     pub id: i64,
     pub name: String,
     pub name_cn: String,
     pub date: Option<String>,
-    pub platform: Option<String>,
+    pub platform: Option<Platform>,
     pub image: Option<String>,
     pub eps: i64,
 }
