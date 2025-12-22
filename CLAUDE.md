@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build and Run Commands
 
+### Backend (Rust)
+
 ```bash
 # Build
 cargo build
@@ -17,6 +19,27 @@ cargo check
 
 # Enable debug logging
 RUST_LOG=debug cargo run -p cli
+```
+
+### Frontend (Web)
+
+```bash
+cd web
+
+# Install dependencies
+bun install
+
+# Development server
+bun run dev
+
+# Production build
+bun run build
+
+# Preview production build
+bun run preview
+
+# Lint
+bun run lint
 ```
 
 ## Configuration
@@ -36,6 +59,9 @@ This is a Rust workspace containing a TODO REST API built with Axum and SQLite.
 
 - **crates/cli** - CLI entry point, reads config from .env and starts server
 - **crates/server** - Core library with web server logic
+- **crates/bgmtv** - BGM.tv API client crate
+- **crates/qbittorrent** - qBittorrent Web API client crate
+- **web/** - Frontend application (React + Vite)
 
 ### Server Module Organization
 
@@ -59,6 +85,45 @@ server/src/
 - `GET /todos` - List all todos
 - `POST /todos` - Create todo (JSON body: `{"title": "..."}`)
 - `DELETE /todos/{id}` - Delete todo by ID
+
+## Frontend Architecture
+
+The `web/` directory contains a React frontend application.
+
+### Tech Stack
+
+- **React 19** - UI framework
+- **Vite** - Build tool and dev server
+- **TailwindCSS 4** - Utility-first CSS
+- **Tanstack Router** - File-based routing
+- **shadcn/ui** - UI component library (base-ui based)
+- **Tabler Icons** - Icon library
+- **Bun** - Package manager and runtime
+
+### Frontend Structure
+
+```
+web/src/
+├── main.tsx              # App entry point
+├── index.css             # Global styles and Tailwind config
+├── routeTree.gen.ts      # Auto-generated route tree
+├── lib/
+│   └── utils.ts          # Utility functions (cn helper)
+├── components/
+│   ├── ui/               # shadcn UI components
+│   ├── app-layout.tsx    # Main layout with sidebar
+│   └── bangumi-card.tsx  # Bangumi card component
+└── routes/
+    ├── __root.tsx        # Root layout
+    └── index.tsx         # Home page
+```
+
+### Key Frontend Patterns
+
+- **File-based routing**: Routes defined in `src/routes/` directory
+- **CSS Variables**: Theme colors defined in `index.css` using oklch
+- **Dark mode**: Toggle via `.dark` class on document element
+- **Component styling**: Uses `cn()` helper for conditional class merging
 
 ## Git Commit Style
 
