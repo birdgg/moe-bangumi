@@ -1,15 +1,17 @@
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
-import { type SearchResult, type Subgroup } from "@/lib/api";
+import { type SearchResult } from "@/lib/api";
 import { useSearchMikan, useMikanRss } from "../hooks/use-bangumi";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   IconX,
   IconRss,
   IconLoader2,
   IconSearch,
   IconChevronLeft,
+  IconChevronDown,
   IconUsers,
   IconCheck,
 } from "@tabler/icons-react";
@@ -31,6 +33,8 @@ export function MikanRssModal({
   const [inputValue, setInputValue] = React.useState(initialKeyword);
   const [debouncedKeyword] = useDebouncedValue(inputValue, { wait: 400 });
   const [selectedBangumi, setSelectedBangumi] = React.useState<SearchResult | null>(null);
+  const [expandedSubgroup, setExpandedSubgroup] = React.useState<string | null>(null);
+  const [selectedSubgroups, setSelectedSubgroups] = React.useState<Set<string>>(new Set());
 
   const { data: searchResults, isLoading: isSearching, isFetching: isSearchFetching } = useSearchMikan(debouncedKeyword);
   const { data: bangumiDetail, isLoading: isLoadingDetail, isFetching: isFetchingDetail } = useMikanRss(selectedBangumi?.id ?? "");
@@ -38,21 +42,47 @@ export function MikanRssModal({
   const isSearchingAny = isSearching || isSearchFetching;
   const isLoadingDetailAny = isLoadingDetail || isFetchingDetail;
 
+  // Auto-expand first subgroup when detail is loaded
+  React.useEffect(() => {
+    if (bangumiDetail && bangumiDetail.subgroups.length > 0 && !expandedSubgroup) {
+      setExpandedSubgroup(bangumiDetail.subgroups[0].id);
+    }
+  }, [bangumiDetail, expandedSubgroup]);
+
   // Reset state when modal opens
   React.useEffect(() => {
     if (open) {
       setInputValue(initialKeyword);
       setSelectedBangumi(null);
+      setExpandedSubgroup(null);
+      setSelectedSubgroups(new Set());
     }
   }, [open, initialKeyword]);
 
-  const handleSelectSubgroup = (subgroup: Subgroup) => {
-    onSelect(subgroup.rss_url);
+  const toggleSubgroup = (subgroupId: string) => {
+    setSelectedSubgroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(subgroupId)) {
+        next.delete(subgroupId);
+      } else {
+        next.add(subgroupId);
+      }
+      return next;
+    });
+  };
+
+  const handleConfirm = () => {
+    if (!bangumiDetail) return;
+    const selectedRssUrls = bangumiDetail.subgroups
+      .filter((sg) => selectedSubgroups.has(sg.id))
+      .map((sg) => sg.rss_url);
+    selectedRssUrls.forEach((url) => onSelect(url));
     onOpenChange(false);
   };
 
   const handleBack = () => {
     setSelectedBangumi(null);
+    setSelectedSubgroups(new Set());
   };
 
   return (
@@ -61,7 +91,7 @@ export function MikanRssModal({
         {/* Backdrop */}
         <DialogPrimitive.Backdrop
           className={cn(
-            "fixed inset-0 z-[60]",
+            "fixed inset-0 z-60",
             "bg-black/20 dark:bg-black/40 backdrop-blur-sm",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -73,7 +103,7 @@ export function MikanRssModal({
         <DialogPrimitive.Popup
           className={cn(
             "fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2",
-            "w-[calc(100%-2rem)] max-w-lg",
+            "w-[calc(100%-2rem)] max-w-2xl",
             "max-h-[80vh] overflow-hidden",
             "rounded-2xl",
             "bg-linear-to-br from-white/95 via-white/90 to-chart-1/10",
@@ -84,13 +114,19 @@ export function MikanRssModal({
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            "data-[state=closed]:slide-out-to-right-8 data-[state=open]:slide-in-from-right-8",
             "duration-300 ease-out",
             "outline-none"
           )}
         >
-          {/* Decorative elements */}
+          {/* Decorative elements - Top right glow */}
           <div className="pointer-events-none absolute -right-20 -top-20 size-40 rounded-full bg-linear-to-br from-chart-1/30 to-chart-3/30 blur-3xl dark:from-chart-1/20 dark:to-chart-3/20" />
-          <div className="pointer-events-none absolute -left-20 bottom-0 size-40 rounded-full bg-linear-to-br from-chart-5/30 to-chart-1/30 blur-3xl dark:from-chart-5/20 dark:to-chart-1/20" />
+
+          {/* Bottom backlight - subtle glow */}
+          <div className="pointer-events-none absolute -bottom-20 left-1/2 -translate-x-1/2 w-full h-20 -z-10">
+            <div className="absolute inset-0 bg-linear-to-t from-chart-1/25 via-chart-3/10 to-transparent blur-2xl dark:from-chart-1/20 dark:via-chart-3/10" />
+            <div className="absolute inset-x-[25%] inset-y-0 bg-linear-to-t from-chart-3/30 to-transparent blur-xl dark:from-chart-3/25 animate-pulse animation-duration-[4s]" />
+          </div>
 
           {/* Header */}
           <div className="relative border-b border-chart-1/30 dark:border-chart-3/20 p-4">
@@ -199,51 +235,112 @@ export function MikanRssModal({
               </>
             ) : (
               /* Subgroup List */
-              <div className="flex-1 overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <><div className="flex-1 overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {isLoadingDetailAny ? (
                   <div className="flex items-center justify-center py-8">
                     <IconLoader2 className="size-6 animate-spin text-chart-1 dark:text-chart-3" />
                   </div>
                 ) : bangumiDetail && bangumiDetail.subgroups.length > 0 ? (
-                  bangumiDetail.subgroups.map((subgroup) => (
-                    <button
-                      key={subgroup.id}
-                      type="button"
-                      onClick={() => handleSelectSubgroup(subgroup)}
-                      className={cn(
-                        "w-full text-left p-4 rounded-xl",
-                        "bg-linear-to-r from-chart-1/5 to-chart-3/5",
-                        "dark:from-chart-1/10 dark:to-chart-3/10",
-                        "border border-transparent",
-                        "hover:border-chart-1/30 dark:hover:border-chart-3/30",
-                        "hover:from-chart-1/10 hover:to-chart-3/10",
-                        "dark:hover:from-chart-1/20 dark:hover:to-chart-3/20",
-                        "transition-all duration-200",
-                        "group"
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-chart-1/20 dark:bg-chart-3/30">
-                          <IconUsers className="size-5 text-chart-1 dark:text-chart-3" />
+                  bangumiDetail.subgroups.map((subgroup) => {
+                    const isExpanded = expandedSubgroup === subgroup.id;
+                    return (
+                      <div
+                        key={subgroup.id}
+                        className={cn(
+                          "rounded-xl overflow-hidden",
+                          "bg-linear-to-r from-chart-1/5 to-chart-3/5",
+                          "dark:from-chart-1/10 dark:to-chart-3/10",
+                          "border",
+                          isExpanded
+                            ? "border-chart-1/30 dark:border-chart-3/30"
+                            : "border-transparent hover:border-chart-1/30 dark:hover:border-chart-3/30",
+                          "transition-all duration-200"
+                        )}
+                      >
+                        {/* Subgroup Header */}
+                        <div className="flex items-center gap-3 p-4">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedSubgroup(isExpanded ? null : subgroup.id)}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          >
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-chart-1/20 dark:bg-chart-3/30">
+                              <IconUsers className="size-5 text-chart-1 dark:text-chart-3" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{subgroup.name || "未知字幕组"}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {subgroup.episodes.length} 个资源
+                              </div>
+                            </div>
+                            <IconChevronDown
+                              className={cn(
+                                "size-5 text-muted-foreground transition-transform duration-200",
+                                isExpanded && "rotate-180"
+                              )}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleSubgroup(subgroup.id)}
+                            className={cn(
+                              "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                              "transition-all border-2",
+                              selectedSubgroups.has(subgroup.id)
+                                ? "bg-chart-1 dark:bg-chart-3 text-white border-transparent"
+                                : "border-muted-foreground/30 text-muted-foreground/50 hover:border-chart-1/50 hover:text-chart-1 dark:hover:border-chart-3/50 dark:hover:text-chart-3"
+                            )}
+                            title={selectedSubgroups.has(subgroup.id) ? "取消选择" : "选择此字幕组"}
+                          >
+                            <IconCheck className="size-4" />
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{subgroup.name || "未知字幕组"}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {subgroup.episodes.length} 个资源
+
+                        {/* Episodes List */}
+                        {isExpanded && subgroup.episodes.length > 0 && (
+                          <div className="border-t border-chart-1/20 dark:border-chart-3/20 px-4 py-2 space-y-1 max-h-48 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            {subgroup.episodes.map((episode) => (
+                              <div
+                                key={episode.id}
+                                className={cn(
+                                  "p-2 rounded-lg text-sm",
+                                  "hover:bg-chart-1/10 dark:hover:bg-chart-3/20",
+                                  "transition-colors"
+                                )}
+                              >
+                                <span className="text-muted-foreground">
+                                  {episode.name}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 bg-chart-1/20 dark:bg-chart-3/30 transition-opacity">
-                          <IconCheck className="size-4 text-chart-1 dark:text-chart-3" />
-                        </div>
+                        )}
                       </div>
-                    </button>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     暂无字幕组资源
                   </div>
                 )}
               </div>
+                {/* Footer with confirm button */}
+                {selectedSubgroups.size > 0 && (
+                  <div className="border-t border-chart-1/30 dark:border-chart-3/20 p-4 bg-linear-to-br from-white/95 via-white/90 to-chart-1/10 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-3/20">
+                    <Button
+                      onClick={handleConfirm}
+                      className={cn(
+                        "w-full gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white",
+                        "shadow-lg shadow-chart-3/30",
+                        "hover:opacity-90"
+                      )}
+                    >
+                      <IconCheck className="size-4" />
+                      确认选择 ({selectedSubgroups.size} 个字幕组)
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DialogPrimitive.Popup>

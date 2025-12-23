@@ -28,7 +28,7 @@ export function SearchBangumiModal({
   onSelect,
 }: SearchBangumiModalProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [debouncedQuery] = useDebouncedValue(searchQuery, { wait: 300 });
+  const [debouncedQuery] = useDebouncedValue(searchQuery, { wait: 800 });
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
