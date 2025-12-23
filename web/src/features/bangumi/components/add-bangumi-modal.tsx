@@ -4,7 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { cn } from "@/lib/utils";
 import { parseBgmtvName } from "@/lib/parser";
 import { type Subject, type CreateBangumi, type TvShow } from "@/lib/api";
-import { useCreateBangumi } from "../hooks/use-bangumi";
+import { useCreateBangumi, useEpisodes } from "../hooks/use-bangumi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,11 +41,26 @@ export function AddBangumiModal({
 }: AddBangumiModalProps) {
   const createBangumi = useCreateBangumi();
   const [selectedTmdb, setSelectedTmdb] = React.useState<TvShow | null>(null);
+  const { data: episodes } = useEpisodes(subject?.id ?? 0);
+
+  // Calculate episode offset from episodes data
+  const episodeOffset = React.useMemo(() => {
+    if (!episodes || episodes.length === 0) return 0;
+    return episodes[0].sort
+  }, [episodes]);
+
+  // Parse titles from subject
+  const parsedTitles = React.useMemo(() => {
+    if (!subject) return { chinese: "", japanese: "" };
+    const parsedChinese = parseBgmtvName(subject.name_cn || subject.name || "");
+    const parsedJapanese = parseBgmtvName(subject.name || "");
+    return { chinese: parsedChinese.name, japanese: parsedJapanese.name };
+  }, [subject]);
 
   const form = useForm({
     defaultValues: {
-      title_chinese: subject?.name_cn || subject?.name || "",
-      title_japanese: subject?.name || "",
+      title_chinese: "",
+      title_japanese: "",
       episode_offset: 0,
       auto_download: true,
       save_path: "",
@@ -65,27 +80,36 @@ export function AddBangumiModal({
         save_path: value.save_path || null,
       };
 
-      await createBangumi.mutateAsync(request);
+      await createBangumi.mutateAsync({ body: request });
       onSuccess?.();
+      resetForm();
       onOpenChange(false);
     },
   });
 
-  // Reset form when subject changes
-  React.useEffect(() => {
-    if (subject && open) {
-      form.reset();
-      // 解析 BGM.tv 名称，去除季度信息
-      const parsedChinese = parseBgmtvName(subject.name_cn || subject.name || "");
-      const parsedJapanese = parseBgmtvName(subject.name || "");
-      form.setFieldValue("title_chinese", parsedChinese.name);
-      form.setFieldValue("title_japanese", parsedJapanese.name);
-      setSelectedTmdb(null);
+  const resetForm = React.useCallback(() => {
+    form.reset();
+    setSelectedTmdb(null);
+  }, [form]);
+
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (!newOpen) {
+      resetForm();
     }
-  }, [subject, open, form]);
+    onOpenChange(newOpen);
+  }, [resetForm, onOpenChange]);
+
+  // Set form values when modal opens or data changes
+  React.useEffect(() => {
+    if (open && subject) {
+      form.setFieldValue("title_chinese", parsedTitles.chinese);
+      form.setFieldValue("title_japanese", parsedTitles.japanese);
+      form.setFieldValue("episode_offset", episodeOffset);
+    }
+  }, [open, subject, parsedTitles, episodeOffset, form]);
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <DialogPrimitive.Portal>
         {/* Backdrop */}
         <DialogPrimitive.Backdrop
