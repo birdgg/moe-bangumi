@@ -4,7 +4,7 @@ import {
   BangumiCard,
   BangumiGrid,
   demoBangumiList,
-} from "@/components/bangumi-card";
+} from "@/features/bangumi/components";
 import { IconSearch, IconSparkles, IconFilter } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
@@ -130,7 +130,7 @@ function Index() {
             <p className="mb-6 max-w-sm text-sm text-muted-foreground">
               点击右上角的「添加番剧」按钮，开始追踪你喜爱的动漫作品吧！
             </p>
-            <Button className="gap-2 bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-lg shadow-purple-500/30 hover:opacity-90">
+            <Button className="gap-2 bg-linear-to-r from-pink-400 to-purple-500 text-white shadow-lg shadow-purple-500/30 hover:opacity-90">
               <IconSparkles className="size-4" />
               添加第一部番剧
             </Button>

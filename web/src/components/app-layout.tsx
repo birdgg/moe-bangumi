@@ -22,6 +22,8 @@ import {
   IconMoon,
   IconPlus,
 } from "@tabler/icons-react";
+import { SearchBangumiModal } from "@/features/bangumi/components";
+import { type Subject } from "@/lib/api";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -56,9 +58,16 @@ function ThemeToggleButton() {
   );
 }
 
-function AddBangumiButton() {
+interface AddBangumiButtonProps {
+  onClick: () => void;
+}
+
+function AddBangumiButton({ onClick }: AddBangumiButtonProps) {
   return (
-    <Button className="gap-2 bg-gradient-to-r from-chart-1 to-chart-3 text-white shadow-lg shadow-chart-3/20 hover:opacity-90">
+    <Button
+      className="gap-2 bg-gradient-to-r from-chart-1 to-chart-3 text-white shadow-lg shadow-chart-3/20 hover:opacity-90"
+      onClick={onClick}
+    >
       <IconPlus className="size-4" />
       <span className="hidden sm:inline">添加番剧</span>
     </Button>
@@ -67,6 +76,12 @@ function AddBangumiButton() {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [activeItem, setActiveItem] = React.useState("anime");
+  const [searchModalOpen, setSearchModalOpen] = React.useState(false);
+
+  const handleSelectBangumi = (subject: Subject) => {
+    console.log("Selected bangumi:", subject);
+    // TODO: Add the selected bangumi to the list
+  };
 
   return (
     <SidebarProvider>
@@ -144,10 +159,17 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* Right side actions */}
             <div className="flex items-center gap-2">
-              <AddBangumiButton />
+              <AddBangumiButton onClick={() => setSearchModalOpen(true)} />
               <ThemeToggleButton />
             </div>
           </header>
+
+          {/* Search Modal */}
+          <SearchBangumiModal
+            open={searchModalOpen}
+            onOpenChange={setSearchModalOpen}
+            onSelect={handleSelectBangumi}
+          />
 
           {/* Main content area */}
           <main className="flex-1 overflow-auto">{children}</main>

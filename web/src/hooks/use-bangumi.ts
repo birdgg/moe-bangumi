@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   bangumiApi,
+  searchApi,
   type CreateBangumiRequest,
   type UpdateBangumiRequest,
 } from "@/lib/api";
@@ -20,7 +21,10 @@ export const bangumiKeys = {
 export function useSearchBangumi(query: string) {
   return useQuery({
     queryKey: bangumiKeys.search(query),
-    queryFn: () => bangumiApi.search(query),
+    queryFn: async () => {
+      const response = await searchApi.bangumi(query);
+      return response.data;
+    },
     enabled: query.length > 0,
   });
 }

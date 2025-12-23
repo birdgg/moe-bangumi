@@ -118,50 +118,6 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
             </div>
           </div>
 
-          {/* Like button */}
-          <button
-            onClick={() => setIsLiked(!isLiked)}
-            className={cn(
-              "absolute right-3 top-3",
-              "flex size-9 items-center justify-center rounded-full",
-              "bg-white/20 backdrop-blur-md",
-              "transition-all duration-300",
-              "hover:scale-110 hover:bg-white/30",
-              isLiked && "bg-pink-500/80 hover:bg-pink-500/90"
-            )}
-          >
-            <IconHeart
-              className={cn(
-                "size-5 transition-all duration-300",
-                isLiked
-                  ? "fill-white text-white scale-110"
-                  : "text-white/90"
-              )}
-            />
-          </button>
-
-          {/* Play button overlay */}
-          <div
-            className={cn(
-              "absolute inset-0 flex items-center justify-center",
-              "opacity-0 transition-opacity duration-300",
-              "group-hover:opacity-100"
-            )}
-          >
-            <button
-              className={cn(
-                "flex size-16 items-center justify-center rounded-full",
-                "bg-gradient-to-br from-pink-400 to-purple-500",
-                "text-white shadow-xl shadow-purple-500/40",
-                "transition-all duration-300",
-                "hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50",
-                "active:scale-95"
-              )}
-            >
-              <IconPlayerPlay className="size-7 ml-1" fill="currentColor" />
-            </button>
-          </div>
-
           {/* Episode info on poster */}
           <div className="absolute bottom-4 left-3 right-3">
             <div className="flex items-center justify-between text-white">

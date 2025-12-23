@@ -2,9 +2,6 @@ import { client } from "./client";
 import type { Bangumi, CreateBangumiRequest, UpdateBangumiRequest } from "./types";
 
 export const bangumiApi = {
-  search: (query: string) =>
-    client.get<Bangumi[]>(`/search?bangumi=${encodeURIComponent(query)}`),
-
   list: () => client.get<Bangumi[]>("/bangumi"),
 
   get: (id: string | number) => client.get<Bangumi>(`/bangumi/${id}`),
