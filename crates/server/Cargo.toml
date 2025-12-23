@@ -19,5 +19,6 @@ utoipa-scalar.workspace = true
 reqwest.workspace = true
 tmdb = { path = "../tmdb" }
 bgmtv = { path = "../bgmtv" }
+mikan = { path = "../mikan" }
 chrono.workspace = true
 tower-http.workspace = true

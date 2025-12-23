@@ -1,0 +1,9 @@
+mod client;
+mod error;
+pub mod models;
+
+pub use client::MikanClient;
+pub use error::MikanError;
+pub use models::{BangumiDetail, Episode, SearchResult, Subgroup};
+
+pub type Result<T> = std::result::Result<T, MikanError>;

@@ -12,18 +12,18 @@ use crate::repositories::BangumiRepository;
 use crate::state::AppState;
 use tmdb::DiscoverBangumiParams;
 
-/// Query parameters for bangumi search on BGM.tv
+/// Query parameters for keyword search
 #[derive(Debug, Deserialize, IntoParams)]
-pub struct SearchBangumiQuery {
-    /// Keyword to search for bangumi
+pub struct SearchQuery {
+    /// Keyword to search
     pub keyword: String,
 }
 
-/// Query parameters for TMDB search
+/// Query parameters for ID lookup
 #[derive(Debug, Deserialize, IntoParams)]
-pub struct SearchTmdbQuery {
-    /// Keyword to search for anime on TMDB
-    pub keyword: String,
+pub struct IdQuery {
+    /// ID to lookup
+    pub id: String,
 }
 
 /// Search for bangumi (Japanese anime) on BGM.tv
@@ -31,15 +31,15 @@ pub struct SearchTmdbQuery {
     get,
     path = "/api/search/bgmtv",
     tag = "search",
-    params(SearchBangumiQuery),
+    params(SearchQuery),
     responses(
         (status = 200, description = "Search results", body = Vec<bgmtv::Subject>),
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn search_bangumi(
+pub async fn search_bgmtv(
     State(state): State<AppState>,
-    Query(query): Query<SearchBangumiQuery>,
+    Query(query): Query<SearchQuery>,
 ) -> impl IntoResponse {
     match state.bgmtv.search_bangumi(&query.keyword).await {
         Ok(response) => (StatusCode::OK, Json(response.data)).into_response(),
@@ -55,7 +55,7 @@ pub async fn search_bangumi(
     get,
     path = "/api/search/tmdb",
     tag = "search",
-    params(SearchTmdbQuery),
+    params(SearchQuery),
     responses(
         (status = 200, description = "Search results from TMDB", body = Vec<tmdb::models::TvShow>),
         (status = 500, description = "Internal server error")
@@ -63,7 +63,7 @@ pub async fn search_bangumi(
 )]
 pub async fn search_tmdb(
     State(state): State<AppState>,
-    Query(query): Query<SearchTmdbQuery>,
+    Query(query): Query<SearchQuery>,
 ) -> impl IntoResponse {
     let params = DiscoverBangumiParams {
         with_text_query: Some(query.keyword),
@@ -122,6 +122,54 @@ pub async fn get_episodes(
         Ok(response) => (StatusCode::OK, Json(response.data)).into_response(),
         Err(e) => {
             tracing::error!("Failed to get episodes for subject {}: {}", subject_id, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+        }
+    }
+}
+
+/// Search for bangumi on Mikan
+#[utoipa::path(
+    get,
+    path = "/api/search/mikan",
+    tag = "search",
+    params(SearchQuery),
+    responses(
+        (status = 200, description = "Search results from Mikan", body = Vec<mikan::SearchResult>),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn search_mikan(
+    State(state): State<AppState>,
+    Query(query): Query<SearchQuery>,
+) -> impl IntoResponse {
+    match state.mikan.search_bangumi(&query.keyword).await {
+        Ok(results) => (StatusCode::OK, Json(results)).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to search Mikan: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+        }
+    }
+}
+
+/// Get bangumi detail with RSS URLs from Mikan
+#[utoipa::path(
+    get,
+    path = "/api/mikan/rss",
+    tag = "mikan",
+    params(IdQuery),
+    responses(
+        (status = 200, description = "Bangumi detail with subgroups and RSS URLs", body = mikan::BangumiDetail),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn get_mikan_rss(
+    State(state): State<AppState>,
+    Query(query): Query<IdQuery>,
+) -> impl IntoResponse {
+    match state.mikan.get_bangumi_detail(&query.id).await {
+        Ok(detail) => (StatusCode::OK, Json(detail)).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to get Mikan RSS for {}: {}", query.id, e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
         }
     }
