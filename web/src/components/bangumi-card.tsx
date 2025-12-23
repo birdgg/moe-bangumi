@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { type Bangumi } from "@/lib/api";
 import {
   IconCalendar,
   IconPlayerPlay,
@@ -9,17 +10,8 @@ import {
   IconHeart,
 } from "@tabler/icons-react";
 
-export interface BangumiData {
-  id: string | number;
-  chineseName: string;
-  japaneseName: string;
-  season: string;
-  episodes: number;
-  currentEpisode?: number;
-  poster: string;
-  airDate: string;
-  isComplete: boolean;
-}
+export type { Bangumi };
+export type BangumiData = Bangumi;
 
 interface BangumiCardProps {
   bangumi: BangumiData;
@@ -50,7 +42,7 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
       <div
         className={cn(
           "absolute -inset-1 rounded-3xl opacity-0 blur-xl transition-opacity duration-500",
-          "bg-gradient-to-br from-pink-300/40 via-purple-300/40 to-cyan-300/40",
+          "bg-linear-to-br from-pink-300/40 via-purple-300/40 to-cyan-300/40",
           isHovered && "opacity-100"
         )}
       />
@@ -59,7 +51,7 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
       <div
         className={cn(
           "relative overflow-hidden rounded-2xl",
-          "bg-gradient-to-br from-white/90 to-white/70 dark:from-zinc-900/90 dark:to-zinc-800/70",
+          "bg-linear-to-br from-white/90 to-white/70 dark:from-zinc-900/90 dark:to-zinc-800/70",
           "border border-pink-200/50 dark:border-purple-500/20",
           "shadow-lg shadow-pink-200/20 dark:shadow-purple-900/30",
           "backdrop-blur-sm",
@@ -85,7 +77,7 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
           />
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
 
           {/* Cute wave decoration at bottom */}
           <svg
