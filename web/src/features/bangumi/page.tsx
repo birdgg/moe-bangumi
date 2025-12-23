@@ -1,12 +1,17 @@
 import {
   BangumiCard,
   BangumiGrid,
-  demoBangumiList,
+  BangumiCardSkeleton,
 } from "@/features/bangumi/components";
-import { IconSparkles } from "@tabler/icons-react";
+import { useGetAllBangumi } from "@/features/bangumi/hooks/use-bangumi";
+import { IconSparkles, IconAlertCircle } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
 export function BangumiPage() {
+  const { data: bangumiList, isLoading, error } = useGetAllBangumi();
+
+  const isEmpty = !bangumiList || bangumiList.length === 0;
+
   return (
     <div className="min-h-full bg-linear-to-br from-chart-1/5 via-background to-chart-3/5 dark:from-zinc-950 dark:via-background dark:to-chart-3/10">
       {/* Decorative background elements */}
@@ -18,39 +23,77 @@ export function BangumiPage() {
 
       {/* Content */}
       <div className="relative">
-        {/* Bangumi cards grid */}
-        <section className="px-6 py-8 md:px-8">
-          <BangumiGrid>
-            {demoBangumiList.map((bangumi, index) => (
-              <BangumiCard
-                key={bangumi.id}
-                bangumi={bangumi}
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                }}
-              />
-            ))}
-          </BangumiGrid>
-        </section>
+        {/* Loading state */}
+        {isLoading && (
+          <section className="px-6 py-8 md:px-8">
+            <BangumiGrid>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <BangumiCardSkeleton key={index} />
+              ))}
+            </BangumiGrid>
+          </section>
+        )}
 
-        {/* Empty state (hidden by default, shown when no results) */}
-        <div className="hidden px-6 py-16 md:px-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-linear-to-br from-chart-1/20 to-chart-3/20 dark:from-chart-1/30 dark:to-chart-3/30">
-              <IconSparkles className="size-10 text-chart-1 dark:text-chart-3" />
+        {/* Error state */}
+        {error && (
+          <div className="px-6 py-16 md:px-8">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertCircle className="size-10 text-destructive" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">
+                加载失败
+              </h3>
+              <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+                无法获取番剧列表，请稍后重试
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+              >
+                重试
+              </Button>
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-foreground">
-              还没有番剧哦
-            </h3>
-            <p className="mb-6 max-w-sm text-sm text-muted-foreground">
-              点击右上角的「添加番剧」按钮，开始追踪你喜爱的动漫作品吧！
-            </p>
-            <Button className="gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white shadow-lg shadow-chart-3/30 hover:opacity-90">
-              <IconSparkles className="size-4" />
-              添加第一部番剧
-            </Button>
           </div>
-        </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && !error && isEmpty && (
+          <div className="px-6 py-16 md:px-8">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-linear-to-br from-chart-1/20 to-chart-3/20 dark:from-chart-1/30 dark:to-chart-3/30">
+                <IconSparkles className="size-10 text-chart-1 dark:text-chart-3" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">
+                还没有番剧哦
+              </h3>
+              <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+                点击右上角的「添加番剧」按钮，开始追踪你喜爱的动漫作品吧！
+              </p>
+              <Button className="gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white shadow-lg shadow-chart-3/30 hover:opacity-90">
+                <IconSparkles className="size-4" />
+                添加第一部番剧
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Bangumi cards grid */}
+        {!isLoading && !error && !isEmpty && (
+          <section className="px-6 py-8 md:px-8">
+            <BangumiGrid>
+              {bangumiList.map((bangumi, index) => (
+                <BangumiCard
+                  key={bangumi.id}
+                  bangumi={bangumi}
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                  }}
+                />
+              ))}
+            </BangumiGrid>
+          </section>
+        )}
       </div>
     </div>
   );

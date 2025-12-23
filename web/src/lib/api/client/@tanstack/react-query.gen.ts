@@ -9,6 +9,7 @@ import {
 import { client } from "../client.gen";
 import {
   createBangumi,
+  getBangumi,
   getEpisodes,
   getMikanRss,
   type Options,
@@ -19,6 +20,8 @@ import {
 import type {
   CreateBangumiData,
   CreateBangumiResponse,
+  GetBangumiData,
+  GetBangumiResponse,
   GetEpisodesData,
   GetEpisodesResponse,
   GetMikanRssData,
@@ -30,33 +33,6 @@ import type {
   SearchTmdbData,
   SearchTmdbResponse,
 } from "../types.gen";
-
-/**
- * Create a new bangumi
- */
-export const createBangumiMutation = (
-  options?: Partial<Options<CreateBangumiData>>,
-): UseMutationOptions<
-  CreateBangumiResponse,
-  DefaultError,
-  Options<CreateBangumiData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateBangumiResponse,
-    DefaultError,
-    Options<CreateBangumiData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createBangumi({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
 
 export type QueryKey<TOptions extends Options> = [
   Pick<TOptions, "baseUrl" | "body" | "headers" | "path" | "query"> & {
@@ -96,6 +72,58 @@ const createQueryKey = <TOptions extends Options>(
     params.query = options.query;
   }
   return [params];
+};
+
+export const getBangumiQueryKey = (options?: Options<GetBangumiData>) =>
+  createQueryKey("getBangumi", options);
+
+/**
+ * Get all bangumi
+ */
+export const getBangumiOptions = (options?: Options<GetBangumiData>) =>
+  queryOptions<
+    GetBangumiResponse,
+    DefaultError,
+    GetBangumiResponse,
+    ReturnType<typeof getBangumiQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getBangumi({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getBangumiQueryKey(options),
+  });
+
+/**
+ * Create a new bangumi
+ */
+export const createBangumiMutation = (
+  options?: Partial<Options<CreateBangumiData>>,
+): UseMutationOptions<
+  CreateBangumiResponse,
+  DefaultError,
+  Options<CreateBangumiData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateBangumiResponse,
+    DefaultError,
+    Options<CreateBangumiData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createBangumi({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
 };
 
 export const getEpisodesQueryKey = (options: Options<GetEpisodesData>) =>

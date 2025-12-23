@@ -180,12 +180,14 @@ export function AppLayout({ children }: AppLayoutProps) {
           />
 
           {/* Add Bangumi Modal */}
-          <AddBangumiModal
-            open={addModalOpen}
-            onOpenChange={setAddModalOpen}
-            subject={selectedSubject}
-            onSuccess={handleAddSuccess}
-          />
+          {selectedSubject && (
+            <AddBangumiModal
+              open={addModalOpen}
+              onOpenChange={setAddModalOpen}
+              subject={selectedSubject}
+              onSuccess={handleAddSuccess}
+            />
+          )}
 
           {/* Main content area */}
           <main className="flex-1 overflow-auto">{children}</main>

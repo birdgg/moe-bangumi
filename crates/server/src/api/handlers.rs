@@ -194,6 +194,26 @@ pub async fn search_mikan(
     }
 }
 
+/// Get all bangumi
+#[utoipa::path(
+    get,
+    path = "/api/bangumi",
+    tag = "bangumi",
+    responses(
+        (status = 200, description = "List of all bangumi", body = Vec<Bangumi>),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn get_bangumi(State(state): State<AppState>) -> impl IntoResponse {
+    match BangumiRepository::get_all(&state.db).await {
+        Ok(bangumi_list) => (StatusCode::OK, Json(bangumi_list)).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to get all bangumi: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+        }
+    }
+}
+
 /// Get bangumi detail with RSS URLs from Mikan
 #[utoipa::path(
     get,

@@ -273,6 +273,29 @@ export type TvShow = {
   vote_count: number;
 };
 
+export type GetBangumiData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/bangumi";
+};
+
+export type GetBangumiErrors = {
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type GetBangumiResponses = {
+  /**
+   * List of all bangumi
+   */
+  200: Array<Bangumi>;
+};
+
+export type GetBangumiResponse = GetBangumiResponses[keyof GetBangumiResponses];
+
 export type CreateBangumiData = {
   body: CreateBangumi;
   path?: never;

@@ -46,7 +46,6 @@ CREATE INDEX IF NOT EXISTS idx_bangumi_air_date ON bangumi(air_date);
 
 -- Unique indexes for non-zero external IDs
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bangumi_bgmtv_id ON bangumi(bgmtv_id) WHERE bgmtv_id IS NOT NULL AND bgmtv_id != 0;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bangumi_tmdb_id ON bangumi(tmdb_id) WHERE tmdb_id IS NOT NULL AND tmdb_id != 0;
 
 -- Trigger to update updated_at on row modification
 CREATE TRIGGER IF NOT EXISTS update_bangumi_timestamp

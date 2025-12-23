@@ -2,6 +2,7 @@
 
 export {
   createBangumi,
+  getBangumi,
   getEpisodes,
   getMikanRss,
   type Options,
@@ -20,6 +21,10 @@ export type {
   CreateBangumiResponses,
   Episode,
   EpisodeType,
+  GetBangumiData,
+  GetBangumiErrors,
+  GetBangumiResponse,
+  GetBangumiResponses,
   GetEpisodesData,
   GetEpisodesErrors,
   GetEpisodesResponse,

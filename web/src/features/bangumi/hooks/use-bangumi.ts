@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
+  getBangumiOptions,
   searchBgmtvOptions,
   searchTmdbOptions,
   searchMikanOptions,
@@ -7,6 +8,13 @@ import {
   getEpisodesOptions,
   createBangumiMutation,
 } from "@/lib/api";
+
+// Get all bangumi
+export function useGetAllBangumi() {
+  return useQuery({
+    ...getBangumiOptions(),
+  });
+}
 
 // Search bangumi from BGM.tv
 export function useSearchBangumi(keyword: string) {

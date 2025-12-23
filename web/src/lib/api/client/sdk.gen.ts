@@ -6,6 +6,9 @@ import type {
   CreateBangumiData,
   CreateBangumiErrors,
   CreateBangumiResponses,
+  GetBangumiData,
+  GetBangumiErrors,
+  GetBangumiResponses,
   GetEpisodesData,
   GetEpisodesErrors,
   GetEpisodesResponses,
@@ -39,6 +42,18 @@ export type Options<
    */
   meta?: Record<string, unknown>;
 };
+
+/**
+ * Get all bangumi
+ */
+export const getBangumi = <ThrowOnError extends boolean = false>(
+  options?: Options<GetBangumiData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetBangumiResponses,
+    GetBangumiErrors,
+    ThrowOnError
+  >({ url: "/api/bangumi", ...options });
 
 /**
  * Create a new bangumi
