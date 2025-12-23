@@ -10,12 +10,8 @@ pub struct Rss {
 
     /// Foreign key to bangumi
     pub bangumi_id: i64,
-    /// RSS subscription title
-    pub title: String,
     /// RSS feed URL
     pub url: String,
-    /// Download save path
-    pub save_path: String,
     /// Whether subscription is enabled
     pub enabled: bool,
     /// Regex patterns to exclude from matching
@@ -27,12 +23,8 @@ pub struct Rss {
 pub struct CreateRss {
     /// Foreign key to bangumi
     pub bangumi_id: i64,
-    /// RSS subscription title
-    pub title: String,
     /// RSS feed URL
     pub url: String,
-    /// Download save path
-    pub save_path: String,
     /// Whether subscription is enabled (default: true)
     #[serde(default = "default_enabled")]
     pub enabled: bool,
@@ -49,11 +41,7 @@ fn default_enabled() -> bool {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct UpdateRss {
     #[serde(default)]
-    pub title: Option<String>,
-    #[serde(default)]
     pub url: Option<String>,
-    #[serde(default)]
-    pub save_path: Option<String>,
     #[serde(default)]
     pub enabled: Option<bool>,
     #[serde(default)]

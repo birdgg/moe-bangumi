@@ -7,7 +7,7 @@ use crate::models::{CreateRss, Rss, UpdateRss};
 const SELECT_RSS: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, title, url, save_path, enabled, exclude_filters
+        bangumi_id, url, enabled, exclude_filters
     FROM rss
 "#;
 
@@ -21,15 +21,13 @@ impl RssRepository {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO rss (bangumi_id, title, url, save_path, enabled, exclude_filters)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO rss (bangumi_id, url, enabled, exclude_filters)
+            VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
         )
         .bind(data.bangumi_id)
-        .bind(&data.title)
         .bind(&data.url)
-        .bind(&data.save_path)
         .bind(data.enabled)
         .bind(&exclude_filters_json)
         .fetch_one(pool)
@@ -97,9 +95,7 @@ impl RssRepository {
             return Ok(None);
         };
 
-        let title = data.title.unwrap_or(existing.title);
         let url = data.url.unwrap_or(existing.url);
-        let save_path = data.save_path.unwrap_or(existing.save_path);
         let enabled = data.enabled.unwrap_or(existing.enabled);
         let exclude_filters = data.exclude_filters.unwrap_or(existing.exclude_filters);
         let exclude_filters_json = serde_json::to_string(&exclude_filters)
@@ -108,17 +104,13 @@ impl RssRepository {
         sqlx::query(
             r#"
             UPDATE rss SET
-                title = $1,
-                url = $2,
-                save_path = $3,
-                enabled = $4,
-                exclude_filters = $5
-            WHERE id = $6
+                url = $1,
+                enabled = $2,
+                exclude_filters = $3
+            WHERE id = $4
             "#,
         )
-        .bind(&title)
         .bind(&url)
-        .bind(&save_path)
         .bind(enabled)
         .bind(&exclude_filters_json)
         .bind(id)
@@ -156,9 +148,7 @@ struct RssRow {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
     bangumi_id: i64,
-    title: String,
     url: String,
-    save_path: String,
     enabled: bool,
     exclude_filters: String,
 }
@@ -173,9 +163,7 @@ impl From<RssRow> for Rss {
             created_at: row.created_at,
             updated_at: row.updated_at,
             bangumi_id: row.bangumi_id,
-            title: row.title,
             url: row.url,
-            save_path: row.save_path,
             enabled: row.enabled,
             exclude_filters,
         }

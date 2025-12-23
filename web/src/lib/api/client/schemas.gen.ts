@@ -8,6 +8,7 @@ export const BangumiSchema = {
     "created_at",
     "updated_at",
     "title_chinese",
+    "title_original",
     "season",
     "year",
     "total_episodes",
@@ -88,6 +89,10 @@ export const BangumiSchema = {
       type: ["string", "null"],
       description: "Japanese original name",
     },
+    title_original: {
+      type: "string",
+      description: "Original title (native language, required, unique)",
+    },
     tmdb_id: {
       type: ["integer", "null"],
       format: "int64",
@@ -126,7 +131,7 @@ export const BangumiDetailSchema = {
 export const CreateBangumiSchema = {
   type: "object",
   description: "Request body for creating a new bangumi",
-  required: ["title_chinese", "year"],
+  required: ["title_chinese", "title_original", "year"],
   properties: {
     air_date: {
       type: ["string", "null"],
@@ -164,6 +169,13 @@ export const CreateBangumiSchema = {
       type: ["string", "null"],
       description: "Poster URL",
     },
+    rss_entries: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/RssEntry",
+      },
+      description: "RSS subscriptions to create with this bangumi",
+    },
     save_path: {
       type: ["string", "null"],
       description: "Custom save path",
@@ -184,6 +196,10 @@ export const CreateBangumiSchema = {
     title_japanese: {
       type: ["string", "null"],
       description: "Japanese original name",
+    },
+    title_original: {
+      type: "string",
+      description: "Original title (native language, required, unique)",
     },
     tmdb_id: {
       type: ["integer", "null"],
@@ -245,6 +261,25 @@ export const EpisodeTypeSchema = {
   type: "string",
   description: "Episode type",
   enum: ["Main", "Special", "Opening", "Ending"],
+} as const;
+
+export const RssEntrySchema = {
+  type: "object",
+  description: "RSS entry for creating bangumi with subscriptions",
+  required: ["url"],
+  properties: {
+    filters: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description: "Regex patterns to exclude from matching",
+    },
+    url: {
+      type: "string",
+      description: "RSS feed URL",
+    },
+  },
 } as const;
 
 export const SearchResultSchema = {

@@ -7,7 +7,7 @@ use crate::models::{Bangumi, CreateBangumi, UpdateBangumi};
 const SELECT_BANGUMI: &str = r#"
     SELECT
         id, created_at, updated_at,
-        title_chinese, title_japanese, season, year,
+        title_chinese, title_japanese, title_original, season, year,
         bgmtv_id, tmdb_id, poster_url, air_date, air_week,
         total_episodes, episode_offset, current_episode,
         auto_download, save_path, source_type, finished, kind
@@ -22,17 +22,18 @@ impl BangumiRepository {
         let result = sqlx::query(
             r#"
             INSERT INTO bangumi (
-                title_chinese, title_japanese, season, year,
+                title_chinese, title_japanese, title_original, season, year,
                 bgmtv_id, tmdb_id, poster_url, air_date, air_week,
                 total_episodes, episode_offset, auto_download,
                 save_path, source_type, finished, kind
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING id
             "#,
         )
         .bind(&data.title_chinese)
         .bind(&data.title_japanese)
+        .bind(&data.title_original)
         .bind(data.season)
         .bind(data.year)
         .bind(data.bgmtv_id)
@@ -117,6 +118,7 @@ impl BangumiRepository {
 
         let title_chinese = data.title_chinese.unwrap_or(existing.title_chinese);
         let title_japanese = data.title_japanese.resolve(existing.title_japanese);
+        let title_original = data.title_original.unwrap_or(existing.title_original);
         let season = data.season.unwrap_or(existing.season);
         let year = data.year.unwrap_or(existing.year);
         let bgmtv_id = data.bgmtv_id.resolve(existing.bgmtv_id);
@@ -138,26 +140,28 @@ impl BangumiRepository {
             UPDATE bangumi SET
                 title_chinese = $1,
                 title_japanese = $2,
-                season = $3,
-                year = $4,
-                bgmtv_id = $5,
-                tmdb_id = $6,
-                poster_url = $7,
-                air_date = $8,
-                air_week = $9,
-                total_episodes = $10,
-                episode_offset = $11,
-                current_episode = $12,
-                auto_download = $13,
-                save_path = $14,
-                source_type = $15,
-                finished = $16,
-                kind = $17
-            WHERE id = $18
+                title_original = $3,
+                season = $4,
+                year = $5,
+                bgmtv_id = $6,
+                tmdb_id = $7,
+                poster_url = $8,
+                air_date = $9,
+                air_week = $10,
+                total_episodes = $11,
+                episode_offset = $12,
+                current_episode = $13,
+                auto_download = $14,
+                save_path = $15,
+                source_type = $16,
+                finished = $17,
+                kind = $18
+            WHERE id = $19
             "#,
         )
         .bind(&title_chinese)
         .bind(&title_japanese)
+        .bind(&title_original)
         .bind(season)
         .bind(year)
         .bind(bgmtv_id)
@@ -214,6 +218,7 @@ struct BangumiRow {
     updated_at: DateTime<Utc>,
     title_chinese: String,
     title_japanese: Option<String>,
+    title_original: String,
     season: i32,
     year: i32,
     bgmtv_id: Option<i64>,
@@ -239,6 +244,7 @@ impl From<BangumiRow> for Bangumi {
             updated_at: row.updated_at,
             title_chinese: row.title_chinese,
             title_japanese: row.title_japanese,
+            title_original: row.title_original,
             season: row.season,
             year: row.year,
             bgmtv_id: row.bgmtv_id,

@@ -67,6 +67,10 @@ export type Bangumi = {
    */
   title_japanese?: string | null;
   /**
+   * Original title (native language, required, unique)
+   */
+  title_original: string;
+  /**
    * TMDB ID
    */
   tmdb_id?: number | null;
@@ -122,6 +126,10 @@ export type CreateBangumi = {
    */
   poster_url?: string | null;
   /**
+   * RSS subscriptions to create with this bangumi
+   */
+  rss_entries?: Array<RssEntry>;
+  /**
    * Custom save path
    */
   save_path?: string | null;
@@ -141,6 +149,10 @@ export type CreateBangumi = {
    * Japanese original name
    */
   title_japanese?: string | null;
+  /**
+   * Original title (native language, required, unique)
+   */
+  title_original: string;
   /**
    * TMDB ID
    */
@@ -190,6 +202,20 @@ export type Episode = {
  * Episode type
  */
 export type EpisodeType = "Main" | "Special" | "Opening" | "Ending";
+
+/**
+ * RSS entry for creating bangumi with subscriptions
+ */
+export type RssEntry = {
+  /**
+   * Regex patterns to exclude from matching
+   */
+  filters?: Array<string>;
+  /**
+   * RSS feed URL
+   */
+  url: string;
+};
 
 export type SearchResult = {
   id: string;

@@ -169,64 +169,14 @@ export function TmdbMatcher({
         </ComboboxContent>
       </Combobox>
 
-      {/* Selected item preview */}
+      {/* Selected item preview - simple display */}
       {value && !open && (
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-xl p-3",
-            "bg-linear-to-r from-chart-3/10 to-chart-1/10",
-            "dark:from-chart-3/20 dark:to-chart-1/20",
-            "border border-chart-3/30 dark:border-chart-1/30",
-            "animate-in fade-in-0 slide-in-from-top-2 duration-200"
-          )}
-        >
-          {/* Poster */}
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-lg shadow-md">
-            {value.poster_path ? (
-              <img
-                src={`${TMDB_IMAGE_BASE}${value.poster_path}`}
-                alt={value.name}
-                className="size-full object-cover"
-              />
-            ) : (
-              <div className="flex size-full items-center justify-center bg-muted">
-                <IconMovie className="size-6 text-muted-foreground" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
-          </div>
-
-          {/* Info */}
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <IconCheck className="size-4 shrink-0 text-chart-3 dark:text-chart-1" />
-              <span className="truncate font-semibold">{value.name}</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5",
-                  "bg-chart-3/20 dark:bg-chart-1/30",
-                  "font-mono text-chart-3 dark:text-chart-1"
-                )}
-              >
-                TMDB #{value.id}
-              </span>
-              {value.first_air_date && (
-                <span>{value.first_air_date}</span>
-              )}
-              {value.vote_average > 0 && (
-                <span>
-                  {value.vote_average.toFixed(1)}
-                </span>
-              )}
-            </div>
-            {value.original_name !== value.name && (
-              <span className="truncate text-xs text-muted-foreground">
-                {value.original_name}
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in-0 duration-200">
+          <IconCheck className="size-4 shrink-0 text-chart-3 dark:text-chart-1" />
+          <span className="truncate">{value.name}</span>
+          <span className="font-mono text-xs text-chart-3 dark:text-chart-1">
+            #{value.id}
+          </span>
         </div>
       )}
     </div>

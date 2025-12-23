@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldLabel,
-  FieldError,
   FieldGroup,
 } from "@/components/ui/field";
 import {
@@ -26,6 +25,10 @@ import {
   IconSearch,
   IconPlus,
   IconTrash,
+  IconCalendar,
+  IconStack2,
+  IconPlayerPlay,
+  IconCircleCheck,
 } from "@tabler/icons-react";
 import { TmdbMatcher } from "./tmdb-matcher";
 import { MikanRssModal } from "./mikan-rss-modal";
@@ -38,7 +41,7 @@ interface RssEntry {
 interface AddBangumiModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  subject: Subject | null;
+  subject: Subject;
   onSuccess?: () => void;
 }
 
@@ -59,13 +62,30 @@ export function AddBangumiModal({
     return episodes[0].sort
   }, [episodes]);
 
-  // Parse titles from subject
+  // Calculate air_week from air_date (0=Sunday, 1=Monday, ..., 6=Saturday)
+  const airWeek = React.useMemo(() => {
+    if (!subject?.date) return null;
+    const date = new Date(subject.date);
+    return isNaN(date.getTime()) ? null : date.getDay();
+  }, [subject]);
+
+  // Parse titles and season from subject
   const parsedTitles = React.useMemo(() => {
-    if (!subject) return { chinese: "", japanese: "" };
+    if (!subject) return { chinese: "", japanese: "", season: 1 };
     const parsedChinese = parseBgmtvName(subject.name_cn || subject.name || "");
     const parsedJapanese = parseBgmtvName(subject.name || "");
-    return { chinese: parsedChinese.name, japanese: parsedJapanese.name };
+    return {
+      chinese: parsedChinese.name,
+      japanese: parsedJapanese.name,
+      season: parsedChinese.season ?? parsedJapanese.season ?? 1,
+    };
   }, [subject]);
+
+  // Check if bangumi has finished airing
+  const isFinished = React.useMemo(() => {
+    if (!episodes || !subject?.eps) return false;
+    return episodes.length >= subject.eps;
+  }, [episodes, subject]);
 
   const form = useForm({
     defaultValues: {
@@ -80,15 +100,22 @@ export function AddBangumiModal({
       const request: CreateBangumi = {
         title_chinese: value.title_chinese,
         title_japanese: value.title_japanese || null,
-        year: subject?.date ? parseInt(subject.date.split("-")[0]) : new Date().getFullYear(),
-        bgmtv_id: subject?.id,
+        title_original: subject.name_cn,
+        year: subject.date ? parseInt(subject.date.split("-")[0]) : new Date().getFullYear(),
+        bgmtv_id: subject.id,
         tmdb_id: selectedTmdb?.id ?? null,
-        poster_url: subject?.image || null,
-        air_date: subject?.date || null,
-        total_episodes: subject?.eps || 0,
+        poster_url: subject.image || null,
+        air_date: subject.date || null,
+        air_week: airWeek,
+        total_episodes: subject.eps || 0,
         episode_offset: value.episode_offset,
         auto_download: value.auto_download,
         save_path: value.save_path || null,
+        finished: isFinished,
+        kind: subject.platform || null,
+        season: parsedTitles.season,
+        source_type: "webrip",
+        rss_entries: value.rss_entries,
       };
 
       await createBangumi.mutateAsync({ body: request });
@@ -167,22 +194,20 @@ export function AddBangumiModal({
           </div>
 
           {/* Header */}
-          <div className="relative border-b border-chart-3/30 dark:border-chart-1/20 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-chart-3 to-chart-1 text-white shadow-lg shadow-chart-1/30">
-                <IconSparkles className="size-5" />
+          <div className="relative border-b border-chart-3/30 dark:border-chart-1/20 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-chart-3 to-chart-1 text-white shadow-md shadow-chart-1/30">
+                <IconSparkles className="size-4" />
               </div>
-              <div className="flex-1">
-                <DialogPrimitive.Title className="text-lg font-bold bg-linear-to-r from-chart-3 via-chart-1 to-chart-5 bg-clip-text text-transparent">
-                  添加番剧
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Description className="text-xs text-muted-foreground">
-                  填写番剧信息并添加到追番列表
-                </DialogPrimitive.Description>
-              </div>
+              <DialogPrimitive.Title className="flex-1 text-base font-semibold bg-linear-to-r from-chart-3 via-chart-1 to-chart-5 bg-clip-text text-transparent">
+                添加番剧
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="sr-only">
+                填写番剧信息并添加到追番列表
+              </DialogPrimitive.Description>
               <DialogPrimitive.Close
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-lg",
+                  "flex size-7 items-center justify-center rounded-md",
                   "text-muted-foreground hover:text-foreground",
                   "hover:bg-chart-3/20 dark:hover:bg-chart-1/30",
                   "transition-colors duration-200",
@@ -204,55 +229,99 @@ export function AddBangumiModal({
             className="relative flex flex-col max-h-[calc(90vh-80px)]"
           >
             <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {/* Subject Info Card */}
+              {subject && (
+                <div className="relative overflow-hidden rounded-xl border border-chart-3/20 dark:border-chart-1/20 bg-linear-to-br from-chart-3/5 via-transparent to-chart-1/5 dark:from-chart-3/10 dark:to-chart-1/10">
+                  {/* Background blur effect from poster */}
+                  {subject.image && (
+                    <div
+                      className="absolute inset-0 opacity-20 dark:opacity-30 blur-2xl scale-150"
+                      style={{
+                        backgroundImage: `url(${subject.image})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                  )}
+
+                  <div className="relative flex gap-4 p-4">
+                    {/* Poster */}
+                    <div className="shrink-0">
+                      {subject.image ? (
+                        <img
+                          src={subject.image}
+                          alt={subject.name_cn || subject.name}
+                          className="w-20 h-28 object-cover rounded-lg shadow-lg ring-1 ring-white/10"
+                        />
+                      ) : (
+                        <div className="w-20 h-28 rounded-lg bg-chart-3/20 dark:bg-chart-1/20 flex items-center justify-center">
+                          <IconDeviceTv className="size-8 text-chart-3/50 dark:text-chart-1/50" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-foreground truncate">
+                          {subject.name_cn || subject.name}
+                        </h3>
+                        {subject.name_cn && subject.name !== subject.name_cn && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {subject.name}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {subject.date && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-3/15 dark:bg-chart-3/20 text-chart-3 dark:text-chart-3">
+                            <IconCalendar className="size-3" />
+                            {subject.date}
+                          </span>
+                        )}
+                        {subject.eps && subject.eps > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-1/15 dark:bg-chart-1/20 text-chart-1 dark:text-chart-1">
+                            <IconStack2 className="size-3" />
+                            {subject.eps} 话
+                          </span>
+                        )}
+                        {parsedTitles.season > 1 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-5/15 dark:bg-chart-5/20 text-chart-5 dark:text-chart-5">
+                            第 {parsedTitles.season} 季
+                          </span>
+                        )}
+                        {subject.platform && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-2/15 dark:bg-chart-2/20 text-chart-2 dark:text-chart-2">
+                            {subject.platform}
+                          </span>
+                        )}
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs",
+                          isFinished
+                            ? "bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                            : "bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                        )}>
+                          {isFinished ? (
+                            <>
+                              <IconCircleCheck className="size-3" />
+                              已完结
+                            </>
+                          ) : (
+                            <>
+                              <IconPlayerPlay className="size-3" />
+                              放送中
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <FieldGroup>
-                {/* Title Chinese */}
-                <form.Field
-                  name="title_chinese"
-                  validators={{
-                    onChange: ({ value }) =>
-                      !value ? "中文标题不能为空" : undefined,
-                  }}
-                >
-                  {(field) => (
-                    <Field data-invalid={field.state.meta.errors.length > 0}>
-                      <FieldLabel htmlFor={field.name}>
-                        <IconDeviceTv className="size-4 text-chart-3 dark:text-chart-1" />
-                        中文标题
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="请输入中文标题"
-                        aria-invalid={field.state.meta.errors.length > 0}
-                      />
-                      <FieldError errors={field.state.meta.errors.map(e => ({ message: e }))} />
-                    </Field>
-                  )}
-                </form.Field>
-
-                {/* Title Japanese */}
-                <form.Field name="title_japanese">
-                  {(field) => (
-                    <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        <IconDeviceTv className="size-4 text-chart-3 dark:text-chart-1" />
-                        日文原名
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="请输入日文原名（可选）"
-                      />
-                    </Field>
-                  )}
-                </form.Field>
-
                 {/* TMDB Matcher */}
                 <Field>
                   <FieldLabel>
@@ -413,10 +482,13 @@ export function AddBangumiModal({
                       <MikanRssModal
                         open={mikanModalOpen}
                         onOpenChange={setMikanModalOpen}
-                        onSelect={(rssUrl) => {
-                          const exists = field.state.value.some((e: RssEntry) => e.url === rssUrl);
-                          if (!exists) {
-                            field.handleChange([...field.state.value, { url: rssUrl, filters: [] }]);
+                        onSelect={(rssUrls) => {
+                          const existingUrls = new Set(field.state.value.map((e: RssEntry) => e.url));
+                          const newEntries = rssUrls
+                            .filter((url) => !existingUrls.has(url))
+                            .map((url) => ({ url, filters: [] }));
+                          if (newEntries.length > 0) {
+                            field.handleChange([...field.state.value, ...newEntries]);
                           }
                         }}
                         initialKeyword={parsedTitles.japanese || parsedTitles.chinese}

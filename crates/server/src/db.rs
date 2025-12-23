@@ -6,5 +6,8 @@ pub async fn create_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> 
         .connect(database_url)
         .await?;
 
+    // Run migrations
+    sqlx::migrate!("../../migrations").run(&pool).await?;
+
     Ok(pool)
 }

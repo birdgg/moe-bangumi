@@ -20,7 +20,7 @@ import { useDebouncedValue } from "@tanstack/react-pacer";
 interface MikanRssModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (rssUrl: string) => void;
+  onSelect: (rssUrls: string[]) => void;
   initialKeyword?: string;
 }
 
@@ -76,7 +76,7 @@ export function MikanRssModal({
     const selectedRssUrls = bangumiDetail.subgroups
       .filter((sg) => selectedSubgroups.has(sg.id))
       .map((sg) => sg.rss_url);
-    selectedRssUrls.forEach((url) => onSelect(url));
+    onSelect(selectedRssUrls);
     onOpenChange(false);
   };
 
@@ -102,7 +102,7 @@ export function MikanRssModal({
         {/* Modal */}
         <DialogPrimitive.Popup
           className={cn(
-            "fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2",
+            "fixed left-1/2 top-1/2 z-60 -translate-x-1/2 -translate-y-1/2",
             "w-[calc(100%-2rem)] max-w-2xl",
             "max-h-[80vh] overflow-hidden",
             "rounded-2xl",

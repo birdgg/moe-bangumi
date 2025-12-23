@@ -28,6 +28,7 @@ export type {
   GetMikanRssErrors,
   GetMikanRssResponse,
   GetMikanRssResponses,
+  RssEntry,
   SearchBgmtvData,
   SearchBgmtvErrors,
   SearchBgmtvResponse,

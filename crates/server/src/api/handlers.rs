@@ -7,8 +7,8 @@ use axum::{
 use serde::Deserialize;
 use utoipa::IntoParams;
 
-use crate::models::{Bangumi, CreateBangumi};
-use crate::repositories::{BangumiRepository, CacheRepository};
+use crate::models::{Bangumi, CreateBangumi, CreateRss};
+use crate::repositories::{BangumiRepository, CacheRepository, RssRepository};
 use crate::state::AppState;
 use tmdb::DiscoverBangumiParams;
 
@@ -96,8 +96,27 @@ pub async fn create_bangumi(
     State(state): State<AppState>,
     Json(payload): Json<CreateBangumi>,
 ) -> impl IntoResponse {
+    // Extract RSS entries before creating bangumi
+    let rss_entries = payload.rss_entries.clone();
+
     match BangumiRepository::create(&state.db, payload).await {
-        Ok(bangumi) => (StatusCode::CREATED, Json(bangumi)).into_response(),
+        Ok(bangumi) => {
+            // Create RSS subscriptions for the new bangumi
+            for entry in rss_entries {
+                let create_rss = CreateRss {
+                    bangumi_id: bangumi.id,
+                    url: entry.url,
+                    enabled: true,
+                    exclude_filters: entry.filters,
+                };
+
+                if let Err(e) = RssRepository::create(&state.db, create_rss).await {
+                    tracing::error!("Failed to create RSS subscription: {}", e);
+                }
+            }
+
+            (StatusCode::CREATED, Json(bangumi)).into_response()
+        }
         Err(e) => {
             tracing::error!("Failed to create bangumi: {}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
@@ -149,8 +168,12 @@ pub async fn search_mikan(
     let cache_key = format!("mikan:search:{}", query.keyword);
 
     // Try cache first
-    if let Ok(Some(cached)) =
-        CacheRepository::get::<Vec<mikan::SearchResult>>(&state.db, &cache_key, MIKAN_SEARCH_CACHE_TTL).await
+    if let Ok(Some(cached)) = CacheRepository::get::<Vec<mikan::SearchResult>>(
+        &state.db,
+        &cache_key,
+        MIKAN_SEARCH_CACHE_TTL,
+    )
+    .await
     {
         return (StatusCode::OK, Json(cached)).into_response();
     }
@@ -190,7 +213,8 @@ pub async fn get_mikan_rss(
 
     // Try cache first
     if let Ok(Some(cached)) =
-        CacheRepository::get::<mikan::BangumiDetail>(&state.db, &cache_key, MIKAN_DETAIL_CACHE_TTL).await
+        CacheRepository::get::<mikan::BangumiDetail>(&state.db, &cache_key, MIKAN_DETAIL_CACHE_TTL)
+            .await
     {
         return (StatusCode::OK, Json(cached)).into_response();
     }

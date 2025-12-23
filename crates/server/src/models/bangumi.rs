@@ -44,6 +44,8 @@ pub struct Bangumi {
     pub title_chinese: String,
     /// Japanese original name
     pub title_japanese: Option<String>,
+    /// Original title (native language, required, unique)
+    pub title_original: String,
     /// Season number
     pub season: i32,
     /// Year
@@ -83,6 +85,16 @@ pub struct Bangumi {
     pub kind: Option<String>,
 }
 
+/// RSS entry for creating bangumi with subscriptions
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RssEntry {
+    /// RSS feed URL
+    pub url: String,
+    /// Regex patterns to exclude from matching
+    #[serde(default)]
+    pub filters: Vec<String>,
+}
+
 /// Request body for creating a new bangumi
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateBangumi {
@@ -90,6 +102,8 @@ pub struct CreateBangumi {
     pub title_chinese: String,
     /// Japanese original name
     pub title_japanese: Option<String>,
+    /// Original title (native language, required, unique)
+    pub title_original: String,
     /// Season number (default: 1)
     #[serde(default = "default_season")]
     pub season: i32,
@@ -122,10 +136,12 @@ pub struct CreateBangumi {
     /// Whether the bangumi has finished airing
     #[serde(default)]
     pub finished: bool,
-
     /// Kind of bangumi (e.g., TV, Movie, OVA)
     #[serde(default = "default_kind")]
     pub kind: Option<String>,
+    /// RSS subscriptions to create with this bangumi
+    #[serde(default)]
+    pub rss_entries: Vec<RssEntry>,
 }
 
 fn default_season() -> i32 {
@@ -151,6 +167,8 @@ pub struct UpdateBangumi {
     pub title_chinese: Option<String>,
     #[serde(default)]
     pub title_japanese: Clearable<String>,
+    #[serde(default)]
+    pub title_original: Option<String>,
     #[serde(default)]
     pub season: Option<i32>,
     #[serde(default)]
