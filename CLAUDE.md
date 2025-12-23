@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 cargo build
 cargo build --release
 
-# Run the server (defaults: port 3000, database todos.db)
+# Run the server (defaults: port 3000, data path ./data)
 cargo run -p cli
 
 # Check compilation without building
@@ -47,8 +47,9 @@ bun run lint
 Configuration is read from environment variables. Create a `.env` file in the project root:
 
 ```env
-PORT=3000        # Server port (default: 3000)
-DATABASE=todos.db # SQLite database file (default: todos.db)
+APP_ENV=dev       # Environment: dev or prod (default: dev)
+PORT=3000         # Server port (default: 3000)
+DATA_PATH=./data  # Data directory for SQLite and posters (default: ./data for dev, /data for prod)
 ```
 
 ## Architecture
