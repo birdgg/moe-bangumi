@@ -11,6 +11,7 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
         .routes(routes!(handlers::search_bangumi))
         .routes(routes!(handlers::search_tmdb))
         .routes(routes!(handlers::create_bangumi))
+        .routes(routes!(handlers::get_episodes))
         .with_state(state)
         .split_for_parts();
 

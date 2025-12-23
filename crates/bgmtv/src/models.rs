@@ -69,3 +69,46 @@ pub struct Subject {
     pub image: Option<String>,
     pub eps: i64,
 }
+
+/// Episode type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize_repr, Deserialize_repr, ToSchema)]
+#[repr(i32)]
+pub enum EpisodeType {
+    /// 本篇
+    #[default]
+    Main = 0,
+    /// SP
+    Special = 1,
+    /// OP
+    Opening = 2,
+    /// ED
+    Ending = 3,
+}
+
+/// Episode item
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct Episode {
+    pub id: i64,
+    /// Episode type: 0=本篇, 1=SP, 2=OP, 3=ED
+    #[serde(rename = "type")]
+    pub episode_type: EpisodeType,
+    /// Original name
+    pub name: String,
+    /// Chinese name
+    pub name_cn: String,
+    /// Sort order
+    pub sort: f64,
+    /// Episode number
+    pub ep: Option<f64>,
+    /// Air date
+    pub airdate: String,
+}
+
+/// Episodes API response from GET /v0/episodes
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct EpisodesResponse {
+    pub data: Vec<Episode>,
+    pub total: i64,
+    pub limit: i64,
+    pub offset: i64,
+}
