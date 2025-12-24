@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  IconDownload,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   IconPlugConnected,
   IconEye,
   IconEyeOff,
@@ -60,7 +66,10 @@ function FormField({
 
 type ConnectionStatus = "idle" | "loading" | "success" | "error";
 
+type DownloaderType = "qbittorrent" | "transmission" | "aria2";
+
 export function DownloaderSettings() {
+  const [downloaderType, setDownloaderType] = React.useState<DownloaderType>("qbittorrent");
   const [showPassword, setShowPassword] = React.useState(false);
   const [connectionStatus, setConnectionStatus] = React.useState<ConnectionStatus>("idle");
   const [url, setUrl] = React.useState("");
@@ -77,18 +86,21 @@ export function DownloaderSettings() {
 
   return (
     <SettingsCard>
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-chart-1/20 to-chart-2/20">
-          <IconDownload className="size-5 text-chart-1" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">下载器配置</h3>
-          <p className="text-sm text-muted-foreground">配置 qBittorrent 连接信息</p>
-        </div>
-      </div>
-
       <div className="space-y-5">
-        <FormField label="服务器地址" description="WebUI URL">
+        <FormField label="下载器类型">
+          <Select value={downloaderType} onValueChange={(v) => setDownloaderType(v as DownloaderType)}>
+            <SelectTrigger className="w-full transition-all duration-200 focus:ring-2 focus:ring-chart-1/20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="qbittorrent">qBittorrent</SelectItem>
+              <SelectItem value="transmission" disabled>Transmission</SelectItem>
+              <SelectItem value="aria2" disabled>Aria2</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+
+        <FormField label="服务器地址">
           <Input
             type="url"
             placeholder="http://localhost:8080"
