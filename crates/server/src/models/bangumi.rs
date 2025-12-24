@@ -44,8 +44,10 @@ pub struct Bangumi {
     pub title_chinese: String,
     /// Japanese original name
     pub title_japanese: Option<String>,
-    /// Original title (native language, required, unique)
-    pub title_original: String,
+    /// Original Chinese title (native language, required, unique)
+    pub title_original_chinese: String,
+    /// Original Japanese title
+    pub title_original_japanese: Option<String>,
     /// Season number
     pub season: i32,
     /// Year
@@ -102,8 +104,10 @@ pub struct CreateBangumi {
     pub title_chinese: String,
     /// Japanese original name
     pub title_japanese: Option<String>,
-    /// Original title (native language, required, unique)
-    pub title_original: String,
+    /// Original Chinese title (native language, required, unique)
+    pub title_original_chinese: String,
+    /// Original Japanese title
+    pub title_original_japanese: Option<String>,
     /// Season number (default: 1)
     #[serde(default = "default_season")]
     pub season: i32,
@@ -168,7 +172,9 @@ pub struct UpdateBangumi {
     #[serde(default)]
     pub title_japanese: Clearable<String>,
     #[serde(default)]
-    pub title_original: Option<String>,
+    pub title_original_chinese: Option<String>,
+    #[serde(default)]
+    pub title_original_japanese: Clearable<String>,
     #[serde(default)]
     pub season: Option<i32>,
     #[serde(default)]

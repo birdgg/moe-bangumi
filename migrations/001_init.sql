@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS bangumi (
     -- Basic info - bilingual title support
     title_chinese TEXT NOT NULL,                    -- Chinese title (primary display)
     title_japanese TEXT,                            -- Japanese original name
-    title_original TEXT NOT NULL DEFAULT '',        -- Original title (native language, required, unique)
+    title_original_chinese TEXT NOT NULL DEFAULT '',-- Original Chinese title (native language, required, unique)
+    title_original_japanese TEXT,                   -- Original Japanese title
     season INTEGER NOT NULL DEFAULT 1,              -- Season number
     year INTEGER NOT NULL,                          -- Year
 
@@ -38,8 +39,9 @@ CREATE TABLE IF NOT EXISTS bangumi (
 -- Bangumi indexes
 CREATE INDEX IF NOT EXISTS idx_bangumi_title_chinese ON bangumi(title_chinese);
 CREATE INDEX IF NOT EXISTS idx_bangumi_title_japanese ON bangumi(title_japanese);
-CREATE INDEX IF NOT EXISTS idx_bangumi_title_original ON bangumi(title_original);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bangumi_title_original_unique ON bangumi(title_original);
+CREATE INDEX IF NOT EXISTS idx_bangumi_title_original_chinese ON bangumi(title_original_chinese);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bangumi_title_original_chinese_unique ON bangumi(title_original_chinese);
+CREATE INDEX IF NOT EXISTS idx_bangumi_title_original_japanese ON bangumi(title_original_japanese);
 CREATE INDEX IF NOT EXISTS idx_bangumi_season ON bangumi(season);
 CREATE INDEX IF NOT EXISTS idx_bangumi_year ON bangumi(year);
 CREATE INDEX IF NOT EXISTS idx_bangumi_air_date ON bangumi(air_date);

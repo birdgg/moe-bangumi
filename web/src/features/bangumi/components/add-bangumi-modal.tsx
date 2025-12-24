@@ -101,7 +101,8 @@ export function AddBangumiModal({
       const request: CreateBangumi = {
         title_chinese: value.title_chinese,
         title_japanese: value.title_japanese || null,
-        title_original: subject.name_cn,
+        title_original_chinese: subject.name_cn,
+        title_original_japanese: subject.name,
         year: subject.date ? parseInt(subject.date.split("-")[0]) : new Date().getFullYear(),
         bgmtv_id: subject.id,
         tmdb_id: selectedTmdb?.id ?? null,

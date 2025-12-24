@@ -8,7 +8,7 @@ export const BangumiSchema = {
     "created_at",
     "updated_at",
     "title_chinese",
-    "title_original",
+    "title_original_chinese",
     "season",
     "year",
     "total_episodes",
@@ -89,9 +89,13 @@ export const BangumiSchema = {
       type: ["string", "null"],
       description: "Japanese original name",
     },
-    title_original: {
+    title_original_chinese: {
       type: "string",
-      description: "Original title (native language, required, unique)",
+      description: "Original Chinese title (native language, required, unique)",
+    },
+    title_original_japanese: {
+      type: ["string", "null"],
+      description: "Original Japanese title",
     },
     tmdb_id: {
       type: ["integer", "null"],
@@ -131,7 +135,7 @@ export const BangumiDetailSchema = {
 export const CreateBangumiSchema = {
   type: "object",
   description: "Request body for creating a new bangumi",
-  required: ["title_chinese", "title_original", "year"],
+  required: ["title_chinese", "title_original_chinese", "year"],
   properties: {
     air_date: {
       type: ["string", "null"],
@@ -197,9 +201,13 @@ export const CreateBangumiSchema = {
       type: ["string", "null"],
       description: "Japanese original name",
     },
-    title_original: {
+    title_original_chinese: {
       type: "string",
-      description: "Original title (native language, required, unique)",
+      description: "Original Chinese title (native language, required, unique)",
+    },
+    title_original_japanese: {
+      type: ["string", "null"],
+      description: "Original Japanese title",
     },
     tmdb_id: {
       type: ["integer", "null"],
@@ -215,6 +223,25 @@ export const CreateBangumiSchema = {
       type: "integer",
       format: "int32",
       description: "Year (required)",
+    },
+  },
+} as const;
+
+export const DownloaderSettingsSchema = {
+  type: "object",
+  description: "Downloader (qBittorrent) configuration",
+  properties: {
+    password: {
+      type: ["string", "null"],
+      description: "qBittorrent password (plain text)",
+    },
+    url: {
+      type: ["string", "null"],
+      description: "qBittorrent Web UI URL (e.g., http://localhost:8080)",
+    },
+    username: {
+      type: ["string", "null"],
+      description: "qBittorrent username",
     },
   },
 } as const;
@@ -261,6 +288,20 @@ export const EpisodeTypeSchema = {
   type: "string",
   description: "Episode type",
   enum: ["Main", "Special", "Opening", "Ending"],
+} as const;
+
+export const FilterSettingsSchema = {
+  type: "object",
+  description: "Filter configuration",
+  properties: {
+    global_rss_filters: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description: "Global RSS filters (regex patterns to exclude)",
+    },
+  },
 } as const;
 
 export const RssEntrySchema = {
@@ -317,6 +358,21 @@ export const SearchSubjectsResponseSchema = {
     total: {
       type: "integer",
       format: "int64",
+    },
+  },
+} as const;
+
+export const SettingsSchema = {
+  type: "object",
+  description: "Application settings stored in TOML file",
+  properties: {
+    downloader: {
+      $ref: "#/components/schemas/DownloaderSettings",
+      description: "Downloader configuration",
+    },
+    filter: {
+      $ref: "#/components/schemas/FilterSettings",
+      description: "Filter configuration",
     },
   },
 } as const;
@@ -444,6 +500,69 @@ export const TvShowSchema = {
     vote_count: {
       type: "integer",
       format: "int64",
+    },
+  },
+} as const;
+
+export const UpdateDownloaderSettingsSchema = {
+  type: "object",
+  description: "Request body for updating downloader settings",
+  properties: {
+    password: {
+      type: ["string", "null"],
+      description: "qBittorrent password (send null to clear)",
+    },
+    url: {
+      type: ["string", "null"],
+      description: "qBittorrent Web UI URL (send null to clear)",
+    },
+    username: {
+      type: ["string", "null"],
+      description: "qBittorrent username (send null to clear)",
+    },
+  },
+} as const;
+
+export const UpdateFilterSettingsSchema = {
+  type: "object",
+  description: "Request body for updating filter settings",
+  properties: {
+    global_rss_filters: {
+      type: ["array", "null"],
+      items: {
+        type: "string",
+      },
+      description: "Global RSS filters (replaces entire array if provided)",
+    },
+  },
+} as const;
+
+export const UpdateSettingsSchema = {
+  type: "object",
+  description:
+    "Request body for updating settings.\nAll fields are optional - only provided fields will be updated.",
+  properties: {
+    downloader: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateDownloaderSettings",
+          description: "Downloader configuration updates",
+        },
+      ],
+    },
+    filter: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateFilterSettings",
+          description: "Filter configuration updates",
+        },
+      ],
     },
   },
 } as const;

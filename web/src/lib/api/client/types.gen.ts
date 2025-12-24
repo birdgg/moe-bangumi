@@ -67,9 +67,13 @@ export type Bangumi = {
    */
   title_japanese?: string | null;
   /**
-   * Original title (native language, required, unique)
+   * Original Chinese title (native language, required, unique)
    */
-  title_original: string;
+  title_original_chinese: string;
+  /**
+   * Original Japanese title
+   */
+  title_original_japanese?: string | null;
   /**
    * TMDB ID
    */
@@ -150,9 +154,13 @@ export type CreateBangumi = {
    */
   title_japanese?: string | null;
   /**
-   * Original title (native language, required, unique)
+   * Original Chinese title (native language, required, unique)
    */
-  title_original: string;
+  title_original_chinese: string;
+  /**
+   * Original Japanese title
+   */
+  title_original_japanese?: string | null;
   /**
    * TMDB ID
    */
@@ -165,6 +173,24 @@ export type CreateBangumi = {
    * Year (required)
    */
   year: number;
+};
+
+/**
+ * Downloader (qBittorrent) configuration
+ */
+export type DownloaderSettings = {
+  /**
+   * qBittorrent password (plain text)
+   */
+  password?: string | null;
+  /**
+   * qBittorrent Web UI URL (e.g., http://localhost:8080)
+   */
+  url?: string | null;
+  /**
+   * qBittorrent username
+   */
+  username?: string | null;
 };
 
 /**
@@ -204,6 +230,16 @@ export type Episode = {
 export type EpisodeType = "Main" | "Special" | "Opening" | "Ending";
 
 /**
+ * Filter configuration
+ */
+export type FilterSettings = {
+  /**
+   * Global RSS filters (regex patterns to exclude)
+   */
+  global_rss_filters?: Array<string>;
+};
+
+/**
  * RSS entry for creating bangumi with subscriptions
  */
 export type RssEntry = {
@@ -230,6 +266,20 @@ export type SearchSubjectsResponse = {
   limit: number;
   offset: number;
   total: number;
+};
+
+/**
+ * Application settings stored in TOML file
+ */
+export type Settings = {
+  /**
+   * Downloader configuration
+   */
+  downloader?: DownloaderSettings;
+  /**
+   * Filter configuration
+   */
+  filter?: FilterSettings;
 };
 
 /**
@@ -271,6 +321,43 @@ export type TvShow = {
   poster_path?: string | null;
   vote_average: number;
   vote_count: number;
+};
+
+/**
+ * Request body for updating downloader settings
+ */
+export type UpdateDownloaderSettings = {
+  /**
+   * qBittorrent password (send null to clear)
+   */
+  password?: string | null;
+  /**
+   * qBittorrent Web UI URL (send null to clear)
+   */
+  url?: string | null;
+  /**
+   * qBittorrent username (send null to clear)
+   */
+  username?: string | null;
+};
+
+/**
+ * Request body for updating filter settings
+ */
+export type UpdateFilterSettings = {
+  /**
+   * Global RSS filters (replaces entire array if provided)
+   */
+  global_rss_filters?: Array<string> | null;
+};
+
+/**
+ * Request body for updating settings.
+ * All fields are optional - only provided fields will be updated.
+ */
+export type UpdateSettings = {
+  downloader?: null | UpdateDownloaderSettings;
+  filter?: null | UpdateFilterSettings;
 };
 
 export type GetBangumiData = {
@@ -463,3 +550,75 @@ export type SearchTmdbResponses = {
 };
 
 export type SearchTmdbResponse = SearchTmdbResponses[keyof SearchTmdbResponses];
+
+export type GetSettingsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/settings";
+};
+
+export type GetSettingsErrors = {
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type GetSettingsResponses = {
+  /**
+   * Application settings
+   */
+  200: Settings;
+};
+
+export type GetSettingsResponse =
+  GetSettingsResponses[keyof GetSettingsResponses];
+
+export type UpdateSettingsData = {
+  body: UpdateSettings;
+  path?: never;
+  query?: never;
+  url: "/api/settings";
+};
+
+export type UpdateSettingsErrors = {
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type UpdateSettingsResponses = {
+  /**
+   * Settings updated successfully
+   */
+  200: Settings;
+};
+
+export type UpdateSettingsResponse =
+  UpdateSettingsResponses[keyof UpdateSettingsResponses];
+
+export type ResetSettingsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/settings/reset";
+};
+
+export type ResetSettingsErrors = {
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type ResetSettingsResponses = {
+  /**
+   * Settings reset successfully
+   */
+  200: Settings;
+};
+
+export type ResetSettingsResponse =
+  ResetSettingsResponses[keyof ResetSettingsResponses];

@@ -15,6 +15,12 @@ import type {
   GetMikanRssData,
   GetMikanRssErrors,
   GetMikanRssResponses,
+  GetSettingsData,
+  GetSettingsErrors,
+  GetSettingsResponses,
+  ResetSettingsData,
+  ResetSettingsErrors,
+  ResetSettingsResponses,
   SearchBgmtvData,
   SearchBgmtvErrors,
   SearchBgmtvResponses,
@@ -24,6 +30,9 @@ import type {
   SearchTmdbData,
   SearchTmdbErrors,
   SearchTmdbResponses,
+  UpdateSettingsData,
+  UpdateSettingsErrors,
+  UpdateSettingsResponses,
 } from "./types.gen";
 
 export type Options<
@@ -133,3 +142,46 @@ export const searchTmdb = <ThrowOnError extends boolean = false>(
     SearchTmdbErrors,
     ThrowOnError
   >({ url: "/api/search/tmdb", ...options });
+
+/**
+ * Get application settings
+ */
+export const getSettings = <ThrowOnError extends boolean = false>(
+  options?: Options<GetSettingsData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetSettingsResponses,
+    GetSettingsErrors,
+    ThrowOnError
+  >({ url: "/api/settings", ...options });
+
+/**
+ * Update application settings
+ */
+export const updateSettings = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateSettingsData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateSettingsResponses,
+    UpdateSettingsErrors,
+    ThrowOnError
+  >({
+    url: "/api/settings",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Reset settings to defaults
+ */
+export const resetSettings = <ThrowOnError extends boolean = false>(
+  options?: Options<ResetSettingsData, ThrowOnError>,
+) =>
+  (options?.client ?? client).post<
+    ResetSettingsResponses,
+    ResetSettingsErrors,
+    ThrowOnError
+  >({ url: "/api/settings/reset", ...options });

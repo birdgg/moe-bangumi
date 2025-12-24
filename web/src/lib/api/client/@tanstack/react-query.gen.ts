@@ -12,10 +12,13 @@ import {
   getBangumi,
   getEpisodes,
   getMikanRss,
+  getSettings,
   type Options,
+  resetSettings,
   searchBgmtv,
   searchMikan,
   searchTmdb,
+  updateSettings,
 } from "../sdk.gen";
 import type {
   CreateBangumiData,
@@ -26,12 +29,18 @@ import type {
   GetEpisodesResponse,
   GetMikanRssData,
   GetMikanRssResponse,
+  GetSettingsData,
+  GetSettingsResponse,
+  ResetSettingsData,
+  ResetSettingsResponse,
   SearchBgmtvData,
   SearchBgmtvResponse,
   SearchMikanData,
   SearchMikanResponse,
   SearchTmdbData,
   SearchTmdbResponse,
+  UpdateSettingsData,
+  UpdateSettingsResponse,
 } from "../types.gen";
 
 export type QueryKey<TOptions extends Options> = [
@@ -250,3 +259,82 @@ export const searchTmdbOptions = (options: Options<SearchTmdbData>) =>
     },
     queryKey: searchTmdbQueryKey(options),
   });
+
+export const getSettingsQueryKey = (options?: Options<GetSettingsData>) =>
+  createQueryKey("getSettings", options);
+
+/**
+ * Get application settings
+ */
+export const getSettingsOptions = (options?: Options<GetSettingsData>) =>
+  queryOptions<
+    GetSettingsResponse,
+    DefaultError,
+    GetSettingsResponse,
+    ReturnType<typeof getSettingsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSettings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSettingsQueryKey(options),
+  });
+
+/**
+ * Update application settings
+ */
+export const updateSettingsMutation = (
+  options?: Partial<Options<UpdateSettingsData>>,
+): UseMutationOptions<
+  UpdateSettingsResponse,
+  DefaultError,
+  Options<UpdateSettingsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateSettingsResponse,
+    DefaultError,
+    Options<UpdateSettingsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateSettings({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reset settings to defaults
+ */
+export const resetSettingsMutation = (
+  options?: Partial<Options<ResetSettingsData>>,
+): UseMutationOptions<
+  ResetSettingsResponse,
+  DefaultError,
+  Options<ResetSettingsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResetSettingsResponse,
+    DefaultError,
+    Options<ResetSettingsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await resetSettings({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
