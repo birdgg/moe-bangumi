@@ -1,14 +1,14 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::Deserialize;
 
-use downloader::{Downloader, DownloaderClient, DownloaderConfig};
+use crate::services::{Downloader, DownloaderClient, DownloaderConfig, DownloaderType};
 
 /// Request body for testing downloader connection
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TestDownloaderRequest {
     /// Downloader type (e.g., "qbittorrent")
     #[serde(rename = "type")]
-    pub downloader_type: downloader::DownloaderType,
+    pub downloader_type: DownloaderType,
     /// Downloader Web UI URL
     pub url: String,
     /// Username

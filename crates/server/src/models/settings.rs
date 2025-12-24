@@ -1,4 +1,4 @@
-use downloader::DownloaderType;
+use super::DownloaderType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

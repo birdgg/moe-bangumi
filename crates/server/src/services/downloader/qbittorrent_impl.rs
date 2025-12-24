@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use qbittorrent::{AddTorrentRequest, QBittorrentClient};
 
-use crate::error::Result;
-use crate::models::AddTorrentOptions;
-use crate::traits::Downloader;
+use super::error::Result;
+use super::models::AddTorrentOptions;
+use super::traits::Downloader;
 
 /// qBittorrent downloader wrapper
 pub struct QBittorrentDownloader {
