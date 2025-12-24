@@ -7,7 +7,8 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    DownloaderService, FileRenameJob, RssFetchJob, SchedulerService, SettingsService,
+    DownloaderService, FileRenameJob, PosterService, RssFetchJob, SchedulerService,
+    SettingsService,
 };
 
 #[derive(Clone)]
@@ -20,6 +21,7 @@ pub struct AppState {
     pub mikan: Arc<MikanClient>,
     pub settings: Arc<SettingsService>,
     pub downloader: Arc<DownloaderService>,
+    pub poster: Arc<PosterService>,
     pub scheduler: Arc<SchedulerService>,
 }
 
@@ -32,6 +34,9 @@ impl AppState {
 
         // Create downloader service with settings subscription
         let downloader = DownloaderService::new(settings.get().downloader, settings.subscribe());
+
+        // Create poster service
+        let poster = PosterService::new(http_client.clone(), config.posters_path());
 
         // Create and start scheduler service
         let scheduler = SchedulerService::new()
@@ -48,6 +53,7 @@ impl AppState {
             mikan: Arc::new(mikan),
             settings: Arc::new(settings),
             downloader: Arc::new(downloader),
+            poster: Arc::new(poster),
             scheduler: Arc::new(scheduler),
         }
     }

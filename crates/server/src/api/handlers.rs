@@ -110,10 +110,17 @@ pub async fn search_tmdb(
 )]
 pub async fn create_bangumi(
     State(state): State<AppState>,
-    Json(payload): Json<CreateBangumi>,
+    Json(mut payload): Json<CreateBangumi>,
 ) -> impl IntoResponse {
     // Extract RSS entries before creating bangumi
     let rss_entries = payload.rss_entries.clone();
+
+    // Try to download poster from TMDB if available
+    if let Some(ref poster_url) = payload.poster_url {
+        if let Some(local_path) = state.poster.try_download(poster_url).await {
+            payload.poster_url = Some(local_path);
+        }
+    }
 
     match BangumiRepository::create(&state.db, payload).await {
         Ok(bangumi) => {
