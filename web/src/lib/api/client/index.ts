@@ -11,7 +11,6 @@ export {
   searchBgmtv,
   searchMikan,
   searchTmdb,
-  testDownloaderAuth,
   testDownloaderConnection,
   updateSettings,
 } from "./sdk.gen";
@@ -68,9 +67,7 @@ export type {
   SourceType,
   Subgroup,
   Subject,
-  TestDownloaderAuthData,
-  TestDownloaderAuthErrors,
-  TestDownloaderAuthResponses,
+  SubjectImages,
   TestDownloaderConnectionData,
   TestDownloaderConnectionErrors,
   TestDownloaderConnectionResponses,

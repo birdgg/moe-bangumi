@@ -223,17 +223,12 @@ export function SearchBangumiModal({
                   >
                     {/* Poster */}
                     <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-linear-to-br from-chart-1/20 to-chart-3/20 dark:from-chart-1/30 dark:to-chart-3/30">
-                      {subject.image ? (
-                        <img
-                          src={subject.image}
-                          alt={subject.name_cn || subject.name}
-                          className="size-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="flex size-full items-center justify-center">
-                          <IconSparkles className="size-6 text-chart-1/60 dark:text-chart-3/60" />
-                        </div>
-                      )}
+                      <img
+                        src={subject.image}
+                        alt={subject.name_cn || subject.name}
+                        className="size-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+
                       {/* Selection indicator */}
                       {selectedId === subject.id && (
                         <div className="absolute inset-0 flex items-center justify-center bg-chart-1/80 dark:bg-chart-3/80">

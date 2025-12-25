@@ -42,20 +42,33 @@ pub struct SearchSubjectsResponse {
     pub data: Vec<Subject>,
 }
 
+/// Subject images from BGM.tv API
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct SubjectImages {
+    pub small: String,
+    pub grid: String,
+    pub large: String,
+    pub medium: String,
+    pub common: String,
+}
+
 /// Subject item in search results
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Subject {
     pub id: i64,
     pub name: String,
     pub name_cn: String,
-    pub date: Option<String>,
-    pub platform: Option<String>,
-    pub image: Option<String>,
+    pub date: String,
+    pub platform: String,
+    pub images: SubjectImages,
+    pub image: String,
     pub eps: i64,
 }
 
 /// Episode type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize_repr, Deserialize_repr, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize_repr, Deserialize_repr, ToSchema,
+)]
 #[repr(i32)]
 pub enum EpisodeType {
     /// 本篇

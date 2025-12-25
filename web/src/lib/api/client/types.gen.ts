@@ -182,16 +182,19 @@ export type DownloaderSettings = {
   /**
    * Password (qBittorrent)
    */
-  password?: string | null;
-  type?: null | DownloaderType;
+  password?: string;
+  /**
+   * Downloader type: qbittorrent
+   */
+  type?: DownloaderType;
   /**
    * Downloader Web UI URL (e.g., http://localhost:8080)
    */
-  url?: string | null;
+  url?: string;
   /**
    * Username (qBittorrent)
    */
-  username?: string | null;
+  username?: string;
 };
 
 /**
@@ -304,13 +307,25 @@ export type Subgroup = {
  * Subject item in search results
  */
 export type Subject = {
-  date?: string | null;
+  date: string;
   eps: number;
   id: number;
-  image?: string | null;
+  image: string;
+  images: SubjectImages;
   name: string;
   name_cn: string;
-  platform?: string | null;
+  platform: string;
+};
+
+/**
+ * Subject images from BGM.tv API
+ */
+export type SubjectImages = {
+  common: string;
+  grid: string;
+  large: string;
+  medium: string;
+  small: string;
 };
 
 /**
@@ -435,35 +450,6 @@ export type CreateBangumiResponses = {
 
 export type CreateBangumiResponse =
   CreateBangumiResponses[keyof CreateBangumiResponses];
-
-export type TestDownloaderAuthData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/api/downloader/auth";
-};
-
-export type TestDownloaderAuthErrors = {
-  /**
-   * Downloader not configured
-   */
-  400: unknown;
-  /**
-   * Authentication failed
-   */
-  401: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
-export type TestDownloaderAuthResponses = {
-  /**
-   * Authentication successful
-   */
-  200: unknown;
-};
 
 export type TestDownloaderConnectionData = {
   body: TestDownloaderRequest;

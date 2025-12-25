@@ -18,7 +18,6 @@ import {
   searchBgmtv,
   searchMikan,
   searchTmdb,
-  testDownloaderAuth,
   testDownloaderConnection,
   updateSettings,
 } from "../sdk.gen";
@@ -41,7 +40,6 @@ import type {
   SearchMikanResponse,
   SearchTmdbData,
   SearchTmdbResponse,
-  TestDownloaderAuthData,
   TestDownloaderConnectionData,
   UpdateSettingsData,
   UpdateSettingsResponse,
@@ -129,33 +127,6 @@ export const createBangumiMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await createBangumi({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Test downloader authentication
- */
-export const testDownloaderAuthMutation = (
-  options?: Partial<Options<TestDownloaderAuthData>>,
-): UseMutationOptions<
-  unknown,
-  DefaultError,
-  Options<TestDownloaderAuthData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    unknown,
-    DefaultError,
-    Options<TestDownloaderAuthData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await testDownloaderAuth({
         ...options,
         ...fnOptions,
         throwOnError: true,

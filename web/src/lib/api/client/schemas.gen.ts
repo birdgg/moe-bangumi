@@ -232,26 +232,19 @@ export const DownloaderSettingsSchema = {
   description: "Downloader configuration (supports qBittorrent)",
   properties: {
     password: {
-      type: ["string", "null"],
+      type: "string",
       description: "Password (qBittorrent)",
     },
     type: {
-      oneOf: [
-        {
-          type: "null",
-        },
-        {
-          $ref: "#/components/schemas/DownloaderType",
-          description: "Downloader type: qbittorrent",
-        },
-      ],
+      $ref: "#/components/schemas/DownloaderType",
+      description: "Downloader type: qbittorrent",
     },
     url: {
-      type: ["string", "null"],
+      type: "string",
       description: "Downloader Web UI URL (e.g., http://localhost:8080)",
     },
     username: {
-      type: ["string", "null"],
+      type: "string",
       description: "Username (qBittorrent)",
     },
   },
@@ -425,10 +418,19 @@ export const SubgroupSchema = {
 export const SubjectSchema = {
   type: "object",
   description: "Subject item in search results",
-  required: ["id", "name", "name_cn", "eps"],
+  required: [
+    "id",
+    "name",
+    "name_cn",
+    "date",
+    "platform",
+    "images",
+    "image",
+    "eps",
+  ],
   properties: {
     date: {
-      type: ["string", "null"],
+      type: "string",
     },
     eps: {
       type: "integer",
@@ -439,7 +441,10 @@ export const SubjectSchema = {
       format: "int64",
     },
     image: {
-      type: ["string", "null"],
+      type: "string",
+    },
+    images: {
+      $ref: "#/components/schemas/SubjectImages",
     },
     name: {
       type: "string",
@@ -448,7 +453,30 @@ export const SubjectSchema = {
       type: "string",
     },
     platform: {
-      type: ["string", "null"],
+      type: "string",
+    },
+  },
+} as const;
+
+export const SubjectImagesSchema = {
+  type: "object",
+  description: "Subject images from BGM.tv API",
+  required: ["small", "grid", "large", "medium", "common"],
+  properties: {
+    common: {
+      type: "string",
+    },
+    grid: {
+      type: "string",
+    },
+    large: {
+      type: "string",
+    },
+    medium: {
+      type: "string",
+    },
+    small: {
+      type: "string",
     },
   },
 } as const;

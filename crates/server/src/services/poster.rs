@@ -2,8 +2,6 @@ use reqwest::Client;
 use std::path::PathBuf;
 use thiserror::Error;
 
-const TMDB_IMAGE_BASE_URL: &str = "https://image.tmdb.org/t/p/original";
-
 /// Errors that can occur when downloading or managing posters.
 #[derive(Debug, Error)]
 pub enum PosterError {
@@ -20,7 +18,7 @@ pub enum PosterError {
     HttpStatus(u16),
 }
 
-/// Service for downloading and managing poster images from TMDB.
+/// Service for downloading and managing poster images from BGM.tv.
 ///
 /// Handles poster downloads with path validation, atomic file writes,
 /// and automatic deduplication via local file caching.
@@ -47,62 +45,46 @@ impl PosterService {
         format!("/posters/{}", filename)
     }
 
-    /// Validate and extract filename from a TMDB poster path.
-    ///
-    /// Returns the filename without the leading slash, or an error if invalid.
-    fn validate_filename(poster_path: &str) -> Result<&str, PosterError> {
-        let filename = poster_path.strip_prefix('/').ok_or_else(|| {
-            PosterError::InvalidPath(format!(
-                "Poster path must start with '/': {}",
-                poster_path
-            ))
-        })?;
-
-        // Prevent path traversal attacks
+    /// Validate filename to prevent path traversal attacks.
+    fn validate_filename(filename: &str) -> Result<(), PosterError> {
         if filename.contains("..") || filename.contains('/') {
             return Err(PosterError::InvalidPath(format!(
-                "Invalid poster path: {}",
-                poster_path
+                "Invalid filename: {}",
+                filename
             )));
         }
-
-        Ok(filename)
+        Ok(())
     }
 
-    /// Extract TMDB poster path from various URL formats.
+    /// Extract filename from a BGM.tv poster URL.
     ///
     /// Handles:
-    /// - Full TMDB URL: "https://image.tmdb.org/t/p/w500/abc.jpg" -> "/abc.jpg"
-    /// - TMDB path: "/abc.jpg" -> "/abc.jpg"
+    /// - Full BGM.tv URL: "https://lain.bgm.tv/pic/cover/l/de/4a/329906_hmtVD.jpg" -> "329906_hmtVD.jpg"
     /// - Local path: "/posters/abc.jpg" -> None (already local)
-    fn extract_tmdb_path(url: &str) -> Option<String> {
+    fn extract_bgm_filename(url: &str) -> Option<&str> {
         if url.starts_with("/posters/") {
             return None;
         }
 
-        if url.contains("image.tmdb.org") {
-            // URL format: https://image.tmdb.org/t/p/{size}/{path}
-            url.rsplit_once("/t/p/")?
-                .1
-                .split_once('/')
-                .map(|(_, path)| format!("/{}", path))
-        } else if url.starts_with('/') {
-            Some(url.to_string())
+        if url.contains("bgm.tv") {
+            // Extract filename from the last path segment
+            url.rsplit_once('/').map(|(_, filename)| filename)
         } else {
             None
         }
     }
 
-    /// Download a poster from TMDB and return the local path.
+    /// Download a poster from a URL and return the local path.
     ///
     /// # Arguments
-    /// * `poster_path` - TMDB poster path (e.g., "/kXE4mzog.jpg")
+    /// * `url` - Full URL to download from
+    /// * `filename` - Filename to save as
     ///
     /// # Returns
-    /// * `Ok(String)` - Local path relative to data dir (e.g., "/posters/kXE4mzog.jpg")
+    /// * `Ok(String)` - Local path relative to data dir (e.g., "/posters/329906_hmtVD.jpg")
     /// * `Err` - Download or save failed
-    pub async fn download_poster(&self, poster_path: &str) -> Result<String, PosterError> {
-        let filename = Self::validate_filename(poster_path)?;
+    pub async fn download_poster(&self, url: &str, filename: &str) -> Result<String, PosterError> {
+        Self::validate_filename(filename)?;
         let local_path = self.posters_dir.join(filename);
 
         // Check if file already exists (avoid repeat download)
@@ -111,11 +93,9 @@ impl PosterService {
             return Ok(Self::local_path_string(filename));
         }
 
-        // Build TMDB URL and download
-        let url = format!("{}{}", TMDB_IMAGE_BASE_URL, poster_path);
-        tracing::info!("Downloading poster: {}", poster_path);
+        tracing::info!("Downloading poster: {}", url);
 
-        let response = self.http_client.get(&url).send().await?;
+        let response = self.http_client.get(url).send().await?;
 
         if !response.status().is_success() {
             return Err(PosterError::HttpStatus(response.status().as_u16()));
@@ -151,13 +131,12 @@ impl PosterService {
     /// Try to download poster from a URL.
     ///
     /// Handles different URL formats:
-    /// - TMDB full URL: "https://image.tmdb.org/t/p/w500/abc.jpg"
-    /// - TMDB path: "/abc.jpg"
+    /// - BGM.tv URL: "https://lain.bgm.tv/pic/cover/l/de/4a/329906_hmtVD.jpg"
     /// - Local path: "/posters/abc.jpg" (returns as-is)
     ///
     /// # Returns
     /// * `Some(local_path)` - Successfully downloaded or already local
-    /// * `None` - Not a TMDB URL or download failed
+    /// * `None` - Not a BGM.tv URL or download failed
     pub async fn try_download(&self, url: &str) -> Option<String> {
         // Already a local path
         if url.starts_with("/posters/") {
@@ -165,9 +144,9 @@ impl PosterService {
             return Some(url.to_string());
         }
 
-        let poster_path = Self::extract_tmdb_path(url)?;
+        let filename = Self::extract_bgm_filename(url)?;
 
-        match self.download_poster(&poster_path).await {
+        match self.download_poster(url, filename).await {
             Ok(local_path) => Some(local_path),
             Err(e) => {
                 tracing::warn!("Failed to download poster: {}", e);

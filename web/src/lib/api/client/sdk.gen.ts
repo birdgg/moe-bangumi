@@ -30,9 +30,6 @@ import type {
   SearchTmdbData,
   SearchTmdbErrors,
   SearchTmdbResponses,
-  TestDownloaderAuthData,
-  TestDownloaderAuthErrors,
-  TestDownloaderAuthResponses,
   TestDownloaderConnectionData,
   TestDownloaderConnectionErrors,
   TestDownloaderConnectionResponses,
@@ -88,18 +85,6 @@ export const createBangumi = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
-
-/**
- * Test downloader authentication
- */
-export const testDownloaderAuth = <ThrowOnError extends boolean = false>(
-  options?: Options<TestDownloaderAuthData, ThrowOnError>,
-) =>
-  (options?.client ?? client).post<
-    TestDownloaderAuthResponses,
-    TestDownloaderAuthErrors,
-    ThrowOnError
-  >({ url: "/api/downloader/auth", ...options });
 
 /**
  * Test downloader connection with provided credentials
