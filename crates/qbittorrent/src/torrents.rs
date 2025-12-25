@@ -51,4 +51,50 @@ impl QBittorrentClient {
 
         Ok(())
     }
+
+    /// Add tags to torrent(s)
+    /// POST /api/v2/torrents/addTags
+    ///
+    /// # Arguments
+    /// * `hashes` - Torrent hashes, or `&["all"]` for all torrents
+    /// * `tags` - Tags to add
+    pub async fn add_tags(&self, hashes: &[&str], tags: &[&str]) -> crate::Result<()> {
+        let url = self.url("/torrents/addTags");
+
+        let hashes_str = hashes.join("|");
+        let tags_str = tags.join(",");
+        let form = Form::new().text("hashes", hashes_str).text("tags", tags_str);
+
+        let mut request = self.client().post(&url).multipart(form);
+
+        if let Some(sid) = self.get_sid().await {
+            request = request.header(reqwest::header::COOKIE, format!("SID={}", sid));
+        }
+
+        let response = request.send().await?;
+        self.handle_response(response).await
+    }
+
+    /// Remove tags from torrent(s)
+    /// POST /api/v2/torrents/removeTags
+    ///
+    /// # Arguments
+    /// * `hashes` - Torrent hashes, or `&["all"]` for all torrents
+    /// * `tags` - Tags to remove. If empty, all tags are removed.
+    pub async fn remove_tags(&self, hashes: &[&str], tags: &[&str]) -> crate::Result<()> {
+        let url = self.url("/torrents/removeTags");
+
+        let hashes_str = hashes.join("|");
+        let tags_str = tags.join(",");
+        let form = Form::new().text("hashes", hashes_str).text("tags", tags_str);
+
+        let mut request = self.client().post(&url).multipart(form);
+
+        if let Some(sid) = self.get_sid().await {
+            request = request.header(reqwest::header::COOKIE, format!("SID={}", sid));
+        }
+
+        let response = request.send().await?;
+        self.handle_response(response).await
+    }
 }
