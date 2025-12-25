@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   BangumiCard,
   BangumiGrid,
@@ -9,6 +10,8 @@ import { Button } from "@/components/ui/button";
 
 export function BangumiPage() {
   const { data: bangumiList, isLoading, error } = useGetAllBangumi();
+  // Only animate on initial load (when no cached data exists at mount time)
+  const [shouldAnimate] = useState(() => !bangumiList || bangumiList.length === 0);
 
   const isEmpty = !bangumiList || bangumiList.length === 0;
 
@@ -70,10 +73,6 @@ export function BangumiPage() {
               <p className="mb-6 max-w-sm text-sm text-muted-foreground">
                 点击右上角的「添加番剧」按钮，开始追踪你喜爱的动漫作品吧！
               </p>
-              <Button className="gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white shadow-lg shadow-chart-3/30 hover:opacity-90">
-                <IconSparkles className="size-4" />
-                添加第一部番剧
-              </Button>
             </div>
           </div>
         )}
@@ -86,9 +85,12 @@ export function BangumiPage() {
                 <BangumiCard
                   key={bangumi.id}
                   bangumi={bangumi}
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                  }}
+                  animate={shouldAnimate}
+                  style={
+                    shouldAnimate
+                      ? { animationDelay: `${index * 100}ms` }
+                      : undefined
+                  }
                 />
               ))}
             </BangumiGrid>

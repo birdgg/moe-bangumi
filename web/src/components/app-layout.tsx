@@ -25,7 +25,6 @@ function AddBangumiButton({ onClick }: AddBangumiButtonProps) {
       <span className="absolute inset-0 bg-linear-to-r from-chart-2 via-chart-3 to-chart-1 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       <IconPlus className="relative z-10 size-4 transition-transform duration-300 group-hover:rotate-90" />
       <span className="relative z-10 hidden font-medium sm:inline">添加番剧</span>
-      <IconSparkles className="relative z-10 size-3 opacity-0 transition-all duration-300 group-hover:opacity-100" />
     </Button>
   );
 }

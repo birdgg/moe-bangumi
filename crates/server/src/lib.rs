@@ -44,10 +44,14 @@ pub async fn run_server(
     }
 
     let settings = SettingsService::new(&config).await?;
+    let posters_path = config.posters_path();
     let state = AppState::new(pool, config, settings);
     let (router, api) = create_router(state);
 
-    let app = router.merge(Scalar::with_url("/docs", api));
+    // Serve poster images from data directory
+    let app = router
+        .nest_service("/posters", ServeDir::new(&posters_path))
+        .merge(Scalar::with_url("/docs", api));
 
     // Serve static files if the dist directory exists (in Docker)
     let app = if Path::new(STATIC_DIR).exists() {

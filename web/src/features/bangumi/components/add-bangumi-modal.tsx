@@ -159,6 +159,8 @@ export function AddBangumiModal({
     }
   }, [open, subject, parsedTitles, episodeOffset, form]);
 
+  console.log({ subject })
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <DialogPrimitive.Portal>

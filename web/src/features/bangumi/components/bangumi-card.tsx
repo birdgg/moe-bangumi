@@ -6,6 +6,7 @@ interface BangumiCardProps {
   bangumi: Bangumi;
   className?: string;
   style?: React.CSSProperties;
+  animate?: boolean;
 }
 
 // Helper function to format season with cute emoji
@@ -20,7 +21,7 @@ function formatSeason(season: number, year: number): { text: string; emoji: stri
   return { text: `${year}${s.name}`, emoji: s.emoji };
 }
 
-export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
+export function BangumiCard({ bangumi, className, style, animate = true }: BangumiCardProps) {
   const progress =
     bangumi.current_episode && bangumi.total_episodes > 0
       ? Math.round((bangumi.current_episode / bangumi.total_episodes) * 100)
@@ -32,7 +33,7 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
     <div
       className={cn(
         "group relative",
-        "animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out",
+        animate && "animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out",
         className
       )}
       style={style}
@@ -63,7 +64,7 @@ export function BangumiCard({ bangumi, className, style }: BangumiCardProps) {
         <div className="relative aspect-2/3 overflow-hidden">
           <img
             src={bangumi.poster_url || "/placeholder.png"}
-            alt={bangumi.title_chinese}
+            alt={bangumi.title_original_chinese}
             className={cn(
               "size-full object-cover transition-all duration-500 ease-out",
               "group-hover:scale-110 group-hover:brightness-105"
