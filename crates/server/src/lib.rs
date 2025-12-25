@@ -52,7 +52,7 @@ pub async fn run_server(
 
     // Start log writer if receiver is provided
     if let Some(receiver) = log_receiver {
-        start_log_writer(receiver, state.events.clone());
+        start_log_writer(receiver, state.logs.clone());
     }
 
     let (router, api) = create_router(state);

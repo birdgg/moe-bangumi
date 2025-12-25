@@ -8,8 +8,8 @@ use tracing::{Event, Level, Subscriber};
 use tracing_subscriber::layer::Context;
 use tracing_subscriber::Layer;
 
-use crate::models::EventLevel;
-use crate::services::EventService;
+use crate::models::LogLevel;
+use crate::services::LogService;
 
 /// Channel capacity for buffering log events
 const CHANNEL_CAPACITY: usize = 1024;
@@ -20,9 +20,8 @@ const DEDUP_WINDOW: Duration = Duration::from_secs(60);
 /// A log event captured from tracing
 #[derive(Debug, Clone)]
 pub struct LogEvent {
-    pub level: EventLevel,
+    pub level: LogLevel,
     pub message: String,
-    pub details: Option<String>,
 }
 
 impl LogEvent {
@@ -65,23 +64,21 @@ where
     fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
         let level = event.metadata().level();
 
-        // Only capture error and warn levels
-        let event_level = match *level {
-            Level::INFO => EventLevel::Info,
-            Level::ERROR => EventLevel::Error,
-            Level::WARN => EventLevel::Warning,
+        // Only capture error, warn, and info levels
+        let log_level = match *level {
+            Level::INFO => LogLevel::Info,
+            Level::ERROR => LogLevel::Error,
+            Level::WARN => LogLevel::Warning,
             _ => return,
         };
 
-        // Extract message and extra fields from the event
-        let mut visitor = FieldVisitor::default();
+        // Extract message from the event
+        let mut visitor = MessageVisitor::default();
         event.record(&mut visitor);
 
-        let details = visitor.details();
         let log_event = LogEvent {
-            level: event_level,
+            level: log_level,
             message: visitor.message,
-            details,
         };
 
         // Non-blocking send - drop if channel is full
@@ -89,74 +86,28 @@ where
     }
 }
 
-/// Visitor to extract message and extra fields from tracing events
+/// Visitor to extract message from tracing events
 #[derive(Default)]
-struct FieldVisitor {
+struct MessageVisitor {
     message: String,
-    fields: Vec<(String, String)>,
 }
 
-impl FieldVisitor {
-    /// Convert extra fields to JSON string for details
-    fn details(&self) -> Option<String> {
-        if self.fields.is_empty() {
-            return None;
-        }
-        // Build a simple JSON object
-        let pairs: Vec<String> = self
-            .fields
-            .iter()
-            .map(|(k, v)| format!("\"{}\": \"{}\"", k, v.replace('\"', "\\\"")))
-            .collect();
-        Some(format!("{{{}}}", pairs.join(", ")))
-    }
-}
-
-impl Visit for FieldVisitor {
+impl Visit for MessageVisitor {
     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        let name = field.name();
-        let value_str = format!("{:?}", value);
-
-        if name == "message" {
-            self.message = value_str;
-        } else {
-            self.fields.push((name.to_string(), value_str));
+        if field.name() == "message" {
+            self.message = format!("{:?}", value);
         }
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
-        let name = field.name();
-
-        if name == "message" {
+        if field.name() == "message" {
             self.message = value.to_string();
-        } else {
-            self.fields.push((name.to_string(), value.to_string()));
         }
-    }
-
-    fn record_i64(&mut self, field: &Field, value: i64) {
-        self.fields
-            .push((field.name().to_string(), value.to_string()));
-    }
-
-    fn record_u64(&mut self, field: &Field, value: u64) {
-        self.fields
-            .push((field.name().to_string(), value.to_string()));
-    }
-
-    fn record_bool(&mut self, field: &Field, value: bool) {
-        self.fields
-            .push((field.name().to_string(), value.to_string()));
-    }
-
-    fn record_error(&mut self, field: &Field, value: &(dyn std::error::Error + 'static)) {
-        self.fields
-            .push((field.name().to_string(), value.to_string()));
     }
 }
 
 /// Start the background task that writes log events to the database
-pub fn start_log_writer(mut receiver: LogReceiver, events: Arc<EventService>) {
+pub fn start_log_writer(mut receiver: LogReceiver, logs: Arc<LogService>) {
     tokio::spawn(async move {
         // Deduplication cache: key -> last seen time
         let mut seen: HashMap<u64, Instant> = HashMap::new();
@@ -180,18 +131,18 @@ pub fn start_log_writer(mut receiver: LogReceiver, events: Arc<EventService>) {
                 }
             }
 
-            // Record this event
+            // Record this log
             seen.insert(key, now);
 
             match log_event.level {
-                EventLevel::Error => {
-                    events.error(&log_event.message, log_event.details).await;
+                LogLevel::Error => {
+                    logs.error(&log_event.message).await;
                 }
-                EventLevel::Warning => {
-                    events.warning(&log_event.message).await;
+                LogLevel::Warning => {
+                    logs.warning(&log_event.message).await;
                 }
-                EventLevel::Info => {
-                    events.info(&log_event.message).await;
+                LogLevel::Info => {
+                    logs.info(&log_event.message).await;
                 }
             }
         }

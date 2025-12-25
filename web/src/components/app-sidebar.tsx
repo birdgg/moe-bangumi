@@ -20,13 +20,13 @@ interface SidebarItem {
   id: string;
   label: string;
   icon: React.ReactNode;
-  path?: "/" | "/settings" | "/events";
+  path?: "/" | "/settings" | "/logs";
 }
 
 const sidebarItems: SidebarItem[] = [
   { id: "anime", label: "动漫", icon: <IconDeviceTv />, path: "/" },
   { id: "schedule", label: "每日放送", icon: <IconCalendarWeek /> },
-  { id: "events", label: "日志", icon: <IconFileText />, path: "/events" },
+  { id: "logs", label: "日志", icon: <IconFileText />, path: "/logs" },
   { id: "settings", label: "设置", icon: <IconSettings />, path: "/settings" },
 ];
 
@@ -54,7 +54,7 @@ export function AppSidebar() {
   const getActiveItem = () => {
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/schedule") return "schedule";
-    if (location.pathname === "/events") return "events";
+    if (location.pathname === "/logs") return "logs";
     return "anime";
   };
   const activeItem = getActiveItem();

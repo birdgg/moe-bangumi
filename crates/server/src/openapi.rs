@@ -1,7 +1,7 @@
 use utoipa::OpenApi;
 
 use crate::models::{
-    BangumiWithRss, DownloaderSettings, Event, EventLevel, FilterSettings, Rss, Settings,
+    BangumiWithRss, DownloaderSettings, FilterSettings, Log, LogLevel, Rss, Settings,
     UpdateBangumiRequest, UpdateDownloaderSettings, UpdateFilterSettings, UpdateSettings,
 };
 
@@ -15,7 +15,7 @@ use crate::models::{
         (name = "search", description = "Bangumi search endpoints"),
         (name = "bangumi", description = "Bangumi management endpoints"),
         (name = "settings", description = "Application settings endpoints"),
-        (name = "events", description = "System events and logging endpoints")
+        (name = "logs", description = "System logs endpoints")
     ),
     components(schemas(
         bgmtv::SearchSubjectsResponse,
@@ -29,8 +29,8 @@ use crate::models::{
         UpdateSettings,
         UpdateDownloaderSettings,
         UpdateFilterSettings,
-        Event,
-        EventLevel
+        Log,
+        LogLevel
     ))
 )]
 pub struct ApiDoc;

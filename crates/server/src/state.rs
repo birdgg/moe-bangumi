@@ -8,7 +8,7 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    DownloaderService, EventCleanupJob, EventService, FileRenameJob, PosterService, RssFetchJob,
+    DownloaderService, FileRenameJob, LogCleanupJob, LogService, PosterService, RssFetchJob,
     SchedulerService, SettingsService,
 };
 
@@ -26,7 +26,7 @@ pub struct AppState {
     pub poster: Arc<PosterService>,
     pub scheduler: Arc<SchedulerService>,
     pub rss_fetch_job: Arc<RssFetchJob>,
-    pub events: Arc<EventService>,
+    pub logs: Arc<LogService>,
 }
 
 impl AppState {
@@ -40,8 +40,8 @@ impl AppState {
         // Wrap settings in Arc first (needed by DownloaderService)
         let settings = Arc::new(settings);
 
-        // Create event service for logging and notifications
-        let events = Arc::new(EventService::new(db.clone()));
+        // Create log service for logging and notifications
+        let logs = Arc::new(LogService::new(db.clone()));
 
         // Create downloader service with settings reference
         let downloader = DownloaderService::new(Arc::clone(&settings));
@@ -64,7 +64,7 @@ impl AppState {
         let scheduler = SchedulerService::new()
             .with_arc_job(Arc::clone(&rss_fetch_job))
             .with_job(FileRenameJob::new())
-            .with_job(EventCleanupJob::new(Arc::clone(&events)));
+            .with_job(LogCleanupJob::new(Arc::clone(&logs)));
         scheduler.start();
 
         Self {
@@ -80,7 +80,7 @@ impl AppState {
             poster: Arc::new(poster),
             scheduler: Arc::new(scheduler),
             rss_fetch_job,
-            events,
+            logs,
         }
     }
 }

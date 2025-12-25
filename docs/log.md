@@ -31,7 +31,6 @@
               ┌─────────────────────┐
               │   Log Writer Task   │  ← tokio::spawn
               │  - Deduplication    │     (60s window)
-              │  - Level filtering  │     (error/warn only)
               └──────────┬──────────┘
                          ▼
               ┌─────────────────────┐
@@ -69,13 +68,11 @@ pub struct DatabaseLayer {
 pub struct LogEvent {
     pub level: EventLevel,
     pub message: String,
-    pub details: Option<String>,  // 额外字段转为 JSON
 }
 ```
 
 **特性：**
-- 仅捕获 `ERROR` 和 `WARN` 级别日志
-- 自动提取 tracing 事件的额外字段作为 `details`
+- 捕获 `ERROR`、`WARN` 和 `INFO` 级别日志
 - 通过 mpsc channel 异步发送，不阻塞主线程
 
 ### 2. Log Writer (`start_log_writer`)
@@ -84,8 +81,8 @@ pub struct LogEvent {
 
 **去重机制：**
 - 60 秒内相同消息不重复记录
-- 使用 `HashMap<String, Instant>` 追踪已处理消息
-- 每小时清理过期条目
+- 使用 `HashMap<u64, Instant>` 追踪已处理消息
+- 每 5 分钟清理过期条目
 
 ```rust
 const DEDUP_WINDOW: Duration = Duration::from_secs(60);
@@ -133,8 +130,7 @@ CREATE TABLE event (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     level TEXT NOT NULL CHECK(level IN ('info', 'warning', 'error')),
-    message TEXT NOT NULL,
-    details TEXT
+    message TEXT NOT NULL
 );
 
 CREATE INDEX idx_event_created_at ON event(created_at);
@@ -147,12 +143,8 @@ CREATE INDEX idx_event_level ON event(level);
 pub struct Event {
     pub id: i64,
     pub created_at: DateTime<Utc>,
-    /// 事件级别: info, warning, error
     pub level: EventLevel,
-    /// 事件消息，简短描述发生了什么
     pub message: String,
-    /// 详细信息，如错误堆栈或额外上下文
-    pub details: Option<String>,
 }
 ```
 
@@ -160,7 +152,7 @@ pub struct Event {
 
 | 方法 | 路径 | 描述 |
 |------|------|------|
-| GET | `/api/events` | 获取事件列表 (支持 level/limit 过滤) |
+| GET | `/api/events` | 获取事件列表 (支持 level/limit/offset 过滤) |
 | GET | `/api/events/stream` | SSE 事件流 |
 | DELETE | `/api/events` | 清理 30 天前的事件 |
 
@@ -175,7 +167,6 @@ export function useEventStream() {
 
     eventSource.onmessage = (e) => {
       const event = JSON.parse(e.data);
-      // 仅对 warning/error 显示 toast
       if (event.level === "error") {
         toast.error(event.message);
       } else if (event.level === "warning") {
@@ -190,62 +181,19 @@ export function useEventStream() {
 
 ### 事件页面 (`/events`)
 
-显示所有事件列表，支持按级别过滤，自动刷新。
-
-## 错误处理 (AppError)
-
-统一的应用错误类型，自动记录日志并返回适当的 HTTP 状态码。
-
-```rust
-pub enum AppError {
-    NotFound(String),      // 404
-    BadRequest(String),    // 400
-    Database(sqlx::Error), // 500 (自动 tracing::error!)
-    Downloader(DownloaderError), // 400/401/500
-    ExternalApi(String),   // 502
-    Internal(String),      // 500
-    // ...
-}
-```
-
-**响应格式：**
-```json
-{
-  "error": "错误描述",
-  "details": "详细信息 (可选)"
-}
-```
+显示所有事件列表，支持按级别过滤，分页加载。
 
 ## 使用示例
 
-### 后台任务记录错误
-
 ```rust
-// 简单日志 - message 包含所有信息
+// 记录错误
 tracing::error!("RSS 订阅处理失败: {} - {}", rss.url, e);
 
-// 结构化日志 - 额外字段会被提取到 details
-tracing::error!(
-    url = %rss.url,
-    error = %e,
-    "RSS 订阅处理失败"
-);
-// details: {"url": "https://...", "error": "connection refused"}
-```
+// 记录警告
+tracing::warn!("下载器连接超时");
 
-### Handler 中返回错误
-
-```rust
-pub async fn get_bangumi(
-    State(state): State<AppState>,
-    Path(id): Path<i64>,
-) -> AppResult<Json<Bangumi>> {
-    let bangumi = BangumiRepository::get_by_id(&state.db, id)
-        .await?  // 数据库错误自动转换为 AppError
-        .ok_or_else(|| AppError::not_found("Bangumi not found"))?;
-
-    Ok(Json(bangumi))
-}
+// 记录信息
+tracing::info!("RSS fetch completed: {} new torrents", count);
 ```
 
 ## 配置

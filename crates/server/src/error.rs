@@ -29,9 +29,9 @@ pub enum AppError {
     #[error("下载器错误: {0}")]
     Downloader(#[from] downloader::DownloaderError),
 
-    /// 事件服务错误
-    #[error("事件错误: {0}")]
-    Event(#[from] crate::services::EventError),
+    /// 日志服务错误
+    #[error("日志错误: {0}")]
+    Log(#[from] crate::services::LogError),
 
     /// 海报服务错误
     #[error("海报错误: {0}")]
@@ -85,11 +85,11 @@ impl IntoResponse for AppError {
                 };
                 (status, "下载器错误".to_string(), Some(e.to_string()))
             }
-            AppError::Event(e) => {
-                tracing::error!("Event error: {}", e);
+            AppError::Log(e) => {
+                tracing::error!("Log error: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    "事件服务错误".to_string(),
+                    "日志服务错误".to_string(),
                     Some(e.to_string()),
                 )
             }
