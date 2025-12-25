@@ -41,9 +41,17 @@ impl AppState {
         // Create poster service
         let poster = PosterService::new(http_client.clone(), config.posters_path());
 
+        // Create shared Arc references for scheduler jobs
+        let rss_arc = Arc::new(rss);
+        let downloader_arc = Arc::new(downloader);
+
         // Create and start scheduler service
         let scheduler = SchedulerService::new()
-            .with_job(RssFetchJob::new())
+            .with_job(RssFetchJob::new(
+                db.clone(),
+                Arc::clone(&rss_arc),
+                Arc::clone(&downloader_arc),
+            ))
             .with_job(FileRenameJob::new());
         scheduler.start();
 
@@ -54,9 +62,9 @@ impl AppState {
             tmdb: Arc::new(tmdb),
             bgmtv: Arc::new(bgmtv),
             mikan: Arc::new(mikan),
-            rss: Arc::new(rss),
+            rss: rss_arc,
             settings: Arc::new(settings),
-            downloader: Arc::new(downloader),
+            downloader: downloader_arc,
             poster: Arc::new(poster),
             scheduler: Arc::new(scheduler),
         }

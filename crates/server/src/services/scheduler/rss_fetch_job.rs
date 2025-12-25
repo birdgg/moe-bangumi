@@ -1,29 +1,37 @@
 use async_trait::async_trait;
+use regex::Regex;
+use rss::{RssClient, RssSource};
+use sqlx::SqlitePool;
+use std::sync::Arc;
 use std::time::Duration;
 
 use super::traits::{JobResult, SchedulerJob};
+use crate::models::{CreateDownloadTask, CreateTorrent};
+use crate::repositories::{DownloadTaskRepository, RssRepository, TorrentRepository};
+use crate::services::DownloaderService;
+use downloader::AddTorrentOptions;
 
-/// RSS fetching job that runs every minute.
+/// RSS fetching job that runs every hour.
 ///
 /// This job fetches RSS feeds from configured sources and processes new entries.
 pub struct RssFetchJob {
-    // TODO: Add dependencies when implementing
-    // db: SqlitePool,
-    // mikan: Arc<MikanClient>,
+    db: SqlitePool,
+    rss_client: Arc<RssClient>,
+    downloader: Arc<DownloaderService>,
 }
 
 impl RssFetchJob {
     /// Creates a new RSS fetch job.
-    pub fn new() -> Self {
+    pub fn new(
+        db: SqlitePool,
+        rss_client: Arc<RssClient>,
+        downloader: Arc<DownloaderService>,
+    ) -> Self {
         Self {
-            // TODO: Initialize with dependencies
+            db,
+            rss_client,
+            downloader,
         }
-    }
-}
-
-impl Default for RssFetchJob {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -34,18 +42,170 @@ impl SchedulerJob for RssFetchJob {
     }
 
     fn interval(&self) -> Duration {
-        Duration::from_secs(60) // Every minute
+        Duration::from_secs(3600) // Every hour
     }
 
     async fn execute(&self) -> JobResult {
-        tracing::debug!("Executing RSS fetch job");
+        tracing::info!("Starting RSS fetch job");
 
-        // TODO: Implement RSS fetching logic
-        // 1. Get enabled RSS subscriptions from database
-        // 2. Fetch RSS feeds
-        // 3. Parse and process new entries
-        // 4. Update database with new items
+        // Get all enabled RSS subscriptions
+        let rss_list = RssRepository::get_enabled(&self.db).await?;
+
+        if rss_list.is_empty() {
+            tracing::debug!("No enabled RSS subscriptions found");
+            return Ok(());
+        }
+
+        tracing::info!("Found {} enabled RSS subscriptions", rss_list.len());
+
+        let mut total_new = 0;
+        let mut total_skipped = 0;
+        let mut total_filtered = 0;
+
+        for rss in rss_list {
+            match self.process_rss(&rss).await {
+                Ok((new, skipped, filtered)) => {
+                    total_new += new;
+                    total_skipped += skipped;
+                    total_filtered += filtered;
+                }
+                Err(e) => {
+                    tracing::error!("Failed to process RSS {} (id={}): {}", rss.url, rss.id, e);
+                    // Continue processing other RSS feeds
+                }
+            }
+        }
+
+        tracing::info!(
+            "RSS fetch completed: {} new torrents, {} skipped (duplicate), {} filtered",
+            total_new,
+            total_skipped,
+            total_filtered
+        );
 
         Ok(())
     }
+}
+
+impl RssFetchJob {
+    /// Process a single RSS subscription
+    async fn process_rss(
+        &self,
+        rss: &crate::models::Rss,
+    ) -> Result<(usize, usize, usize), Box<dyn std::error::Error + Send + Sync>> {
+        tracing::debug!("Processing RSS: {} (id={})", rss.url, rss.id);
+
+        // Parse URL to determine source type
+        let source = parse_rss_source(&rss.url);
+
+        // Fetch RSS feed
+        let items = self.rss_client.fetch(&source).await?;
+        tracing::debug!("Fetched {} items from RSS {}", items.len(), rss.id);
+
+        // Compile exclude filters
+        let filters = compile_filters(&rss.exclude_filters);
+
+        let mut new_count = 0;
+        let mut skipped_count = 0;
+        let mut filtered_count = 0;
+
+        for item in items {
+            let title = item.title();
+            let info_hash = item.info_hash();
+            let torrent_url = item.torrent_url();
+
+            // Check exclude filters
+            if matches_any_filter(title, &filters) {
+                tracing::debug!("Filtered out: {}", title);
+                filtered_count += 1;
+                continue;
+            }
+
+            // Check if torrent already exists
+            if TorrentRepository::exists_by_info_hash(&self.db, info_hash).await? {
+                tracing::debug!("Skipping duplicate: {}", title);
+                skipped_count += 1;
+                continue;
+            }
+
+            // Create torrent record
+            let torrent = TorrentRepository::create(
+                &self.db,
+                CreateTorrent {
+                    bangumi_id: rss.bangumi_id,
+                    rss_id: Some(rss.id),
+                    info_hash: info_hash.to_string(),
+                    episode_number: 0, // Not extracting episode number for now
+                },
+            )
+            .await?;
+
+            tracing::info!("New torrent: {} (id={})", title, torrent.id);
+
+            // Create download task
+            let task = DownloadTaskRepository::create(
+                &self.db,
+                CreateDownloadTask {
+                    torrent_id: torrent.id,
+                },
+            )
+            .await?;
+
+            // Add to downloader
+            let options = AddTorrentOptions::new(torrent_url);
+
+            match self.downloader.add_torrent(options).await {
+                Ok(_) => {
+                    tracing::debug!("Added to downloader: {}", title);
+                    // Update task status to downloading
+                    DownloadTaskRepository::update_status(
+                        &self.db,
+                        task.id,
+                        crate::models::DownloadTaskStatus::Downloading,
+                    )
+                    .await?;
+                    new_count += 1;
+                }
+                Err(e) => {
+                    tracing::error!("Failed to add to downloader: {}: {}", title, e);
+                    // Mark task as failed
+                    DownloadTaskRepository::mark_failed(&self.db, task.id, &e.to_string()).await?;
+                }
+            }
+        }
+
+        Ok((new_count, skipped_count, filtered_count))
+    }
+}
+
+/// Parse RSS URL to determine source type
+fn parse_rss_source(url: &str) -> RssSource {
+    let url_lower = url.to_lowercase();
+
+    if url_lower.contains("nyaa.si") {
+        RssSource::Nyaa(url.to_string())
+    } else {
+        // Default to Mikan (covers mikanani.me and other sources)
+        RssSource::Mikan(url.to_string())
+    }
+}
+
+/// Compile filter strings into regex patterns
+fn compile_filters(filters: &[String]) -> Vec<Regex> {
+    filters
+        .iter()
+        .filter_map(|pattern| {
+            Regex::new(pattern)
+                .map_err(|e| {
+                    tracing::warn!("Invalid exclude filter regex '{}': {}", pattern, e);
+                    e
+                })
+                .ok()
+        })
+        .collect()
+}
+
+/// Check if title matches any of the exclude filters
+fn matches_any_filter(title: &str, filters: &[Regex]) -> bool {
+    filters.iter().any(|re| re.is_match(title))
 }
