@@ -132,6 +132,28 @@ export const BangumiDetailSchema = {
   },
 } as const;
 
+export const BangumiWithRssSchema = {
+  allOf: [
+    {
+      $ref: "#/components/schemas/Bangumi",
+    },
+    {
+      type: "object",
+      required: ["rss_entries"],
+      properties: {
+        rss_entries: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/Rss",
+          },
+          description: "RSS subscriptions for this bangumi",
+        },
+      },
+    },
+  ],
+  description: "Bangumi with its RSS subscriptions",
+} as const;
+
 export const CreateBangumiSchema = {
   type: "object",
   description: "Request body for creating a new bangumi",
@@ -314,6 +336,60 @@ export const FilterSettingsSchema = {
   },
 } as const;
 
+export const RssSchema = {
+  type: "object",
+  description: "RSS subscription entity",
+  required: [
+    "id",
+    "created_at",
+    "updated_at",
+    "bangumi_id",
+    "url",
+    "enabled",
+    "exclude_filters",
+    "is_primary",
+  ],
+  properties: {
+    bangumi_id: {
+      type: "integer",
+      format: "int64",
+      description: "Foreign key to bangumi",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+    },
+    enabled: {
+      type: "boolean",
+      description: "Whether subscription is enabled",
+    },
+    exclude_filters: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description: "Regex patterns to exclude from matching",
+    },
+    id: {
+      type: "integer",
+      format: "int64",
+    },
+    is_primary: {
+      type: "boolean",
+      description:
+        "Whether this is the primary RSS source (only one per bangumi)\nEpisodes from primary RSS can override those from backup RSS",
+    },
+    updated_at: {
+      type: "string",
+      format: "date-time",
+    },
+    url: {
+      type: "string",
+      description: "RSS feed URL",
+    },
+  },
+} as const;
+
 export const RssEntrySchema = {
   type: "object",
   description: "RSS entry for creating bangumi with subscriptions",
@@ -325,6 +401,10 @@ export const RssEntrySchema = {
         type: "string",
       },
       description: "Regex patterns to exclude from matching",
+    },
+    is_primary: {
+      type: "boolean",
+      description: "Whether this is the primary RSS source (default: false)",
     },
     url: {
       type: "string",
@@ -569,6 +649,33 @@ export const TvShowSchema = {
     vote_count: {
       type: "integer",
       format: "int64",
+    },
+  },
+} as const;
+
+export const UpdateBangumiRequestSchema = {
+  type: "object",
+  description: "Request body for updating a bangumi with RSS entries",
+  properties: {
+    auto_download: {
+      type: ["boolean", "null"],
+      description: "Auto download new episodes",
+    },
+    episode_offset: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Episode offset",
+    },
+    rss_entries: {
+      type: ["array", "null"],
+      items: {
+        $ref: "#/components/schemas/RssEntry",
+      },
+      description: "RSS entries to sync (replaces all existing entries)",
+    },
+    save_path: {
+      type: ["string", "null"],
+      description: "Custom save path (send null to clear)",
     },
   },
 } as const;

@@ -1,8 +1,8 @@
 use utoipa::OpenApi;
 
 use crate::models::{
-    DownloaderSettings, FilterSettings, Settings, UpdateDownloaderSettings, UpdateFilterSettings,
-    UpdateSettings,
+    BangumiWithRss, DownloaderSettings, FilterSettings, Rss, Settings, UpdateBangumiRequest,
+    UpdateDownloaderSettings, UpdateFilterSettings, UpdateSettings,
 };
 
 #[derive(OpenApi)]
@@ -13,11 +13,15 @@ use crate::models::{
     ),
     tags(
         (name = "search", description = "Bangumi search endpoints"),
+        (name = "bangumi", description = "Bangumi management endpoints"),
         (name = "settings", description = "Application settings endpoints")
     ),
     components(schemas(
         bgmtv::SearchSubjectsResponse,
         bgmtv::Subject,
+        BangumiWithRss,
+        Rss,
+        UpdateBangumiRequest,
         Settings,
         DownloaderSettings,
         FilterSettings,

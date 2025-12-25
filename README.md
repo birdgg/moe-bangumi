@@ -1,5 +1,7 @@
 # MoeBangumi
-使用 claude code vibe coding 出来的追番程序。
+MoeBangumi 是一款追番工具，支持订阅番剧、智能下载、在线播放等功能。
+采用 Rust + React 前端开发，高效稳定，界面美观。
+代码全部由 claude code opus 4.5 生成。
 
 # Thanks
 感谢以下项目

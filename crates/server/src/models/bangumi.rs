@@ -163,6 +163,28 @@ fn default_kind() -> Option<String> {
     Some("TV".to_string())
 }
 
+/// Bangumi with its RSS subscriptions
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct BangumiWithRss {
+    #[serde(flatten)]
+    pub bangumi: Bangumi,
+    /// RSS subscriptions for this bangumi
+    pub rss_entries: Vec<super::Rss>,
+}
+
+/// Request body for updating a bangumi with RSS entries
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateBangumiRequest {
+    /// Episode offset
+    pub episode_offset: Option<i32>,
+    /// Auto download new episodes
+    pub auto_download: Option<bool>,
+    /// Custom save path (send null to clear)
+    pub save_path: Option<Option<String>>,
+    /// RSS entries to sync (replaces all existing entries)
+    pub rss_entries: Option<Vec<RssEntry>>,
+}
+
 /// Request body for updating a bangumi.
 /// Fields use `Clearable` to distinguish between:
 /// - Not provided (unchanged)

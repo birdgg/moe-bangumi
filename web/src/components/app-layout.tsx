@@ -1,7 +1,7 @@
 import * as React from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { IconPlus, IconSparkles } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { SearchBangumiModal, AddBangumiModal } from "@/features/bangumi/components";
 import { type Subject } from "@/lib/api";
 import { ThemeColorSelector } from "@/components/theme-color-selector";

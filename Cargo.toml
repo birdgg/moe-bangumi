@@ -32,3 +32,5 @@ phf = { version = "0.11", features = ["macros"] }
 tower-http = { version = "0.6", features = ["fs", "cors"] }
 scraper = "0.22"
 toml = "0.8"
+futures = "0.3"
+quick-xml = "0.37"

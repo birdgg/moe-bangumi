@@ -3,15 +3,18 @@ import {
   BangumiCard,
   BangumiGrid,
   BangumiCardSkeleton,
+  EditBangumiModal,
 } from "@/features/bangumi/components";
 import { useGetAllBangumi } from "@/features/bangumi/hooks/use-bangumi";
 import { IconSparkles, IconAlertCircle } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import type { Bangumi } from "@/lib/api";
 
 export function BangumiPage() {
   const { data: bangumiList, isLoading, error } = useGetAllBangumi();
   // Only animate on initial load (when no cached data exists at mount time)
   const [shouldAnimate] = useState(() => !bangumiList || bangumiList.length === 0);
+  const [editingBangumi, setEditingBangumi] = useState<Bangumi | null>(null);
 
   const isEmpty = !bangumiList || bangumiList.length === 0;
 
@@ -91,10 +94,20 @@ export function BangumiPage() {
                       ? { animationDelay: `${index * 100}ms` }
                       : undefined
                   }
+                  onClick={() => setEditingBangumi(bangumi)}
                 />
               ))}
             </BangumiGrid>
           </section>
+        )}
+
+        {/* Edit Bangumi Modal */}
+        {editingBangumi && (
+          <EditBangumiModal
+            open={!!editingBangumi}
+            onOpenChange={(open) => !open && setEditingBangumi(null)}
+            bangumi={editingBangumi}
+          />
         )}
       </div>
     </div>

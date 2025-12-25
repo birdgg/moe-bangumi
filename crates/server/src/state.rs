@@ -1,6 +1,7 @@
 use bgmtv::BgmtvClient;
 use mikan::MikanClient;
 use reqwest::Client;
+use rss::RssClient;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use tmdb::TmdbClient;
@@ -19,6 +20,7 @@ pub struct AppState {
     pub tmdb: Arc<TmdbClient>,
     pub bgmtv: Arc<BgmtvClient>,
     pub mikan: Arc<MikanClient>,
+    pub rss: Arc<RssClient>,
     pub settings: Arc<SettingsService>,
     pub downloader: Arc<DownloaderService>,
     pub poster: Arc<PosterService>,
@@ -31,6 +33,7 @@ impl AppState {
         let tmdb = TmdbClient::with_client(http_client.clone(), &config.tmdb_api_key);
         let bgmtv = BgmtvClient::with_client(http_client.clone());
         let mikan = MikanClient::new(http_client.clone());
+        let rss = RssClient::with_client(http_client.clone());
 
         // Create downloader service with settings subscription
         let downloader = DownloaderService::new(settings.get().downloader, settings.subscribe());
@@ -51,6 +54,7 @@ impl AppState {
             tmdb: Arc::new(tmdb),
             bgmtv: Arc::new(bgmtv),
             mikan: Arc::new(mikan),
+            rss: Arc::new(rss),
             settings: Arc::new(settings),
             downloader: Arc::new(downloader),
             poster: Arc::new(poster),

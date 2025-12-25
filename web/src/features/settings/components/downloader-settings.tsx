@@ -74,15 +74,13 @@ function FormField({
 
 type ConnectionStatus = "idle" | "loading" | "success" | "error";
 
-type DownloaderType = "qBittorrent";
-
 interface DownloaderSettingsProps {
   settings?: DownloaderSettingsType;
 }
 
 export function DownloaderSettings({ settings }: DownloaderSettingsProps) {
   const queryClient = useQueryClient();
-  const [downloaderType, setDownloaderType] = React.useState<DownloaderType>("qBittorrent");
+  const [downloaderType, setDownloaderType] = React.useState<"qbittorrent">("qbittorrent");
   const [showPassword, setShowPassword] = React.useState(false);
   const [connectionStatus, setConnectionStatus] = React.useState<ConnectionStatus>("idle");
   const [errorMessage, setErrorMessage] = React.useState<string>("");
@@ -162,12 +160,12 @@ export function DownloaderSettings({ settings }: DownloaderSettingsProps) {
     <SettingsCard>
       <div className="space-y-5">
         <FormField label="下载器类型">
-          <Select value={downloaderType} onValueChange={(v) => setDownloaderType(v as DownloaderType)}>
+          <Select value={downloaderType} onValueChange={(v) => setDownloaderType(v as "qbittorrent")}>
             <SelectTrigger className="w-full transition-all duration-200 focus:ring-2 focus:ring-chart-1/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="qBittorrent">qBittorrent</SelectItem>
+              <SelectItem value="qbittorrent">qBittorrent</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

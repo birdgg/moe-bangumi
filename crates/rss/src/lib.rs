@@ -1,0 +1,10 @@
+mod client;
+mod error;
+pub mod models;
+mod parsers;
+
+pub use client::RssClient;
+pub use error::RssError;
+pub use models::{MikanItem, NyaaItem, RssItem, RssSource};
+
+pub type Result<T> = std::result::Result<T, RssError>;

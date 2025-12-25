@@ -2,12 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getBangumiOptions,
   getBangumiQueryKey,
+  getBangumiByIdOptions,
+  getBangumiByIdQueryKey,
   searchBgmtvOptions,
   searchTmdbOptions,
   searchMikanOptions,
   getMikanRssOptions,
   getEpisodesOptions,
   createBangumiMutation,
+  updateBangumiMutation,
 } from "@/lib/api";
 
 // Get all bangumi
@@ -65,5 +68,29 @@ export function useMikanRss(id: string) {
   return useQuery({
     ...getMikanRssOptions({ query: { id } }),
     enabled: id.length > 0,
+  });
+}
+
+// Get a single bangumi by ID with RSS subscriptions
+export function useGetBangumiById(id: number) {
+  return useQuery({
+    ...getBangumiByIdOptions({ path: { id } }),
+    enabled: !!id,
+  });
+}
+
+// Update a bangumi
+export function useUpdateBangumi() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...updateBangumiMutation(),
+    onSuccess: (_data, variables) => {
+      // Invalidate the list query
+      queryClient.invalidateQueries({ queryKey: getBangumiQueryKey() });
+      // Invalidate the specific bangumi detail query
+      queryClient.invalidateQueries({
+        queryKey: getBangumiByIdQueryKey({ path: { id: variables.path.id } }),
+      });
+    },
   });
 }

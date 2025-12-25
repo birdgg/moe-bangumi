@@ -94,6 +94,16 @@ export type BangumiDetail = {
 };
 
 /**
+ * Bangumi with its RSS subscriptions
+ */
+export type BangumiWithRss = Bangumi & {
+  /**
+   * RSS subscriptions for this bangumi
+   */
+  rss_entries: Array<Rss>;
+};
+
+/**
  * Request body for creating a new bangumi
  */
 export type CreateBangumi = {
@@ -249,6 +259,36 @@ export type FilterSettings = {
 };
 
 /**
+ * RSS subscription entity
+ */
+export type Rss = {
+  /**
+   * Foreign key to bangumi
+   */
+  bangumi_id: number;
+  created_at: string;
+  /**
+   * Whether subscription is enabled
+   */
+  enabled: boolean;
+  /**
+   * Regex patterns to exclude from matching
+   */
+  exclude_filters: Array<string>;
+  id: number;
+  /**
+   * Whether this is the primary RSS source (only one per bangumi)
+   * Episodes from primary RSS can override those from backup RSS
+   */
+  is_primary: boolean;
+  updated_at: string;
+  /**
+   * RSS feed URL
+   */
+  url: string;
+};
+
+/**
  * RSS entry for creating bangumi with subscriptions
  */
 export type RssEntry = {
@@ -256,6 +296,10 @@ export type RssEntry = {
    * Regex patterns to exclude from matching
    */
   filters?: Array<string>;
+  /**
+   * Whether this is the primary RSS source (default: false)
+   */
+  is_primary?: boolean;
   /**
    * RSS feed URL
    */
@@ -367,6 +411,28 @@ export type TvShow = {
 };
 
 /**
+ * Request body for updating a bangumi with RSS entries
+ */
+export type UpdateBangumiRequest = {
+  /**
+   * Auto download new episodes
+   */
+  auto_download?: boolean | null;
+  /**
+   * Episode offset
+   */
+  episode_offset?: number | null;
+  /**
+   * RSS entries to sync (replaces all existing entries)
+   */
+  rss_entries?: Array<RssEntry> | null;
+  /**
+   * Custom save path (send null to clear)
+   */
+  save_path?: string | null;
+};
+
+/**
  * Request body for updating downloader settings
  */
 export type UpdateDownloaderSettings = {
@@ -450,6 +516,72 @@ export type CreateBangumiResponses = {
 
 export type CreateBangumiResponse =
   CreateBangumiResponses[keyof CreateBangumiResponses];
+
+export type GetBangumiByIdData = {
+  body?: never;
+  path: {
+    /**
+     * Bangumi ID
+     */
+    id: number;
+  };
+  query?: never;
+  url: "/api/bangumi/{id}";
+};
+
+export type GetBangumiByIdErrors = {
+  /**
+   * Bangumi not found
+   */
+  404: unknown;
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type GetBangumiByIdResponses = {
+  /**
+   * Bangumi with RSS subscriptions
+   */
+  200: BangumiWithRss;
+};
+
+export type GetBangumiByIdResponse =
+  GetBangumiByIdResponses[keyof GetBangumiByIdResponses];
+
+export type UpdateBangumiData = {
+  body: UpdateBangumiRequest;
+  path: {
+    /**
+     * Bangumi ID
+     */
+    id: number;
+  };
+  query?: never;
+  url: "/api/bangumi/{id}";
+};
+
+export type UpdateBangumiErrors = {
+  /**
+   * Bangumi not found
+   */
+  404: unknown;
+  /**
+   * Internal server error
+   */
+  500: unknown;
+};
+
+export type UpdateBangumiResponses = {
+  /**
+   * Bangumi updated successfully
+   */
+  200: BangumiWithRss;
+};
+
+export type UpdateBangumiResponse =
+  UpdateBangumiResponses[keyof UpdateBangumiResponses];
 
 export type TestDownloaderConnectionData = {
   body: TestDownloaderRequest;

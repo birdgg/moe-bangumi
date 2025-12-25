@@ -10,6 +10,7 @@ import { client } from "../client.gen";
 import {
   createBangumi,
   getBangumi,
+  getBangumiById,
   getEpisodes,
   getMikanRss,
   getSettings,
@@ -19,11 +20,14 @@ import {
   searchMikan,
   searchTmdb,
   testDownloaderConnection,
+  updateBangumi,
   updateSettings,
 } from "../sdk.gen";
 import type {
   CreateBangumiData,
   CreateBangumiResponse,
+  GetBangumiByIdData,
+  GetBangumiByIdResponse,
   GetBangumiData,
   GetBangumiResponse,
   GetEpisodesData,
@@ -41,6 +45,8 @@ import type {
   SearchTmdbData,
   SearchTmdbResponse,
   TestDownloaderConnectionData,
+  UpdateBangumiData,
+  UpdateBangumiResponse,
   UpdateSettingsData,
   UpdateSettingsResponse,
 } from "../types.gen";
@@ -127,6 +133,58 @@ export const createBangumiMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await createBangumi({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getBangumiByIdQueryKey = (options: Options<GetBangumiByIdData>) =>
+  createQueryKey("getBangumiById", options);
+
+/**
+ * Get a bangumi by ID with its RSS subscriptions
+ */
+export const getBangumiByIdOptions = (options: Options<GetBangumiByIdData>) =>
+  queryOptions<
+    GetBangumiByIdResponse,
+    DefaultError,
+    GetBangumiByIdResponse,
+    ReturnType<typeof getBangumiByIdQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getBangumiById({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getBangumiByIdQueryKey(options),
+  });
+
+/**
+ * Update a bangumi
+ */
+export const updateBangumiMutation = (
+  options?: Partial<Options<UpdateBangumiData>>,
+): UseMutationOptions<
+  UpdateBangumiResponse,
+  DefaultError,
+  Options<UpdateBangumiData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateBangumiResponse,
+    DefaultError,
+    Options<UpdateBangumiData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateBangumi({
         ...options,
         ...fnOptions,
         throwOnError: true,

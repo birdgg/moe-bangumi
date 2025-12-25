@@ -27,7 +27,7 @@ pub struct IdQuery {
 }
 
 // Re-export all handlers
-pub use bangumi::{create_bangumi, get_bangumi};
+pub use bangumi::{create_bangumi, get_bangumi, get_bangumi_by_id, update_bangumi};
 pub use downloader::{test_downloader_connection, TestDownloaderRequest};
 pub use episodes::get_episodes;
 pub use mikan::get_mikan_rss;
@@ -36,7 +36,7 @@ pub use settings::{get_settings, reset_settings, update_settings};
 
 // Re-export utoipa path structs for OpenAPI routing
 #[doc(hidden)]
-pub use bangumi::{__path_create_bangumi, __path_get_bangumi};
+pub use bangumi::{__path_create_bangumi, __path_get_bangumi, __path_get_bangumi_by_id, __path_update_bangumi};
 #[doc(hidden)]
 pub use downloader::__path_test_downloader_connection;
 #[doc(hidden)]

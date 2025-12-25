@@ -6,6 +6,9 @@ import type {
   CreateBangumiData,
   CreateBangumiErrors,
   CreateBangumiResponses,
+  GetBangumiByIdData,
+  GetBangumiByIdErrors,
+  GetBangumiByIdResponses,
   GetBangumiData,
   GetBangumiErrors,
   GetBangumiResponses,
@@ -33,6 +36,9 @@ import type {
   TestDownloaderConnectionData,
   TestDownloaderConnectionErrors,
   TestDownloaderConnectionResponses,
+  UpdateBangumiData,
+  UpdateBangumiErrors,
+  UpdateBangumiResponses,
   UpdateSettingsData,
   UpdateSettingsErrors,
   UpdateSettingsResponses,
@@ -79,6 +85,37 @@ export const createBangumi = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: "/api/bangumi",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get a bangumi by ID with its RSS subscriptions
+ */
+export const getBangumiById = <ThrowOnError extends boolean = false>(
+  options: Options<GetBangumiByIdData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetBangumiByIdResponses,
+    GetBangumiByIdErrors,
+    ThrowOnError
+  >({ url: "/api/bangumi/{id}", ...options });
+
+/**
+ * Update a bangumi
+ */
+export const updateBangumi = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateBangumiData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateBangumiResponses,
+    UpdateBangumiErrors,
+    ThrowOnError
+  >({
+    url: "/api/bangumi/{id}",
     ...options,
     headers: {
       "Content-Type": "application/json",
