@@ -16,6 +16,9 @@ pub struct Rss {
     pub enabled: bool,
     /// Regex patterns to exclude from matching
     pub exclude_filters: Vec<String>,
+    /// Whether this is the primary RSS source (only one per bangumi)
+    /// Episodes from primary RSS can override those from backup RSS
+    pub is_primary: bool,
 }
 
 /// Request body for creating a new RSS subscription
@@ -31,6 +34,9 @@ pub struct CreateRss {
     /// Regex patterns to exclude from matching
     #[serde(default)]
     pub exclude_filters: Vec<String>,
+    /// Whether this is the primary RSS source (default: false)
+    #[serde(default)]
+    pub is_primary: bool,
 }
 
 fn default_enabled() -> bool {
@@ -46,4 +52,7 @@ pub struct UpdateRss {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub exclude_filters: Option<Vec<String>>,
+    /// Whether this is the primary RSS source
+    #[serde(default)]
+    pub is_primary: Option<bool>,
 }

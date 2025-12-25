@@ -30,6 +30,8 @@ import {
   IconStack2,
   IconPlayerPlay,
   IconCircleCheck,
+  IconStar,
+  IconStarFilled,
 } from "@tabler/icons-react";
 import { TmdbMatcher } from "./tmdb-matcher";
 import { MikanRssModal } from "./mikan-rss-modal";
@@ -37,6 +39,7 @@ import { MikanRssModal } from "./mikan-rss-modal";
 interface RssEntry {
   url: string;
   filters: string[];
+  is_primary: boolean;
 }
 
 interface AddBangumiModalProps {
@@ -411,8 +414,20 @@ export function AddBangumiModal({
                       </div>
                       <div className="space-y-3">
                         {field.state.value.map((entry, index) => (
-                          <div key={index} className="space-y-2 p-3 rounded-lg border border-chart-3/20 dark:border-chart-1/20 bg-chart-3/5 dark:bg-chart-1/5">
-                            <div className="flex gap-2">
+                          <div key={index} className={cn(
+                            "space-y-2 p-3 rounded-lg border bg-chart-3/5 dark:bg-chart-1/5",
+                            entry.is_primary
+                              ? "border-chart-1/50 dark:border-chart-1/50 ring-1 ring-chart-1/20"
+                              : "border-chart-3/20 dark:border-chart-1/20"
+                          )}>
+                            <div className="flex gap-2 items-center">
+                              {/* Primary Badge */}
+                              {entry.is_primary && (
+                                <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-1/20 text-chart-1 font-medium">
+                                  <IconStarFilled className="size-3" />
+                                  主RSS
+                                </span>
+                              )}
                               <Input
                                 value={entry.url}
                                 onChange={(e) => {
@@ -423,6 +438,36 @@ export function AddBangumiModal({
                                 placeholder="RSS 订阅地址"
                                 className="flex-1"
                               />
+                              {/* Toggle Primary Button */}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  // If already primary, don't allow unchecking (must set another as primary)
+                                  if (entry.is_primary) return;
+                                  // Set this as primary, demote all others to backup
+                                  const newEntries = field.state.value.map((e: RssEntry, i: number) => ({
+                                    ...e,
+                                    is_primary: i === index
+                                  }));
+                                  field.handleChange(newEntries);
+                                }}
+                                className={cn(
+                                  "shrink-0",
+                                  entry.is_primary
+                                    ? "border-chart-1/50 bg-chart-1/10 text-chart-1 cursor-default"
+                                    : "border-chart-3/30 dark:border-chart-1/30 hover:bg-chart-3/10 dark:hover:bg-chart-1/20"
+                                )}
+                                title={entry.is_primary ? "当前为主RSS" : "设为主RSS"}
+                              >
+                                {entry.is_primary ? (
+                                  <IconStarFilled className="size-4" />
+                                ) : (
+                                  <IconStar className="size-4" />
+                                )}
+                              </Button>
+                              {/* Delete Button */}
                               <Button
                                 type="button"
                                 variant="outline"
@@ -486,7 +531,7 @@ export function AddBangumiModal({
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => field.handleChange([...field.state.value, { url: "", filters: [] }])}
+                          onClick={() => field.handleChange([...field.state.value, { url: "", filters: [], is_primary: false }])}
                           className="w-full gap-2 border-dashed border-chart-3/30 dark:border-chart-1/30 hover:bg-chart-3/10 dark:hover:bg-chart-1/20"
                         >
                           <IconPlus className="size-4" />
@@ -498,9 +543,15 @@ export function AddBangumiModal({
                         onOpenChange={setMikanModalOpen}
                         onSelect={(rssUrls) => {
                           const existingUrls = new Set(field.state.value.map((e: RssEntry) => e.url));
+                          const hasPrimary = field.state.value.some((e: RssEntry) => e.is_primary);
                           const newEntries = rssUrls
                             .filter((url) => !existingUrls.has(url))
-                            .map((url) => ({ url, filters: [] }));
+                            .map((url, index) => ({
+                              url,
+                              filters: [],
+                              // Auto-set first as primary if no primary RSS exists
+                              is_primary: !hasPrimary && index === 0
+                            }));
                           if (newEntries.length > 0) {
                             field.handleChange([...field.state.value, ...newEntries]);
                           }

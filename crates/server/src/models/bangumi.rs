@@ -95,6 +95,9 @@ pub struct RssEntry {
     /// Regex patterns to exclude from matching
     #[serde(default)]
     pub filters: Vec<String>,
+    /// Whether this is the primary RSS source (default: false)
+    #[serde(default)]
+    pub is_primary: bool,
 }
 
 /// Request body for creating a new bangumi

@@ -7,7 +7,7 @@ use crate::models::{CreateRss, Rss, UpdateRss};
 const SELECT_RSS: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, url, enabled, exclude_filters
+        bangumi_id, url, enabled, exclude_filters, is_primary
     FROM rss
 "#;
 
@@ -19,10 +19,15 @@ impl RssRepository {
         let exclude_filters_json = serde_json::to_string(&data.exclude_filters)
             .unwrap_or_else(|_| "[]".to_string());
 
+        // If creating a primary RSS, demote any existing primary for this bangumi
+        if data.is_primary {
+            Self::demote_primary(pool, data.bangumi_id).await?;
+        }
+
         let result = sqlx::query(
             r#"
-            INSERT INTO rss (bangumi_id, url, enabled, exclude_filters)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO rss (bangumi_id, url, enabled, exclude_filters, is_primary)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id
             "#,
         )
@@ -30,6 +35,7 @@ impl RssRepository {
         .bind(&data.url)
         .bind(data.enabled)
         .bind(&exclude_filters_json)
+        .bind(data.is_primary)
         .fetch_one(pool)
         .await?;
 
@@ -51,11 +57,15 @@ impl RssRepository {
     }
 
     /// Get all RSS subscriptions for a bangumi
+    /// Primary RSS is returned first, followed by backups ordered by creation time
     pub async fn get_by_bangumi_id(
         pool: &SqlitePool,
         bangumi_id: i64,
     ) -> Result<Vec<Rss>, sqlx::Error> {
-        let query = format!("{} WHERE bangumi_id = $1 ORDER BY created_at DESC", SELECT_RSS);
+        let query = format!(
+            "{} WHERE bangumi_id = $1 ORDER BY is_primary DESC, created_at DESC",
+            SELECT_RSS
+        );
         let rows = sqlx::query_as::<_, RssRow>(&query)
             .bind(bangumi_id)
             .fetch_all(pool)
@@ -100,19 +110,27 @@ impl RssRepository {
         let exclude_filters = data.exclude_filters.unwrap_or(existing.exclude_filters);
         let exclude_filters_json = serde_json::to_string(&exclude_filters)
             .unwrap_or_else(|_| "[]".to_string());
+        let is_primary = data.is_primary.unwrap_or(existing.is_primary);
+
+        // If promoting to primary, demote any existing primary for this bangumi
+        if is_primary && !existing.is_primary {
+            Self::demote_primary(pool, existing.bangumi_id).await?;
+        }
 
         sqlx::query(
             r#"
             UPDATE rss SET
                 url = $1,
                 enabled = $2,
-                exclude_filters = $3
-            WHERE id = $4
+                exclude_filters = $3,
+                is_primary = $4
+            WHERE id = $5
             "#,
         )
         .bind(&url)
         .bind(enabled)
         .bind(&exclude_filters_json)
+        .bind(is_primary)
         .bind(id)
         .execute(pool)
         .await?;
@@ -139,6 +157,31 @@ impl RssRepository {
 
         Ok(result.rows_affected())
     }
+
+    /// Demote any existing primary RSS for a bangumi to backup
+    /// This is called before creating/updating a new primary RSS
+    async fn demote_primary(pool: &SqlitePool, bangumi_id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE rss SET is_primary = 0 WHERE bangumi_id = $1 AND is_primary = 1")
+            .bind(bangumi_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Get the primary RSS subscription for a bangumi
+    /// Returns None if no primary RSS is set
+    pub async fn get_primary_by_bangumi_id(
+        pool: &SqlitePool,
+        bangumi_id: i64,
+    ) -> Result<Option<Rss>, sqlx::Error> {
+        let query = format!("{} WHERE bangumi_id = $1 AND is_primary = 1", SELECT_RSS);
+        let row = sqlx::query_as::<_, RssRow>(&query)
+            .bind(bangumi_id)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(row.map(Into::into))
+    }
 }
 
 /// Internal row type for mapping SQLite results
@@ -151,6 +194,7 @@ struct RssRow {
     url: String,
     enabled: bool,
     exclude_filters: String,
+    is_primary: bool,
 }
 
 impl From<RssRow> for Rss {
@@ -166,6 +210,7 @@ impl From<RssRow> for Rss {
             url: row.url,
             enabled: row.enabled,
             exclude_filters,
+            is_primary: row.is_primary,
         }
     }
 }

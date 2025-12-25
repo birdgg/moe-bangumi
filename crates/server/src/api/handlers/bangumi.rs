@@ -38,6 +38,7 @@ pub async fn create_bangumi(
                     url: entry.url,
                     enabled: true,
                     exclude_filters: entry.filters,
+                    is_primary: entry.is_primary,
                 };
 
                 if let Err(e) = RssRepository::create(&state.db, create_rss).await {
