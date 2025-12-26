@@ -3,7 +3,8 @@ use serde::Deserialize;
 use utoipa::IntoParams;
 
 use crate::error::{AppError, AppResult};
-use crate::repositories::{BangumiRepository, DownloadTaskRepository, TorrentRepository};
+use crate::repositories::{DownloadTaskRepository, TorrentRepository};
+use crate::services::{FileRenameError, FileRenameService, RenameResult};
 use crate::state::AppState;
 
 /// Query parameters for torrent completion webhook
@@ -58,96 +59,62 @@ pub async fn torrent_completed(
             AppError::not_found(format!("No download task for torrent {}", torrent.id))
         })?;
 
-    // Skip if already completed
-    if task.status == crate::models::DownloadTaskStatus::Completed {
-        tracing::debug!("Task {} already completed, skipping", task.id);
-        return Ok("Already completed");
-    }
-
-    // Get bangumi info for path generation
-    let bangumi = BangumiRepository::get_by_id(&state.db, torrent.bangumi_id)
-        .await
-        .map_err(|e| AppError::internal(e.to_string()))?
-        .ok_or_else(|| AppError::internal(format!("Bangumi {} not found", torrent.bangumi_id)))?;
-
-    // Get files in the torrent
-    let files = state
-        .downloader
-        .get_task_files(&hash)
-        .await
-        .map_err(|e| AppError::internal(e.to_string()))?;
-
-    // Find the main video file (largest completed video file)
-    let main_file = files
-        .iter()
-        .filter(|f| f.is_completed() && f.is_video())
-        .max_by_key(|f| f.size);
-
-    let Some(main_file) = main_file else {
-        tracing::warn!(
-            "No completed video file found for task {}, marking as completed anyway",
-            task.id
-        );
-        DownloadTaskRepository::mark_completed(&state.db, task.id)
-            .await
-            .map_err(|e| AppError::internal(e.to_string()))?;
-        return Ok("Completed (no video file)");
-    };
-
-    // Generate target filename using pathgen
-    let target_filename = pathgen::generate_filename(
-        &bangumi.title_chinese,
-        bangumi.season,
-        torrent.episode_number,
-        bangumi.kind.as_deref(),
-    );
-
-    // Preserve the original extension
-    let extension = main_file.extension().unwrap_or("mkv");
-    let new_filename = format!("{}.{}", target_filename, extension);
-
-    // Build the new path preserving directory structure
-    let new_path = if let Some((dir, _)) = main_file.name.rsplit_once('/') {
-        format!("{}/{}", dir, new_filename)
-    } else {
-        new_filename.clone()
-    };
-
-    // Check if already renamed
-    if main_file.name.ends_with(&new_filename) {
-        tracing::debug!(
-            "File already has correct name for task {}, marking as completed",
-            task.id
-        );
-        DownloadTaskRepository::mark_completed(&state.db, task.id)
-            .await
-            .map_err(|e| AppError::internal(e.to_string()))?;
-        return Ok("Already renamed");
-    }
-
-    // Rename the file
-    match state
-        .downloader
-        .rename_file(&hash, &main_file.name, &new_path)
+    // Use shared rename service (now returns Vec<RenameResult>)
+    match FileRenameService::rename_completed_torrent(&state.db, &state.downloader, &torrent, &task)
         .await
     {
-        Ok(()) => {
-            tracing::info!(
-                "Renamed file for task {}: {} -> {}",
-                task.id,
-                main_file.name,
-                new_path
-            );
-            DownloadTaskRepository::mark_completed(&state.db, task.id)
-                .await
-                .map_err(|e| AppError::internal(e.to_string()))?;
-            Ok("File renamed successfully")
+        Ok(results) => {
+            // Summarize results for response
+            let renamed_count = results
+                .iter()
+                .filter(|r| matches!(r, RenameResult::Renamed { .. }))
+                .count();
+            let already_renamed_count = results
+                .iter()
+                .filter(|r| matches!(r, RenameResult::AlreadyRenamed))
+                .count();
+            let failed_count = results
+                .iter()
+                .filter(|r| {
+                    matches!(r, RenameResult::Failed { .. } | RenameResult::ParseFailed { .. })
+                })
+                .count();
+
+            if torrent.is_collection() {
+                tracing::info!(
+                    "Collection torrent completed: {} renamed, {} already renamed, {} failed",
+                    renamed_count,
+                    already_renamed_count,
+                    failed_count
+                );
+                Ok(if renamed_count > 0 || already_renamed_count > 0 {
+                    "Collection processed successfully"
+                } else {
+                    "Collection completed (no video files)"
+                })
+            } else {
+                Ok(match results.first() {
+                    Some(RenameResult::Renamed { .. }) => "File renamed successfully",
+                    Some(RenameResult::AlreadyRenamed) => "Already renamed",
+                    Some(RenameResult::NoVideoFile) => "Completed (no video file)",
+                    Some(RenameResult::AlreadyCompleted) => "Already completed",
+                    Some(RenameResult::Failed { .. }) => "Failed to rename file",
+                    Some(RenameResult::ParseFailed { .. }) => "Failed to parse filename",
+                    None => "No operation performed",
+                })
+            }
         }
-        Err(e) => {
-            tracing::error!("Failed to rename file for task {}: {}", task.id, e);
-            DownloadTaskRepository::mark_failed(&state.db, task.id, &e.to_string())
-                .await
-                .map_err(|e| AppError::internal(e.to_string()))?;
+        Err(FileRenameError::BangumiNotFound(id)) => {
+            Err(AppError::internal(format!("Bangumi {} not found", id)))
+        }
+        Err(FileRenameError::InvalidTorrent(e)) => {
+            Err(AppError::bad_request(format!("Invalid torrent: {}", e)))
+        }
+        Err(FileRenameError::CollectionRenameFailed(e)) => {
+            Err(AppError::internal(format!("Collection rename failed: {}", e)))
+        }
+        Err(FileRenameError::Database(e)) => Err(AppError::internal(e.to_string())),
+        Err(FileRenameError::Downloader(e)) => {
             Err(AppError::internal(format!("Failed to rename file: {}", e)))
         }
     }

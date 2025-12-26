@@ -157,7 +157,8 @@ impl RssFetchJob {
                     bangumi_id: rss.bangumi_id,
                     rss_id: Some(rss.id),
                     info_hash: info_hash.to_string(),
-                    episode_number: episode,
+                    kind: Default::default(), // Episode
+                    episode_number: Some(episode),
                 },
             )
             .await?;

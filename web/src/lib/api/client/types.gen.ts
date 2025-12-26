@@ -1288,6 +1288,10 @@ export type TorrentCompletedData = {
      * Torrent info hash from qBittorrent
      */
     hash: string;
+    /**
+     * Torrent name
+     */
+    name: string;
   };
   url: "/api/webhook/torrent-completed";
 };

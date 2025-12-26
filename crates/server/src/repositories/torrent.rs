@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 use sqlx::SqlitePool;
 
-use crate::models::{CreateTorrent, Torrent, UpdateTorrent};
+use crate::models::{CreateTorrent, Torrent, TorrentKind, UpdateTorrent};
 
 /// Common SELECT fields for torrent queries
 const SELECT_TORRENT: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, rss_id, info_hash, episode_number
+        bangumi_id, rss_id, info_hash, kind, episode_number
     FROM torrent
 "#;
 
@@ -18,14 +18,15 @@ impl TorrentRepository {
     pub async fn create(pool: &SqlitePool, data: CreateTorrent) -> Result<Torrent, sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO torrent (bangumi_id, rss_id, info_hash, episode_number)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO torrent (bangumi_id, rss_id, info_hash, kind, episode_number)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id
             "#,
         )
         .bind(data.bangumi_id)
         .bind(data.rss_id)
         .bind(&data.info_hash)
+        .bind(data.kind.as_str())
         .bind(data.episode_number)
         .fetch_one(pool)
         .await?;
@@ -67,7 +68,7 @@ impl TorrentRepository {
         bangumi_id: i64,
     ) -> Result<Vec<Torrent>, sqlx::Error> {
         let query = format!(
-            "{} WHERE bangumi_id = $1 ORDER BY episode_number ASC",
+            "{} WHERE bangumi_id = $1 ORDER BY episode_number ASC NULLS LAST",
             SELECT_TORRENT
         );
         let rows = sqlx::query_as::<_, TorrentRow>(&query)
@@ -103,7 +104,7 @@ impl TorrentRepository {
         rss_id: i64,
     ) -> Result<Vec<Torrent>, sqlx::Error> {
         let query = format!(
-            "{} WHERE rss_id = $1 ORDER BY episode_number ASC",
+            "{} WHERE rss_id = $1 ORDER BY episode_number ASC NULLS LAST",
             SELECT_TORRENT
         );
         let rows = sqlx::query_as::<_, TorrentRow>(&query)
@@ -126,17 +127,20 @@ impl TorrentRepository {
         };
 
         let rss_id = data.rss_id.resolve(existing.rss_id);
-        let episode_number = data.episode_number.unwrap_or(existing.episode_number);
+        let kind = data.kind.unwrap_or(existing.kind);
+        let episode_number = data.episode_number.resolve(existing.episode_number);
 
         sqlx::query(
             r#"
             UPDATE torrent SET
                 rss_id = $1,
-                episode_number = $2
-            WHERE id = $3
+                kind = $2,
+                episode_number = $3
+            WHERE id = $4
             "#,
         )
         .bind(rss_id)
+        .bind(kind.as_str())
         .bind(episode_number)
         .bind(id)
         .execute(pool)
@@ -193,11 +197,21 @@ struct TorrentRow {
     bangumi_id: i64,
     rss_id: Option<i64>,
     info_hash: String,
-    episode_number: i32,
+    kind: String,
+    episode_number: Option<i32>,
 }
 
 impl From<TorrentRow> for Torrent {
     fn from(row: TorrentRow) -> Self {
+        let kind = row.kind.parse().unwrap_or_else(|_| {
+            tracing::warn!(
+                "Invalid torrent kind '{}' for torrent id {}, defaulting to Episode",
+                row.kind,
+                row.id
+            );
+            TorrentKind::Episode
+        });
+
         Self {
             id: row.id,
             created_at: row.created_at,
@@ -205,6 +219,7 @@ impl From<TorrentRow> for Torrent {
             bangumi_id: row.bangumi_id,
             rss_id: row.rss_id,
             info_hash: row.info_hash,
+            kind,
             episode_number: row.episode_number,
         }
     }

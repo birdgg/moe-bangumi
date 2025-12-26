@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -8,6 +7,11 @@ import { useGetBangumiById, useUpdateBangumi } from "../hooks/use-bangumi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
+import {
+  AnimatedModal,
+  AnimatedModalClose,
+  AnimatedModalTitle,
+} from "@/components/ui/animated-modal";
 import {
   IconX,
   IconEdit,
@@ -115,66 +119,38 @@ export function EditBangumiModal({
   }, [open, bangumiWithRss, bangumi.id, form]);
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPrimitive.Portal>
-        {/* Backdrop */}
-        <DialogPrimitive.Backdrop
-          className={cn(
-            "fixed inset-0 z-50",
-            "bg-black/20 dark:bg-black/40",
-            "data-[state=open]:animate-modal-backdrop-in",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
-            "duration-300"
-          )}
-        />
+    <AnimatedModal
+      open={open}
+      onOpenChange={onOpenChange}
+      shifted={mikanModalOpen}
+      className="max-w-xl"
+    >
+      {/* Decorative elements */}
+      <div className="pointer-events-none absolute -right-20 -top-20 size-40 rounded-full bg-linear-to-br from-chart-3/30 to-chart-1/30 blur-3xl dark:from-chart-3/20 dark:to-chart-1/20" />
+      <div className="pointer-events-none absolute -left-16 -bottom-16 size-32 rounded-full bg-linear-to-tr from-chart-1/20 to-chart-5/20 blur-2xl dark:from-chart-1/15 dark:to-chart-5/15" />
 
-        {/* Modal */}
-        <DialogPrimitive.Popup
-          className={cn(
-            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
-            "w-[calc(100%-2rem)] max-w-xl",
-            "max-h-[90vh] overflow-hidden",
-            "rounded-2xl",
-            "bg-linear-to-br from-white/95 via-white/90 to-chart-3/10",
-            "dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-1/20",
-            "border border-chart-3/30 dark:border-chart-1/30",
-            "shadow-2xl shadow-chart-3/20 dark:shadow-chart-1/50",
-            "backdrop-blur-xl",
-            "data-[state=open]:animate-modal-popup-in",
-            "data-[state=closed]:animate-modal-popup-out",
-            "outline-none",
-            "will-change-transform",
-            mikanModalOpen &&
-            "left-[25%]! scale-95 opacity-80 transition-all duration-300"
-          )}
-        >
-          {/* Decorative elements */}
-          <div className="pointer-events-none absolute -right-20 -top-20 size-40 rounded-full bg-linear-to-br from-chart-3/30 to-chart-1/30 blur-3xl dark:from-chart-3/20 dark:to-chart-1/20 animate-modal-glow" />
-          <div className="pointer-events-none absolute -left-16 -bottom-16 size-32 rounded-full bg-linear-to-tr from-chart-1/20 to-chart-5/20 blur-2xl dark:from-chart-1/15 dark:to-chart-5/15 animate-modal-glow [animation-delay:2s]" />
-
-          {/* Header */}
-          <div className="relative border-b border-chart-3/30 dark:border-chart-1/20 px-4 py-3 animate-modal-header">
-            <div className="flex items-center gap-2.5">
-              <div className="relative flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-chart-3 to-chart-1 text-white shadow-md shadow-chart-1/30 overflow-hidden">
-                <IconEdit className="size-4 relative z-10" />
-                <div className="absolute inset-0 animate-shimmer" />
-              </div>
-              <DialogPrimitive.Title className="flex-1 text-base font-semibold bg-linear-to-r from-chart-3 via-chart-1 to-chart-5 bg-clip-text text-transparent">
-                编辑番剧
-              </DialogPrimitive.Title>
-              <DialogPrimitive.Close
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-md",
-                  "text-muted-foreground hover:text-foreground",
-                  "hover:bg-chart-3/20 dark:hover:bg-chart-1/30",
-                  "transition-colors duration-200",
-                  "outline-none focus-visible:ring-2 focus-visible:ring-chart-3 dark:focus-visible:ring-chart-1"
-                )}
-              >
-                <IconX className="size-4" />
-              </DialogPrimitive.Close>
-            </div>
+      {/* Header */}
+      <div className="relative border-b border-chart-3/30 dark:border-chart-1/20 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-chart-3 to-chart-1 text-white shadow-md shadow-chart-1/30 overflow-hidden">
+            <IconEdit className="size-4 relative z-10" />
           </div>
+          <AnimatedModalTitle className="flex-1 text-base font-semibold bg-linear-to-r from-chart-3 via-chart-1 to-chart-5 bg-clip-text text-transparent">
+            编辑番剧
+          </AnimatedModalTitle>
+          <AnimatedModalClose
+            className={cn(
+              "flex size-7 items-center justify-center rounded-md",
+              "text-muted-foreground hover:text-foreground",
+              "hover:bg-chart-3/20 dark:hover:bg-chart-1/30",
+              "transition-colors duration-200",
+              "outline-none focus-visible:ring-2 focus-visible:ring-chart-3 dark:focus-visible:ring-chart-1"
+            )}
+          >
+            <IconX className="size-4" />
+          </AnimatedModalClose>
+        </div>
+      </div>
 
           {/* Form Content */}
           <form
@@ -499,9 +475,9 @@ export function EditBangumiModal({
             </div>
 
             {/* Footer */}
-            <div className="relative shrink-0 border-t border-chart-3/30 dark:border-chart-1/20 p-4 bg-linear-to-br from-white/95 via-white/90 to-chart-3/10 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-1/20 animate-modal-content [animation-delay:0.2s]">
+            <div className="relative shrink-0 border-t border-chart-3/30 dark:border-chart-1/20 p-4 bg-linear-to-br from-white/95 via-white/90 to-chart-3/10 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-1/20">
               <div className="flex justify-end gap-3">
-                <DialogPrimitive.Close
+                <AnimatedModalClose
                   render={
                     <Button
                       type="button"
@@ -511,7 +487,7 @@ export function EditBangumiModal({
                   }
                 >
                   取消
-                </DialogPrimitive.Close>
+                </AnimatedModalClose>
                 <form.Subscribe
                   selector={(state) => [state.canSubmit, state.isSubmitting]}
                 >
@@ -542,8 +518,6 @@ export function EditBangumiModal({
               </div>
             </div>
           </form>
-        </DialogPrimitive.Popup>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+    </AnimatedModal>
   );
 }
