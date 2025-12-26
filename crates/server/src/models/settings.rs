@@ -79,7 +79,11 @@ impl Default for FilterSettings {
 
 impl FilterSettings {
     fn default_global_rss_filters() -> Vec<String> {
-        vec!["720[Pp]".to_string()]
+        vec![
+            "720[Pp]".to_string(),
+            "\\d-\\d".to_string(),
+            "合集".to_string(),
+        ]
     }
 }
 
