@@ -10,11 +10,9 @@ import {
   IconLoader2,
   IconSparkles,
   IconCalendar,
-  IconMovie,
-  IconDeviceTv,
-  IconWorld,
   IconCheck,
 } from "@tabler/icons-react";
+import { PlatformBadge } from "./platform-badge";
 
 interface SearchBangumiModalProps {
   open: boolean;
@@ -51,19 +49,6 @@ export function SearchBangumiModal({
     setTimeout(() => {
       onOpenChange(false);
     }, 200);
-  };
-
-  const getPlatformIcon = (platform: string | null) => {
-    switch (platform) {
-      case "TV":
-        return <IconDeviceTv className="size-3.5" />;
-      case "Web":
-        return <IconWorld className="size-3.5" />;
-      case "剧场版":
-        return <IconMovie className="size-3.5" />;
-      default:
-        return null;
-    }
   };
 
   return (
@@ -256,18 +241,7 @@ export function SearchBangumiModal({
                           </span>
                         )}
                         {/* Platform */}
-                        {subject.platform && (
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-                              "bg-chart-1/15 text-chart-2",
-                              "dark:bg-chart-1/20 dark:text-chart-1"
-                            )}
-                          >
-                            {getPlatformIcon(subject.platform)}
-                            {subject.platform}
-                          </span>
-                        )}
+                        <PlatformBadge platform={subject.platform} />
                         {/* Episodes */}
                         {subject.eps > 0 && (
                           <span className="text-xs text-muted-foreground">

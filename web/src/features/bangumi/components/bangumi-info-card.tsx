@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { IconDeviceTv } from "@tabler/icons-react";
 import { SeasonBadge } from "./season-badge";
 import { StatusBadge } from "./status-badge";
+import { PlatformBadge } from "./platform-badge";
 
 interface BangumiInfoCardProps {
   posterUrl?: string | null;
@@ -107,11 +108,7 @@ export function BangumiInfoCard({
               {year && broadcastSeason && (
                 <SeasonBadge season={broadcastSeason} year={year} />
               )}
-              {platform && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-chart-2/15 dark:bg-chart-2/20 text-chart-2 dark:text-chart-2">
-                  {platform}
-                </span>
-              )}
+              <PlatformBadge platform={platform} className="rounded-md" />
               {isFinished !== undefined && (
                 <StatusBadge finished={isFinished} />
               )}

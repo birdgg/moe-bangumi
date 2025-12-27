@@ -3,6 +3,7 @@ import { IconDownload } from "@tabler/icons-react";
 import type { Bangumi } from "@/lib/api";
 import { SeasonBadge } from "./season-badge";
 import { StatusBadge } from "./status-badge";
+import { PlatformBadge } from "./platform-badge";
 
 interface BangumiCardProps {
   bangumi: Bangumi;
@@ -81,17 +82,7 @@ export function BangumiCard({ bangumi, className, style, animate = true, onClick
               <h3 className="line-clamp-1 text-sm font-bold text-white min-w-0 flex-1 drop-shadow-md">
                 {bangumi.title_original_chinese}
               </h3>
-              {bangumi.kind && (
-                <span
-                  className={cn(
-                    "shrink-0 inline-flex items-center rounded px-1 py-0.5",
-                    "text-[9px] font-bold",
-                    "bg-white/20 text-white backdrop-blur-sm"
-                  )}
-                >
-                  {bangumi.kind}
-                </span>
-              )}
+              <PlatformBadge platform={bangumi.kind} variant="overlay" className="shrink-0" />
             </div>
 
             {/* Episode progress */}
