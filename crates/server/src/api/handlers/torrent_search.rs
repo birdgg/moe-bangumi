@@ -16,8 +16,7 @@ use super::{TorrentSearchQuery, TORRENT_SEARCH_CACHE_TTL};
     tag = "search",
     params(TorrentSearchQuery),
     responses(
-        (status = 200, description = "Search results from the specified source", body = Vec<TorrentSearchResult>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Search results from the specified source", body = Vec<TorrentSearchResult>)
     )
 )]
 pub async fn search_torrents(

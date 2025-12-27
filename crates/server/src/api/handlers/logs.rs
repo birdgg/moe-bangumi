@@ -20,8 +20,7 @@ use crate::state::AppState;
     tag = "logs",
     params(LogQueryParams),
     responses(
-        (status = 200, description = "Logs retrieved successfully", body = Vec<Log>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Logs retrieved successfully", body = Vec<Log>)
     )
 )]
 pub async fn get_logs(
@@ -80,8 +79,7 @@ pub async fn stream_logs(
     path = "/api/logs",
     tag = "logs",
     responses(
-        (status = 200, description = "Old logs deleted", body = u64),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Old logs deleted", body = u64)
     )
 )]
 pub async fn cleanup_logs(State(state): State<AppState>) -> AppResult<Json<u64>> {

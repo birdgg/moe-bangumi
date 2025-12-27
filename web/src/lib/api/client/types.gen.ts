@@ -9,13 +9,13 @@ export type ClientOptions = {
  */
 export type Bangumi = {
   /**
-   * First air date (YYYY-MM-DD format)
+   * First air date (YYYY-MM-DD format, required)
    */
-  air_date?: string | null;
+  air_date: string;
   /**
-   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)
+   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
    */
-  air_week?: number | null;
+  air_week: number;
   /**
    * Auto download new episodes
    */
@@ -39,17 +39,17 @@ export type Bangumi = {
   finished: boolean;
   id: number;
   /**
-   * Kind of bangumi (e.g., TV, Movie, OVA)
+   * Platform type (TV, Movie, OVA)
    */
-  kind?: string | null;
+  platform: Platform;
   /**
    * Poster URL
    */
   poster_url?: string | null;
   /**
-   * Custom save path (None=use default)
+   * Save path (required)
    */
-  save_path?: string | null;
+  save_path: string;
   /**
    * Season number
    */
@@ -118,13 +118,13 @@ export type ControlTorrentsRequest = {
  */
 export type CreateBangumi = {
   /**
-   * First air date (YYYY-MM-DD format)
+   * First air date (YYYY-MM-DD format, required)
    */
-  air_date?: string | null;
+  air_date: string;
   /**
-   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)
+   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
    */
-  air_week?: number | null;
+  air_week: number;
   /**
    * Auto download new episodes
    */
@@ -142,9 +142,9 @@ export type CreateBangumi = {
    */
   finished?: boolean;
   /**
-   * Kind of bangumi (e.g., TV, Movie, OVA)
+   * Platform type (TV, Movie, OVA)
    */
-  kind?: string | null;
+  platform?: Platform;
   /**
    * Poster URL
    */
@@ -154,9 +154,9 @@ export type CreateBangumi = {
    */
   rss_entries?: Array<RssEntry>;
   /**
-   * Custom save path
+   * Save path (required)
    */
-  save_path?: string | null;
+  save_path: string;
   /**
    * Season number (default: 1)
    */
@@ -311,6 +311,11 @@ export type Log = {
  * Log severity level
  */
 export type LogLevel = "info" | "warning" | "error";
+
+/**
+ * Platform type for bangumi (TV, Movie, OVA)
+ */
+export type Platform = "tv" | "movie" | "ova";
 
 /**
  * Proxy configuration for HTTP client
@@ -681,6 +686,14 @@ export type TvShow = {
  */
 export type UpdateBangumiRequest = {
   /**
+   * First air date (None = unchanged, Some = new value)
+   */
+  air_date?: string | null;
+  /**
+   * Day of week when new episodes air (None = unchanged, Some = new value)
+   */
+  air_week?: number | null;
+  /**
    * Auto download new episodes
    */
   auto_download?: boolean | null;
@@ -693,7 +706,7 @@ export type UpdateBangumiRequest = {
    */
   rss_entries?: Array<RssEntry> | null;
   /**
-   * Custom save path (send null to clear)
+   * Save path (None = unchanged, Some = new value)
    */
   save_path?: string | null;
 };
@@ -770,13 +783,6 @@ export type GetBangumiData = {
   url: "/api/bangumi";
 };
 
-export type GetBangumiErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type GetBangumiResponses = {
   /**
    * List of all bangumi
@@ -791,13 +797,6 @@ export type CreateBangumiData = {
   path?: never;
   query?: never;
   url: "/api/bangumi";
-};
-
-export type CreateBangumiErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type CreateBangumiResponses = {
@@ -827,10 +826,6 @@ export type GetBangumiByIdErrors = {
    * Bangumi not found
    */
   404: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type GetBangumiByIdResponses = {
@@ -860,10 +855,6 @@ export type UpdateBangumiErrors = {
    * Bangumi not found
    */
   404: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type UpdateBangumiResponses = {
@@ -888,10 +879,6 @@ export type TestDownloaderConnectionErrors = {
    * Authentication failed
    */
   401: unknown;
-  /**
-   * Connection error
-   */
-  500: unknown;
 };
 
 export type TestDownloaderConnectionResponses = {
@@ -913,13 +900,6 @@ export type GetEpisodesData = {
   url: "/api/episodes/{subject_id}";
 };
 
-export type GetEpisodesErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type GetEpisodesResponses = {
   /**
    * Episodes list
@@ -935,13 +915,6 @@ export type CleanupLogsData = {
   path?: never;
   query?: never;
   url: "/api/logs";
-};
-
-export type CleanupLogsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type CleanupLogsResponses = {
@@ -972,13 +945,6 @@ export type GetLogsData = {
     offset?: number | null;
   };
   url: "/api/logs";
-};
-
-export type GetLogsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type GetLogsResponses = {
@@ -1016,13 +982,6 @@ export type GetMikanRssData = {
   url: "/api/mikan/rss";
 };
 
-export type GetMikanRssErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type GetMikanRssResponses = {
   /**
    * Bangumi detail with subgroups and RSS URLs
@@ -1045,10 +1004,6 @@ export type TestProxyErrors = {
    * Invalid proxy configuration
    */
   400: unknown;
-  /**
-   * Proxy connection failed
-   */
-  500: unknown;
 };
 
 export type TestProxyResponses = {
@@ -1063,13 +1018,6 @@ export type TriggerRssFetchData = {
   path?: never;
   query?: never;
   url: "/api/scheduler/rss-fetch";
-};
-
-export type TriggerRssFetchErrors = {
-  /**
-   * Job execution failed
-   */
-  500: unknown;
 };
 
 export type TriggerRssFetchResponses = {
@@ -1089,13 +1037,6 @@ export type SearchBgmtvData = {
     keyword: string;
   };
   url: "/api/search/bgmtv";
-};
-
-export type SearchBgmtvErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type SearchBgmtvResponses = {
@@ -1120,13 +1061,6 @@ export type SearchMikanData = {
   url: "/api/search/mikan";
 };
 
-export type SearchMikanErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type SearchMikanResponses = {
   /**
    * Search results from Mikan
@@ -1149,13 +1083,6 @@ export type SearchTmdbData = {
   url: "/api/search/tmdb";
 };
 
-export type SearchTmdbErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type SearchTmdbResponses = {
   /**
    * Search results from TMDB
@@ -1170,13 +1097,6 @@ export type GetSettingsData = {
   path?: never;
   query?: never;
   url: "/api/settings";
-};
-
-export type GetSettingsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type GetSettingsResponses = {
@@ -1196,13 +1116,6 @@ export type UpdateSettingsData = {
   url: "/api/settings";
 };
 
-export type UpdateSettingsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
-};
-
 export type UpdateSettingsResponses = {
   /**
    * Settings updated successfully
@@ -1218,13 +1131,6 @@ export type ResetSettingsData = {
   path?: never;
   query?: never;
   url: "/api/settings/reset";
-};
-
-export type ResetSettingsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type ResetSettingsResponses = {
@@ -1249,10 +1155,6 @@ export type ListTorrentsErrors = {
    * Downloader not configured
    */
   400: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type ListTorrentsResponses = {
@@ -1277,10 +1179,6 @@ export type DeleteTorrentsErrors = {
    * Invalid request (empty hashes) or downloader not configured
    */
   400: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type DeleteTorrentsResponses = {
@@ -1302,10 +1200,6 @@ export type PauseTorrentsErrors = {
    * Invalid request (empty hashes) or downloader not configured
    */
   400: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type PauseTorrentsResponses = {
@@ -1327,10 +1221,6 @@ export type ResumeTorrentsErrors = {
    * Invalid request (empty hashes) or downloader not configured
    */
   400: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type ResumeTorrentsResponses = {
@@ -1354,13 +1244,6 @@ export type SearchTorrentsData = {
     source?: TorrentSource;
   };
   url: "/api/torrents/search";
-};
-
-export type SearchTorrentsErrors = {
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type SearchTorrentsResponses = {
@@ -1390,10 +1273,6 @@ export type SyncMaindataErrors = {
    * Downloader not configured
    */
   400: unknown;
-  /**
-   * Internal server error
-   */
-  500: unknown;
 };
 
 export type SyncMaindataResponses = {
@@ -1427,10 +1306,6 @@ export type TorrentCompletedErrors = {
    * Torrent not found
    */
   404: unknown;
-  /**
-   * Failed to process torrent
-   */
-  500: unknown;
 };
 
 export type TorrentCompletedResponses = {

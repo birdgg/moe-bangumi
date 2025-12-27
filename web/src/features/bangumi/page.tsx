@@ -25,7 +25,7 @@ function bangumiToModalData(bangumi: Bangumi): BangumiModalData {
     year: bangumi.year,
     season: bangumi.season,
     totalEpisodes: bangumi.total_episodes,
-    platform: bangumi.kind,
+    platform: bangumi.platform,
     airDate: bangumi.air_date,
     airWeek: bangumi.air_week,
     finished: bangumi.finished,

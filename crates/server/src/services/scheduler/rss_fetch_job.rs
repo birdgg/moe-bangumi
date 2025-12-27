@@ -7,7 +7,6 @@ use std::time::Duration;
 
 use super::traits::{JobResult, SchedulerJob};
 use crate::models::{CreateDownloadTask, CreateTorrent};
-use crate::models::Settings;
 use crate::repositories::{BangumiRepository, DownloadTaskRepository, RssRepository, TorrentRepository};
 use crate::services::{DownloaderService, SettingsService};
 use downloader::AddTorrentOptions;
@@ -70,7 +69,7 @@ impl SchedulerJob for RssFetchJob {
         let global_filters = compile_filters(&settings.filter.global_rss_filters);
 
         for rss in rss_list {
-            if let Err(e) = self.process_rss(&rss, &global_filters, &settings).await {
+            if let Err(e) = self.process_rss(&rss, &global_filters).await {
                 tracing::error!("RSS 订阅处理失败: {} (id={}) - {}", rss.url, rss.id, e);
             }
         }
@@ -87,7 +86,6 @@ impl RssFetchJob {
         &self,
         rss: &crate::models::Rss,
         global_filters: &[Regex],
-        settings: &Settings,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         tracing::debug!("Processing RSS: {} (id={})", rss.url, rss.id);
 
@@ -157,6 +155,7 @@ impl RssFetchJob {
                     bangumi_id: rss.bangumi_id,
                     rss_id: Some(rss.id),
                     info_hash: info_hash.to_string(),
+                    torrent_url: torrent_url.to_string(),
                     kind: Default::default(), // Episode
                     episode_number: Some(episode),
                 },
@@ -173,23 +172,19 @@ impl RssFetchJob {
             .await?;
 
             // Generate save path and filename using pathgen
-            let base_path = bangumi
-                .save_path
-                .as_ref()
-                .unwrap_or(&settings.downloader.save_path);
             let save_path = pathgen::generate_directory(
-                base_path,
+                &bangumi.save_path,
                 &bangumi.title_chinese,
                 bangumi.year,
                 bangumi.season,
                 bangumi.tmdb_id,
-                bangumi.kind.as_deref(),
+                Some(bangumi.platform.as_str()),
             )?;
             let filename = pathgen::generate_filename(
                 &bangumi.title_chinese,
                 bangumi.season,
                 episode,
-                bangumi.kind.as_deref(),
+                Some(bangumi.platform.as_str()),
             );
 
             // Add to downloader

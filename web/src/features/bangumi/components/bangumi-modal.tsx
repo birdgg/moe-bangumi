@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn, generateSavePath } from "@/lib/utils";
-import { type TvShow, type RssEntry as ApiRssEntry, type Rss, getSettingsOptions } from "@/lib/api";
+import { type TvShow, type RssEntry as ApiRssEntry, type Rss, type Platform, getSettingsOptions } from "@/lib/api";
 import {
   useCreateBangumi,
   useUpdateBangumi,
@@ -86,6 +86,16 @@ interface BangumiModalProps {
   onSuccess?: () => void;
 }
 
+// Map external platform strings to our Platform enum
+function normalizePlatform(platform: string | null | undefined): Platform {
+  if (!platform) return "tv";
+  const lower = platform.toLowerCase();
+  if (lower === "tv" || lower === "web") return "tv";
+  if (lower === "movie" || lower === "剧场版" || lower === "劇場版") return "movie";
+  if (lower === "ova" || lower === "oad") return "ova";
+  return "tv";
+}
+
 // Convert Rss to RssFormEntry
 function rssToFormEntry(rss: Rss): RssFormEntry {
   return {
@@ -163,12 +173,17 @@ export function BangumiModal({
     onSubmit: async ({ value }) => {
       try {
         if (isEdit && data.id) {
+          // Validate save_path in edit mode - it's a required field
+          if (!value.save_path) {
+            toast.error("保存失败", { description: "保存路径是必填项" });
+            return;
+          }
           await updateBangumi.mutateAsync({
             path: { id: data.id },
             body: {
               episode_offset: value.episode_offset,
               auto_download: value.auto_download,
-              save_path: value.save_path || null,
+              save_path: value.save_path,
               rss_entries: value.rss_entries.map(formEntryToApiEntry),
             },
           });
@@ -176,6 +191,20 @@ export function BangumiModal({
             description: `「${data.titleChinese}」已更新`,
           });
         } else {
+          // Validate required fields
+          if (!data.airDate) {
+            toast.error("创建失败", { description: "首播日期是必填项" });
+            return;
+          }
+          if (data.airWeek === null || data.airWeek === undefined) {
+            toast.error("创建失败", { description: "播出星期是必填项" });
+            return;
+          }
+          if (!value.save_path) {
+            toast.error("创建失败", { description: "保存路径是必填项" });
+            return;
+          }
+
           await createBangumi.mutateAsync({
             body: {
               title_chinese: value.title_chinese,
@@ -186,14 +215,14 @@ export function BangumiModal({
               bgmtv_id: data.bgmtvId,
               tmdb_id: selectedTmdb?.id ?? null,
               poster_url: data.posterUrl || null,
-              air_date: data.airDate || null,
-              air_week: data.airWeek ?? null,
+              air_date: data.airDate,
+              air_week: data.airWeek,
               total_episodes: data.totalEpisodes || 0,
               episode_offset: value.episode_offset,
               auto_download: value.auto_download,
-              save_path: value.save_path || null,
+              save_path: value.save_path,
               finished: calculatedIsFinished,
-              kind: data.platform || null,
+              platform: normalizePlatform(data.platform),
               season: data.season ?? 1,
               source_type: data.sourceType || "webrip",
               rss_entries: value.rss_entries.map(formEntryToApiEntry),
@@ -271,7 +300,7 @@ export function BangumiModal({
           year: data.year,
           season: data.season ?? 1,
           tmdbId: data.tmdbId,
-          kind: data.platform,
+          platform: data.platform,
         });
         form.setFieldValue("save_path", autoPath);
         savePathInitializedRef.current = true;

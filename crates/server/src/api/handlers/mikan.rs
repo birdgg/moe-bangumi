@@ -16,8 +16,7 @@ use super::{IdQuery, MIKAN_DETAIL_CACHE_TTL};
     tag = "mikan",
     params(IdQuery),
     responses(
-        (status = 200, description = "Bangumi detail with subgroups and RSS URLs", body = mikan::BangumiDetail),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Bangumi detail with subgroups and RSS URLs", body = mikan::BangumiDetail)
     )
 )]
 pub async fn get_mikan_rss(

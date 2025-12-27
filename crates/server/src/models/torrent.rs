@@ -60,6 +60,9 @@ pub struct Torrent {
     /// BitTorrent info hash (40-char hex for v1, 64-char for v2)
     pub info_hash: String,
 
+    /// Torrent URL (.torrent file URL or magnet link)
+    pub torrent_url: String,
+
     /// Torrent kind (episode or collection)
     pub kind: TorrentKind,
 
@@ -84,6 +87,9 @@ pub struct CreateTorrent {
     /// BitTorrent info hash
     pub info_hash: String,
 
+    /// Torrent URL (.torrent file URL or magnet link)
+    pub torrent_url: String,
+
     /// Torrent kind (default: episode)
     #[serde(default)]
     pub kind: TorrentKind,
@@ -97,6 +103,8 @@ pub struct CreateTorrent {
 pub struct UpdateTorrent {
     #[serde(default)]
     pub rss_id: Clearable<i64>,
+    /// Torrent URL (cannot be cleared, only updated)
+    pub torrent_url: Option<String>,
     #[serde(default)]
     pub kind: Option<TorrentKind>,
     #[serde(default)]

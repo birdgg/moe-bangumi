@@ -16,8 +16,7 @@ use super::{SearchQuery, TmdbSearchQuery, MIKAN_SEARCH_CACHE_TTL};
     tag = "search",
     params(SearchQuery),
     responses(
-        (status = 200, description = "Search results", body = Vec<bgmtv::Subject>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Search results", body = Vec<bgmtv::Subject>)
     )
 )]
 pub async fn search_bgmtv(
@@ -35,8 +34,7 @@ pub async fn search_bgmtv(
     tag = "search",
     params(TmdbSearchQuery),
     responses(
-        (status = 200, description = "Search results from TMDB", body = Vec<tmdb::models::TvShow>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Search results from TMDB", body = Vec<tmdb::models::TvShow>)
     )
 )]
 pub async fn search_tmdb(
@@ -57,8 +55,7 @@ pub async fn search_tmdb(
     tag = "search",
     params(SearchQuery),
     responses(
-        (status = 200, description = "Search results from Mikan", body = Vec<mikan::SearchResult>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Search results from Mikan", body = Vec<mikan::SearchResult>)
     )
 )]
 pub async fn search_mikan(

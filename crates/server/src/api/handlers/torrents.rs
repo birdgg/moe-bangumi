@@ -17,8 +17,7 @@ use crate::state::AppState;
     tag = "torrents",
     responses(
         (status = 200, description = "List of all torrents", body = Vec<TorrentInfo>),
-        (status = 400, description = "Downloader not configured"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Downloader not configured")
     )
 )]
 pub async fn list_torrents(State(state): State<AppState>) -> AppResult<Json<Vec<TorrentInfo>>> {
@@ -41,8 +40,7 @@ pub struct ControlTorrentsRequest {
     request_body = ControlTorrentsRequest,
     responses(
         (status = 200, description = "Torrents paused successfully"),
-        (status = 400, description = "Invalid request (empty hashes) or downloader not configured"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Invalid request (empty hashes) or downloader not configured")
     )
 )]
 pub async fn pause_torrents(
@@ -68,8 +66,7 @@ pub async fn pause_torrents(
     request_body = ControlTorrentsRequest,
     responses(
         (status = 200, description = "Torrents resumed successfully"),
-        (status = 400, description = "Invalid request (empty hashes) or downloader not configured"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Invalid request (empty hashes) or downloader not configured")
     )
 )]
 pub async fn resume_torrents(
@@ -109,8 +106,7 @@ fn default_delete_files() -> bool {
     request_body = DeleteTorrentsRequest,
     responses(
         (status = 200, description = "Torrents deleted successfully"),
-        (status = 400, description = "Invalid request (empty hashes) or downloader not configured"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Invalid request (empty hashes) or downloader not configured")
     )
 )]
 pub async fn delete_torrents(
@@ -150,8 +146,7 @@ pub struct SyncMainDataQuery {
     params(SyncMainDataQuery),
     responses(
         (status = 200, description = "Sync maindata with torrent updates", body = SyncMainData),
-        (status = 400, description = "Downloader not configured"),
-        (status = 500, description = "Internal server error")
+        (status = 400, description = "Downloader not configured")
     )
 )]
 pub async fn sync_maindata(

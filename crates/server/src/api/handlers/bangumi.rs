@@ -15,8 +15,7 @@ use crate::state::AppState;
     tag = "bangumi",
     request_body = CreateBangumi,
     responses(
-        (status = 201, description = "Bangumi created successfully", body = Bangumi),
-        (status = 500, description = "Internal server error")
+        (status = 201, description = "Bangumi created successfully", body = Bangumi)
     )
 )]
 pub async fn create_bangumi(
@@ -33,8 +32,7 @@ pub async fn create_bangumi(
     path = "/api/bangumi",
     tag = "bangumi",
     responses(
-        (status = 200, description = "List of all bangumi", body = Vec<Bangumi>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "List of all bangumi", body = Vec<Bangumi>)
     )
 )]
 pub async fn get_bangumi(State(state): State<AppState>) -> AppResult<Json<Vec<Bangumi>>> {
@@ -52,8 +50,7 @@ pub async fn get_bangumi(State(state): State<AppState>) -> AppResult<Json<Vec<Ba
     ),
     responses(
         (status = 200, description = "Bangumi with RSS subscriptions", body = BangumiWithRss),
-        (status = 404, description = "Bangumi not found"),
-        (status = 500, description = "Internal server error")
+        (status = 404, description = "Bangumi not found")
     )
 )]
 pub async fn get_bangumi_by_id(
@@ -75,8 +72,7 @@ pub async fn get_bangumi_by_id(
     request_body = UpdateBangumiRequest,
     responses(
         (status = 200, description = "Bangumi updated successfully", body = BangumiWithRss),
-        (status = 404, description = "Bangumi not found"),
-        (status = 500, description = "Internal server error")
+        (status = 404, description = "Bangumi not found")
     )
 )]
 pub async fn update_bangumi(

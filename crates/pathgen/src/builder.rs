@@ -128,7 +128,7 @@ mod tests {
     #[test]
     fn test_build_movie() {
         let info = PathInfo::new("测试电影", 2024, 1, 1)
-            .with_kind("Movie")
+            .with_kind("movie")
             .with_tmdb_id(99999);
 
         let path = PathBuilder::new()

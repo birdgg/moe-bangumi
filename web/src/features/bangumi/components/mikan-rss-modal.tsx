@@ -400,8 +400,8 @@ export function MikanRssModal({
                             <div className="border-t border-chart-1/20 dark:border-chart-3/20 px-4 py-2 space-y-2 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                               {subgroup.episodes.map((episode, index) => {
                                 const tags: string[] = [];
-                                if (episode.sub_type) tags.push(episode.sub_type);
-                                if (episode.resolution) tags.push(episode.resolution);
+                                if ("sub_type" in episode && episode.sub_type) tags.push(episode.sub_type as string);
+                                if ("resolution" in episode && episode.resolution) tags.push(episode.resolution as string);
 
                                 return (
                                   <div

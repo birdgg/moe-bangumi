@@ -82,7 +82,7 @@ export function BangumiCard({ bangumi, className, style, animate = true, onClick
               <h3 className="line-clamp-1 text-sm font-bold text-white min-w-0 flex-1 drop-shadow-md">
                 {bangumi.title_original_chinese}
               </h3>
-              <PlatformBadge platform={bangumi.kind} variant="overlay" className="shrink-0" />
+              <PlatformBadge platform={bangumi.platform} variant="overlay" className="shrink-0" />
             </div>
 
             {/* Episode progress */}

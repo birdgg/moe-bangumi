@@ -26,7 +26,7 @@ fn generate_rename_path(
         &bangumi.title_chinese,
         bangumi.season,
         episode_number,
-        bangumi.kind.as_deref(),
+        Some(bangumi.platform.as_str()),
     );
 
     let extension = file.extension().unwrap_or("mkv");

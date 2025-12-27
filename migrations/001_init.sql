@@ -18,11 +18,11 @@ CREATE TABLE IF NOT EXISTS bangumi (
 
     -- Metadata
     poster_url TEXT,                                -- Poster URL
-    air_date DATE,                                  -- First air date
-    air_week INTEGER,                               -- Air weekday (0=Sunday, 1=Monday, ..., 6=Saturday)
+    air_date DATE NOT NULL,                         -- First air date (required)
+    air_week INTEGER NOT NULL,                      -- Air weekday (0=Sunday, 1=Monday, ..., 6=Saturday, required)
     total_episodes INTEGER NOT NULL DEFAULT 0,      -- Total episodes (0=unknown)
     episode_offset INTEGER NOT NULL DEFAULT 0,      -- Episode offset
-    kind TEXT DEFAULT 'TV',                         -- Type: TV, Movie, OVA, etc.
+    platform TEXT NOT NULL DEFAULT 'tv' CHECK(platform IN ('tv', 'movie', 'ova')),  -- Platform type: tv, movie, ova
 
     -- Status management
     current_episode INTEGER NOT NULL DEFAULT 0,     -- Current downloaded episode
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS bangumi (
     finished INTEGER NOT NULL DEFAULT 0,            -- Whether bangumi has completed airing
 
     -- Path configuration
-    save_path TEXT,                                 -- Custom save path (empty=use default)
+    save_path TEXT NOT NULL,                        -- Save path (required)
 
     -- Source type
     source_type TEXT NOT NULL DEFAULT 'webrip'      -- Source type: 'webrip' or 'bdrip'
@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS torrent (
 
     -- Torrent identification
     info_hash TEXT NOT NULL,                        -- BitTorrent info hash (40-char hex for v1, 64-char for v2)
+    torrent_url TEXT NOT NULL,                      -- Torrent URL (.torrent file URL or magnet link)
 
     -- Torrent kind: 'episode' (single episode) or 'collection' (batch/season pack)
     kind TEXT NOT NULL DEFAULT 'episode' CHECK(kind IN ('episode', 'collection')),

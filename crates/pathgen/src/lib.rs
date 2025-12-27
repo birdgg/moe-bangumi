@@ -6,7 +6,7 @@
 //! # Features
 //!
 //! - Sanitizes path components to remove filesystem-illegal characters
-//! - Supports different content types (TV, Movie, OVA)
+//! - Supports different content types (tv, movie, ova)
 //! - Plex/Jellyfin compatible naming scheme
 //! - Extensible formatter trait for custom path formats
 //!
@@ -43,7 +43,7 @@
 //!     1,
 //!     12,
 //!     Some(119121),
-//!     Some("TV"),
+//!     Some("tv"),
 //! ).unwrap();
 //! ```
 
@@ -71,7 +71,7 @@ pub use sanitizer::PathSanitizer;
 /// * `season` - The season number
 /// * `episode` - The episode number
 /// * `tmdb_id` - Optional TMDB ID for the media
-/// * `kind` - Optional content type ("TV", "Movie", "OVA", etc.)
+/// * `kind` - Optional content type ("tv", "movie", "ova")
 ///
 /// # Examples
 ///
@@ -79,11 +79,11 @@ pub use sanitizer::PathSanitizer;
 /// use pathgen::generate_path;
 ///
 /// // TV show
-/// let path = generate_path("/Media/Bangumi", "测试动画", 2024, 1, 5, Some(12345), Some("TV")).unwrap();
+/// let path = generate_path("/Media/Bangumi", "测试动画", 2024, 1, 5, Some(12345), Some("tv")).unwrap();
 /// assert_eq!(path, "/Media/Bangumi/测试动画 (2024) {tmdb-12345}/Season 01/测试动画 - s01e05");
 ///
 /// // Movie
-/// let path = generate_path("/Media/Movies", "测试电影", 2024, 1, 1, Some(99999), Some("Movie")).unwrap();
+/// let path = generate_path("/Media/Movies", "测试电影", 2024, 1, 1, Some(99999), Some("movie")).unwrap();
 /// assert_eq!(path, "/Media/Movies/测试电影 (2024) {tmdb-99999}/测试电影");
 /// ```
 pub fn generate_path(
@@ -160,7 +160,7 @@ mod tests {
     #[test]
     fn test_generate_path_tv() {
         let path =
-            generate_path("/Media/Bangumi", "测试动画", 2024, 1, 5, Some(12345), Some("TV"))
+            generate_path("/Media/Bangumi", "测试动画", 2024, 1, 5, Some(12345), Some("tv"))
                 .unwrap();
         assert_eq!(
             path,
@@ -177,7 +177,7 @@ mod tests {
             1,
             1,
             Some(99999),
-            Some("Movie"),
+            Some("movie"),
         )
         .unwrap();
         assert_eq!(path, "/Media/Movies/测试电影 (2024) {tmdb-99999}/测试电影");
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn test_generate_directory() {
         let dir =
-            generate_directory("/Media/Bangumi", "测试动画", 2024, 2, Some(12345), Some("TV"))
+            generate_directory("/Media/Bangumi", "测试动画", 2024, 2, Some(12345), Some("tv"))
                 .unwrap();
         assert_eq!(dir, "/Media/Bangumi/测试动画 (2024) {tmdb-12345}/Season 02");
     }

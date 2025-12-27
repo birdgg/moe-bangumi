@@ -24,7 +24,7 @@ impl PathInfo {
             season,
             episode,
             tmdb_id: None,
-            kind: Some("TV".to_string()),
+            kind: Some("tv".to_string()),
         }
     }
 
@@ -42,6 +42,6 @@ impl PathInfo {
 
     /// Check if this is a movie
     pub fn is_movie(&self) -> bool {
-        self.kind.as_deref() == Some("Movie")
+        self.kind.as_deref() == Some("movie")
     }
 }

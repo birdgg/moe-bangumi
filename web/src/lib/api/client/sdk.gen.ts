@@ -4,10 +4,8 @@ import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
   CleanupLogsData,
-  CleanupLogsErrors,
   CleanupLogsResponses,
   CreateBangumiData,
-  CreateBangumiErrors,
   CreateBangumiResponses,
   DeleteTorrentsData,
   DeleteTorrentsErrors,
@@ -16,19 +14,14 @@ import type {
   GetBangumiByIdErrors,
   GetBangumiByIdResponses,
   GetBangumiData,
-  GetBangumiErrors,
   GetBangumiResponses,
   GetEpisodesData,
-  GetEpisodesErrors,
   GetEpisodesResponses,
   GetLogsData,
-  GetLogsErrors,
   GetLogsResponses,
   GetMikanRssData,
-  GetMikanRssErrors,
   GetMikanRssResponses,
   GetSettingsData,
-  GetSettingsErrors,
   GetSettingsResponses,
   ListTorrentsData,
   ListTorrentsErrors,
@@ -37,22 +30,17 @@ import type {
   PauseTorrentsErrors,
   PauseTorrentsResponses,
   ResetSettingsData,
-  ResetSettingsErrors,
   ResetSettingsResponses,
   ResumeTorrentsData,
   ResumeTorrentsErrors,
   ResumeTorrentsResponses,
   SearchBgmtvData,
-  SearchBgmtvErrors,
   SearchBgmtvResponses,
   SearchMikanData,
-  SearchMikanErrors,
   SearchMikanResponses,
   SearchTmdbData,
-  SearchTmdbErrors,
   SearchTmdbResponses,
   SearchTorrentsData,
-  SearchTorrentsErrors,
   SearchTorrentsResponses,
   StreamLogsData,
   StreamLogsResponses,
@@ -69,13 +57,11 @@ import type {
   TorrentCompletedErrors,
   TorrentCompletedResponses,
   TriggerRssFetchData,
-  TriggerRssFetchErrors,
   TriggerRssFetchResponses,
   UpdateBangumiData,
   UpdateBangumiErrors,
   UpdateBangumiResponses,
   UpdateSettingsData,
-  UpdateSettingsErrors,
   UpdateSettingsResponses,
 } from "./types.gen";
 
@@ -102,11 +88,10 @@ export type Options<
 export const getBangumi = <ThrowOnError extends boolean = false>(
   options?: Options<GetBangumiData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    GetBangumiResponses,
-    GetBangumiErrors,
-    ThrowOnError
-  >({ url: "/api/bangumi", ...options });
+  (options?.client ?? client).get<GetBangumiResponses, unknown, ThrowOnError>({
+    url: "/api/bangumi",
+    ...options,
+  });
 
 /**
  * Create a new bangumi
@@ -116,7 +101,7 @@ export const createBangumi = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).post<
     CreateBangumiResponses,
-    CreateBangumiErrors,
+    unknown,
     ThrowOnError
   >({
     url: "/api/bangumi",
@@ -183,11 +168,10 @@ export const testDownloaderConnection = <ThrowOnError extends boolean = false>(
 export const getEpisodes = <ThrowOnError extends boolean = false>(
   options: Options<GetEpisodesData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<
-    GetEpisodesResponses,
-    GetEpisodesErrors,
-    ThrowOnError
-  >({ url: "/api/episodes/{subject_id}", ...options });
+  (options.client ?? client).get<GetEpisodesResponses, unknown, ThrowOnError>({
+    url: "/api/episodes/{subject_id}",
+    ...options,
+  });
 
 /**
  * Delete old logs (cleanup endpoint)
@@ -197,7 +181,7 @@ export const cleanupLogs = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).delete<
     CleanupLogsResponses,
-    CleanupLogsErrors,
+    unknown,
     ThrowOnError
   >({ url: "/api/logs", ...options });
 
@@ -207,11 +191,10 @@ export const cleanupLogs = <ThrowOnError extends boolean = false>(
 export const getLogs = <ThrowOnError extends boolean = false>(
   options?: Options<GetLogsData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    GetLogsResponses,
-    GetLogsErrors,
-    ThrowOnError
-  >({ url: "/api/logs", ...options });
+  (options?.client ?? client).get<GetLogsResponses, unknown, ThrowOnError>({
+    url: "/api/logs",
+    ...options,
+  });
 
 /**
  * Stream logs via Server-Sent Events (SSE)
@@ -231,11 +214,10 @@ export const streamLogs = <ThrowOnError extends boolean = false>(
 export const getMikanRss = <ThrowOnError extends boolean = false>(
   options: Options<GetMikanRssData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<
-    GetMikanRssResponses,
-    GetMikanRssErrors,
-    ThrowOnError
-  >({ url: "/api/mikan/rss", ...options });
+  (options.client ?? client).get<GetMikanRssResponses, unknown, ThrowOnError>({
+    url: "/api/mikan/rss",
+    ...options,
+  });
 
 /**
  * Test proxy connection by making a request to mikanani.me
@@ -264,7 +246,7 @@ export const triggerRssFetch = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).post<
     TriggerRssFetchResponses,
-    TriggerRssFetchErrors,
+    unknown,
     ThrowOnError
   >({ url: "/api/scheduler/rss-fetch", ...options });
 
@@ -274,11 +256,10 @@ export const triggerRssFetch = <ThrowOnError extends boolean = false>(
 export const searchBgmtv = <ThrowOnError extends boolean = false>(
   options: Options<SearchBgmtvData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<
-    SearchBgmtvResponses,
-    SearchBgmtvErrors,
-    ThrowOnError
-  >({ url: "/api/search/bgmtv", ...options });
+  (options.client ?? client).get<SearchBgmtvResponses, unknown, ThrowOnError>({
+    url: "/api/search/bgmtv",
+    ...options,
+  });
 
 /**
  * Search for bangumi on Mikan
@@ -286,11 +267,10 @@ export const searchBgmtv = <ThrowOnError extends boolean = false>(
 export const searchMikan = <ThrowOnError extends boolean = false>(
   options: Options<SearchMikanData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<
-    SearchMikanResponses,
-    SearchMikanErrors,
-    ThrowOnError
-  >({ url: "/api/search/mikan", ...options });
+  (options.client ?? client).get<SearchMikanResponses, unknown, ThrowOnError>({
+    url: "/api/search/mikan",
+    ...options,
+  });
 
 /**
  * Search for anime on TMDB using discover API
@@ -298,11 +278,10 @@ export const searchMikan = <ThrowOnError extends boolean = false>(
 export const searchTmdb = <ThrowOnError extends boolean = false>(
   options: Options<SearchTmdbData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<
-    SearchTmdbResponses,
-    SearchTmdbErrors,
-    ThrowOnError
-  >({ url: "/api/search/tmdb", ...options });
+  (options.client ?? client).get<SearchTmdbResponses, unknown, ThrowOnError>({
+    url: "/api/search/tmdb",
+    ...options,
+  });
 
 /**
  * Get application settings
@@ -310,11 +289,10 @@ export const searchTmdb = <ThrowOnError extends boolean = false>(
 export const getSettings = <ThrowOnError extends boolean = false>(
   options?: Options<GetSettingsData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    GetSettingsResponses,
-    GetSettingsErrors,
-    ThrowOnError
-  >({ url: "/api/settings", ...options });
+  (options?.client ?? client).get<GetSettingsResponses, unknown, ThrowOnError>({
+    url: "/api/settings",
+    ...options,
+  });
 
 /**
  * Update application settings
@@ -324,7 +302,7 @@ export const updateSettings = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).patch<
     UpdateSettingsResponses,
-    UpdateSettingsErrors,
+    unknown,
     ThrowOnError
   >({
     url: "/api/settings",
@@ -343,7 +321,7 @@ export const resetSettings = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).post<
     ResetSettingsResponses,
-    ResetSettingsErrors,
+    unknown,
     ThrowOnError
   >({ url: "/api/settings/reset", ...options });
 
@@ -424,7 +402,7 @@ export const searchTorrents = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).get<
     SearchTorrentsResponses,
-    SearchTorrentsErrors,
+    unknown,
     ThrowOnError
   >({ url: "/api/torrents/search", ...options });
 

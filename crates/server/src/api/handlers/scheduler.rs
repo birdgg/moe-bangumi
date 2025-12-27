@@ -10,8 +10,7 @@ use crate::state::AppState;
     path = "/api/scheduler/rss-fetch",
     tag = "scheduler",
     responses(
-        (status = 200, description = "RSS fetch job triggered successfully"),
-        (status = 500, description = "Job execution failed")
+        (status = 200, description = "RSS fetch job triggered successfully")
     )
 )]
 pub async fn trigger_rss_fetch(State(state): State<AppState>) -> AppResult<&'static str> {

@@ -26,8 +26,7 @@ pub struct TestDownloaderRequest {
     request_body = TestDownloaderRequest,
     responses(
         (status = 200, description = "Connection successful"),
-        (status = 401, description = "Authentication failed"),
-        (status = 500, description = "Connection error")
+        (status = 401, description = "Authentication failed")
     )
 )]
 pub async fn test_downloader_connection(

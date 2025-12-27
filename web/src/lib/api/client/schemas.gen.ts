@@ -11,23 +11,27 @@ export const BangumiSchema = {
     "title_original_chinese",
     "season",
     "year",
+    "air_date",
+    "air_week",
     "total_episodes",
     "episode_offset",
     "current_episode",
     "auto_download",
+    "save_path",
     "source_type",
     "finished",
+    "platform",
   ],
   properties: {
     air_date: {
-      type: ["string", "null"],
-      description: "First air date (YYYY-MM-DD format)",
+      type: "string",
+      description: "First air date (YYYY-MM-DD format, required)",
     },
     air_week: {
-      type: ["integer", "null"],
+      type: "integer",
       format: "int32",
       description:
-        "Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)",
+        "Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)",
     },
     auto_download: {
       type: "boolean",
@@ -60,17 +64,17 @@ export const BangumiSchema = {
       type: "integer",
       format: "int64",
     },
-    kind: {
-      type: ["string", "null"],
-      description: "Kind of bangumi (e.g., TV, Movie, OVA)",
+    platform: {
+      $ref: "#/components/schemas/Platform",
+      description: "Platform type (TV, Movie, OVA)",
     },
     poster_url: {
       type: ["string", "null"],
       description: "Poster URL",
     },
     save_path: {
-      type: ["string", "null"],
-      description: "Custom save path (None=use default)",
+      type: "string",
+      description: "Save path (required)",
     },
     season: {
       type: "integer",
@@ -172,17 +176,24 @@ export const ControlTorrentsRequestSchema = {
 export const CreateBangumiSchema = {
   type: "object",
   description: "Request body for creating a new bangumi",
-  required: ["title_chinese", "title_original_chinese", "year"],
+  required: [
+    "title_chinese",
+    "title_original_chinese",
+    "year",
+    "air_date",
+    "air_week",
+    "save_path",
+  ],
   properties: {
     air_date: {
-      type: ["string", "null"],
-      description: "First air date (YYYY-MM-DD format)",
+      type: "string",
+      description: "First air date (YYYY-MM-DD format, required)",
     },
     air_week: {
-      type: ["integer", "null"],
+      type: "integer",
       format: "int32",
       description:
-        "Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)",
+        "Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)",
     },
     auto_download: {
       type: "boolean",
@@ -202,9 +213,9 @@ export const CreateBangumiSchema = {
       type: "boolean",
       description: "Whether the bangumi has finished airing",
     },
-    kind: {
-      type: ["string", "null"],
-      description: "Kind of bangumi (e.g., TV, Movie, OVA)",
+    platform: {
+      $ref: "#/components/schemas/Platform",
+      description: "Platform type (TV, Movie, OVA)",
     },
     poster_url: {
       type: ["string", "null"],
@@ -218,8 +229,8 @@ export const CreateBangumiSchema = {
       description: "RSS subscriptions to create with this bangumi",
     },
     save_path: {
-      type: ["string", "null"],
-      description: "Custom save path",
+      type: "string",
+      description: "Save path (required)",
     },
     season: {
       type: "integer",
@@ -407,6 +418,12 @@ export const LogLevelSchema = {
   type: "string",
   description: "Log severity level",
   enum: ["info", "warning", "error"],
+} as const;
+
+export const PlatformSchema = {
+  type: "string",
+  description: "Platform type for bangumi (TV, Movie, OVA)",
+  enum: ["tv", "movie", "ova"],
 } as const;
 
 export const ProxySettingsSchema = {
@@ -1015,6 +1032,16 @@ export const UpdateBangumiRequestSchema = {
   type: "object",
   description: "Request body for updating a bangumi with RSS entries",
   properties: {
+    air_date: {
+      type: ["string", "null"],
+      description: "First air date (None = unchanged, Some = new value)",
+    },
+    air_week: {
+      type: ["integer", "null"],
+      format: "int32",
+      description:
+        "Day of week when new episodes air (None = unchanged, Some = new value)",
+    },
     auto_download: {
       type: ["boolean", "null"],
       description: "Auto download new episodes",
@@ -1033,7 +1060,7 @@ export const UpdateBangumiRequestSchema = {
     },
     save_path: {
       type: ["string", "null"],
-      description: "Custom save path (send null to clear)",
+      description: "Save path (None = unchanged, Some = new value)",
     },
   },
 } as const;

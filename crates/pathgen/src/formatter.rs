@@ -117,7 +117,7 @@ mod tests {
     fn test_format_movie() {
         let formatter = DefaultFormatter::new();
         let info = PathInfo::new("电影名称", 2024, 1, 1)
-            .with_kind("Movie")
+            .with_kind("movie")
             .with_tmdb_id(12345);
 
         let path = formatter.format(&info).unwrap();

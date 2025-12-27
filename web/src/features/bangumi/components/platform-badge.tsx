@@ -1,28 +1,46 @@
 import { cn } from "@/lib/utils";
-import { IconDeviceTv, IconWorld, IconMovie } from "@tabler/icons-react";
+import { IconDeviceTv, IconMovie, IconVideoPlus } from "@tabler/icons-react";
+import type { Platform } from "@/lib/api";
 
 interface PlatformBadgeProps {
-  platform: string | null | undefined;
+  platform: Platform | string | null | undefined;
   variant?: "default" | "overlay";
   className?: string;
 }
 
-function getPlatformIcon(platform: string | null | undefined, variant: "default" | "overlay") {
-  const iconClass = variant === "overlay" ? "size-3" : "size-3.5";
-  switch (platform) {
-    case "TV":
-      return <IconDeviceTv className={iconClass} />;
-    case "Web":
-      return <IconWorld className={iconClass} />;
-    case "剧场版":
-      return <IconMovie className={iconClass} />;
-    default:
-      return null;
-  }
+const PLATFORM_CONFIG = {
+  tv: { icon: IconDeviceTv, label: "TV" },
+  movie: { icon: IconMovie, label: "Movie" },
+  ova: { icon: IconVideoPlus, label: "OVA" },
+} as const;
+
+// Map external platform strings to our Platform enum
+// BGM.tv uses "TV", "剧场版", "OVA" etc.
+function normalizePlatform(platform: string | null | undefined): Platform | null {
+  if (!platform) return null;
+  const lower = platform.toLowerCase();
+  if (lower === "tv" || lower === "web") return "tv";
+  if (lower === "movie" || lower === "剧场版" || lower === "劇場版") return "movie";
+  if (lower === "ova" || lower === "oad") return "ova";
+  return null;
 }
 
-export function PlatformBadge({ platform, variant = "default", className }: PlatformBadgeProps) {
+function getPlatformIcon(platform: Platform | null, variant: "default" | "overlay") {
   if (!platform) return null;
+  const iconClass = variant === "overlay" ? "size-3" : "size-3.5";
+  const Icon = PLATFORM_CONFIG[platform].icon;
+  return <Icon className={iconClass} />;
+}
+
+function getPlatformLabel(platform: Platform | null): string | null {
+  if (!platform) return null;
+  return PLATFORM_CONFIG[platform].label;
+}
+
+export function PlatformBadge({ platform: rawPlatform, variant = "default", className }: PlatformBadgeProps) {
+  const platform = normalizePlatform(rawPlatform);
+  const label = getPlatformLabel(platform);
+  if (!label) return null;
 
   return (
     <span
@@ -41,7 +59,7 @@ export function PlatformBadge({ platform, variant = "default", className }: Plat
       )}
     >
       {getPlatformIcon(platform, variant)}
-      {platform}
+      {label}
     </span>
   );
 }

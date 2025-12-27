@@ -30,8 +30,7 @@ pub struct TorrentCompletedQuery {
     params(TorrentCompletedQuery),
     responses(
         (status = 200, description = "File renamed successfully"),
-        (status = 404, description = "Torrent not found"),
-        (status = 500, description = "Failed to process torrent")
+        (status = 404, description = "Torrent not found")
     )
 )]
 pub async fn torrent_completed(

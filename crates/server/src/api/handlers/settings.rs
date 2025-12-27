@@ -25,8 +25,7 @@ pub struct TestProxyRequest {
     path = "/api/settings",
     tag = "settings",
     responses(
-        (status = 200, description = "Application settings", body = Settings),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Application settings", body = Settings)
     )
 )]
 pub async fn get_settings(State(state): State<AppState>) -> Json<Settings> {
@@ -40,8 +39,7 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Settings> {
     tag = "settings",
     request_body = UpdateSettings,
     responses(
-        (status = 200, description = "Settings updated successfully", body = Settings),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Settings updated successfully", body = Settings)
     )
 )]
 pub async fn update_settings(
@@ -70,8 +68,7 @@ pub async fn update_settings(
     path = "/api/settings/reset",
     tag = "settings",
     responses(
-        (status = 200, description = "Settings reset successfully", body = Settings),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Settings reset successfully", body = Settings)
     )
 )]
 pub async fn reset_settings(State(state): State<AppState>) -> AppResult<Json<Settings>> {
@@ -87,8 +84,7 @@ pub async fn reset_settings(State(state): State<AppState>) -> AppResult<Json<Set
     request_body = TestProxyRequest,
     responses(
         (status = 200, description = "Proxy connection successful"),
-        (status = 400, description = "Invalid proxy configuration"),
-        (status = 500, description = "Proxy connection failed")
+        (status = 400, description = "Invalid proxy configuration")
     )
 )]
 pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'static str> {

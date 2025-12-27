@@ -3,7 +3,7 @@ use std::sync::Arc;
 use thiserror::Error;
 
 use crate::models::{
-    Bangumi, BangumiWithRss, Clearable, CreateBangumi, CreateRss, RssEntry, UpdateBangumi,
+    Bangumi, BangumiWithRss, CreateBangumi, CreateRss, RssEntry, UpdateBangumi,
     UpdateBangumiRequest,
 };
 use crate::repositories::{BangumiRepository, RssRepository};
@@ -96,11 +96,9 @@ impl BangumiService {
         let update_data = UpdateBangumi {
             episode_offset: request.episode_offset,
             auto_download: request.auto_download,
-            save_path: match request.save_path {
-                Some(Some(path)) => Clearable::Set(path),
-                Some(None) => Clearable::Clear,
-                None => Clearable::Unchanged,
-            },
+            save_path: request.save_path,
+            air_date: request.air_date,
+            air_week: request.air_week,
             ..Default::default()
         };
 

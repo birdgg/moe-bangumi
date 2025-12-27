@@ -33,6 +33,43 @@ impl FromStr for SourceType {
     }
 }
 
+/// Platform type for bangumi (TV, Movie, OVA)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Platform {
+    #[default]
+    Tv,
+    Movie,
+    Ova,
+}
+
+impl Platform {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Platform::Tv => "tv",
+            Platform::Movie => "movie",
+            Platform::Ova => "ova",
+        }
+    }
+
+    /// Check if this platform is a movie
+    pub fn is_movie(&self) -> bool {
+        matches!(self, Platform::Movie)
+    }
+}
+
+impl FromStr for Platform {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
+            "movie" => Platform::Movie,
+            "ova" => Platform::Ova,
+            _ => Platform::Tv,
+        })
+    }
+}
+
 /// Bangumi (anime) main entity
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Bangumi {
@@ -60,10 +97,10 @@ pub struct Bangumi {
 
     /// Poster URL
     pub poster_url: Option<String>,
-    /// First air date (YYYY-MM-DD format)
-    pub air_date: Option<String>,
-    /// Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)
-    pub air_week: Option<i32>,
+    /// First air date (YYYY-MM-DD format, required)
+    pub air_date: String,
+    /// Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
+    pub air_week: i32,
     /// Total episodes (0=unknown)
     pub total_episodes: i32,
     /// Episode offset
@@ -74,8 +111,8 @@ pub struct Bangumi {
     /// Auto download new episodes
     pub auto_download: bool,
 
-    /// Custom save path (None=use default)
-    pub save_path: Option<String>,
+    /// Save path (required)
+    pub save_path: String,
 
     /// Source type: webrip or bdrip
     pub source_type: SourceType,
@@ -83,8 +120,8 @@ pub struct Bangumi {
     /// Whether the bangumi has finished airing
     pub finished: bool,
 
-    /// Kind of bangumi (e.g., TV, Movie, OVA)
-    pub kind: Option<String>,
+    /// Platform type (TV, Movie, OVA)
+    pub platform: Platform,
 }
 
 /// RSS entry for creating bangumi with subscriptions
@@ -122,10 +159,10 @@ pub struct CreateBangumi {
     pub tmdb_id: Option<i64>,
     /// Poster URL
     pub poster_url: Option<String>,
-    /// First air date (YYYY-MM-DD format)
-    pub air_date: Option<String>,
-    /// Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday)
-    pub air_week: Option<i32>,
+    /// First air date (YYYY-MM-DD format, required)
+    pub air_date: String,
+    /// Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
+    pub air_week: i32,
     /// Total episodes
     #[serde(default)]
     pub total_episodes: i32,
@@ -135,17 +172,17 @@ pub struct CreateBangumi {
     /// Auto download new episodes
     #[serde(default = "default_auto_download")]
     pub auto_download: bool,
-    /// Custom save path
-    pub save_path: Option<String>,
+    /// Save path (required)
+    pub save_path: String,
     /// Source type
     #[serde(default)]
     pub source_type: SourceType,
     /// Whether the bangumi has finished airing
     #[serde(default)]
     pub finished: bool,
-    /// Kind of bangumi (e.g., TV, Movie, OVA)
-    #[serde(default = "default_kind")]
-    pub kind: Option<String>,
+    /// Platform type (TV, Movie, OVA)
+    #[serde(default)]
+    pub platform: Platform,
     /// RSS subscriptions to create with this bangumi
     #[serde(default)]
     pub rss_entries: Vec<RssEntry>,
@@ -157,10 +194,6 @@ fn default_season() -> i32 {
 
 fn default_auto_download() -> bool {
     true
-}
-
-fn default_kind() -> Option<String> {
-    Some("TV".to_string())
 }
 
 /// Bangumi with its RSS subscriptions
@@ -179,17 +212,19 @@ pub struct UpdateBangumiRequest {
     pub episode_offset: Option<i32>,
     /// Auto download new episodes
     pub auto_download: Option<bool>,
-    /// Custom save path (send null to clear)
-    pub save_path: Option<Option<String>>,
+    /// Save path (None = unchanged, Some = new value)
+    pub save_path: Option<String>,
+    /// First air date (None = unchanged, Some = new value)
+    pub air_date: Option<String>,
+    /// Day of week when new episodes air (None = unchanged, Some = new value)
+    pub air_week: Option<i32>,
     /// RSS entries to sync (replaces all existing entries)
     pub rss_entries: Option<Vec<RssEntry>>,
 }
 
 /// Request body for updating a bangumi.
-/// Fields use `Clearable` to distinguish between:
-/// - Not provided (unchanged)
-/// - Explicitly set to null (clear)
-/// - Set to a new value
+/// Fields use `Clearable` for optional fields that can be cleared,
+/// and `Option` for required fields (None = unchanged, Some = new value).
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct UpdateBangumi {
     #[serde(default)]
@@ -210,10 +245,12 @@ pub struct UpdateBangumi {
     pub tmdb_id: Clearable<i64>,
     #[serde(default)]
     pub poster_url: Clearable<String>,
+    /// First air date (required field, cannot be cleared)
     #[serde(default)]
-    pub air_date: Clearable<String>,
+    pub air_date: Option<String>,
+    /// Day of week when new episodes air (required field, cannot be cleared)
     #[serde(default)]
-    pub air_week: Clearable<i32>,
+    pub air_week: Option<i32>,
     #[serde(default)]
     pub total_episodes: Option<i32>,
     #[serde(default)]
@@ -222,12 +259,13 @@ pub struct UpdateBangumi {
     pub current_episode: Option<i32>,
     #[serde(default)]
     pub auto_download: Option<bool>,
+    /// Save path (required field, cannot be cleared)
     #[serde(default)]
-    pub save_path: Clearable<String>,
+    pub save_path: Option<String>,
     #[serde(default)]
     pub source_type: Option<SourceType>,
     #[serde(default)]
     pub finished: Option<bool>,
     #[serde(default)]
-    pub kind: Clearable<String>,
+    pub platform: Option<Platform>,
 }

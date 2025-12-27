@@ -40,11 +40,11 @@ export function generateSavePath(options: {
   year: number;
   season: number;
   tmdbId?: number | null;
-  kind?: string | null;
+  platform?: string | null;
 }): string {
-  const { basePath, title, year, season, tmdbId, kind } = options;
+  const { basePath, title, year, season, tmdbId, platform } = options;
   const sanitizedTitle = sanitizePathComponent(title);
-  const isMovie = kind === "Movie";
+  const isMovie = platform === "movie";
 
   // Format base directory: "迷宫饭 (2024) {tmdb-119121}" or "迷宫饭 (2024)"
   const baseDir = tmdbId

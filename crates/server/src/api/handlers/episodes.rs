@@ -15,8 +15,7 @@ use crate::state::AppState;
         ("subject_id" = i64, Path, description = "BGM.tv subject ID")
     ),
     responses(
-        (status = 200, description = "Episodes list", body = Vec<bgmtv::Episode>),
-        (status = 500, description = "Internal server error")
+        (status = 200, description = "Episodes list", body = Vec<bgmtv::Episode>)
     )
 )]
 pub async fn get_episodes(
