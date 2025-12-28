@@ -82,7 +82,7 @@ impl RssProcessingService {
     pub async fn process_single(
         &self,
         rss: &Rss,
-        global_filters: &[Regex],
+        global_exclude_filters: &[String],
     ) -> Result<ProcessingStats, RssProcessingError> {
         tracing::debug!("Processing RSS: {} (id={})", rss.url, rss.id);
 
@@ -106,31 +106,78 @@ impl RssProcessingService {
         stats.items_fetched = items.len();
         tracing::debug!("Fetched {} items from RSS {}", items.len(), rss.id);
 
-        // Compile RSS-specific filters
-        let rss_exclude_filters = compile_filters(&rss.exclude_filters);
-        let rss_include_filters = compile_filters(&rss.include_filters);
+        // Compile include filters
+        let include_filters = compile_filters(&rss.include_filters);
 
-        for item in items {
+        // Merge global and RSS-specific exclude filters, then compile once
+        let exclude_filters = compile_filters(
+            &global_exclude_filters
+                .iter()
+                .chain(rss.exclude_filters.iter())
+                .cloned()
+                .collect::<Vec<_>>(),
+        );
+
+        // Pre-filter items by include/exclude filters to reduce subsequent processing
+        let filtered_items: Vec<_> = items
+            .into_iter()
+            .filter(|item| {
+                let title = item.title();
+
+                // Check include filters (must match ALL if not empty)
+                if !include_filters.is_empty() && !matches_all_filters(title, &include_filters) {
+                    tracing::debug!("Filtered out by include filter: {}", title);
+                    return false;
+                }
+
+                // Check exclude filters (merged global + RSS-specific)
+                if matches_any_filter(title, &exclude_filters) {
+                    tracing::debug!("Filtered out by exclude filter: {}", title);
+                    return false;
+                }
+
+                true
+            })
+            .collect();
+
+        stats.items_filtered = stats.items_fetched - filtered_items.len();
+
+        // When auto_complete is disabled, we need to find the latest episode only
+        // Pre-parse all items to find the one with highest episode number
+        let items_to_process: Vec<_> = if !bangumi.auto_complete {
+            // Parse all items and find the one with highest episode number
+            let mut parsed_items: Vec<_> = filtered_items
+                .into_iter()
+                .filter_map(|item| {
+                    let title = item.title();
+                    match self.parser.parse(title) {
+                        Ok(parse_result) => parse_result.episode.map(|ep| (item, ep)),
+                        Err(_) => None,
+                    }
+                })
+                .collect();
+
+            // Sort by episode number descending and take only the latest
+            parsed_items.sort_by(|a, b| b.1.cmp(&a.1));
+
+            if let Some((latest_item, ep)) = parsed_items.into_iter().next() {
+                tracing::debug!(
+                    "auto_complete disabled for bangumi {}: only processing latest episode {}",
+                    bangumi.id,
+                    ep
+                );
+                vec![latest_item]
+            } else {
+                vec![]
+            }
+        } else {
+            filtered_items
+        };
+
+        for item in items_to_process {
             let title = item.title();
             let info_hash = item.info_hash();
             let torrent_url = item.torrent_url();
-
-            // Step 1: Check include filters (must match ALL if not empty)
-            if !rss_include_filters.is_empty() && !matches_all_filters(title, &rss_include_filters)
-            {
-                tracing::debug!("Filtered out by include filter: {}", title);
-                stats.items_filtered += 1;
-                continue;
-            }
-
-            // Step 2: Check exclude filters (global + RSS-specific)
-            if matches_any_filter(title, global_filters)
-                || matches_any_filter(title, &rss_exclude_filters)
-            {
-                tracing::debug!("Filtered out by exclude filter: {}", title);
-                stats.items_filtered += 1;
-                continue;
-            }
 
             // Parse title to extract episode number
             let episode_number = match self.parser.parse(title) {
@@ -147,21 +194,18 @@ impl RssProcessingService {
                 continue;
             };
 
-            // For non-primary RSS, filter by episode number
+            // For non-primary RSS, skip if this episode is already downloaded
             if !rss.is_primary {
-                // Check if this episode already exists for this bangumi
-                let existing =
-                    TorrentRepository::get_by_bangumi_episode(&self.db, rss.bangumi_id, episode)
-                        .await?;
+                let has_completed = DownloadTaskRepository::has_completed_for_episode(
+                    &self.db,
+                    rss.bangumi_id,
+                    episode,
+                )
+                .await?;
 
-                if !existing.is_empty() {
+                if has_completed {
                     continue;
                 }
-            }
-
-            // Check if torrent already exists by info_hash
-            if TorrentRepository::exists_by_info_hash(&self.db, info_hash).await? {
-                continue;
             }
 
             // Create torrent record with parsed episode number
@@ -210,8 +254,12 @@ impl RssProcessingService {
                     tracing::debug!("Added to downloader: {}", title);
                     stats.tasks_added += 1;
                     // Update task status to downloading
-                    DownloadTaskRepository::update_status(&self.db, task.id, DownloadTaskStatus::Downloading)
-                        .await?;
+                    DownloadTaskRepository::update_status(
+                        &self.db,
+                        task.id,
+                        DownloadTaskStatus::Downloading,
+                    )
+                    .await?;
                 }
                 Err(e) => {
                     tracing::error!("Failed to add download task: {} - {}", title, e);
@@ -231,7 +279,7 @@ impl RssProcessingService {
     pub async fn process_batch(
         &self,
         rss_list: Vec<Rss>,
-        global_filters: &[Regex],
+        global_exclude_filters: &[String],
     ) -> BatchStats {
         let mut batch_stats = BatchStats {
             total_rss: rss_list.len(),
@@ -239,13 +287,18 @@ impl RssProcessingService {
         };
 
         for rss in rss_list {
-            match self.process_single(&rss, global_filters).await {
+            match self.process_single(&rss, global_exclude_filters).await {
                 Ok(stats) => {
                     batch_stats.successful += 1;
                     batch_stats.total_torrents += stats.torrents_created;
                 }
                 Err(e) => {
-                    tracing::error!("Failed to process RSS subscription: {} (id={}) - {}", rss.url, rss.id, e);
+                    tracing::error!(
+                        "Failed to process RSS subscription: {} (id={}) - {}",
+                        rss.url,
+                        rss.id,
+                        e
+                    );
                     batch_stats.failed += 1;
                 }
             }
@@ -276,11 +329,12 @@ impl RssProcessingService {
             );
 
             // Create a temporary service instance for background processing
-            let service = RssProcessingService::new(db.clone(), rss_client, downloader, settings.clone());
+            let service =
+                RssProcessingService::new(db.clone(), rss_client, downloader, settings.clone());
 
-            // Get global filters
+            // Get global exclude filters from settings
             let settings_data = settings.get();
-            let global_filters = compile_filters(&settings_data.filter.global_rss_filters);
+            let global_exclude_filters = &settings_data.filter.global_rss_filters;
 
             for rss_id in rss_ids {
                 // Fetch RSS from database
@@ -296,7 +350,7 @@ impl RssProcessingService {
                     }
                 };
 
-                match service.process_single(&rss, &global_filters).await {
+                match service.process_single(&rss, global_exclude_filters).await {
                     Ok(stats) => {
                         tracing::info!(
                             "RSS {} processed: fetched {} items, created {} torrents, added {} download tasks",
@@ -316,13 +370,12 @@ impl RssProcessingService {
         });
     }
 
-    /// Get compiled global filters from settings
-    pub fn get_global_filters(&self) -> Vec<Regex> {
+    /// Get global exclude filters from settings
+    pub fn get_global_exclude_filters(&self) -> Vec<String> {
         let settings = self.settings.get();
-        compile_filters(&settings.filter.global_rss_filters)
+        settings.filter.global_rss_filters.clone()
     }
 }
-
 
 /// Parse RSS URL to determine source type
 fn parse_rss_source(url: &str) -> RssSource {
@@ -351,7 +404,7 @@ fn compile_filters(filters: &[String]) -> Vec<Regex> {
         .collect()
 }
 
-/// Check if title matches any of the exclude filters (OR logic)
+/// Check if title matches any of the filters (OR logic)
 fn matches_any_filter(title: &str, filters: &[Regex]) -> bool {
     filters.iter().any(|re| re.is_match(title))
 }

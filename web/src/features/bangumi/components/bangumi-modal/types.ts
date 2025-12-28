@@ -26,7 +26,7 @@ export interface BangumiModalData {
 
   // Form data (for edit mode prefill)
   episodeOffset?: number;
-  autoDownload?: boolean;
+  autoComplete?: boolean;
   rssEntries?: Rss[];
 }
 
@@ -50,7 +50,7 @@ export interface BangumiFormValues {
   title_chinese: string;
   title_japanese: string;
   episode_offset: number;
-  auto_download: boolean;
+  auto_complete: boolean;
   rss_entries: RssFormEntry[];
   torrent: string;
   torrent_file: File | null;

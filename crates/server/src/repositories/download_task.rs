@@ -231,6 +231,29 @@ impl DownloadTaskRepository {
 
         Ok(result.rows_affected())
     }
+
+    /// Check if there's a completed download task for a specific bangumi episode
+    pub async fn has_completed_for_episode(
+        pool: &SqlitePool,
+        bangumi_id: i64,
+        episode_number: i32,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM download_task dt
+            JOIN torrent t ON dt.torrent_id = t.id
+            WHERE t.bangumi_id = $1
+            AND t.episode_number = $2
+            AND dt.status = 'completed'
+            "#,
+        )
+        .bind(bangumi_id)
+        .bind(episode_number)
+        .fetch_one(pool)
+        .await?;
+
+        Ok(result > 0)
+    }
 }
 
 /// Internal row type for mapping SQLite results

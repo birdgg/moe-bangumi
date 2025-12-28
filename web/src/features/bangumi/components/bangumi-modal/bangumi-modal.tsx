@@ -36,7 +36,7 @@ import type { BangumiModalProps, RssFormEntry } from "./types";
 import { normalizePlatform, rssToFormEntry, formEntryToApiEntry } from "./utils";
 import { RssEntryItem } from "./rss-entry-item";
 import { TorrentInputSection } from "./torrent-input-section";
-import { AutoDownloadToggle } from "./auto-download-toggle";
+import { AutoCompleteToggle } from "./auto-complete-toggle";
 
 export function BangumiModal({
   open,
@@ -80,7 +80,7 @@ export function BangumiModal({
       title_chinese: "",
       title_japanese: "",
       episode_offset: 0,
-      auto_download: true,
+      auto_complete: true,
       rss_entries: [] as RssFormEntry[],
       torrent: "",
       torrent_file: null as File | null,
@@ -92,7 +92,7 @@ export function BangumiModal({
             path: { id: data.id },
             body: {
               episode_offset: value.episode_offset,
-              auto_download: value.auto_download,
+              auto_complete: value.auto_complete,
               rss_entries: value.rss_entries.map(formEntryToApiEntry),
             },
           });
@@ -124,7 +124,7 @@ export function BangumiModal({
               air_week: data.airWeek,
               total_episodes: data.totalEpisodes || 0,
               episode_offset: value.episode_offset,
-              auto_download: value.auto_download,
+              auto_complete: value.auto_complete,
               finished: calculatedIsFinished,
               platform: normalizePlatform(data.platform),
               season: data.season ?? 1,
@@ -174,7 +174,7 @@ export function BangumiModal({
         form.setFieldValue("title_chinese", data.titleChinese);
         form.setFieldValue("title_japanese", data.titleJapanese || "");
         form.setFieldValue("episode_offset", bangumiWithRss.episode_offset);
-        form.setFieldValue("auto_download", bangumiWithRss.auto_download);
+        form.setFieldValue("auto_complete", bangumiWithRss.auto_complete);
         form.setFieldValue(
           "rss_entries",
           bangumiWithRss.rss_entries.map(rssToFormEntry)
@@ -185,7 +185,7 @@ export function BangumiModal({
       form.setFieldValue("title_chinese", data.titleChinese);
       form.setFieldValue("title_japanese", data.titleJapanese || "");
       form.setFieldValue("episode_offset", calculatedEpisodeOffset);
-      form.setFieldValue("auto_download", data.autoDownload ?? true);
+      form.setFieldValue("auto_complete", data.autoComplete ?? true);
 
       if (data.rssEntries) {
         form.setFieldValue("rss_entries", data.rssEntries.map(rssToFormEntry));
@@ -490,10 +490,10 @@ export function BangumiModal({
                   )}
                 </form.Field>
 
-                {/* Auto Download Toggle */}
-                <form.Field name="auto_download">
+                {/* Auto Complete Toggle */}
+                <form.Field name="auto_complete">
                   {(field) => (
-                    <AutoDownloadToggle
+                    <AutoCompleteToggle
                       id={field.name}
                       value={field.state.value}
                       onChange={field.handleChange}

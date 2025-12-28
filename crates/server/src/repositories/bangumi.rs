@@ -10,7 +10,7 @@ const SELECT_BANGUMI: &str = r#"
         title_chinese, title_japanese, title_original_chinese, title_original_japanese, season, year,
         bgmtv_id, tmdb_id, poster_url, air_date, air_week,
         total_episodes, episode_offset, current_episode,
-        auto_download, save_path, source_type, finished, platform
+        auto_complete, save_path, source_type, finished, platform
     FROM bangumi
 "#;
 
@@ -24,7 +24,7 @@ impl BangumiRepository {
             INSERT INTO bangumi (
                 title_chinese, title_japanese, title_original_chinese, title_original_japanese, season, year,
                 bgmtv_id, tmdb_id, poster_url, air_date, air_week,
-                total_episodes, episode_offset, auto_download,
+                total_episodes, episode_offset, auto_complete,
                 save_path, source_type, finished, platform
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
@@ -44,7 +44,7 @@ impl BangumiRepository {
         .bind(data.air_week)
         .bind(data.total_episodes)
         .bind(data.episode_offset)
-        .bind(data.auto_download)
+        .bind(data.auto_complete)
         .bind(&data.save_path)
         .bind(data.source_type.as_str())
         .bind(data.finished)
@@ -93,19 +93,6 @@ impl BangumiRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    /// Get bangumi with auto_download enabled
-    pub async fn get_auto_download(pool: &SqlitePool) -> Result<Vec<Bangumi>, sqlx::Error> {
-        let query = format!(
-            "{} WHERE auto_download = 1 ORDER BY created_at DESC",
-            SELECT_BANGUMI
-        );
-        let rows = sqlx::query_as::<_, BangumiRow>(&query)
-            .fetch_all(pool)
-            .await?;
-
-        Ok(rows.into_iter().map(Into::into).collect())
-    }
-
     /// Update a bangumi
     pub async fn update(
         pool: &SqlitePool,
@@ -135,7 +122,7 @@ impl BangumiRepository {
         let total_episodes = data.total_episodes.unwrap_or(existing.total_episodes);
         let episode_offset = data.episode_offset.unwrap_or(existing.episode_offset);
         let current_episode = data.current_episode.unwrap_or(existing.current_episode);
-        let auto_download = data.auto_download.unwrap_or(existing.auto_download);
+        let auto_complete = data.auto_complete.unwrap_or(existing.auto_complete);
         // save_path is auto-generated at creation time and cannot be modified
         let save_path = existing.save_path;
         let source_type = data.source_type.unwrap_or(existing.source_type);
@@ -159,7 +146,7 @@ impl BangumiRepository {
                 total_episodes = $12,
                 episode_offset = $13,
                 current_episode = $14,
-                auto_download = $15,
+                auto_complete = $15,
                 save_path = $16,
                 source_type = $17,
                 finished = $18,
@@ -181,7 +168,7 @@ impl BangumiRepository {
         .bind(total_episodes)
         .bind(episode_offset)
         .bind(current_episode)
-        .bind(auto_download)
+        .bind(auto_complete)
         .bind(&save_path)
         .bind(source_type.as_str())
         .bind(finished)
@@ -254,7 +241,7 @@ struct BangumiRow {
     total_episodes: i32,
     episode_offset: i32,
     current_episode: i32,
-    auto_download: bool,
+    auto_complete: bool,
     save_path: String,
     source_type: String,
     finished: bool,
@@ -281,7 +268,7 @@ impl From<BangumiRow> for Bangumi {
             total_episodes: row.total_episodes,
             episode_offset: row.episode_offset,
             current_episode: row.current_episode,
-            auto_download: row.auto_download,
+            auto_complete: row.auto_complete,
             save_path: row.save_path,
             source_type: row.source_type.parse().unwrap_or_default(),
             finished: row.finished,

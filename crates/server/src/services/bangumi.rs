@@ -139,7 +139,7 @@ impl BangumiService {
         // Build update data (save_path is not editable, auto-generated on create)
         let update_data = UpdateBangumi {
             episode_offset: request.episode_offset,
-            auto_download: request.auto_download,
+            auto_complete: request.auto_complete,
             air_date: request.air_date,
             air_week: request.air_week,
             ..Default::default()

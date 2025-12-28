@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS bangumi (
 
     -- Status management
     current_episode INTEGER NOT NULL DEFAULT 0,     -- Current downloaded episode
-    auto_download INTEGER NOT NULL DEFAULT 1,       -- Auto download new episodes (boolean)
+    auto_complete INTEGER NOT NULL DEFAULT 1,       -- Only download first matching episode per RSS check (boolean)
     finished INTEGER NOT NULL DEFAULT 0,            -- Whether bangumi has completed airing
 
     -- Path configuration

@@ -1,25 +1,28 @@
 import { cn } from "@/lib/utils";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { IconDownload } from "@tabler/icons-react";
+import { IconCircleCheck } from "@tabler/icons-react";
 
-interface AutoDownloadToggleProps {
+interface AutoCompleteToggleProps {
   id: string;
   value: boolean;
   onChange: (value: boolean) => void;
 }
 
-export function AutoDownloadToggle({
+export function AutoCompleteToggle({
   id,
   value,
   onChange,
-}: AutoDownloadToggleProps) {
+}: AutoCompleteToggleProps) {
   return (
     <Field orientation="horizontal">
       <FieldLabel htmlFor={id} className="flex-1 cursor-pointer">
         <div className="flex items-center gap-2">
-          <IconDownload className="size-4 text-chart-3 dark:text-chart-1" />
-          自动下载
+          <IconCircleCheck className="size-4 text-chart-3 dark:text-chart-1" />
+          自动完成
         </div>
+        <p className="text-xs text-muted-foreground font-normal mt-0.5">
+          启用后下载全部剧集，禁用后仅下载最新一集
+        </p>
       </FieldLabel>
       <button
         id={id}

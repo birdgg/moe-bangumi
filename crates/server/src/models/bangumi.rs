@@ -108,8 +108,8 @@ pub struct Bangumi {
 
     /// Current downloaded episode
     pub current_episode: i32,
-    /// Auto download new episodes
-    pub auto_download: bool,
+    /// Only download the latest episode
+    pub auto_complete: bool,
 
     /// Save path (required)
     pub save_path: String,
@@ -175,9 +175,9 @@ pub struct CreateBangumi {
     /// Episode offset
     #[serde(default)]
     pub episode_offset: i32,
-    /// Auto download new episodes
-    #[serde(default = "default_auto_download")]
-    pub auto_download: bool,
+    /// Only download first matching episode per RSS check
+    #[serde(default = "default_auto_complete")]
+    pub auto_complete: bool,
     /// Source type
     #[serde(default)]
     pub source_type: SourceType,
@@ -200,7 +200,7 @@ fn default_season() -> i32 {
     1
 }
 
-fn default_auto_download() -> bool {
+fn default_auto_complete() -> bool {
     true
 }
 
@@ -218,8 +218,8 @@ pub struct BangumiWithRss {
 pub struct UpdateBangumiRequest {
     /// Episode offset
     pub episode_offset: Option<i32>,
-    /// Auto download new episodes
-    pub auto_download: Option<bool>,
+    /// Only download first matching episode per RSS check
+    pub auto_complete: Option<bool>,
     /// First air date (None = unchanged, Some = new value)
     pub air_date: Option<String>,
     /// Day of week when new episodes air (None = unchanged, Some = new value)
@@ -264,7 +264,7 @@ pub struct UpdateBangumi {
     #[serde(default)]
     pub current_episode: Option<i32>,
     #[serde(default)]
-    pub auto_download: Option<bool>,
+    pub auto_complete: Option<bool>,
     #[serde(default)]
     pub source_type: Option<SourceType>,
     #[serde(default)]

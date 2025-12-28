@@ -31,7 +31,7 @@ function bangumiToModalData(bangumi: Bangumi): BangumiModalData {
     finished: bangumi.finished,
     sourceType: bangumi.source_type,
     episodeOffset: bangumi.episode_offset,
-    autoDownload: bangumi.auto_download,
+    autoComplete: bangumi.auto_complete,
   };
 }
 
