@@ -1,19 +1,29 @@
 use async_trait::async_trait;
-use qbittorrent::{SyncMainData, TorrentFile, TorrentInfo};
 
 use crate::config::DownloaderConfig;
 use crate::error::{DownloaderError, Result};
-use crate::models::{AddTorrentOptions, DownloaderType};
-use crate::qbittorrent_impl::QBittorrentDownloader;
-use crate::traits::{Downloader, DownloaderExt};
+use crate::impls::QBittorrentDownloader;
+use crate::models::{AddTaskOptions, DownloaderType, Task, TaskFile, TaskFilter};
+use crate::traits::Downloader;
 
-/// Unified downloader client (enum dispatch)
+/// Unified downloader client (enum dispatch).
+///
+/// This enum provides a single entry point for all downloader implementations.
+/// It automatically dispatches method calls to the appropriate implementation
+/// based on the configured downloader type.
 pub enum DownloaderClient {
     QBittorrent(QBittorrentDownloader),
+    // Future implementations:
+    // Transmission(TransmissionDownloader),
+    // Aria2(Aria2Downloader),
 }
 
 impl DownloaderClient {
-    /// Create a downloader client from configuration
+    /// Create a downloader client from configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns `DownloaderError::Config` if required credentials are missing.
     pub fn from_config(config: DownloaderConfig) -> Result<Self> {
         match config.downloader_type {
             DownloaderType::QBittorrent => {
@@ -31,7 +41,6 @@ impl DownloaderClient {
     }
 }
 
-/// Implement Downloader trait for DownloaderClient (dispatch to concrete implementations)
 #[async_trait]
 impl Downloader for DownloaderClient {
     async fn login(&self) -> Result<()> {
@@ -46,99 +55,39 @@ impl Downloader for DownloaderClient {
         }
     }
 
-    async fn get_tasks(&self) -> Result<Vec<TorrentInfo>> {
-        self.get_tasks_filtered(None, None).await
-    }
-
-    async fn get_tasks_filtered(
-        &self,
-        filter: Option<&str>,
-        tag: Option<&str>,
-    ) -> Result<Vec<TorrentInfo>> {
-        match self {
-            Self::QBittorrent(d) => d.get_tasks_filtered(filter, tag).await,
-        }
-    }
-
-    async fn get_tasks_info(&self, rid: i64) -> Result<SyncMainData> {
-        match self {
-            Self::QBittorrent(d) => d.get_tasks_info(rid).await,
-        }
-    }
-
-    async fn add_task(&self, options: AddTorrentOptions) -> Result<String> {
+    async fn add_task(&self, options: AddTaskOptions) -> Result<String> {
         match self {
             Self::QBittorrent(d) => d.add_task(options).await,
         }
     }
 
-    async fn pause_task(&self, hashes: &[&str]) -> Result<()> {
+    async fn delete_task(&self, ids: &[&str], delete_files: bool) -> Result<()> {
         match self {
-            Self::QBittorrent(d) => d.pause_task(hashes).await,
+            Self::QBittorrent(d) => d.delete_task(ids, delete_files).await,
         }
     }
 
-    async fn resume_task(&self, hashes: &[&str]) -> Result<()> {
+    async fn get_tasks(&self, filter: Option<&TaskFilter>) -> Result<Vec<Task>> {
         match self {
-            Self::QBittorrent(d) => d.resume_task(hashes).await,
+            Self::QBittorrent(d) => d.get_tasks(filter).await,
         }
     }
 
-    async fn delete_task(&self, hashes: &[&str], delete_files: bool) -> Result<()> {
+    async fn get_task_files(&self, id: &str) -> Result<Vec<TaskFile>> {
         match self {
-            Self::QBittorrent(d) => d.delete_task(hashes, delete_files).await,
+            Self::QBittorrent(d) => d.get_task_files(id).await,
         }
     }
 
-    async fn add_tags(&self, hash: &str, tags: &[&str]) -> Result<()> {
+    async fn add_tags(&self, id: &str, tags: &[&str]) -> Result<()> {
         match self {
-            Self::QBittorrent(d) => d.add_tags(hash, tags).await,
+            Self::QBittorrent(d) => d.add_tags(id, tags).await,
         }
     }
 
-    async fn remove_tags(&self, hash: &str, tags: &[&str]) -> Result<()> {
+    async fn remove_tags(&self, id: &str, tags: &[&str]) -> Result<()> {
         match self {
-            Self::QBittorrent(d) => d.remove_tags(hash, tags).await,
-        }
-    }
-
-    async fn get_task_files(&self, hash: &str) -> Result<Vec<TorrentFile>> {
-        match self {
-            Self::QBittorrent(d) => d.get_task_files(hash).await,
-        }
-    }
-
-    async fn rename_file(&self, hash: &str, old_path: &str, new_path: &str) -> Result<()> {
-        match self {
-            Self::QBittorrent(d) => d.rename_file(hash, old_path, new_path).await,
-        }
-    }
-
-    fn downloader_type(&self) -> &'static str {
-        match self {
-            Self::QBittorrent(d) => d.downloader_type(),
-        }
-    }
-}
-
-/// Implement DownloaderExt trait for extended features
-#[async_trait]
-impl DownloaderExt for DownloaderClient {
-    async fn get_task_info(&self, hash: &str) -> Result<Option<TorrentInfo>> {
-        match self {
-            Self::QBittorrent(d) => d.get_task_info(hash).await,
-        }
-    }
-
-    async fn configure_autorun(&self, webhook_url: &str) -> Result<()> {
-        match self {
-            Self::QBittorrent(d) => d.configure_autorun(webhook_url).await,
-        }
-    }
-
-    async fn disable_autorun(&self) -> Result<()> {
-        match self {
-            Self::QBittorrent(d) => d.disable_autorun().await,
+            Self::QBittorrent(d) => d.remove_tags(id, tags).await,
         }
     }
 }

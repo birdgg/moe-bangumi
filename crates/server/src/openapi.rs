@@ -1,12 +1,12 @@
 use utoipa::OpenApi;
 
-use crate::api::handlers::{ControlTorrentsRequest, DeleteTorrentsRequest};
+use crate::api::handlers::DeleteTorrentsRequest;
 use crate::models::{
     BangumiWithRss, DownloaderSettings, FilterSettings, Log, LogLevel, Platform, Rss, Settings,
     TorrentSearchResult, TorrentSource, UpdateBangumiRequest, UpdateDownloaderSettings,
     UpdateFilterSettings, UpdateSettings,
 };
-use crate::services::{ServerState, SyncMainData, SyncTorrentInfo, TorrentInfo};
+use crate::services::Task;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -36,12 +36,8 @@ use crate::services::{ServerState, SyncMainData, SyncTorrentInfo, TorrentInfo};
         Log,
         LogLevel,
         Platform,
-        TorrentInfo,
-        ControlTorrentsRequest,
+        Task,
         DeleteTorrentsRequest,
-        SyncMainData,
-        SyncTorrentInfo,
-        ServerState,
         TorrentSearchResult,
         TorrentSource
     ))

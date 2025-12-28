@@ -339,10 +339,10 @@ pub enum DownloaderClient {
 
 | 文件 | 职责 |
 |------|------|
-| `crates/downloader/src/traits.rs` | Trait 定义 |
-| `crates/downloader/src/client.rs` | 枚举分发 |
-| `crates/downloader/src/qbittorrent_impl.rs` | qBittorrent 实现 |
-| `crates/downloader/src/models.rs` | 数据模型 |
-| `crates/downloader/src/error.rs` | 错误类型 |
-| `crates/server/src/services/downloader.rs` | 服务层封装 |
-| `crates/qbittorrent/` | qBittorrent Web API 客户端 |
+| [traits.rs](../crates/downloader/src/traits.rs) | Trait 定义 |
+| [client.rs](../crates/downloader/src/client.rs) | 枚举分发 |
+| [qbittorrent_impl.rs](../crates/downloader/src/qbittorrent_impl.rs) | qBittorrent 实现 |
+| [models.rs](../crates/downloader/src/models.rs) | 数据模型 |
+| [error.rs](../crates/downloader/src/error.rs) | 错误类型 |
+| [downloader.rs](../crates/server/src/services/downloader.rs) | 服务层封装 |
+| [qbittorrent/](../crates/qbittorrent/) | qBittorrent Web API 客户端 |

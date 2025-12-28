@@ -1,10 +1,8 @@
-mod file_rename_job;
 mod log_cleanup_job;
 mod rss_fetch_job;
 mod traits;
 
 pub use log_cleanup_job::LogCleanupJob;
-pub use file_rename_job::FileRenameJob;
 pub use rss_fetch_job::RssFetchJob;
 pub use traits::{JobResult, SchedulerJob};
 
@@ -19,8 +17,7 @@ use std::sync::Arc;
 ///
 /// ```rust,ignore
 /// let scheduler = SchedulerService::new()
-///     .with_job(RssFetchJob::new())
-///     .with_job(FileRenameJob::new());
+///     .with_job(RssFetchJob::new());
 ///
 /// scheduler.start();
 /// ```

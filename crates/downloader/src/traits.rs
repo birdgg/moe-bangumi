@@ -1,106 +1,146 @@
 use async_trait::async_trait;
 
-use crate::error::{DownloaderError, Result};
-use crate::models::{AddTorrentOptions, SyncMainData, TorrentFile, TorrentInfo};
+use crate::error::Result;
+use crate::models::{AddTaskOptions, Task, TaskFile, TaskFilter};
 
-/// Core downloader interface
+/// Core downloader interface.
 ///
-/// This trait defines the common operations that all downloaders must support.
-/// Extended features (like file renaming, autorun configuration) are in DownloaderExt.
+/// This trait defines the essential operations that all downloaders must support.
+/// Implementations should convert their native types to the unified models defined
+/// in this crate (Task, TaskFile, TaskStatus).
+///
+/// # Design Principles
+///
+/// - **Simplicity**: Only 8 core methods, no bloat
+/// - **Universality**: All methods work across BitTorrent, HTTP, and other protocols
+/// - **Type safety**: Strongly typed models instead of stringly-typed APIs
+/// - **Async first**: All operations are async for proper I/O handling
+///
+/// # Thread Safety
+///
+/// All implementations must be Send + Sync for use in async contexts.
 #[async_trait]
 pub trait Downloader: Send + Sync {
-    /// Login to the downloader
+    /// Authenticate with the downloader.
+    ///
+    /// Some downloaders require authentication before operations can be performed.
+    /// This method should be called before any other operations.
+    ///
+    /// # Errors
+    ///
+    /// Returns `DownloaderError::Auth` if authentication fails.
     async fn login(&self) -> Result<()>;
 
-    /// Check if currently logged in
+    /// Check if currently authenticated.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(true)` if authenticated and ready
+    /// - `Ok(false)` if not authenticated
+    /// - `Err(_)` if unable to check authentication status
     async fn is_login(&self) -> Result<bool>;
 
-    /// Get all tasks
-    async fn get_tasks(&self) -> Result<Vec<TorrentInfo>>;
-
-    /// Get tasks with optional filtering
+    /// Add a new download task.
     ///
     /// # Arguments
-    /// * `filter` - Optional torrent filter (e.g., "completed", "downloading")
-    /// * `tag` - Optional tag filter
-    async fn get_tasks_filtered(
-        &self,
-        filter: Option<&str>,
-        tag: Option<&str>,
-    ) -> Result<Vec<TorrentInfo>>;
+    ///
+    /// * `options` - Configuration for the new task (URL, save path, tags, etc.)
+    ///
+    /// # Returns
+    ///
+    /// The task ID on success. Format varies by implementation:
+    /// - BitTorrent: info hash
+    /// - HTTP: generated UUID or sequential ID
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let options = AddTaskOptions::new("magnet:?xt=...")
+    ///     .save_path("/downloads")
+    ///     .add_tag("anime")
+    ///     .category("tv");
+    /// let task_id = downloader.add_task(options).await?;
+    /// ```
+    async fn add_task(&self, options: AddTaskOptions) -> Result<String>;
 
-    /// Get tasks info with incremental sync
+    /// Delete task(s) by ID.
     ///
     /// # Arguments
-    /// * `rid` - Response ID from previous call. Use 0 for initial request.
-    async fn get_tasks_info(&self, rid: i64) -> Result<SyncMainData>;
-
-    /// Add a new task
     ///
-    /// Returns an identifier for the added task (varies by implementation)
-    async fn add_task(&self, options: AddTorrentOptions) -> Result<String>;
-
-    /// Pause task(s) by hash
+    /// * `ids` - List of task IDs to delete
+    /// * `delete_files` - Whether to also delete downloaded files from disk
     ///
-    /// # Arguments
-    /// * `hashes` - List of task hashes. Use `&["all"]` to pause all tasks.
-    async fn pause_task(&self, hashes: &[&str]) -> Result<()>;
+    /// # Notes
+    ///
+    /// - If a task ID doesn't exist, it's silently ignored
+    /// - All specified tasks are deleted in a single operation
+    async fn delete_task(&self, ids: &[&str], delete_files: bool) -> Result<()>;
 
-    /// Resume task(s) by hash
+    /// Get tasks with optional filtering.
     ///
     /// # Arguments
-    /// * `hashes` - List of task hashes. Use `&["all"]` to resume all tasks.
-    async fn resume_task(&self, hashes: &[&str]) -> Result<()>;
+    ///
+    /// * `filter` - Optional filter criteria (status, category, tag, IDs)
+    ///
+    /// # Returns
+    ///
+    /// Vector of tasks matching the filter. Returns all tasks if filter is None.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Get all tasks
+    /// let all = downloader.get_tasks(None).await?;
+    ///
+    /// // Get completed tasks with "rename" tag
+    /// let filter = TaskFilter::new()
+    ///     .status(TaskStatus::Completed)
+    ///     .tag("rename");
+    /// let completed = downloader.get_tasks(Some(&filter)).await?;
+    ///
+    /// // Get specific task by ID
+    /// let task = downloader.get_tasks(Some(&TaskFilter::new().id("abc123"))).await?;
+    /// ```
+    async fn get_tasks(&self, filter: Option<&TaskFilter>) -> Result<Vec<Task>>;
 
-    /// Delete task(s) by hash
+    /// Get files within a specific task.
     ///
     /// # Arguments
-    /// * `hashes` - List of task hashes
-    /// * `delete_files` - Whether to delete downloaded files
-    async fn delete_task(&self, hashes: &[&str], delete_files: bool) -> Result<()>;
+    ///
+    /// * `id` - Task ID
+    ///
+    /// # Returns
+    ///
+    /// Vector of files in the task. For single-file tasks, returns one element.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if task doesn't exist.
+    async fn get_task_files(&self, id: &str) -> Result<Vec<TaskFile>>;
 
-    /// Add tags to a task
+    /// Add tags to a task.
     ///
     /// # Arguments
-    /// * `hash` - Task hash
+    ///
+    /// * `id` - Task ID
     /// * `tags` - Tags to add
-    async fn add_tags(&self, hash: &str, tags: &[&str]) -> Result<()>;
+    ///
+    /// # Notes
+    ///
+    /// - If tag already exists, it's not duplicated
+    /// - If task doesn't exist, returns error
+    async fn add_tags(&self, id: &str, tags: &[&str]) -> Result<()>;
 
-    /// Remove tags from a task
+    /// Remove tags from a task.
     ///
     /// # Arguments
-    /// * `hash` - Task hash
+    ///
+    /// * `id` - Task ID
     /// * `tags` - Tags to remove. If empty, all tags are removed.
-    async fn remove_tags(&self, hash: &str, tags: &[&str]) -> Result<()>;
-
-    /// Get files for a specific task
-    async fn get_task_files(&self, hash: &str) -> Result<Vec<TorrentFile>>;
-
-    /// Rename a file within a task
-    async fn rename_file(&self, hash: &str, old_path: &str, new_path: &str) -> Result<()>;
-
-    /// Get the downloader type name (for logging)
-    fn downloader_type(&self) -> &'static str;
-}
-
-/// Extended downloader interface for advanced features
-///
-/// This trait provides optional functionality that may not be supported by all
-/// downloader implementations. Default implementations return NotSupported errors.
-#[async_trait]
-pub trait DownloaderExt: Downloader {
-    /// Get task information by hash
-    async fn get_task_info(&self, _hash: &str) -> Result<Option<TorrentInfo>> {
-        Err(DownloaderError::NotSupported("get_task_info".into()))
-    }
-
-    /// Configure autorun to call a webhook URL when tasks complete
-    async fn configure_autorun(&self, _webhook_url: &str) -> Result<()> {
-        Err(DownloaderError::NotSupported("configure_autorun".into()))
-    }
-
-    /// Disable autorun callback
-    async fn disable_autorun(&self) -> Result<()> {
-        Err(DownloaderError::NotSupported("disable_autorun".into()))
-    }
+    ///
+    /// # Notes
+    ///
+    /// - If tag doesn't exist, it's silently ignored
+    /// - If task doesn't exist, returns error
+    async fn remove_tags(&self, id: &str, tags: &[&str]) -> Result<()>;
 }

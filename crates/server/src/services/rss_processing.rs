@@ -1,4 +1,4 @@
-use downloader::AddTorrentOptions;
+use downloader::AddTaskOptions;
 use parser::Parser;
 use regex::Regex;
 use rss::{RssClient, RssSource};
@@ -256,7 +256,7 @@ impl RssProcessingService {
             );
 
             // Add to downloader with "moe" tag to identify moe-managed tasks
-            let options = AddTorrentOptions::new(torrent_url)
+            let options = AddTaskOptions::new(torrent_url)
                 .save_path(&save_path)
                 .rename(&filename)
                 .add_tag("moe");

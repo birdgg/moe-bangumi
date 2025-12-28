@@ -60,10 +60,7 @@ pub use scheduler::trigger_rss_fetch;
 pub use search::{search_bgmtv, search_mikan, search_tmdb};
 pub use settings::{get_settings, reset_settings, test_proxy, update_settings, TestProxyRequest};
 pub use torrent_search::search_torrents;
-pub use torrents::{
-    delete_torrents, list_torrents, pause_torrents, resume_torrents, sync_maindata,
-    ControlTorrentsRequest, DeleteTorrentsRequest, SyncMainDataQuery,
-};
+pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 
 // Re-export utoipa path structs for OpenAPI routing
 #[doc(hidden)]
@@ -89,7 +86,4 @@ pub use settings::{
 #[doc(hidden)]
 pub use torrent_search::__path_search_torrents;
 #[doc(hidden)]
-pub use torrents::{
-    __path_delete_torrents, __path_list_torrents, __path_pause_torrents, __path_resume_torrents,
-    __path_sync_maindata,
-};
+pub use torrents::{__path_delete_torrents, __path_list_torrents};
