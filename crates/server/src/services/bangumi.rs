@@ -49,12 +49,8 @@ impl BangumiService {
         // Extract RSS entries before creating bangumi
         let rss_entries = std::mem::take(&mut data.rss_entries);
 
-        // Try to download poster if available
-        if let Some(ref poster_url) = data.poster_url {
-            if let Some(local_path) = self.poster.try_download(poster_url).await {
-                data.poster_url = Some(local_path);
-            }
-        }
+        // Note: Poster download is handled asynchronously after bangumi creation
+        // to avoid blocking the API response
 
         // Generate save_path using pathgen
         let settings = self.settings.get();
@@ -99,6 +95,12 @@ impl BangumiService {
         // Trigger background RSS fetch for newly created subscriptions
         if !new_rss_ids.is_empty() {
             self.rss_processing.spawn_background(new_rss_ids);
+        }
+
+        // Trigger background poster download (non-blocking)
+        if let Some(ref poster_url) = bangumi.poster_url {
+            self.poster
+                .spawn_download_and_update(bangumi.id, poster_url.clone(), self.db.clone());
         }
 
         Ok(bangumi)

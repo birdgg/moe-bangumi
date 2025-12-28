@@ -217,6 +217,21 @@ impl BangumiRepository {
 
         Ok(result.rows_affected() > 0)
     }
+
+    /// Update poster URL for a bangumi
+    pub async fn update_poster_url(
+        pool: &SqlitePool,
+        id: i64,
+        poster_url: &str,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("UPDATE bangumi SET poster_url = $1 WHERE id = $2")
+            .bind(poster_url)
+            .bind(id)
+            .execute(pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
 }
 
 /// Internal row type for mapping SQLite results

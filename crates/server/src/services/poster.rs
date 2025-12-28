@@ -4,7 +4,10 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use reqwest::Client;
+use sqlx::SqlitePool;
 use thiserror::Error;
+
+use crate::repositories::BangumiRepository;
 
 /// A function that asynchronously provides an HTTP client.
 /// Used for dynamic proxy configuration support.
@@ -199,5 +202,68 @@ impl PosterService {
                 None
             }
         }
+    }
+
+    /// Spawn a background task to download poster and update database.
+    ///
+    /// This method returns immediately without blocking. The actual download
+    /// happens in a background tokio task. If download succeeds, the database
+    /// is updated with the local path. If it fails, the original URL is kept.
+    ///
+    /// # Arguments
+    /// * `bangumi_id` - The ID of the bangumi to update
+    /// * `poster_url` - The URL of the poster to download
+    /// * `db` - Database connection pool
+    pub fn spawn_download_and_update(self: &Arc<Self>, bangumi_id: i64, poster_url: String, db: SqlitePool) {
+        // Skip if already a local path
+        if poster_url.starts_with("/posters/") {
+            return;
+        }
+
+        let poster_service = Arc::clone(self);
+
+        tokio::spawn(async move {
+            tracing::info!(
+                "Starting background poster download for bangumi {} from {}",
+                bangumi_id,
+                poster_url
+            );
+
+            match poster_service.try_download(&poster_url).await {
+                Some(local_path) => {
+                    match BangumiRepository::update_poster_url(&db, bangumi_id, &local_path).await {
+                        Ok(true) => {
+                            tracing::info!(
+                                "Successfully updated poster for bangumi {}: {}",
+                                bangumi_id,
+                                local_path
+                            );
+                        }
+                        Ok(false) => {
+                            tracing::warn!(
+                                "Bangumi {} not found when updating poster",
+                                bangumi_id
+                            );
+                        }
+                        Err(e) => {
+                            tracing::error!(
+                                "Failed to update poster URL for bangumi {}: {}",
+                                bangumi_id,
+                                e
+                            );
+                        }
+                    }
+                }
+                None => {
+                    tracing::warn!(
+                        "Failed to download poster for bangumi {}, keeping original URL: {}",
+                        bangumi_id,
+                        poster_url
+                    );
+                }
+            }
+
+            tracing::debug!("Background poster download for bangumi {} completed", bangumi_id);
+        });
     }
 }
