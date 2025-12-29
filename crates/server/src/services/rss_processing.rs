@@ -1,13 +1,27 @@
 use downloader::AddTaskOptions;
 use parser::Parser;
 use regex::Regex;
-use rss::{RssClient, RssSource};
+use rss::{RssClient, RssItem, RssSource};
 use sqlx::SqlitePool;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use crate::models::{CreateTorrent, Rss};
+use crate::models::{Bangumi, CreateTorrent, Rss, Torrent};
 use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::{DownloaderService, SettingsService};
+
+/// Context for RSS processing, avoiding repeated parameter passing
+struct ProcessingContext {
+    bangumi: Bangumi,
+    /// Log prefix like "[番剧名 S1]" for consistent error messages
+    log_prefix: String,
+}
+
+/// Lookup structures for existing torrents (O(1) access)
+struct TorrentLookup {
+    existing_hashes: HashSet<String>,
+    episodes_map: HashMap<i32, Vec<Torrent>>,
+}
 
 /// Service for processing RSS feeds and creating download tasks.
 ///
@@ -47,12 +61,37 @@ impl RssProcessingService {
     pub async fn process_single(&self, rss: &Rss, global_exclude_filters: &[String]) {
         tracing::debug!("Processing RSS: {} (id={})", rss.url, rss.id);
 
-        // Get bangumi info for path generation and error context
+        // 1. Prepare processing context (get bangumi info)
+        let Some(ctx) = self.prepare_context(rss).await else {
+            return;
+        };
+
+        // 2. Fetch and parse RSS items
+        let Some(parsed_items) = self
+            .fetch_and_parse_items(rss, global_exclude_filters, &ctx)
+            .await
+        else {
+            return;
+        };
+
+        // 3. Build lookup structures for existing torrents
+        let Some(lookup) = self.build_torrent_lookup(rss.bangumi_id, &ctx).await else {
+            return;
+        };
+
+        // 4. Process each item
+        for (item, episode) in parsed_items {
+            self.process_item(rss, &ctx, &lookup, item, episode).await;
+        }
+    }
+
+    /// Prepare processing context by fetching bangumi info
+    async fn prepare_context(&self, rss: &Rss) -> Option<ProcessingContext> {
         let bangumi = match BangumiRepository::get_by_id(&self.db, rss.bangumi_id).await {
             Ok(Some(b)) => b,
             Ok(None) => {
                 tracing::error!("[bangumi_id={}] Bangumi not found", rss.bangumi_id);
-                return;
+                return None;
             }
             Err(e) => {
                 tracing::error!(
@@ -60,13 +99,21 @@ impl RssProcessingService {
                     rss.bangumi_id,
                     e
                 );
-                return;
+                return None;
             }
         };
 
-        // Error context with bangumi name and season
-        let ctx = format!("[{} S{}]", bangumi.title_chinese, bangumi.season);
+        let log_prefix = format!("[{} S{}]", bangumi.title_chinese, bangumi.season);
+        Some(ProcessingContext { bangumi, log_prefix })
+    }
 
+    /// Fetch RSS feed, apply filters, and parse episode numbers
+    async fn fetch_and_parse_items(
+        &self,
+        rss: &Rss,
+        global_exclude_filters: &[String],
+        ctx: &ProcessingContext,
+    ) -> Option<Vec<(RssItem, i32)>> {
         // Parse URL to determine source type
         let source = parse_rss_source(&rss.url);
 
@@ -74,8 +121,8 @@ impl RssProcessingService {
         let items = match self.rss_client.fetch(&source).await {
             Ok(items) => items,
             Err(e) => {
-                tracing::error!("{} RSS fetch failed: {}", ctx, e);
-                return;
+                tracing::error!("{} RSS fetch failed: {}", ctx.log_prefix, e);
+                return None;
             }
         };
 
@@ -90,7 +137,6 @@ impl RssProcessingService {
         let filtered_items = filter_rss_items(items, &rss.include_filters, &all_exclude_filters);
 
         // Parse all items upfront to extract episode numbers
-        // This avoids parsing twice when auto_complete is disabled
         let mut parsed_items: Vec<_> = filtered_items
             .into_iter()
             .filter_map(|item| {
@@ -106,142 +152,198 @@ impl RssProcessingService {
             .collect();
 
         // When auto_complete is disabled, only process the latest episode
-        if !bangumi.auto_complete {
-            // Sort by episode number descending and keep only the latest
+        if !ctx.bangumi.auto_complete {
             parsed_items.sort_by(|a, b| b.1.cmp(&a.1));
             if let Some((_, ep)) = parsed_items.first() {
                 tracing::debug!(
                     "auto_complete disabled for bangumi {}: only processing latest episode {}",
-                    bangumi.id,
+                    ctx.bangumi.id,
                     ep
                 );
                 parsed_items.truncate(1);
             }
         }
 
-        for (item, episode) in parsed_items {
-            let title = item.title();
-            let info_hash = item.info_hash();
-            let torrent_url = item.torrent_url();
+        Some(parsed_items)
+    }
 
-            // Skip if torrent already exists in database (by info_hash)
-            match TorrentRepository::exists_by_info_hash(&self.db, info_hash).await {
-                Ok(true) => {
-                    tracing::debug!("Skipping existing torrent: {}", title);
-                    continue;
-                }
-                Ok(false) => {}
-                Err(e) => {
-                    tracing::error!("{} Failed to check torrent existence: {}", ctx, e);
-                    continue;
-                }
-            }
-
-            // Check if episode already exists
-            // Primary RSS can override episodes from backup RSS
-            let existing_torrents =
-                match TorrentRepository::get_by_bangumi_episode(&self.db, rss.bangumi_id, episode)
-                    .await
-                {
-                    Ok(torrents) => torrents,
-                    Err(e) => {
-                        tracing::error!("{} Failed to check episode existence: {}", ctx, e);
-                        continue;
-                    }
-                };
-
-            if !existing_torrents.is_empty() {
-                // Episode already exists, check if we should override
-                if !rss.is_primary {
-                    // Backup RSS should not override existing episodes
-                    tracing::debug!(
-                        "Skipping already downloaded episode: {} E{}",
-                        bangumi.title_chinese,
-                        episode
-                    );
-                    continue;
-                }
-
-                // Primary RSS: check if existing torrent is from a non-primary RSS
-                let existing = &existing_torrents[0];
-                let should_override = if let Some(existing_rss_id) = existing.rss_id {
-                    // Check if existing torrent's RSS is primary
-                    match RssRepository::get_by_id(&self.db, existing_rss_id).await {
-                        Ok(Some(existing_rss)) => !existing_rss.is_primary,
-                        Ok(None) => true, // RSS deleted, allow override
-                        Err(e) => {
-                            tracing::error!("{} Failed to check existing RSS: {}", ctx, e);
-                            continue;
-                        }
-                    }
-                } else {
-                    // No RSS ID (manual add), don't override
-                    false
-                };
-
-                if !should_override {
-                    tracing::debug!(
-                        "Skipping episode already from primary RSS: {} E{}",
-                        bangumi.title_chinese,
-                        episode
-                    );
-                    continue;
-                }
-
-                // Override: delete existing torrent from backup RSS
-                tracing::info!(
-                    "{} Overriding backup RSS torrent with primary RSS for E{}",
-                    ctx,
-                    episode
-                );
-                if let Err(e) = TorrentRepository::delete(&self.db, existing.id).await {
-                    tracing::error!("{} Failed to delete backup torrent: {}", ctx, e);
-                    continue;
-                }
-            }
-
-            // Create torrent record with parsed episode number
-            if let Err(e) = TorrentRepository::create(
-                &self.db,
-                CreateTorrent {
-                    bangumi_id: rss.bangumi_id,
-                    rss_id: Some(rss.id),
-                    info_hash: info_hash.to_string(),
-                    torrent_url: torrent_url.to_string(),
-                    kind: Default::default(), // Episode
-                    episode_number: Some(episode),
-                },
-            )
+    /// Build lookup structures for existing torrents (batch fetch to avoid N+1)
+    async fn build_torrent_lookup(
+        &self,
+        bangumi_id: i64,
+        ctx: &ProcessingContext,
+    ) -> Option<TorrentLookup> {
+        let existing_torrents = match TorrentRepository::get_by_bangumi_id(&self.db, bangumi_id)
             .await
+        {
+            Ok(torrents) => torrents,
+            Err(e) => {
+                tracing::error!("{} Failed to fetch existing torrents: {}", ctx.log_prefix, e);
+                return None;
+            }
+        };
+
+        let existing_hashes: HashSet<String> = existing_torrents
+            .iter()
+            .map(|t| t.info_hash.clone())
+            .collect();
+
+        let episodes_map: HashMap<i32, Vec<Torrent>> =
+            existing_torrents
+                .into_iter()
+                .fold(HashMap::new(), |mut map, t| {
+                    if let Some(ep) = t.episode_number {
+                        map.entry(ep).or_default().push(t);
+                    }
+                    map
+                });
+
+        Some(TorrentLookup {
+            existing_hashes,
+            episodes_map,
+        })
+    }
+
+    /// Process a single RSS item: check duplicates, handle override, create record, add download
+    async fn process_item(
+        &self,
+        rss: &Rss,
+        ctx: &ProcessingContext,
+        lookup: &TorrentLookup,
+        item: RssItem,
+        episode: i32,
+    ) {
+        let title = item.title();
+        let info_hash = item.info_hash();
+        let torrent_url = item.torrent_url();
+
+        // Skip if torrent already exists in database (by info_hash)
+        if lookup.existing_hashes.contains(info_hash) {
+            tracing::debug!("Skipping existing torrent: {}", title);
+            return;
+        }
+
+        // Check if episode already exists and handle override logic
+        if let Some(existing_torrents) = lookup.episodes_map.get(&episode) {
+            if !self
+                .should_override_existing(rss, ctx, existing_torrents, episode)
+                .await
             {
-                tracing::error!("{} Database error: {}", ctx, e);
-                continue;
+                return;
             }
 
-            // Use the save_path stored in bangumi (auto-generated when bangumi was created)
-            // and generate filename for this specific episode
-            let save_path = bangumi.save_path.clone();
-
-            let filename = pathgen::generate_filename(
-                &bangumi.title_chinese,
-                bangumi.season,
-                episode,
-                Some(bangumi.platform.as_str()),
+            // Override: delete existing torrent from backup RSS
+            let existing = &existing_torrents[0];
+            tracing::info!(
+                "{} Overriding backup RSS torrent with primary RSS for E{}",
+                ctx.log_prefix,
+                episode
             );
+            if let Err(e) = TorrentRepository::delete(&self.db, existing.id).await {
+                tracing::error!("{} Failed to delete backup torrent: {}", ctx.log_prefix, e);
+                return;
+            }
+        }
 
-            // Add to downloader with "moe" tag to identify moe-managed tasks
-            let options = AddTaskOptions::new(torrent_url)
-                .save_path(&save_path)
-                .rename(&filename)
-                .add_tag("moe");
+        // Create torrent record and add download task
+        self.create_and_add_task(rss, ctx, info_hash, torrent_url, episode)
+            .await;
+    }
 
-            match self.downloader.add_task(options).await {
-                Ok(_) => {
-                    tracing::debug!("Added to downloader: {}", title);
-                }
+    /// Determine if we should override an existing episode torrent
+    ///
+    /// Returns true if current RSS is primary and existing torrent is from backup RSS
+    async fn should_override_existing(
+        &self,
+        rss: &Rss,
+        ctx: &ProcessingContext,
+        existing_torrents: &[Torrent],
+        episode: i32,
+    ) -> bool {
+        // Backup RSS should not override existing episodes
+        if !rss.is_primary {
+            tracing::debug!(
+                "Skipping already downloaded episode: {} E{}",
+                ctx.bangumi.title_chinese,
+                episode
+            );
+            return false;
+        }
+
+        // Primary RSS: check if existing torrent is from a non-primary RSS
+        let existing = &existing_torrents[0];
+        let should_override = if let Some(existing_rss_id) = existing.rss_id {
+            match RssRepository::get_by_id(&self.db, existing_rss_id).await {
+                Ok(Some(existing_rss)) => !existing_rss.is_primary,
+                Ok(None) => true, // RSS deleted, allow override
                 Err(e) => {
-                    tracing::error!("{} Failed to add download task: {}", ctx, e);
+                    tracing::error!("{} Failed to check existing RSS: {}", ctx.log_prefix, e);
+                    return false;
                 }
+            }
+        } else {
+            // No RSS ID (manual add), don't override
+            false
+        };
+
+        if !should_override {
+            tracing::debug!(
+                "Skipping episode already from primary RSS: {} E{}",
+                ctx.bangumi.title_chinese,
+                episode
+            );
+        }
+
+        should_override
+    }
+
+    /// Create torrent record in database and add download task to downloader
+    async fn create_and_add_task(
+        &self,
+        rss: &Rss,
+        ctx: &ProcessingContext,
+        info_hash: &str,
+        torrent_url: &str,
+        episode: i32,
+    ) {
+        // Create torrent record with parsed episode number
+        if let Err(e) = TorrentRepository::create(
+            &self.db,
+            CreateTorrent {
+                bangumi_id: rss.bangumi_id,
+                rss_id: Some(rss.id),
+                info_hash: info_hash.to_string(),
+                torrent_url: torrent_url.to_string(),
+                kind: Default::default(), // Episode
+                episode_number: Some(episode),
+            },
+        )
+        .await
+        {
+            tracing::error!("{} Database error: {}", ctx.log_prefix, e);
+            return;
+        }
+
+        // Generate filename for this specific episode
+        let filename = pathgen::generate_filename(
+            &ctx.bangumi.title_chinese,
+            ctx.bangumi.season,
+            episode,
+            Some(ctx.bangumi.platform.as_str()),
+        );
+
+        // Add to downloader with "moe" tag to identify moe-managed tasks
+        let options = AddTaskOptions::new(torrent_url)
+            .save_path(&ctx.bangumi.save_path)
+            .rename(&filename)
+            .add_tag("moe");
+
+        match self.downloader.add_task(options).await {
+            Ok(_) => {
+                tracing::debug!("Added to downloader: {}", info_hash);
+            }
+            Err(e) => {
+                tracing::error!("{} Failed to add download task: {}", ctx.log_prefix, e);
             }
         }
     }

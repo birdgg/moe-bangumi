@@ -192,13 +192,7 @@ impl Downloader for TransmissionDownloader {
     }
 
     async fn add_task(&self, options: AddTaskOptions) -> Result<String> {
-        // Transmission doesn't support renaming torrents on add
-        if options.rename.is_some() {
-            return Err(DownloaderError::NotSupported(
-                "Transmission does not support renaming torrents on add".into(),
-            ));
-        }
-
+        // Note: Transmission doesn't support renaming on add, rename option is ignored
         let add_args = TorrentAddArgs {
             filename: Some(options.url.clone()),
             download_dir: options.save_path,
