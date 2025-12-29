@@ -403,6 +403,21 @@ export const LogLevelSchema = {
   enum: ["info", "warning", "error"],
 } as const;
 
+export const NotificationSettingsSchema = {
+  type: "object",
+  description: "Notification configuration",
+  properties: {
+    enabled: {
+      type: "boolean",
+      description: "Global enable/disable for notifications",
+    },
+    telegram: {
+      $ref: "#/components/schemas/TelegramConfig",
+      description: "Telegram configuration",
+    },
+  },
+} as const;
+
 export const PlatformSchema = {
   type: "string",
   description: "Platform type for bangumi (TV, Movie, OVA)",
@@ -605,6 +620,10 @@ export const SettingsSchema = {
       $ref: "#/components/schemas/FilterSettings",
       description: "Filter configuration",
     },
+    notification: {
+      $ref: "#/components/schemas/NotificationSettings",
+      description: "Notification configuration",
+    },
     proxy: {
       $ref: "#/components/schemas/ProxySettings",
       description: "Proxy configuration for HTTP client",
@@ -786,6 +805,25 @@ export const TaskStatusSchema = {
   ],
 } as const;
 
+export const TelegramConfigSchema = {
+  type: "object",
+  description: "Telegram notification configuration",
+  properties: {
+    bot_token: {
+      type: "string",
+      description: "Telegram Bot API token",
+    },
+    chat_id: {
+      type: "string",
+      description: "Telegram chat ID to send notifications to",
+    },
+    enabled: {
+      type: "boolean",
+      description: "Enable Telegram notifications",
+    },
+  },
+} as const;
+
 export const TestDownloaderRequestSchema = {
   type: "object",
   description: "Request body for testing downloader connection",
@@ -806,6 +844,22 @@ export const TestDownloaderRequestSchema = {
     username: {
       type: "string",
       description: "Username",
+    },
+  },
+} as const;
+
+export const TestNotificationRequestSchema = {
+  type: "object",
+  description: "Request body for testing Telegram notification",
+  required: ["bot_token", "chat_id"],
+  properties: {
+    bot_token: {
+      type: "string",
+      description: "Telegram Bot API token",
+    },
+    chat_id: {
+      type: "string",
+      description: "Telegram chat ID",
     },
   },
 } as const;
@@ -1032,6 +1086,28 @@ export const UpdateFilterSettingsSchema = {
   },
 } as const;
 
+export const UpdateNotificationSettingsSchema = {
+  type: "object",
+  description: "Request body for updating notification settings",
+  properties: {
+    enabled: {
+      type: ["boolean", "null"],
+      description: "Enable/disable notifications globally",
+    },
+    telegram: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateTelegramConfig",
+          description: "Telegram configuration updates",
+        },
+      ],
+    },
+  },
+} as const;
+
 export const UpdateProxySettingsSchema = {
   type: "object",
   description: "Request body for updating proxy settings",
@@ -1097,6 +1173,17 @@ export const UpdateSettingsSchema = {
         },
       ],
     },
+    notification: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateNotificationSettings",
+          description: "Notification configuration updates",
+        },
+      ],
+    },
     proxy: {
       oneOf: [
         {
@@ -1107,6 +1194,25 @@ export const UpdateSettingsSchema = {
           description: "Proxy configuration updates",
         },
       ],
+    },
+  },
+} as const;
+
+export const UpdateTelegramConfigSchema = {
+  type: "object",
+  description: "Request body for updating Telegram settings",
+  properties: {
+    bot_token: {
+      type: ["string", "null"],
+      description: "Bot token (send null to clear)",
+    },
+    chat_id: {
+      type: ["string", "null"],
+      description: "Chat ID (send null to clear)",
+    },
+    enabled: {
+      type: ["boolean", "null"],
+      description: "Enable Telegram notifications",
     },
   },
 } as const;

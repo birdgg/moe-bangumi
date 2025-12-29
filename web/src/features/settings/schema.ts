@@ -8,26 +8,18 @@ export type DownloaderTypeValue = (typeof downloaderTypes)[number];
 
 /**
  * qBittorrent configuration schema
- * - requires username and password
  */
 export const qbittorrentConfigSchema = z.object({
-  url: z
-    .string()
-    .min(1, "服务器地址不能为空")
-    .url("请输入有效的 URL (如 http://localhost:8080)"),
-  username: z.string().min(1, "用户名不能为空"),
-  password: z.string().min(1, "密码不能为空"),
+  url: z.string(),
+  username: z.string(),
+  password: z.string(),
 });
 
 /**
  * Transmission configuration schema
- * - username and password are optional
  */
 export const transmissionConfigSchema = z.object({
-  url: z
-    .string()
-    .min(1, "服务器地址不能为空")
-    .url("请输入有效的 URL (如 http://localhost:9091/transmission/rpc)"),
+  url: z.string(),
   username: z.string(),
   password: z.string(),
 });
@@ -45,7 +37,7 @@ export const downloaderConfigsSchema = z.object({
  */
 export const downloaderSchema = z.object({
   type: z.enum(downloaderTypes),
-  save_path: z.string().min(1, "保存路径不能为空"),
+  save_path: z.string(),
   configs: downloaderConfigsSchema,
 });
 
@@ -60,9 +52,24 @@ export const filterSchema = z.object({
  * Proxy configuration schema
  */
 export const proxySchema = z.object({
-  url: z.string().optional(),
-  username: z.string().optional(),
-  password: z.string().optional(),
+  url: z.string(),
+  username: z.string(),
+  password: z.string(),
+});
+
+/**
+ * Telegram configuration schema
+ */
+export const telegramConfigSchema = z.object({
+  bot_token: z.string(),
+  chat_id: z.string(),
+});
+
+/**
+ * Notification settings schema
+ */
+export const notificationSchema = z.object({
+  telegram: telegramConfigSchema,
 });
 
 /**
@@ -72,6 +79,7 @@ export const settingsFormSchema = z.object({
   downloader: downloaderSchema,
   filter: filterSchema,
   proxy: proxySchema,
+  notification: notificationSchema,
 });
 
 /**
@@ -83,4 +91,6 @@ export type DownloaderConfigsFormData = z.infer<typeof downloaderConfigsSchema>;
 export type DownloaderFormData = z.infer<typeof downloaderSchema>;
 export type FilterFormData = z.infer<typeof filterSchema>;
 export type ProxyFormData = z.infer<typeof proxySchema>;
+export type TelegramConfigFormData = z.infer<typeof telegramConfigSchema>;
+export type NotificationFormData = z.infer<typeof notificationSchema>;
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;

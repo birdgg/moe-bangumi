@@ -32,6 +32,12 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
       username: settings?.proxy?.username ?? "",
       password: settings?.proxy?.password ?? "",
     },
+    notification: {
+      telegram: {
+        bot_token: settings?.notification?.telegram?.bot_token ?? "",
+        chat_id: settings?.notification?.telegram?.chat_id ?? "",
+      },
+    },
   };
 }
 
@@ -67,9 +73,18 @@ export function formDataToUpdateSettings(data: SettingsFormData): UpdateSettings
       global_rss_filters: data.filter.global_rss_filters,
     },
     proxy: {
-      url: data.proxy.url?.trim() || null,
-      username: data.proxy.username?.trim() || null,
-      password: data.proxy.password?.trim() || null,
+      url: data.proxy.url.trim() || null,
+      username: data.proxy.username.trim() || null,
+      password: data.proxy.password.trim() || null,
+    },
+    notification: {
+      // Auto-enable when both bot_token and chat_id are provided
+      enabled: !!(data.notification.telegram.bot_token.trim() && data.notification.telegram.chat_id.trim()),
+      telegram: {
+        enabled: !!(data.notification.telegram.bot_token.trim() && data.notification.telegram.chat_id.trim()),
+        bot_token: data.notification.telegram.bot_token.trim() || null,
+        chat_id: data.notification.telegram.chat_id.trim() || null,
+      },
     },
   };
 }
@@ -106,6 +121,9 @@ export function useSettingsForm(initialSettings?: Settings) {
       form.setFieldValue("proxy.url", formData.proxy.url);
       form.setFieldValue("proxy.username", formData.proxy.username);
       form.setFieldValue("proxy.password", formData.proxy.password);
+      // Notification settings
+      form.setFieldValue("notification.telegram.bot_token", formData.notification.telegram.bot_token);
+      form.setFieldValue("notification.telegram.chat_id", formData.notification.telegram.chat_id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSettings]);

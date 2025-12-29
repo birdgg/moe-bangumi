@@ -19,6 +19,15 @@ pub struct TestProxyRequest {
     pub password: Option<String>,
 }
 
+/// Request body for testing Telegram notification
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct TestNotificationRequest {
+    /// Telegram Bot API token
+    pub bot_token: String,
+    /// Telegram chat ID
+    pub chat_id: String,
+}
+
 /// Get application settings
 #[utoipa::path(
     get,
@@ -110,4 +119,51 @@ pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'st
             response.status()
         )))
     }
+}
+
+/// Test Telegram notification by sending a test message
+#[utoipa::path(
+    post,
+    path = "/api/notification/test",
+    tag = "settings",
+    request_body = TestNotificationRequest,
+    responses(
+        (status = 200, description = "Notification sent successfully"),
+        (status = 400, description = "Invalid configuration")
+    )
+)]
+pub async fn test_notification(
+    State(state): State<AppState>,
+    Json(payload): Json<TestNotificationRequest>,
+) -> AppResult<&'static str> {
+    // Validate inputs
+    if payload.bot_token.is_empty() {
+        return Err(crate::error::AppError::BadRequest(
+            "Bot Token 不能为空".to_string(),
+        ));
+    }
+    if payload.chat_id.is_empty() {
+        return Err(crate::error::AppError::BadRequest(
+            "Chat ID 不能为空".to_string(),
+        ));
+    }
+
+    // Create a temporary Telegram notifier with the provided credentials
+    let client = state.http_client_service.get_client();
+    let notifier = notify::telegram::TelegramNotifier::new_with_client(
+        client,
+        &payload.bot_token,
+        &payload.chat_id,
+    )
+    .map_err(|e| crate::error::AppError::BadRequest(format!("配置无效: {}", e)))?;
+
+    // Send test message
+    use notify::Notifier;
+    notifier
+        .send_message("🔔 MOE-RS 通知测试成功！")
+        .await
+        .map_err(|e| crate::error::AppError::Internal(format!("发送失败: {}", e)))?;
+
+    tracing::info!("Telegram notification test successful");
+    Ok("Notification sent successfully")
 }

@@ -300,6 +300,20 @@ export type Log = {
 export type LogLevel = "info" | "warning" | "error";
 
 /**
+ * Notification configuration
+ */
+export type NotificationSettings = {
+  /**
+   * Global enable/disable for notifications
+   */
+  enabled?: boolean;
+  /**
+   * Telegram configuration
+   */
+  telegram?: TelegramConfig;
+};
+
+/**
  * Platform type for bangumi (TV, Movie, OVA)
  */
 export type Platform = "tv" | "movie" | "ova";
@@ -436,6 +450,10 @@ export type Settings = {
    */
   filter?: FilterSettings;
   /**
+   * Notification configuration
+   */
+  notification?: NotificationSettings;
+  /**
    * Proxy configuration for HTTP client
    */
   proxy?: ProxySettings;
@@ -544,6 +562,24 @@ export type TaskStatus =
   | "unknown";
 
 /**
+ * Telegram notification configuration
+ */
+export type TelegramConfig = {
+  /**
+   * Telegram Bot API token
+   */
+  bot_token?: string;
+  /**
+   * Telegram chat ID to send notifications to
+   */
+  chat_id?: string;
+  /**
+   * Enable Telegram notifications
+   */
+  enabled?: boolean;
+};
+
+/**
  * Request body for testing downloader connection
  */
 export type TestDownloaderRequest = {
@@ -563,6 +599,20 @@ export type TestDownloaderRequest = {
    * Username
    */
   username: string;
+};
+
+/**
+ * Request body for testing Telegram notification
+ */
+export type TestNotificationRequest = {
+  /**
+   * Telegram Bot API token
+   */
+  bot_token: string;
+  /**
+   * Telegram chat ID
+   */
+  chat_id: string;
 };
 
 /**
@@ -676,6 +726,17 @@ export type UpdateFilterSettings = {
 };
 
 /**
+ * Request body for updating notification settings
+ */
+export type UpdateNotificationSettings = {
+  /**
+   * Enable/disable notifications globally
+   */
+  enabled?: boolean | null;
+  telegram?: null | UpdateTelegramConfig;
+};
+
+/**
  * Request body for updating proxy settings
  */
 export type UpdateProxySettings = {
@@ -718,7 +779,26 @@ export type UpdateQBittorrentConfig = {
 export type UpdateSettings = {
   downloader?: null | UpdateDownloaderSettings;
   filter?: null | UpdateFilterSettings;
+  notification?: null | UpdateNotificationSettings;
   proxy?: null | UpdateProxySettings;
+};
+
+/**
+ * Request body for updating Telegram settings
+ */
+export type UpdateTelegramConfig = {
+  /**
+   * Bot token (send null to clear)
+   */
+  bot_token?: string | null;
+  /**
+   * Chat ID (send null to clear)
+   */
+  chat_id?: string | null;
+  /**
+   * Enable Telegram notifications
+   */
+  enabled?: boolean | null;
 };
 
 /**
@@ -954,6 +1034,27 @@ export type GetMikanRssResponses = {
 
 export type GetMikanRssResponse =
   GetMikanRssResponses[keyof GetMikanRssResponses];
+
+export type TestNotificationData = {
+  body: TestNotificationRequest;
+  path?: never;
+  query?: never;
+  url: "/api/notification/test";
+};
+
+export type TestNotificationErrors = {
+  /**
+   * Invalid configuration
+   */
+  400: unknown;
+};
+
+export type TestNotificationResponses = {
+  /**
+   * Notification sent successfully
+   */
+  200: unknown;
+};
 
 export type TestProxyData = {
   body: TestProxyRequest;

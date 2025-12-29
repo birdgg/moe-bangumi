@@ -41,6 +41,9 @@ import type {
   TestDownloaderConnectionData,
   TestDownloaderConnectionErrors,
   TestDownloaderConnectionResponses,
+  TestNotificationData,
+  TestNotificationErrors,
+  TestNotificationResponses,
   TestProxyData,
   TestProxyErrors,
   TestProxyResponses,
@@ -203,6 +206,25 @@ export const getMikanRss = <ThrowOnError extends boolean = false>(
   (options.client ?? client).get<GetMikanRssResponses, unknown, ThrowOnError>({
     url: "/api/mikan/rss",
     ...options,
+  });
+
+/**
+ * Test Telegram notification by sending a test message
+ */
+export const testNotification = <ThrowOnError extends boolean = false>(
+  options: Options<TestNotificationData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    TestNotificationResponses,
+    TestNotificationErrors,
+    ThrowOnError
+  >({
+    url: "/api/notification/test",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

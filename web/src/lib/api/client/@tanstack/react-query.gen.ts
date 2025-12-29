@@ -27,6 +27,7 @@ import {
   searchTmdb,
   searchTorrents,
   testDownloaderConnection,
+  testNotification,
   testProxy,
   updateBangumi,
   updateSettings,
@@ -62,6 +63,7 @@ import type {
   SearchTorrentsData,
   SearchTorrentsResponse,
   TestDownloaderConnectionData,
+  TestNotificationData,
   TestProxyData,
   UpdateBangumiData,
   UpdateBangumiResponse,
@@ -423,6 +425,29 @@ export const getMikanRssOptions = (options: Options<GetMikanRssData>) =>
     },
     queryKey: getMikanRssQueryKey(options),
   });
+
+/**
+ * Test Telegram notification by sending a test message
+ */
+export const testNotificationMutation = (
+  options?: Partial<Options<TestNotificationData>>,
+): UseMutationOptions<unknown, DefaultError, Options<TestNotificationData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<TestNotificationData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await testNotification({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Test proxy connection by making a request to mikanani.me

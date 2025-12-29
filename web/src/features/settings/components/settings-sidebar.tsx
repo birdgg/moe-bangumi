@@ -35,7 +35,6 @@ const sidebarItems: SettingsSidebarItem[] = [
     id: "notification",
     label: "通知",
     icon: <IconBrandTelegram className="size-4" />,
-    disabled: true,
   },
 ];
 

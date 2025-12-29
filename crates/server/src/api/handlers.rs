@@ -56,7 +56,10 @@ pub use episodes::get_episodes;
 pub use logs::{cleanup_logs, get_logs, stream_logs};
 pub use mikan::get_mikan_rss;
 pub use search::{search_bgmtv, search_mikan, search_tmdb};
-pub use settings::{get_settings, reset_settings, test_proxy, update_settings, TestProxyRequest};
+pub use settings::{
+    get_settings, reset_settings, test_notification, test_proxy, update_settings,
+    TestNotificationRequest, TestProxyRequest,
+};
 pub use torrent_search::search_torrents;
 pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 
@@ -77,7 +80,8 @@ pub use mikan::__path_get_mikan_rss;
 pub use search::{__path_search_bgmtv, __path_search_mikan, __path_search_tmdb};
 #[doc(hidden)]
 pub use settings::{
-    __path_get_settings, __path_reset_settings, __path_test_proxy, __path_update_settings,
+    __path_get_settings, __path_reset_settings, __path_test_notification, __path_test_proxy,
+    __path_update_settings,
 };
 #[doc(hidden)]
 pub use torrent_search::__path_search_torrents;
