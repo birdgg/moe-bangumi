@@ -12,6 +12,7 @@ serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
+anyhow.workspace = true
 async-trait.workspace = true
 utoipa.workspace = true
 utoipa-axum.workspace = true
@@ -23,6 +24,7 @@ mikan = { path = "../mikan" }
 qbittorrent = { path = "../qbittorrent" }
 downloader = { path = "../downloader" }
 rss = { path = "../rss" }
+notify = { path = "../notify" }
 parser = { path = "../parser" }
 pathgen = { path = "../pathgen" }
 chrono.workspace = true

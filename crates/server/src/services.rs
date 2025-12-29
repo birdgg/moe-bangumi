@@ -3,6 +3,7 @@ mod cache;
 mod downloader;
 mod http_client;
 mod log;
+mod notification;
 mod poster;
 mod rss_processing;
 mod scheduler;
@@ -18,9 +19,12 @@ pub use downloader::{
 };
 pub use http_client::{HttpClientError, HttpClientService};
 pub use log::{LogError, LogService};
+pub use notification::{NotificationError, NotificationService};
 pub use poster::{PosterError, PosterService};
 pub use rss_processing::RssProcessingService;
-pub use scheduler::{JobResult, LogCleanupJob, RssFetchJob, SchedulerJob, SchedulerService};
+pub use scheduler::{
+    JobResult, LogCleanupJob, RssFetchJob, SchedulerJob, SchedulerService,
+};
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
 pub use torrent_search::{TorrentSearchError, TorrentSearchService};
 pub use tracing_layer::{create_log_channel, start_log_writer, DatabaseLayer, LogReceiver};

@@ -8,8 +8,8 @@ use tmdb::TmdbClient;
 use crate::config::Config;
 use crate::services::{
     BangumiService, CacheService, DownloaderService, HttpClientService, LogCleanupJob, LogService,
-    PosterService, RssFetchJob, RssProcessingService, SchedulerService, SettingsService,
-    TorrentSearchService,
+    NotificationService, PosterService, RssFetchJob, RssProcessingService, SchedulerService,
+    SettingsService, TorrentSearchService,
 };
 
 #[derive(Clone)]
@@ -30,6 +30,7 @@ pub struct AppState {
     pub bangumi: Arc<BangumiService>,
     pub cache: Arc<CacheService>,
     pub torrent_search: Arc<TorrentSearchService>,
+    pub notification: Arc<NotificationService>,
 }
 
 /// Create a client provider closure from HttpClientService
@@ -114,6 +115,12 @@ impl AppState {
             Arc::clone(&rss_processing),
         ));
 
+        // Create notification service
+        let notification = Arc::new(NotificationService::new(
+            Arc::clone(&settings),
+            Arc::clone(&http_client_service),
+        ));
+
         // Create and start scheduler service
         let scheduler = SchedulerService::new()
             .with_arc_job(Arc::clone(&rss_fetch_job))
@@ -137,6 +144,7 @@ impl AppState {
             bangumi,
             cache,
             torrent_search,
+            notification,
         }
     }
 }

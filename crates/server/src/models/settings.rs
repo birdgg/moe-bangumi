@@ -17,6 +17,9 @@ pub struct Settings {
     /// Proxy configuration for HTTP client
     #[serde(default)]
     pub proxy: ProxySettings,
+    /// Notification configuration
+    #[serde(default)]
+    pub notification: NotificationSettings,
 }
 
 /// Downloader configuration with per-type configs
@@ -220,6 +223,40 @@ impl Default for ProxySettings {
     }
 }
 
+/// Notification configuration
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct NotificationSettings {
+    /// Global enable/disable for notifications
+    #[serde(default)]
+    pub enabled: bool,
+    /// Telegram configuration
+    #[serde(default)]
+    pub telegram: TelegramConfig,
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            telegram: TelegramConfig::default(),
+        }
+    }
+}
+
+/// Telegram notification configuration
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct TelegramConfig {
+    /// Enable Telegram notifications
+    #[serde(default)]
+    pub enabled: bool,
+    /// Telegram Bot API token
+    #[serde(default)]
+    pub bot_token: String,
+    /// Telegram chat ID to send notifications to
+    #[serde(default)]
+    pub chat_id: String,
+}
+
 impl Settings {
     /// Merge update data into current settings
     pub fn merge(&self, update: UpdateSettings) -> Self {
@@ -294,6 +331,26 @@ impl Settings {
                     .unwrap_or(Clearable::Unchanged)
                     .resolve_or_empty(self.proxy.password.clone()),
             },
+            notification: if let Some(n) = update.notification {
+                NotificationSettings {
+                    enabled: n.enabled.unwrap_or(self.notification.enabled),
+                    telegram: if let Some(t) = n.telegram {
+                        TelegramConfig {
+                            enabled: t.enabled.unwrap_or(self.notification.telegram.enabled),
+                            bot_token: t
+                                .bot_token
+                                .resolve_or_empty(self.notification.telegram.bot_token.clone()),
+                            chat_id: t
+                                .chat_id
+                                .resolve_or_empty(self.notification.telegram.chat_id.clone()),
+                        }
+                    } else {
+                        self.notification.telegram.clone()
+                    },
+                }
+            } else {
+                self.notification.clone()
+            },
         }
     }
 }
@@ -311,6 +368,9 @@ pub struct UpdateSettings {
     /// Proxy configuration updates
     #[serde(default)]
     pub proxy: Option<UpdateProxySettings>,
+    /// Notification configuration updates
+    #[serde(default)]
+    pub notification: Option<UpdateNotificationSettings>,
 }
 
 /// Request body for updating downloader settings
@@ -388,4 +448,31 @@ pub struct UpdateProxySettings {
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub password: Clearable<String>,
+}
+
+/// Request body for updating notification settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdateNotificationSettings {
+    /// Enable/disable notifications globally
+    #[serde(default)]
+    pub enabled: Option<bool>,
+    /// Telegram configuration updates
+    #[serde(default)]
+    pub telegram: Option<UpdateTelegramConfig>,
+}
+
+/// Request body for updating Telegram settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdateTelegramConfig {
+    /// Enable Telegram notifications
+    #[serde(default)]
+    pub enabled: Option<bool>,
+    /// Bot token (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub bot_token: Clearable<String>,
+    /// Chat ID (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub chat_id: Clearable<String>,
 }

@@ -50,6 +50,11 @@ pub async fn run_server(
     let posters_path = config.posters_path();
     let state = AppState::new(pool, config, settings);
 
+    // Start notification worker
+    if let Err(e) = state.notification.start().await {
+        tracing::warn!("Failed to start notification service: {}", e);
+    }
+
     // Start log writer if receiver is provided
     if let Some(receiver) = log_receiver {
         start_log_writer(receiver, state.logs.clone());
