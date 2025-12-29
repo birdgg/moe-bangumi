@@ -33,27 +33,40 @@ impl DownloaderService {
         }
     }
 
-    /// Check if downloader settings have changed
+    /// Check if downloader settings have changed (only checks active type's config)
     fn settings_changed(old: &DownloaderSettings, new: &DownloaderSettings) -> bool {
-        old.downloader_type != new.downloader_type
-            || old.url != new.url
-            || old.username != new.username
-            || old.password != new.password
+        // Type change always triggers rebuild
+        if old.downloader_type != new.downloader_type {
+            return true;
+        }
+
+        // Check if current downloader's config changed
+        match new.downloader_type {
+            DownloaderType::QBittorrent => {
+                let old_cfg = &old.configs.qbittorrent;
+                let new_cfg = &new.configs.qbittorrent;
+                old_cfg.url != new_cfg.url
+                    || old_cfg.username != new_cfg.username
+                    || old_cfg.password != new_cfg.password
+            }
+            DownloaderType::Transmission => {
+                let old_cfg = &old.configs.transmission;
+                let new_cfg = &new.configs.transmission;
+                old_cfg.url != new_cfg.url
+                    || old_cfg.username != new_cfg.username
+                    || old_cfg.password != new_cfg.password
+            }
+        }
     }
 
     /// Check if settings are complete (all required fields filled)
     fn settings_complete(settings: &DownloaderSettings) -> bool {
-        !settings.url.is_empty() && !settings.username.is_empty() && !settings.password.is_empty()
+        settings.is_active_config_complete()
     }
 
     /// Create a downloader client from settings
     fn create_client(settings: &DownloaderSettings) -> downloader::Result<DownloaderClient> {
-        let config = DownloaderConfig {
-            downloader_type: settings.downloader_type,
-            url: settings.url.clone(),
-            username: Some(settings.username.clone()),
-            password: Some(settings.password.clone()),
-        };
+        let config = settings.get_active_config();
         DownloaderClient::from_config(config)
     }
 

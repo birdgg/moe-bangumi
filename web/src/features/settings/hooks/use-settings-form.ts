@@ -10,10 +10,19 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
   return {
     downloader: {
       type: settings?.downloader?.type ?? "qBittorrent",
-      url: settings?.downloader?.url ?? "",
-      username: settings?.downloader?.username ?? "",
-      password: settings?.downloader?.password ?? "",
       save_path: settings?.downloader?.save_path ?? "/Media/Bangumi",
+      configs: {
+        qbittorrent: {
+          url: settings?.downloader?.configs?.qbittorrent?.url ?? "http://localhost:8080",
+          username: settings?.downloader?.configs?.qbittorrent?.username ?? "",
+          password: settings?.downloader?.configs?.qbittorrent?.password ?? "",
+        },
+        transmission: {
+          url: settings?.downloader?.configs?.transmission?.url ?? "http://localhost:9091/transmission/rpc",
+          username: settings?.downloader?.configs?.transmission?.username ?? "",
+          password: settings?.downloader?.configs?.transmission?.password ?? "",
+        },
+      },
     },
     filter: {
       global_rss_filters: settings?.filter?.global_rss_filters ?? [],
@@ -27,16 +36,32 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
 }
 
 /**
- * Convert form data to API UpdateSettings format
+ * Convert form data to API UpdateSettings format.
+ * Only sends the active downloader's config to avoid overwriting inactive configs.
  */
 export function formDataToUpdateSettings(data: SettingsFormData): UpdateSettings {
+  const isQBittorrent = data.downloader.type === "qBittorrent";
+
   return {
     downloader: {
       type: data.downloader.type,
-      url: data.downloader.url,
-      username: data.downloader.username,
-      password: data.downloader.password,
       save_path: data.downloader.save_path,
+      // Only send the active downloader's config
+      ...(isQBittorrent
+        ? {
+            qbittorrent: {
+              url: data.downloader.configs.qbittorrent.url,
+              username: data.downloader.configs.qbittorrent.username,
+              password: data.downloader.configs.qbittorrent.password,
+            },
+          }
+        : {
+            transmission: {
+              url: data.downloader.configs.transmission.url,
+              username: data.downloader.configs.transmission.username || null,
+              password: data.downloader.configs.transmission.password || null,
+            },
+          }),
     },
     filter: {
       global_rss_filters: data.filter.global_rss_filters,
@@ -64,12 +89,20 @@ export function useSettingsForm(initialSettings?: Settings) {
   React.useEffect(() => {
     if (initialSettings) {
       const formData = settingsToFormData(initialSettings);
+      // Downloader settings
       form.setFieldValue("downloader.type", formData.downloader.type);
-      form.setFieldValue("downloader.url", formData.downloader.url);
-      form.setFieldValue("downloader.username", formData.downloader.username);
-      form.setFieldValue("downloader.password", formData.downloader.password);
       form.setFieldValue("downloader.save_path", formData.downloader.save_path);
+      // qBittorrent configs
+      form.setFieldValue("downloader.configs.qbittorrent.url", formData.downloader.configs.qbittorrent.url);
+      form.setFieldValue("downloader.configs.qbittorrent.username", formData.downloader.configs.qbittorrent.username);
+      form.setFieldValue("downloader.configs.qbittorrent.password", formData.downloader.configs.qbittorrent.password);
+      // Transmission configs
+      form.setFieldValue("downloader.configs.transmission.url", formData.downloader.configs.transmission.url);
+      form.setFieldValue("downloader.configs.transmission.username", formData.downloader.configs.transmission.username);
+      form.setFieldValue("downloader.configs.transmission.password", formData.downloader.configs.transmission.password);
+      // Filter settings
       form.setFieldValue("filter.global_rss_filters", formData.filter.global_rss_filters);
+      // Proxy settings
       form.setFieldValue("proxy.url", formData.proxy.url);
       form.setFieldValue("proxy.username", formData.proxy.username);
       form.setFieldValue("proxy.password", formData.proxy.password);

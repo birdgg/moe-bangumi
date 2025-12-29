@@ -34,24 +34,23 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
   const [connectionStatus, setConnectionStatus] = React.useState<ConnectionStatus>("idle");
   const [errorMessage, setErrorMessage] = React.useState<string>("");
 
-  // Check if current type requires credentials
-  const isTransmission = form.state.values.downloader.type === "Transmission";
-
   // Test connection using current form values
   const handleCheckConnection = async () => {
     setErrorMessage("");
 
     const values = form.state.values.downloader;
+    const isQB = values.type === "qBittorrent";
+    const currentConfig = isQB ? values.configs.qbittorrent : values.configs.transmission;
 
     // URL is always required
-    if (!values.url) {
+    if (!currentConfig.url) {
       setConnectionStatus("error");
       setErrorMessage("请填写服务器地址");
       return;
     }
 
     // qBittorrent requires username and password
-    if (!isTransmission && (!values.username || !values.password)) {
+    if (isQB && (!currentConfig.username || !currentConfig.password)) {
       setConnectionStatus("error");
       setErrorMessage("请填写用户名和密码");
       return;
@@ -63,9 +62,9 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
       const { response } = await testDownloaderConnection({
         body: {
           type: values.type,
-          url: values.url,
-          username: values.username,
-          password: values.password,
+          url: currentConfig.url,
+          username: currentConfig.username,
+          password: currentConfig.password,
         },
       });
 
@@ -92,7 +91,12 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
             <FormField label="下载器类型">
               <Select
                 value={field.state.value}
-                onValueChange={(v) => field.handleChange(v as DownloaderTypeValue)}
+                onValueChange={(v) => {
+                  field.handleChange(v as DownloaderTypeValue);
+                  // Reset connection status when switching
+                  setConnectionStatus("idle");
+                  setErrorMessage("");
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -109,79 +113,175 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
           )}
         </form.Field>
 
-        {/* URL */}
-        <form.Field name="downloader.url">
-          {(field) => {
-            const error = getErrorMessage(field.state.meta.errors[0]);
+        {/* Subscribe to downloader type to conditionally render configs */}
+        <form.Subscribe selector={(state) => state.values.downloader.type}>
+          {(downloaderType) => {
+            const isQBittorrent = downloaderType === "qBittorrent";
+            const isTransmission = downloaderType === "Transmission";
+
             return (
-              <FormField label="服务器地址">
-                <Input
-                  type="url"
-                  placeholder="http://localhost:8080"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                />
-                {error && (
-                  <p className="text-xs text-destructive mt-1">{error}</p>
+              <>
+                {/* qBittorrent Config */}
+                {isQBittorrent && (
+                  <>
+                    {/* URL */}
+                    <form.Field name="downloader.configs.qbittorrent.url">
+                      {(field) => {
+                        const error = getErrorMessage(field.state.meta.errors[0]);
+                        return (
+                          <FormField label="服务器地址">
+                            <Input
+                              type="url"
+                              placeholder="http://localhost:8080"
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                            />
+                            {error && (
+                              <p className="text-xs text-destructive mt-1">{error}</p>
+                            )}
+                          </FormField>
+                        );
+                      }}
+                    </form.Field>
+
+                    {/* Username & Password */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <form.Field name="downloader.configs.qbittorrent.username">
+                        {(field) => {
+                          const error = getErrorMessage(field.state.meta.errors[0]);
+                          return (
+                            <FormField label="用户名">
+                              <Input
+                                type="text"
+                                placeholder="admin"
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(e.target.value)}
+                                onBlur={field.handleBlur}
+                              />
+                              {error && (
+                                <p className="text-xs text-destructive mt-1">{error}</p>
+                              )}
+                            </FormField>
+                          );
+                        }}
+                      </form.Field>
+
+                      <form.Field name="downloader.configs.qbittorrent.password">
+                        {(field) => {
+                          const error = getErrorMessage(field.state.meta.errors[0]);
+                          return (
+                            <FormField label="密码">
+                              <div className="relative">
+                                <Input
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  value={field.state.value}
+                                  onChange={(e) => field.handleChange(e.target.value)}
+                                  onBlur={field.handleBlur}
+                                  className="pr-10"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                                >
+                                  {showPassword ? <IconEyeOff className="size-4" /> : <IconEye className="size-4" />}
+                                </button>
+                              </div>
+                              {error && (
+                                <p className="text-xs text-destructive mt-1">{error}</p>
+                              )}
+                            </FormField>
+                          );
+                        }}
+                      </form.Field>
+                    </div>
+                  </>
                 )}
-              </FormField>
+
+                {/* Transmission Config */}
+                {isTransmission && (
+                  <>
+                    {/* URL */}
+                    <form.Field name="downloader.configs.transmission.url">
+                      {(field) => {
+                        const error = getErrorMessage(field.state.meta.errors[0]);
+                        return (
+                          <FormField label="服务器地址">
+                            <Input
+                              type="url"
+                              placeholder="http://localhost:9091/transmission/rpc"
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                            />
+                            {error && (
+                              <p className="text-xs text-destructive mt-1">{error}</p>
+                            )}
+                          </FormField>
+                        );
+                      }}
+                    </form.Field>
+
+                    {/* Username & Password (Optional) */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <form.Field name="downloader.configs.transmission.username">
+                        {(field) => {
+                          const error = getErrorMessage(field.state.meta.errors[0]);
+                          return (
+                            <FormField label="用户名 (可选)">
+                              <Input
+                                type="text"
+                                placeholder="admin"
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(e.target.value)}
+                                onBlur={field.handleBlur}
+                              />
+                              {error && (
+                                <p className="text-xs text-destructive mt-1">{error}</p>
+                              )}
+                            </FormField>
+                          );
+                        }}
+                      </form.Field>
+
+                      <form.Field name="downloader.configs.transmission.password">
+                        {(field) => {
+                          const error = getErrorMessage(field.state.meta.errors[0]);
+                          return (
+                            <FormField label="密码 (可选)">
+                              <div className="relative">
+                                <Input
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  value={field.state.value}
+                                  onChange={(e) => field.handleChange(e.target.value)}
+                                  onBlur={field.handleBlur}
+                                  className="pr-10"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                                >
+                                  {showPassword ? <IconEyeOff className="size-4" /> : <IconEye className="size-4" />}
+                                </button>
+                              </div>
+                              {error && (
+                                <p className="text-xs text-destructive mt-1">{error}</p>
+                              )}
+                            </FormField>
+                          );
+                        }}
+                      </form.Field>
+                    </div>
+                  </>
+                )}
+              </>
             );
           }}
-        </form.Field>
-
-        {/* Username & Password */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form.Field name="downloader.username">
-            {(field) => {
-              const error = getErrorMessage(field.state.meta.errors[0]);
-              return (
-                <FormField label={isTransmission ? "用户名 (可选)" : "用户名"}>
-                  <Input
-                    type="text"
-                    placeholder="admin"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                  {error && (
-                    <p className="text-xs text-destructive mt-1">{error}</p>
-                  )}
-                </FormField>
-              );
-            }}
-          </form.Field>
-
-          <form.Field name="downloader.password">
-            {(field) => {
-              const error = getErrorMessage(field.state.meta.errors[0]);
-              return (
-                <FormField label={isTransmission ? "密码 (可选)" : "密码"}>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {showPassword ? <IconEyeOff className="size-4" /> : <IconEye className="size-4" />}
-                    </button>
-                  </div>
-                  {error && (
-                    <p className="text-xs text-destructive mt-1">{error}</p>
-                  )}
-                </FormField>
-              );
-            }}
-          </form.Field>
-        </div>
+        </form.Subscribe>
 
         {/* Test Connection */}
         <div className="flex items-center gap-3">
@@ -215,7 +315,7 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
           )}
         </div>
 
-        {/* Save Path */}
+        {/* Save Path (shared across all downloaders) */}
         <form.Field name="downloader.save_path">
           {(field) => {
             const error = getErrorMessage(field.state.meta.errors[0]);

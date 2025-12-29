@@ -1,4 +1,5 @@
 use super::DownloaderType;
+use downloader::DownloaderConfig;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -18,34 +19,97 @@ pub struct Settings {
     pub proxy: ProxySettings,
 }
 
-/// Downloader configuration (supports qBittorrent)
+/// Downloader configuration with per-type configs
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct DownloaderSettings {
-    /// Downloader type: qbittorrent
+    /// Currently active downloader type
     #[serde(default = "DownloaderSettings::default_type", rename = "type")]
     pub downloader_type: DownloaderType,
-    /// Downloader Web UI URL (e.g., http://localhost:8080)
-    #[serde(default = "DownloaderSettings::default_url")]
-    pub url: String,
-    /// Username (qBittorrent)
-    #[serde(default)]
-    pub username: String,
-    /// Password (qBittorrent)
-    #[serde(default)]
-    pub password: String,
-    /// Default save path for downloads
+    /// Default save path for downloads (shared across all downloaders)
     #[serde(default = "DownloaderSettings::default_save_path")]
     pub save_path: String,
+    /// Per-downloader configurations
+    #[serde(default)]
+    pub configs: DownloaderConfigs,
+}
+
+/// Per-downloader configurations
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct DownloaderConfigs {
+    /// qBittorrent configuration
+    #[serde(default)]
+    pub qbittorrent: QBittorrentConfig,
+    /// Transmission configuration
+    #[serde(default)]
+    pub transmission: TransmissionConfig,
+}
+
+/// qBittorrent-specific configuration
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct QBittorrentConfig {
+    /// Web UI URL (e.g., http://localhost:8080)
+    #[serde(default = "QBittorrentConfig::default_url")]
+    pub url: String,
+    /// Username (required)
+    #[serde(default)]
+    pub username: String,
+    /// Password (required)
+    #[serde(default)]
+    pub password: String,
+}
+
+impl Default for QBittorrentConfig {
+    fn default() -> Self {
+        Self {
+            url: Self::default_url(),
+            username: String::new(),
+            password: String::new(),
+        }
+    }
+}
+
+impl QBittorrentConfig {
+    fn default_url() -> String {
+        "http://localhost:8080".to_string()
+    }
+}
+
+/// Transmission-specific configuration
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TransmissionConfig {
+    /// RPC URL (e.g., http://localhost:9091/transmission/rpc)
+    #[serde(default = "TransmissionConfig::default_url")]
+    pub url: String,
+    /// Username (optional)
+    #[serde(default)]
+    pub username: String,
+    /// Password (optional)
+    #[serde(default)]
+    pub password: String,
+}
+
+impl Default for TransmissionConfig {
+    fn default() -> Self {
+        Self {
+            url: Self::default_url(),
+            username: String::new(),
+            password: String::new(),
+        }
+    }
+}
+
+impl TransmissionConfig {
+    fn default_url() -> String {
+        "http://localhost:9091/transmission/rpc".to_string()
+    }
 }
 
 impl Default for DownloaderSettings {
     fn default() -> Self {
         Self {
             downloader_type: Self::default_type(),
-            url: Self::default_url(),
-            username: String::new(),
-            password: String::new(),
             save_path: Self::default_save_path(),
+            configs: DownloaderConfigs::default(),
         }
     }
 }
@@ -55,12 +119,54 @@ impl DownloaderSettings {
         DownloaderType::QBittorrent
     }
 
-    fn default_url() -> String {
-        "http://localhost:8080".to_string()
-    }
-
     fn default_save_path() -> String {
         "/Media/Bangumi".to_string()
+    }
+
+    /// Get the active downloader's configuration
+    pub fn get_active_config(&self) -> DownloaderConfig {
+        match self.downloader_type {
+            DownloaderType::QBittorrent => {
+                let cfg = &self.configs.qbittorrent;
+                DownloaderConfig {
+                    downloader_type: DownloaderType::QBittorrent,
+                    url: cfg.url.clone(),
+                    username: Some(cfg.username.clone()),
+                    password: Some(cfg.password.clone()),
+                }
+            }
+            DownloaderType::Transmission => {
+                let cfg = &self.configs.transmission;
+                DownloaderConfig {
+                    downloader_type: DownloaderType::Transmission,
+                    url: cfg.url.clone(),
+                    username: if cfg.username.is_empty() {
+                        None
+                    } else {
+                        Some(cfg.username.clone())
+                    },
+                    password: if cfg.password.is_empty() {
+                        None
+                    } else {
+                        Some(cfg.password.clone())
+                    },
+                }
+            }
+        }
+    }
+
+    /// Check if the active downloader config is complete
+    pub fn is_active_config_complete(&self) -> bool {
+        match self.downloader_type {
+            DownloaderType::QBittorrent => {
+                let cfg = &self.configs.qbittorrent;
+                !cfg.url.is_empty() && !cfg.username.is_empty() && !cfg.password.is_empty()
+            }
+            DownloaderType::Transmission => {
+                // Transmission only requires URL
+                !self.configs.transmission.url.is_empty()
+            }
+        }
     }
 }
 
@@ -118,36 +224,49 @@ impl Settings {
     /// Merge update data into current settings
     pub fn merge(&self, update: UpdateSettings) -> Self {
         Self {
-            downloader: DownloaderSettings {
-                downloader_type: update
-                    .downloader
-                    .as_ref()
-                    .and_then(|d| d.downloader_type)
-                    .unwrap_or(self.downloader.downloader_type),
-                url: update
-                    .downloader
-                    .as_ref()
-                    .map(|d| d.url.clone())
-                    .unwrap_or(Clearable::Unchanged)
-                    .resolve_or_empty(self.downloader.url.clone()),
-                username: update
-                    .downloader
-                    .as_ref()
-                    .map(|d| d.username.clone())
-                    .unwrap_or(Clearable::Unchanged)
-                    .resolve_or_empty(self.downloader.username.clone()),
-                password: update
-                    .downloader
-                    .as_ref()
-                    .map(|d| d.password.clone())
-                    .unwrap_or(Clearable::Unchanged)
-                    .resolve_or_empty(self.downloader.password.clone()),
-                save_path: update
-                    .downloader
-                    .as_ref()
-                    .map(|d| d.save_path.clone())
-                    .unwrap_or(Clearable::Unchanged)
-                    .resolve_or_empty(self.downloader.save_path.clone()),
+            downloader: if let Some(d) = update.downloader {
+                DownloaderSettings {
+                    downloader_type: d
+                        .downloader_type
+                        .unwrap_or(self.downloader.downloader_type),
+                    save_path: d
+                        .save_path
+                        .resolve_or_empty(self.downloader.save_path.clone()),
+                    configs: DownloaderConfigs {
+                        qbittorrent: if let Some(qb) = d.qbittorrent {
+                            QBittorrentConfig {
+                                url: qb
+                                    .url
+                                    .resolve_or_empty(self.downloader.configs.qbittorrent.url.clone()),
+                                username: qb.username.resolve_or_empty(
+                                    self.downloader.configs.qbittorrent.username.clone(),
+                                ),
+                                password: qb.password.resolve_or_empty(
+                                    self.downloader.configs.qbittorrent.password.clone(),
+                                ),
+                            }
+                        } else {
+                            self.downloader.configs.qbittorrent.clone()
+                        },
+                        transmission: if let Some(tr) = d.transmission {
+                            TransmissionConfig {
+                                url: tr.url.resolve_or_empty(
+                                    self.downloader.configs.transmission.url.clone(),
+                                ),
+                                username: tr.username.resolve_or_empty(
+                                    self.downloader.configs.transmission.username.clone(),
+                                ),
+                                password: tr.password.resolve_or_empty(
+                                    self.downloader.configs.transmission.password.clone(),
+                                ),
+                            }
+                        } else {
+                            self.downloader.configs.transmission.clone()
+                        },
+                    },
+                }
+            } else {
+                self.downloader.clone()
             },
             filter: FilterSettings {
                 global_rss_filters: update
@@ -197,10 +316,25 @@ pub struct UpdateSettings {
 /// Request body for updating downloader settings
 #[derive(Debug, Clone, Default, Deserialize, ToSchema)]
 pub struct UpdateDownloaderSettings {
-    /// Downloader type: qbittorrent
+    /// Switch active downloader type
     #[serde(default, rename = "type")]
     pub downloader_type: Option<DownloaderType>,
-    /// Downloader Web UI URL (send null to clear)
+    /// Update shared save path (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub save_path: Clearable<String>,
+    /// Update qBittorrent config
+    #[serde(default)]
+    pub qbittorrent: Option<UpdateQBittorrentConfig>,
+    /// Update Transmission config
+    #[serde(default)]
+    pub transmission: Option<UpdateTransmissionConfig>,
+}
+
+/// Request body for updating qBittorrent settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdateQBittorrentConfig {
+    /// Web UI URL (send null to clear)
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub url: Clearable<String>,
@@ -212,10 +346,23 @@ pub struct UpdateDownloaderSettings {
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub password: Clearable<String>,
-    /// Default save path for downloads (send null to clear)
+}
+
+/// Request body for updating Transmission settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdateTransmissionConfig {
+    /// RPC URL (send null to clear)
     #[serde(default)]
     #[schema(value_type = Option<String>)]
-    pub save_path: Clearable<String>,
+    pub url: Clearable<String>,
+    /// Username (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub username: Clearable<String>,
+    /// Password (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub password: Clearable<String>,
 }
 
 /// Request body for updating filter settings

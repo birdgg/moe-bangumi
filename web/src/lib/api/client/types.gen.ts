@@ -196,29 +196,35 @@ export type DeleteTorrentsRequest = {
 };
 
 /**
- * Downloader configuration (supports qBittorrent)
+ * Per-downloader configurations
+ */
+export type DownloaderConfigs = {
+  /**
+   * qBittorrent configuration
+   */
+  qbittorrent?: QBittorrentConfig;
+  /**
+   * Transmission configuration
+   */
+  transmission?: TransmissionConfig;
+};
+
+/**
+ * Downloader configuration with per-type configs
  */
 export type DownloaderSettings = {
   /**
-   * Password (qBittorrent)
+   * Per-downloader configurations
    */
-  password?: string;
+  configs?: DownloaderConfigs;
   /**
-   * Default save path for downloads
+   * Default save path for downloads (shared across all downloaders)
    */
   save_path?: string;
   /**
-   * Downloader type: qbittorrent
+   * Currently active downloader type
    */
   type?: DownloaderType;
-  /**
-   * Downloader Web UI URL (e.g., http://localhost:8080)
-   */
-  url?: string;
-  /**
-   * Username (qBittorrent)
-   */
-  username?: string;
 };
 
 /**
@@ -312,6 +318,24 @@ export type ProxySettings = {
   url?: string;
   /**
    * Proxy username (optional)
+   */
+  username?: string;
+};
+
+/**
+ * qBittorrent-specific configuration
+ */
+export type QBittorrentConfig = {
+  /**
+   * Password (required)
+   */
+  password?: string;
+  /**
+   * Web UI URL (e.g., http://localhost:8080)
+   */
+  url?: string;
+  /**
+   * Username (required)
    */
   username?: string;
 };
@@ -564,6 +588,24 @@ export type TorrentSearchResult = {
 
 export type TorrentSource = "mikan" | "nyaa";
 
+/**
+ * Transmission-specific configuration
+ */
+export type TransmissionConfig = {
+  /**
+   * Password (optional)
+   */
+  password?: string;
+  /**
+   * RPC URL (e.g., http://localhost:9091/transmission/rpc)
+   */
+  url?: string;
+  /**
+   * Username (optional)
+   */
+  username?: string;
+};
+
 export type TvShow = {
   backdrop_path?: string | null;
   first_air_date?: string | null;
@@ -610,23 +652,13 @@ export type UpdateBangumiRequest = {
  * Request body for updating downloader settings
  */
 export type UpdateDownloaderSettings = {
+  qbittorrent?: null | UpdateQBittorrentConfig;
   /**
-   * Password (send null to clear)
-   */
-  password?: string | null;
-  /**
-   * Default save path for downloads (send null to clear)
+   * Update shared save path (send null to clear)
    */
   save_path?: string | null;
+  transmission?: null | UpdateTransmissionConfig;
   type?: null | DownloaderType;
-  /**
-   * Downloader Web UI URL (send null to clear)
-   */
-  url?: string | null;
-  /**
-   * Username (send null to clear)
-   */
-  username?: string | null;
 };
 
 /**
@@ -658,6 +690,24 @@ export type UpdateProxySettings = {
 };
 
 /**
+ * Request body for updating qBittorrent settings
+ */
+export type UpdateQBittorrentConfig = {
+  /**
+   * Password (send null to clear)
+   */
+  password?: string | null;
+  /**
+   * Web UI URL (send null to clear)
+   */
+  url?: string | null;
+  /**
+   * Username (send null to clear)
+   */
+  username?: string | null;
+};
+
+/**
  * Request body for updating settings.
  * All fields are optional - only provided fields will be updated.
  */
@@ -665,6 +715,24 @@ export type UpdateSettings = {
   downloader?: null | UpdateDownloaderSettings;
   filter?: null | UpdateFilterSettings;
   proxy?: null | UpdateProxySettings;
+};
+
+/**
+ * Request body for updating Transmission settings
+ */
+export type UpdateTransmissionConfig = {
+  /**
+   * Password (send null to clear)
+   */
+  password?: string | null;
+  /**
+   * RPC URL (send null to clear)
+   */
+  url?: string | null;
+  /**
+   * Username (send null to clear)
+   */
+  username?: string | null;
 };
 
 export type GetBangumiData = {

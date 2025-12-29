@@ -274,29 +274,37 @@ export const DeleteTorrentsRequestSchema = {
   },
 } as const;
 
+export const DownloaderConfigsSchema = {
+  type: "object",
+  description: "Per-downloader configurations",
+  properties: {
+    qbittorrent: {
+      $ref: "#/components/schemas/QBittorrentConfig",
+      description: "qBittorrent configuration",
+    },
+    transmission: {
+      $ref: "#/components/schemas/TransmissionConfig",
+      description: "Transmission configuration",
+    },
+  },
+} as const;
+
 export const DownloaderSettingsSchema = {
   type: "object",
-  description: "Downloader configuration (supports qBittorrent)",
+  description: "Downloader configuration with per-type configs",
   properties: {
-    password: {
-      type: "string",
-      description: "Password (qBittorrent)",
+    configs: {
+      $ref: "#/components/schemas/DownloaderConfigs",
+      description: "Per-downloader configurations",
     },
     save_path: {
       type: "string",
-      description: "Default save path for downloads",
+      description:
+        "Default save path for downloads (shared across all downloaders)",
     },
     type: {
       $ref: "#/components/schemas/DownloaderType",
-      description: "Downloader type: qbittorrent",
-    },
-    url: {
-      type: "string",
-      description: "Downloader Web UI URL (e.g., http://localhost:8080)",
-    },
-    username: {
-      type: "string",
-      description: "Username (qBittorrent)",
+      description: "Currently active downloader type",
     },
   },
 } as const;
@@ -417,6 +425,25 @@ export const ProxySettingsSchema = {
     username: {
       type: "string",
       description: "Proxy username (optional)",
+    },
+  },
+} as const;
+
+export const QBittorrentConfigSchema = {
+  type: "object",
+  description: "qBittorrent-specific configuration",
+  properties: {
+    password: {
+      type: "string",
+      description: "Password (required)",
+    },
+    url: {
+      type: "string",
+      description: "Web UI URL (e.g., http://localhost:8080)",
+    },
+    username: {
+      type: "string",
+      description: "Username (required)",
     },
   },
 } as const;
@@ -822,6 +849,25 @@ export const TorrentSourceSchema = {
   enum: ["mikan", "nyaa"],
 } as const;
 
+export const TransmissionConfigSchema = {
+  type: "object",
+  description: "Transmission-specific configuration",
+  properties: {
+    password: {
+      type: "string",
+      description: "Password (optional)",
+    },
+    url: {
+      type: "string",
+      description: "RPC URL (e.g., http://localhost:9091/transmission/rpc)",
+    },
+    username: {
+      type: "string",
+      description: "Username (optional)",
+    },
+  },
+} as const;
+
 export const TvShowSchema = {
   type: "object",
   required: [
@@ -927,13 +973,31 @@ export const UpdateDownloaderSettingsSchema = {
   type: "object",
   description: "Request body for updating downloader settings",
   properties: {
-    password: {
-      type: ["string", "null"],
-      description: "Password (send null to clear)",
+    qbittorrent: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateQBittorrentConfig",
+          description: "Update qBittorrent config",
+        },
+      ],
     },
     save_path: {
       type: ["string", "null"],
-      description: "Default save path for downloads (send null to clear)",
+      description: "Update shared save path (send null to clear)",
+    },
+    transmission: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateTransmissionConfig",
+          description: "Update Transmission config",
+        },
+      ],
     },
     type: {
       oneOf: [
@@ -942,17 +1006,9 @@ export const UpdateDownloaderSettingsSchema = {
         },
         {
           $ref: "#/components/schemas/DownloaderType",
-          description: "Downloader type: qbittorrent",
+          description: "Switch active downloader type",
         },
       ],
-    },
-    url: {
-      type: ["string", "null"],
-      description: "Downloader Web UI URL (send null to clear)",
-    },
-    username: {
-      type: ["string", "null"],
-      description: "Username (send null to clear)",
     },
   },
 } as const;
@@ -982,6 +1038,25 @@ export const UpdateProxySettingsSchema = {
     url: {
       type: ["string", "null"],
       description: "Proxy server URL (send null to clear)",
+    },
+    username: {
+      type: ["string", "null"],
+      description: "Username (send null to clear)",
+    },
+  },
+} as const;
+
+export const UpdateQBittorrentConfigSchema = {
+  type: "object",
+  description: "Request body for updating qBittorrent settings",
+  properties: {
+    password: {
+      type: ["string", "null"],
+      description: "Password (send null to clear)",
+    },
+    url: {
+      type: ["string", "null"],
+      description: "Web UI URL (send null to clear)",
     },
     username: {
       type: ["string", "null"],
@@ -1027,6 +1102,25 @@ export const UpdateSettingsSchema = {
           description: "Proxy configuration updates",
         },
       ],
+    },
+  },
+} as const;
+
+export const UpdateTransmissionConfigSchema = {
+  type: "object",
+  description: "Request body for updating Transmission settings",
+  properties: {
+    password: {
+      type: ["string", "null"],
+      description: "Password (send null to clear)",
+    },
+    url: {
+      type: ["string", "null"],
+      description: "RPC URL (send null to clear)",
+    },
+    username: {
+      type: ["string", "null"],
+      description: "Username (send null to clear)",
     },
   },
 } as const;
