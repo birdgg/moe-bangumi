@@ -7,7 +7,7 @@ use crate::models::{CreateRss, Rss, UpdateRss};
 const SELECT_RSS: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, url, enabled, exclude_filters, include_filters, is_primary, "group"
+        bangumi_id, title, url, enabled, exclude_filters, include_filters, is_primary, "group"
     FROM rss
 "#;
 
@@ -28,12 +28,13 @@ impl RssRepository {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO rss (bangumi_id, url, enabled, exclude_filters, include_filters, is_primary, "group")
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO rss (bangumi_id, title, url, enabled, exclude_filters, include_filters, is_primary, "group")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             "#,
         )
         .bind(data.bangumi_id)
+        .bind(&data.title)
         .bind(&data.url)
         .bind(data.enabled)
         .bind(&exclude_filters_json)
@@ -203,6 +204,7 @@ struct RssRow {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
     bangumi_id: i64,
+    title: String,
     url: String,
     enabled: bool,
     exclude_filters: String,
@@ -223,6 +225,7 @@ impl From<RssRow> for Rss {
             created_at: row.created_at,
             updated_at: row.updated_at,
             bangumi_id: row.bangumi_id,
+            title: row.title,
             url: row.url,
             enabled: row.enabled,
             exclude_filters,

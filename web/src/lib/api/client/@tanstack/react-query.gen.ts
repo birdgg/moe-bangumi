@@ -19,7 +19,6 @@ import {
   getLogs,
   getMikanRss,
   getSettings,
-  listDownloadTasks,
   listTorrents,
   type Options,
   resetSettings,
@@ -51,8 +50,6 @@ import type {
   GetMikanRssResponse,
   GetSettingsData,
   GetSettingsResponse,
-  ListDownloadTasksData,
-  ListDownloadTasksResponse,
   ListTorrentsData,
   ListTorrentsResponse,
   ResetSettingsData,
@@ -217,34 +214,6 @@ export const updateBangumiMutation = (
   };
   return mutationOptions;
 };
-
-export const listDownloadTasksQueryKey = (
-  options?: Options<ListDownloadTasksData>,
-) => createQueryKey("listDownloadTasks", options);
-
-/**
- * List download tasks with real-time progress
- */
-export const listDownloadTasksOptions = (
-  options?: Options<ListDownloadTasksData>,
-) =>
-  queryOptions<
-    ListDownloadTasksResponse,
-    DefaultError,
-    ListDownloadTasksResponse,
-    ReturnType<typeof listDownloadTasksQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listDownloadTasks({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listDownloadTasksQueryKey(options),
-  });
 
 /**
  * Test downloader connection with provided credentials

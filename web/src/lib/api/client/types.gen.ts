@@ -196,22 +196,6 @@ export type DeleteTorrentsRequest = {
 };
 
 /**
- * Download task with real-time progress from downloader
- */
-export type DownloadTaskWithProgress = {
-  bangumi_id: number;
-  bangumi_name: string;
-  created_at: string;
-  episode_number?: number | null;
-  id: number;
-  info_hash: string;
-  progress: number;
-  status: TaskStatus;
-  torrent_id: number;
-  total_size: number;
-};
-
-/**
  * Per-downloader configurations
  */
 export type DownloaderConfigs = {
@@ -387,6 +371,10 @@ export type Rss = {
    * Episodes from primary RSS can override those from backup RSS
    */
   is_primary: boolean;
+  /**
+   * RSS subscription title: [group] {bangumi} S{season}
+   */
+  title: string;
   updated_at: string;
   /**
    * RSS feed URL
@@ -841,23 +829,6 @@ export type UpdateBangumiResponses = {
 
 export type UpdateBangumiResponse =
   UpdateBangumiResponses[keyof UpdateBangumiResponses];
-
-export type ListDownloadTasksData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/api/download-tasks";
-};
-
-export type ListDownloadTasksResponses = {
-  /**
-   * List of download tasks with progress
-   */
-  200: Array<DownloadTaskWithProgress>;
-};
-
-export type ListDownloadTasksResponse =
-  ListDownloadTasksResponses[keyof ListDownloadTasksResponses];
 
 export type TestDownloaderConnectionData = {
   body: TestDownloaderRequest;

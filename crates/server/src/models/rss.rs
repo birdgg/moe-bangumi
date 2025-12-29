@@ -10,6 +10,8 @@ pub struct Rss {
 
     /// Foreign key to bangumi
     pub bangumi_id: i64,
+    /// RSS subscription title: [group] {bangumi} S{season}
+    pub title: String,
     /// RSS feed URL
     pub url: String,
     /// Whether subscription is enabled
@@ -30,6 +32,8 @@ pub struct Rss {
 pub struct CreateRss {
     /// Foreign key to bangumi
     pub bangumi_id: i64,
+    /// RSS subscription title: [group] {bangumi} S{season}
+    pub title: String,
     /// RSS feed URL
     pub url: String,
     /// Whether subscription is enabled (default: true)
@@ -70,4 +74,13 @@ pub struct UpdateRss {
     /// Optional subtitle group name
     #[serde(default)]
     pub group: Option<String>,
+}
+
+/// Format RSS subscription title
+/// Format: `[group] {bangumi_title} S{season:02}` or `{bangumi_title} S{season:02}` if group is None
+pub fn format_rss_title(bangumi_title: &str, season: i32, group: Option<&str>) -> String {
+    match group {
+        Some(g) => format!("[{}] {} S{:02}", g, bangumi_title, season),
+        None => format!("{} S{:02}", bangumi_title, season),
+    }
 }

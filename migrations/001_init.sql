@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS rss (
     bangumi_id INTEGER NOT NULL REFERENCES bangumi(id) ON DELETE CASCADE,
 
     -- RSS info
+    title TEXT NOT NULL,                            -- RSS subscription title: [group] {bangumi} S{season}
     url TEXT NOT NULL,                              -- RSS feed URL
     enabled INTEGER NOT NULL DEFAULT 1,             -- Whether subscription is enabled (boolean)
     exclude_filters TEXT NOT NULL DEFAULT '[]',     -- JSON array of regex patterns to exclude
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS rss (
 
 -- RSS indexes
 CREATE INDEX IF NOT EXISTS idx_rss_bangumi_id ON rss(bangumi_id);
+CREATE INDEX IF NOT EXISTS idx_rss_title ON rss(title);
 CREATE INDEX IF NOT EXISTS idx_rss_enabled ON rss(enabled);
 CREATE INDEX IF NOT EXISTS idx_rss_is_primary ON rss(is_primary);
 

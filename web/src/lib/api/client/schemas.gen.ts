@@ -274,61 +274,6 @@ export const DeleteTorrentsRequestSchema = {
   },
 } as const;
 
-export const DownloadTaskWithProgressSchema = {
-  type: "object",
-  description: "Download task with real-time progress from downloader",
-  required: [
-    "id",
-    "created_at",
-    "torrent_id",
-    "bangumi_id",
-    "bangumi_name",
-    "info_hash",
-    "status",
-    "progress",
-    "total_size",
-  ],
-  properties: {
-    bangumi_id: {
-      type: "integer",
-      format: "int64",
-    },
-    bangumi_name: {
-      type: "string",
-    },
-    created_at: {
-      type: "string",
-      format: "date-time",
-    },
-    episode_number: {
-      type: ["integer", "null"],
-      format: "int32",
-    },
-    id: {
-      type: "integer",
-      format: "int64",
-    },
-    info_hash: {
-      type: "string",
-    },
-    progress: {
-      type: "number",
-      format: "double",
-    },
-    status: {
-      $ref: "#/components/schemas/TaskStatus",
-    },
-    torrent_id: {
-      type: "integer",
-      format: "int64",
-    },
-    total_size: {
-      type: "integer",
-      format: "int64",
-    },
-  },
-} as const;
-
 export const DownloaderConfigsSchema = {
   type: "object",
   description: "Per-downloader configurations",
@@ -511,6 +456,7 @@ export const RssSchema = {
     "created_at",
     "updated_at",
     "bangumi_id",
+    "title",
     "url",
     "enabled",
     "exclude_filters",
@@ -558,6 +504,10 @@ export const RssSchema = {
       type: "boolean",
       description:
         "Whether this is the primary RSS source (only one per bangumi)\nEpisodes from primary RSS can override those from backup RSS",
+    },
+    title: {
+      type: "string",
+      description: "RSS subscription title: [group] {bangumi} S{season}",
     },
     updated_at: {
       type: "string",

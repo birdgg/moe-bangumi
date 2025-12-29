@@ -4,7 +4,7 @@ use std::sync::Arc;
 use thiserror::Error;
 
 use crate::models::{
-    Bangumi, BangumiWithRss, CreateBangumi, CreateRss, RssEntry, UpdateBangumi,
+    format_rss_title, Bangumi, BangumiWithRss, CreateBangumi, CreateRss, RssEntry, UpdateBangumi,
     UpdateBangumiRequest,
 };
 use crate::repositories::{BangumiRepository, RssRepository};
@@ -72,8 +72,16 @@ impl BangumiService {
 
         // Create RSS subscriptions
         for entry in rss_entries {
+            // Generate title: [group] {bangumi} S{season} or {bangumi} S{season}
+            let title = format_rss_title(
+                &bangumi.title_chinese,
+                bangumi.season,
+                entry.group.as_deref(),
+            );
+
             let create_rss = CreateRss {
                 bangumi_id: bangumi.id,
+                title,
                 url: entry.url,
                 enabled: true,
                 exclude_filters: entry.filters,
@@ -178,6 +186,11 @@ impl BangumiService {
         bangumi_id: i64,
         entries: Vec<RssEntry>,
     ) -> Result<Vec<i64>, BangumiError> {
+        // Get bangumi info to generate RSS titles
+        let bangumi = BangumiRepository::get_by_id(&self.db, bangumi_id)
+            .await?
+            .ok_or(BangumiError::NotFound)?;
+
         // Get existing RSS URLs to identify new ones
         let existing_rss = RssRepository::get_by_bangumi_id(&self.db, bangumi_id).await?;
         let existing_urls: HashSet<_> = existing_rss.iter().map(|r| r.url.as_str()).collect();
@@ -191,8 +204,16 @@ impl BangumiService {
         for entry in entries {
             let is_new = !existing_urls.contains(entry.url.as_str());
 
+            // Generate title: [group] {bangumi} S{season} or {bangumi} S{season}
+            let title = format_rss_title(
+                &bangumi.title_chinese,
+                bangumi.season,
+                entry.group.as_deref(),
+            );
+
             let create_rss = CreateRss {
                 bangumi_id,
+                title,
                 url: entry.url,
                 enabled: true,
                 exclude_filters: entry.filters,
