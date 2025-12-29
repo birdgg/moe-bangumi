@@ -22,7 +22,6 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
         .routes(routes!(handlers::reset_settings))
         .routes(routes!(handlers::test_proxy))
         .routes(routes!(handlers::test_downloader_connection))
-        .routes(routes!(handlers::trigger_rss_fetch))
         .routes(routes!(handlers::get_logs, handlers::cleanup_logs))
         .routes(routes!(handlers::stream_logs))
         .routes(routes!(handlers::list_torrents))

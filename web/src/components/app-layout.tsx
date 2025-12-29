@@ -1,13 +1,12 @@
 import * as React from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { SearchBangumiModal, BangumiModal, type BangumiModalData } from "@/features/bangumi/components";
-import { type Subject, triggerRssFetchMutation } from "@/lib/api";
+import { type Subject } from "@/lib/api";
 import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
-import { useMutation } from "@tanstack/react-query";
 import { parseBgmtvName } from "@/lib/parser";
 
 // Convert Subject to BangumiModalData
@@ -53,25 +52,6 @@ function AddBangumiButton({ onClick }: AddBangumiButtonProps) {
   );
 }
 
-function RefreshRssButton() {
-  const mutation = useMutation(triggerRssFetchMutation());
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="size-9 rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      onClick={() => mutation.mutate({})}
-      disabled={mutation.isPending}
-      title="刷新 RSS"
-    >
-      <IconRefresh
-        className={`size-4 ${mutation.isPending ? "animate-spin" : ""}`}
-      />
-    </Button>
-  );
-}
-
 export function AppLayout({ children }: AppLayoutProps) {
   const [searchModalOpen, setSearchModalOpen] = React.useState(false);
   const [addModalOpen, setAddModalOpen] = React.useState(false);
@@ -96,7 +76,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           <div className="flex items-center gap-2">
             <AddBangumiButton onClick={() => setSearchModalOpen(true)} />
-            <RefreshRssButton />
             <ThemeColorSelector />
             <ThemeToggleButton />
           </div>

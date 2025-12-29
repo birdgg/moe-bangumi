@@ -3,7 +3,6 @@ mod downloader;
 mod episodes;
 mod logs;
 mod mikan;
-mod scheduler;
 mod search;
 mod settings;
 mod torrent_search;
@@ -56,7 +55,6 @@ pub use downloader::{test_downloader_connection, TestDownloaderRequest};
 pub use episodes::get_episodes;
 pub use logs::{cleanup_logs, get_logs, stream_logs};
 pub use mikan::get_mikan_rss;
-pub use scheduler::trigger_rss_fetch;
 pub use search::{search_bgmtv, search_mikan, search_tmdb};
 pub use settings::{get_settings, reset_settings, test_proxy, update_settings, TestProxyRequest};
 pub use torrent_search::search_torrents;
@@ -75,8 +73,6 @@ pub use episodes::__path_get_episodes;
 pub use logs::{__path_cleanup_logs, __path_get_logs, __path_stream_logs};
 #[doc(hidden)]
 pub use mikan::__path_get_mikan_rss;
-#[doc(hidden)]
-pub use scheduler::__path_trigger_rss_fetch;
 #[doc(hidden)]
 pub use search::{__path_search_bgmtv, __path_search_mikan, __path_search_tmdb};
 #[doc(hidden)]

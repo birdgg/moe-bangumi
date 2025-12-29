@@ -44,8 +44,6 @@ import type {
   TestProxyData,
   TestProxyErrors,
   TestProxyResponses,
-  TriggerRssFetchData,
-  TriggerRssFetchResponses,
   UpdateBangumiData,
   UpdateBangumiErrors,
   UpdateBangumiResponses,
@@ -225,18 +223,6 @@ export const testProxy = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
-
-/**
- * Manually trigger RSS fetch job
- */
-export const triggerRssFetch = <ThrowOnError extends boolean = false>(
-  options?: Options<TriggerRssFetchData, ThrowOnError>,
-) =>
-  (options?.client ?? client).post<
-    TriggerRssFetchResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/api/scheduler/rss-fetch", ...options });
 
 /**
  * Search for bangumi (Japanese anime) on BGM.tv

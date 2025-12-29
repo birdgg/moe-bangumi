@@ -976,20 +976,6 @@ export type TestProxyResponses = {
   200: unknown;
 };
 
-export type TriggerRssFetchData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/api/scheduler/rss-fetch";
-};
-
-export type TriggerRssFetchResponses = {
-  /**
-   * RSS fetch job triggered successfully
-   */
-  200: unknown;
-};
-
 export type SearchBgmtvData = {
   body?: never;
   path?: never;

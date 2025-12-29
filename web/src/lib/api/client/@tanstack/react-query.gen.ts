@@ -28,7 +28,6 @@ import {
   searchTorrents,
   testDownloaderConnection,
   testProxy,
-  triggerRssFetch,
   updateBangumi,
   updateSettings,
 } from "../sdk.gen";
@@ -64,7 +63,6 @@ import type {
   SearchTorrentsResponse,
   TestDownloaderConnectionData,
   TestProxyData,
-  TriggerRssFetchData,
   UpdateBangumiData,
   UpdateBangumiResponse,
   UpdateSettingsData,
@@ -439,29 +437,6 @@ export const testProxyMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await testProxy({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Manually trigger RSS fetch job
- */
-export const triggerRssFetchMutation = (
-  options?: Partial<Options<TriggerRssFetchData>>,
-): UseMutationOptions<unknown, DefaultError, Options<TriggerRssFetchData>> => {
-  const mutationOptions: UseMutationOptions<
-    unknown,
-    DefaultError,
-    Options<TriggerRssFetchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await triggerRssFetch({
         ...options,
         ...fnOptions,
         throwOnError: true,

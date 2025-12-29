@@ -20,7 +20,6 @@ export {
   streamLogs,
   testDownloaderConnection,
   testProxy,
-  triggerRssFetch,
   updateBangumi,
   updateSettings,
 } from "./sdk.gen";
@@ -113,8 +112,6 @@ export type {
   TorrentSearchResult,
   TorrentSource,
   TransmissionConfig,
-  TriggerRssFetchData,
-  TriggerRssFetchResponses,
   TvShow,
   UpdateBangumiData,
   UpdateBangumiErrors,
