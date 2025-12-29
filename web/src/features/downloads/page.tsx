@@ -6,20 +6,13 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { DownloadsTable } from "./components";
-import {
-  useListTorrents,
-  usePauseTorrents,
-  useResumeTorrents,
-  useDeleteTorrents,
-} from "./hooks/use-downloads";
+import { useListTorrents, useDeleteTorrents } from "./hooks/use-downloads";
 
 export function DownloadsPage() {
-  const { data: torrents, isLoading, error, refetch } = useListTorrents();
-  const pauseMutation = usePauseTorrents();
-  const resumeMutation = useResumeTorrents();
+  const { data: tasks, isLoading, error, refetch } = useListTorrents();
   const deleteMutation = useDeleteTorrents();
 
-  const isEmpty = !torrents || torrents.length === 0;
+  const isEmpty = !tasks || tasks.length === 0;
 
   // Check if error is "downloader not configured" type
   const isNotConfigured =
@@ -75,7 +68,10 @@ export function DownloadsPage() {
               <p className="mb-6 max-w-sm text-sm text-muted-foreground">
                 请先在设置中配置下载器连接信息
               </p>
-              <Button variant="outline" onClick={() => (window.location.href = "/settings")}>
+              <Button
+                variant="outline"
+                onClick={() => (window.location.href = "/settings")}
+              >
                 前往设置
               </Button>
             </div>
@@ -120,16 +116,12 @@ export function DownloadsPage() {
         )}
 
         {/* Downloads table */}
-        {!isLoading && !error && !isEmpty && torrents && (
+        {!isLoading && !error && !isEmpty && tasks && (
           <DownloadsTable
-            torrents={torrents}
-            onPause={(hashes) => pauseMutation.mutate({ body: { hashes } })}
-            onResume={(hashes) => resumeMutation.mutate({ body: { hashes } })}
+            tasks={tasks}
             onDelete={(hashes) =>
               deleteMutation.mutate({ body: { hashes, delete_files: true } })
             }
-            isPausing={pauseMutation.isPending}
-            isResuming={resumeMutation.isPending}
             isDeleting={deleteMutation.isPending}
           />
         )}

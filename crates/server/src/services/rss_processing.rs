@@ -6,10 +6,8 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use crate::models::{CreateDownloadTask, CreateTorrent, DownloadTaskStatus, Rss};
-use crate::repositories::{
-    BangumiRepository, DownloadTaskRepository, RssRepository, TorrentRepository,
-};
+use crate::models::{CreateTorrent, Rss};
+use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::{DownloaderService, SettingsService};
 
 #[derive(Debug, Error)]
@@ -205,22 +203,8 @@ impl RssProcessingService {
                 continue;
             };
 
-            // For non-primary RSS, skip if this episode is already downloaded
-            if !rss.is_primary {
-                let has_completed = DownloadTaskRepository::has_completed_for_episode(
-                    &self.db,
-                    rss.bangumi_id,
-                    episode,
-                )
-                .await?;
-
-                if has_completed {
-                    continue;
-                }
-            }
-
             // Create torrent record with parsed episode number
-            let torrent = TorrentRepository::create(
+            let _torrent = TorrentRepository::create(
                 &self.db,
                 CreateTorrent {
                     bangumi_id: rss.bangumi_id,
@@ -234,15 +218,6 @@ impl RssProcessingService {
             .await?;
 
             stats.torrents_created += 1;
-
-            // Create download task
-            let task = DownloadTaskRepository::create(
-                &self.db,
-                CreateDownloadTask {
-                    torrent_id: torrent.id,
-                },
-            )
-            .await?;
 
             // Use the save_path stored in bangumi (auto-generated when bangumi was created)
             // and generate filename for this specific episode
@@ -265,19 +240,10 @@ impl RssProcessingService {
                 Ok(_) => {
                     tracing::debug!("Added to downloader: {}", title);
                     stats.tasks_added += 1;
-                    // Update task status to downloading
-                    DownloadTaskRepository::update_status(
-                        &self.db,
-                        task.id,
-                        DownloadTaskStatus::Downloading,
-                    )
-                    .await?;
                 }
                 Err(e) => {
                     tracing::error!("Failed to add download task: {} - {}", title, e);
                     stats.errors += 1;
-                    // Mark task as failed
-                    DownloadTaskRepository::mark_failed(&self.db, task.id, &e.to_string()).await?;
                 }
             }
         }

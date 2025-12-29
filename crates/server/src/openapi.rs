@@ -6,7 +6,7 @@ use crate::models::{
     TorrentSearchResult, TorrentSource, UpdateBangumiRequest, UpdateDownloaderSettings,
     UpdateFilterSettings, UpdateSettings,
 };
-use crate::services::Task;
+use crate::services::{Task, TaskStatus};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -37,6 +37,7 @@ use crate::services::Task;
         LogLevel,
         Platform,
         Task,
+        TaskStatus,
         DeleteTorrentsRequest,
         TorrentSearchResult,
         TorrentSource

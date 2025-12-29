@@ -23,6 +23,8 @@ import type {
   GetMikanRssResponses,
   GetSettingsData,
   GetSettingsResponses,
+  ListDownloadTasksData,
+  ListDownloadTasksResponses,
   ListTorrentsData,
   ListTorrentsErrors,
   ListTorrentsResponses,
@@ -130,6 +132,18 @@ export const updateBangumi = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+
+/**
+ * List download tasks with real-time progress
+ */
+export const listDownloadTasks = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDownloadTasksData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListDownloadTasksResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/download-tasks", ...options });
 
 /**
  * Test downloader connection with provided credentials

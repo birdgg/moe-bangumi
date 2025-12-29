@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  IconPlayerPause,
-  IconPlayerPlay,
-  IconTrash,
-  IconLoader2,
-} from "@tabler/icons-react";
+import { IconTrash, IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +12,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { ExtendedTorrentInfo } from "../hooks/use-downloads";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { Task } from "../hooks/use-downloads";
+import type { TaskStatus } from "@/lib/api";
 
 interface DownloadsTableProps {
-  torrents: ExtendedTorrentInfo[];
-  onPause: (hashes: string[]) => void;
-  onResume: (hashes: string[]) => void;
+  tasks: Task[];
   onDelete: (hashes: string[]) => void;
-  isPausing?: boolean;
-  isResuming?: boolean;
   isDeleting?: boolean;
 }
 
@@ -39,60 +35,26 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-// Format ETA
-function formatEta(seconds: number): string {
-  if (seconds < 0 || seconds === 8640000) return "∞";
-  if (seconds === 0) return "-";
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${secs}s`;
-  return `${secs}s`;
-}
-
-// Get status display info
-function getStatusInfo(state: string): { label: string; color: string } {
-  const stateMap: Record<string, { label: string; color: string }> = {
+// Get status display info based on TaskStatus
+function getStatusInfo(status: TaskStatus): { label: string; color: string } {
+  const statusMap: Record<TaskStatus, { label: string; color: string }> = {
     downloading: { label: "下载中", color: "text-chart-1" },
-    uploading: { label: "做种", color: "text-chart-3" },
-    pausedDL: { label: "已暂停", color: "text-muted-foreground" },
-    pausedUP: { label: "已暂停", color: "text-muted-foreground" },
-    stoppedDL: { label: "已停止", color: "text-muted-foreground" },
-    stoppedUP: { label: "已停止", color: "text-muted-foreground" },
-    stalledDL: { label: "等待中", color: "text-chart-5" },
-    stalledUP: { label: "做种", color: "text-chart-3" },
-    checkingDL: { label: "检查中", color: "text-chart-2" },
-    checkingUP: { label: "检查中", color: "text-chart-2" },
-    checkingResumeData: { label: "检查中", color: "text-chart-2" },
-    queuedDL: { label: "排队中", color: "text-muted-foreground" },
-    queuedUP: { label: "排队中", color: "text-muted-foreground" },
-    forcedDL: { label: "强制下载", color: "text-chart-1" },
-    forcedUP: { label: "强制上传", color: "text-chart-3" },
-    missingFiles: { label: "文件丢失", color: "text-destructive" },
+    seeding: { label: "做种", color: "text-chart-3" },
+    completed: { label: "已完成", color: "text-chart-3" },
+    paused: { label: "已暂停", color: "text-muted-foreground" },
+    checking: { label: "检查中", color: "text-chart-2" },
+    queued: { label: "排队中", color: "text-muted-foreground" },
+    stalled: { label: "等待中", color: "text-chart-5" },
     error: { label: "错误", color: "text-destructive" },
-    allocating: { label: "分配空间", color: "text-chart-2" },
-    metaDL: { label: "获取元数据", color: "text-chart-2" },
-    moving: { label: "移动中", color: "text-chart-2" },
+    unknown: { label: "未知", color: "text-muted-foreground" },
   };
 
-  return stateMap[state] || { label: state, color: "text-muted-foreground" };
-}
-
-// Check if torrent is paused or stopped
-function isPaused(state: string): boolean {
-  return state === "pausedDL" || state === "pausedUP" || state === "stoppedDL" || state === "stoppedUP";
+  return statusMap[status] || { label: status, color: "text-muted-foreground" };
 }
 
 export function DownloadsTable({
-  torrents,
-  onPause,
-  onResume,
+  tasks,
   onDelete,
-  isPausing,
-  isResuming,
   isDeleting,
 }: DownloadsTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -110,35 +72,35 @@ export function DownloadsTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50 text-left text-muted-foreground">
-              <th className="px-4 py-3 font-medium w-96">名称</th>
+              <th className="px-4 py-3 font-medium">名称</th>
               <th className="px-4 py-3 font-medium w-24">状态</th>
               <th className="px-4 py-3 font-medium w-40">进度</th>
               <th className="px-4 py-3 font-medium w-32 text-right">大小</th>
-              <th className="px-4 py-3 font-medium w-24 text-right">剩余时间</th>
-              <th className="px-4 py-3 font-medium w-28 text-right">操作</th>
+              <th className="px-4 py-3 font-medium w-20 text-right">操作</th>
             </tr>
           </thead>
           <tbody>
-            {torrents.map((torrent) => {
-              const status = getStatusInfo(torrent.state);
-              const paused = isPaused(torrent.state);
-              const progress = Math.round(torrent.progress * 100);
+            {tasks.map((task) => {
+              const status = getStatusInfo(task.status);
+              const progress = Math.round(task.progress * 100);
 
               return (
                 <tr
-                  key={torrent.hash}
+                  key={task.id}
                   className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors"
                 >
                   {/* Name */}
                   <td className="px-4 py-3">
                     <Tooltip>
                       <TooltipTrigger
-                        render={<span className="block truncate text-foreground cursor-default" />}
+                        render={
+                          <span className="block truncate text-foreground cursor-default" />
+                        }
                       >
-                        {torrent.name}
+                        {task.name}
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-md">
-                        <p className="break-all">{torrent.name}</p>
+                        <p className="break-all">{task.name}</p>
                       </TooltipContent>
                     </Tooltip>
                   </td>
@@ -172,66 +134,19 @@ export function DownloadsTable({
 
                   {/* Size */}
                   <td className="px-4 py-3 text-right text-muted-foreground">
-                    {formatBytes(torrent.size)}
-                  </td>
-
-                  {/* ETA */}
-                  <td className="px-4 py-3 text-right text-muted-foreground">
-                    {formatEta(torrent.eta)}
+                    {formatBytes(task.total_size)}
                   </td>
 
                   {/* Actions */}
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      {paused ? (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => onResume([torrent.hash])}
-                                disabled={isResuming}
-                              />
-                            }
-                          >
-                            {isResuming ? (
-                              <IconLoader2 className="size-4 animate-spin" />
-                            ) : (
-                              <IconPlayerPlay className="size-4" />
-                            )}
-                          </TooltipTrigger>
-                          <TooltipContent>继续</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => onPause([torrent.hash])}
-                                disabled={isPausing}
-                              />
-                            }
-                          >
-                            {isPausing ? (
-                              <IconLoader2 className="size-4 animate-spin" />
-                            ) : (
-                              <IconPlayerPause className="size-4" />
-                            )}
-                          </TooltipTrigger>
-                          <TooltipContent>暂停</TooltipContent>
-                        </Tooltip>
-                      )}
-
+                    <div className="flex items-center justify-end">
                       <Tooltip>
                         <TooltipTrigger
                           render={
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              onClick={() => setDeleteTarget(torrent.hash)}
+                              onClick={() => setDeleteTarget(task.id)}
                               disabled={isDeleting}
                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             />
@@ -255,7 +170,10 @@ export function DownloadsTable({
       </div>
 
       {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
