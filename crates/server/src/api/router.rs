@@ -13,6 +13,7 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
         .routes(routes!(handlers::search_mikan))
         .routes(routes!(handlers::search_torrents))
         .routes(routes!(handlers::get_mikan_rss))
+        .routes(routes!(handlers::get_calendar))
         .routes(routes!(handlers::create_bangumi))
         .routes(routes!(handlers::get_bangumi))
         .routes(routes!(handlers::get_bangumi_by_id, handlers::update_bangumi))

@@ -17,6 +17,7 @@ use crate::services::{Task, TaskStatus};
     tags(
         (name = "search", description = "Bangumi search endpoints"),
         (name = "bangumi", description = "Bangumi management endpoints"),
+        (name = "calendar", description = "Anime calendar endpoints"),
         (name = "settings", description = "Application settings endpoints"),
         (name = "logs", description = "System logs endpoints"),
         (name = "torrents", description = "Torrent management endpoints")
@@ -24,6 +25,13 @@ use crate::services::{Task, TaskStatus};
     components(schemas(
         bgmtv::SearchSubjectsResponse,
         bgmtv::Subject,
+        bgmtv::CalendarDay,
+        bgmtv::CalendarSubject,
+        bgmtv::CalendarRating,
+        bgmtv::CalendarCollection,
+        bgmtv::Weekday,
+        bgmtv::SubjectImages,
+        bgmtv::SubjectType,
         BangumiWithRss,
         Rss,
         UpdateBangumiRequest,

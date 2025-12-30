@@ -15,6 +15,8 @@ import type {
   GetBangumiByIdResponses,
   GetBangumiData,
   GetBangumiResponses,
+  GetCalendarData,
+  GetCalendarResponses,
   GetEpisodesData,
   GetEpisodesResponses,
   GetLogsData,
@@ -130,6 +132,17 @@ export const updateBangumi = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Get BGM.tv calendar (weekly anime schedule)
+ */
+export const getCalendar = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCalendarData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<GetCalendarResponses, unknown, ThrowOnError>({
+    url: "/api/calendar",
+    ...options,
   });
 
 /**

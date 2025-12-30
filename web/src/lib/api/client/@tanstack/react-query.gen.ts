@@ -15,6 +15,7 @@ import {
   deleteTorrents,
   getBangumi,
   getBangumiById,
+  getCalendar,
   getEpisodes,
   getLogs,
   getMikanRss,
@@ -42,6 +43,8 @@ import type {
   GetBangumiByIdResponse,
   GetBangumiData,
   GetBangumiResponse,
+  GetCalendarData,
+  GetCalendarResponse,
   GetEpisodesData,
   GetEpisodesResponse,
   GetLogsData,
@@ -214,6 +217,31 @@ export const updateBangumiMutation = (
   };
   return mutationOptions;
 };
+
+export const getCalendarQueryKey = (options?: Options<GetCalendarData>) =>
+  createQueryKey("getCalendar", options);
+
+/**
+ * Get BGM.tv calendar (weekly anime schedule)
+ */
+export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
+  queryOptions<
+    GetCalendarResponse,
+    DefaultError,
+    GetCalendarResponse,
+    ReturnType<typeof getCalendarQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCalendar({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCalendarQueryKey(options),
+  });
 
 /**
  * Test downloader connection with provided credentials

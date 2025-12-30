@@ -104,6 +104,46 @@ export type BangumiWithRss = Bangumi & {
 };
 
 /**
+ * Collection information for calendar subject
+ */
+export type CalendarCollection = {
+  doing?: number;
+};
+
+/**
+ * Calendar day with weekday info and items
+ */
+export type CalendarDay = {
+  items: Array<CalendarSubject>;
+  weekday: Weekday;
+};
+
+/**
+ * Rating information for calendar subject
+ */
+export type CalendarRating = {
+  score: number;
+  total: number;
+};
+
+/**
+ * Subject item in calendar results
+ */
+export type CalendarSubject = {
+  air_date: string;
+  air_weekday: number;
+  collection?: null | CalendarCollection;
+  id: number;
+  images: SubjectImages;
+  name: string;
+  name_cn: string;
+  rank?: number | null;
+  rating?: null | CalendarRating;
+  summary?: string;
+  type: SubjectType;
+};
+
+/**
  * Request body for creating a new bangumi
  */
 export type CreateBangumi = {
@@ -497,6 +537,11 @@ export type SubjectImages = {
 };
 
 /**
+ * BGM.tv subject type
+ */
+export type SubjectType = "Book" | "Anime" | "Music" | "Game" | "Real";
+
+/**
  * Unified download task representation.
  *
  * This model represents a download task across different downloaders,
@@ -819,6 +864,16 @@ export type UpdateTransmissionConfig = {
   username?: string | null;
 };
 
+/**
+ * Weekday information for calendar
+ */
+export type Weekday = {
+  cn: string;
+  en: string;
+  id: number;
+  ja: string;
+};
+
 export type GetBangumiData = {
   body?: never;
   path?: never;
@@ -909,6 +964,23 @@ export type UpdateBangumiResponses = {
 
 export type UpdateBangumiResponse =
   UpdateBangumiResponses[keyof UpdateBangumiResponses];
+
+export type GetCalendarData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/calendar";
+};
+
+export type GetCalendarResponses = {
+  /**
+   * Weekly anime schedule
+   */
+  200: Array<CalendarDay>;
+};
+
+export type GetCalendarResponse =
+  GetCalendarResponses[keyof GetCalendarResponses];
 
 export type TestDownloaderConnectionData = {
   body: TestDownloaderRequest;

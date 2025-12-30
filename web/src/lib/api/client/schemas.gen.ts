@@ -158,6 +158,116 @@ export const BangumiWithRssSchema = {
   description: "Bangumi with its RSS subscriptions",
 } as const;
 
+export const CalendarCollectionSchema = {
+  type: "object",
+  description: "Collection information for calendar subject",
+  properties: {
+    doing: {
+      type: "integer",
+      format: "int64",
+    },
+  },
+} as const;
+
+export const CalendarDaySchema = {
+  type: "object",
+  description: "Calendar day with weekday info and items",
+  required: ["weekday", "items"],
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/CalendarSubject",
+      },
+    },
+    weekday: {
+      $ref: "#/components/schemas/Weekday",
+    },
+  },
+} as const;
+
+export const CalendarRatingSchema = {
+  type: "object",
+  description: "Rating information for calendar subject",
+  required: ["total", "score"],
+  properties: {
+    score: {
+      type: "number",
+      format: "double",
+    },
+    total: {
+      type: "integer",
+      format: "int64",
+    },
+  },
+} as const;
+
+export const CalendarSubjectSchema = {
+  type: "object",
+  description: "Subject item in calendar results",
+  required: [
+    "id",
+    "type",
+    "name",
+    "name_cn",
+    "air_date",
+    "air_weekday",
+    "images",
+  ],
+  properties: {
+    air_date: {
+      type: "string",
+    },
+    air_weekday: {
+      type: "integer",
+      format: "int32",
+    },
+    collection: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/CalendarCollection",
+        },
+      ],
+    },
+    id: {
+      type: "integer",
+      format: "int64",
+    },
+    images: {
+      $ref: "#/components/schemas/SubjectImages",
+    },
+    name: {
+      type: "string",
+    },
+    name_cn: {
+      type: "string",
+    },
+    rank: {
+      type: ["integer", "null"],
+      format: "int64",
+    },
+    rating: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/CalendarRating",
+        },
+      ],
+    },
+    summary: {
+      type: "string",
+    },
+    type: {
+      $ref: "#/components/schemas/SubjectType",
+    },
+  },
+} as const;
+
 export const CreateBangumiSchema = {
   type: "object",
   description: "Request body for creating a new bangumi",
@@ -725,6 +835,12 @@ export const SubjectImagesSchema = {
   },
 } as const;
 
+export const SubjectTypeSchema = {
+  type: "string",
+  description: "BGM.tv subject type",
+  enum: ["Book", "Anime", "Music", "Game", "Real"],
+} as const;
+
 export const TaskSchema = {
   type: "object",
   description:
@@ -1232,6 +1348,27 @@ export const UpdateTransmissionConfigSchema = {
     username: {
       type: ["string", "null"],
       description: "Username (send null to clear)",
+    },
+  },
+} as const;
+
+export const WeekdaySchema = {
+  type: "object",
+  description: "Weekday information for calendar",
+  required: ["en", "cn", "ja", "id"],
+  properties: {
+    cn: {
+      type: "string",
+    },
+    en: {
+      type: "string",
+    },
+    id: {
+      type: "integer",
+      format: "int32",
+    },
+    ja: {
+      type: "string",
     },
   },
 } as const;

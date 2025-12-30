@@ -124,6 +124,20 @@ pub struct Weekday {
     pub id: i32,
 }
 
+/// Rating information for calendar subject
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CalendarRating {
+    pub total: i64,
+    pub score: f64,
+}
+
+/// Collection information for calendar subject
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CalendarCollection {
+    #[serde(default)]
+    pub doing: i64,
+}
+
 /// Subject item in calendar results
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CalendarSubject {
@@ -132,11 +146,17 @@ pub struct CalendarSubject {
     pub subject_type: SubjectType,
     pub name: String,
     pub name_cn: String,
+    #[serde(default)]
+    pub summary: String,
     pub air_date: String,
     pub air_weekday: i32,
+    #[serde(default)]
+    pub rating: Option<CalendarRating>,
+    #[serde(default)]
+    pub rank: Option<i64>,
     pub images: SubjectImages,
-    pub eps: i64,
-    pub eps_count: i64,
+    #[serde(default)]
+    pub collection: Option<CalendarCollection>,
 }
 
 /// Calendar day with weekday info and items

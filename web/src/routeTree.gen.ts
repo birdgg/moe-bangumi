@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleRoute = ScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogsRoute = LogsRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/downloads': typeof DownloadsRoute
   '/logs': typeof LogsRoute
+  '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/downloads': typeof DownloadsRoute
   '/logs': typeof LogsRoute
+  '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/downloads': typeof DownloadsRoute
   '/logs': typeof LogsRoute
+  '/schedule': typeof ScheduleRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/downloads' | '/logs' | '/settings'
+  fullPaths: '/' | '/downloads' | '/logs' | '/schedule' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/downloads' | '/logs' | '/settings'
-  id: '__root__' | '/' | '/downloads' | '/logs' | '/settings'
+  to: '/' | '/downloads' | '/logs' | '/schedule' | '/settings'
+  id: '__root__' | '/' | '/downloads' | '/logs' | '/schedule' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DownloadsRoute: typeof DownloadsRoute
   LogsRoute: typeof LogsRoute
+  ScheduleRoute: typeof ScheduleRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule': {
+      id: '/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof ScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logs': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DownloadsRoute: DownloadsRoute,
   LogsRoute: LogsRoute,
+  ScheduleRoute: ScheduleRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

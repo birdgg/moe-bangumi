@@ -1,4 +1,5 @@
 mod bangumi;
+mod calendar;
 mod downloader;
 mod episodes;
 mod logs;
@@ -51,6 +52,7 @@ pub struct IdQuery {
 
 // Re-export all handlers
 pub use bangumi::{create_bangumi, get_bangumi, get_bangumi_by_id, update_bangumi};
+pub use calendar::get_calendar;
 pub use downloader::{test_downloader_connection, TestDownloaderRequest};
 pub use episodes::get_episodes;
 pub use logs::{cleanup_logs, get_logs, stream_logs};
@@ -68,6 +70,8 @@ pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 pub use bangumi::{
     __path_create_bangumi, __path_get_bangumi, __path_get_bangumi_by_id, __path_update_bangumi,
 };
+#[doc(hidden)]
+pub use calendar::__path_get_calendar;
 #[doc(hidden)]
 pub use downloader::__path_test_downloader_connection;
 #[doc(hidden)]

@@ -2,34 +2,12 @@ import * as React from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
-import { SearchBangumiModal, BangumiModal, type BangumiModalData } from "@/features/bangumi/components";
+import { SearchBangumiModal, BangumiModal } from "@/features/bangumi/components";
 import { type Subject } from "@/lib/api";
 import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
-import { parseBgmtvName } from "@/lib/parser";
-
-// Convert Subject to BangumiModalData
-function subjectToModalData(subject: Subject): BangumiModalData {
-  const parsedChinese = parseBgmtvName(subject.name_cn || subject.name || "");
-  const parsedJapanese = parseBgmtvName(subject.name || "");
-  const season = parsedChinese.season ?? parsedJapanese.season ?? 1;
-
-  return {
-    bgmtvId: subject.id,
-    titleChinese: parsedChinese.name,
-    titleJapanese: subject.name_cn ? parsedJapanese.name : null,
-    titleOriginalChinese: subject.name_cn,
-    titleOriginalJapanese: subject.name,
-    posterUrl: subject.image,
-    year: subject.date ? parseInt(subject.date.split("-")[0]) : null,
-    season,
-    totalEpisodes: subject.eps,
-    platform: subject.platform,
-    airDate: subject.date,
-    airWeek: subject.date ? new Date(subject.date).getDay() : null,
-  };
-}
+import { subjectToModalData } from "@/lib/converters";
 
 interface AppLayoutProps {
   children: React.ReactNode;
