@@ -7,7 +7,7 @@ use reqwest::Client;
 use crate::error::BgmtvError;
 
 const BASE_URL: &str = "https://api.bgm.tv";
-pub(crate) const USER_AGENT: &str = "birdgg/moe-rs";
+pub(crate) const USER_AGENT: &str = "birdgg/moe-bangumi";
 
 /// A function that asynchronously provides an HTTP client.
 /// Used for dynamic proxy configuration support.

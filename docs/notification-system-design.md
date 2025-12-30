@@ -1,7 +1,7 @@
 # Notification System Design
 
 ## Overview
-This document outlines the design for a notification system in `moe-rs`. The system's primary goal is to alert users via Telegram when a new episode download finishes.
+This document outlines the design for a notification system in `moe-bangumi`. The system's primary goal is to alert users via Telegram when a new episode download finishes.
 
 ## Architecture
 

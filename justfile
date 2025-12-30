@@ -1,4 +1,4 @@
-# moe-rs justfile
+# moe-bangumi justfile
 # Run `just` to start the backend dev server
 # Run `just --list` to see all available commands
 

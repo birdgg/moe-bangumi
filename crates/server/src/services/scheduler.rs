@@ -71,8 +71,6 @@ impl SchedulerService {
         let name = job.name();
         let interval = job.interval();
 
-        tracing::info!("Job '{}' started with interval {:?}", name, interval);
-
         let mut timer = tokio::time::interval(interval);
         timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 

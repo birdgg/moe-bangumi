@@ -101,7 +101,9 @@ pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'st
         .proxy(proxy)
         .timeout(std::time::Duration::from_secs(10))
         .build()
-        .map_err(|e| crate::error::AppError::BadRequest(format!("Failed to build client: {}", e)))?;
+        .map_err(|e| {
+            crate::error::AppError::BadRequest(format!("Failed to build client: {}", e))
+        })?;
 
     // Test by making a request to mikanani.me
     let response = client
@@ -160,7 +162,7 @@ pub async fn test_notification(
     // Send test message
     use notify::Notifier;
     notifier
-        .send_message("🔔 MOE-RS 通知测试成功！")
+        .send_message("🔔 MoeBangumi 通知测试成功！")
         .await
         .map_err(|e| crate::error::AppError::Internal(format!("发送失败: {}", e)))?;
 

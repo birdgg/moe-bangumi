@@ -171,9 +171,3 @@ Since the project is not yet released, database schema changes should be added d
 
 - **Do NOT use `mod.rs`** for module definitions. Use `module_name.rs` + `module_name/` directory instead of `module_name/mod.rs`.
 - Example: Use `models.rs` + `models/bangumi.rs` instead of `models/mod.rs` + `models/bangumi.rs`
-
-## Doc
-
-### bgmtv
-
-when lookup bgmtv api doc, use @docs/bgmtv.json

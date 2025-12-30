@@ -11,9 +11,7 @@ macro_rules! with_retry {
 
         let result = {
             let guard = $self.cached.read().await;
-            let $client = guard
-                .as_ref()
-                .ok_or(DownloaderError::NotConfigured)?;
+            let $client = guard.as_ref().ok_or(DownloaderError::NotConfigured)?;
             $op
         };
 
@@ -24,9 +22,7 @@ macro_rules! with_retry {
                 $self.reauthenticate().await?;
 
                 let guard = $self.cached.read().await;
-                let $client = guard
-                    .as_ref()
-                    .ok_or(DownloaderError::NotConfigured)?;
+                let $client = guard.as_ref().ok_or(DownloaderError::NotConfigured)?;
                 $op
             }
             Err(e) => Err(e),
@@ -69,7 +65,6 @@ impl DownloaderService {
                 let new_settings = watcher.borrow().downloader.clone();
 
                 if Self::settings_changed(&prev_settings, &new_settings) {
-                    tracing::info!("Downloader settings changed, invalidating client cache");
                     *cached_clone.write().await = None;
                 }
                 prev_settings = new_settings;
