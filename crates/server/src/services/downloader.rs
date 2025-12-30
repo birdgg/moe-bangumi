@@ -144,11 +144,9 @@ impl DownloaderService {
             return Err(DownloaderError::NotConfigured);
         }
 
-        tracing::info!("Creating downloader client...");
         let client = Self::create_client(&current_settings)?;
 
         client.login().await?;
-        tracing::info!("Downloader authenticated successfully");
 
         *guard = Some(client);
         Ok(())

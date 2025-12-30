@@ -2,9 +2,9 @@ use utoipa::OpenApi;
 
 use crate::api::handlers::DeleteTorrentsRequest;
 use crate::models::{
-    BangumiWithRss, DownloaderSettings, FilterSettings, Log, LogLevel, Platform, Rss, Settings,
-    TorrentSearchResult, TorrentSource, UpdateBangumiRequest, UpdateDownloaderSettings,
-    UpdateFilterSettings, UpdateSettings,
+    BangumiWithRss, DownloaderSettings, FilterSettings, Log, LogLevel, Platform,
+    PrioritySettings, Rss, Settings, TorrentSearchResult, TorrentSource, UpdateBangumiRequest,
+    UpdateDownloaderSettings, UpdateFilterSettings, UpdatePrioritySettings, UpdateSettings,
 };
 use crate::services::{Task, TaskStatus};
 
@@ -38,9 +38,11 @@ use crate::services::{Task, TaskStatus};
         Settings,
         DownloaderSettings,
         FilterSettings,
+        PrioritySettings,
         UpdateSettings,
         UpdateDownloaderSettings,
         UpdateFilterSettings,
+        UpdatePrioritySettings,
         Log,
         LogLevel,
         Platform,

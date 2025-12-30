@@ -192,8 +192,8 @@ export function MikanRssModal({
                   <IconRss className="size-5" />
                 </div>
               )}
-              <div className="flex-1">
-                <DialogPrimitive.Title className="text-lg font-bold bg-linear-to-r from-chart-1 via-chart-3 to-chart-5 bg-clip-text text-transparent">
+              <div className="flex-1 min-w-0">
+                <DialogPrimitive.Title className="text-lg font-bold bg-linear-to-r from-chart-1 via-chart-3 to-chart-5 bg-clip-text text-transparent truncate">
                   {selectedBangumi ? selectedBangumi.name : "Mikan RSS 搜索"}
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Description className="text-xs text-muted-foreground">
@@ -408,7 +408,7 @@ export function MikanRssModal({
                                     "px-2 py-1.5 rounded-lg text-xs",
                                     "bg-white/50 dark:bg-zinc-800/50",
                                     "border border-chart-1/10 dark:border-chart-3/10",
-                                    "text-muted-foreground line-clamp-1"
+                                    "text-muted-foreground line-clamp-2"
                                   )}
                                 >
                                   {episode.name}
@@ -428,21 +428,23 @@ export function MikanRssModal({
 
 
                 {/* Footer with confirm button */}
-                {selectedSubgroups.size > 0 && (
-                  <div className="border-t border-chart-1/30 dark:border-chart-3/20 p-4 bg-linear-to-br from-white/95 via-white/90 to-chart-1/10 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-3/20">
-                    <Button
-                      onClick={handleConfirm}
-                      className={cn(
-                        "w-full gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white",
-                        "shadow-lg shadow-chart-3/30",
-                        "hover:opacity-90"
-                      )}
-                    >
-                      <IconCheck className="size-4" />
-                      确认选择 ({selectedSubgroups.size} 个字幕组)
-                    </Button>
-                  </div>
-                )}
+                <div className="border-t border-chart-1/30 dark:border-chart-3/20 p-4 bg-linear-to-br from-white/95 via-white/90 to-chart-1/10 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-chart-3/20">
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={selectedSubgroups.size === 0}
+                    className={cn(
+                      "w-full gap-2 bg-linear-to-r from-chart-1 to-chart-3 text-white",
+                      "shadow-lg shadow-chart-3/30",
+                      "hover:opacity-90",
+                      "disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    <IconCheck className="size-4" />
+                    {selectedSubgroups.size > 0
+                      ? `确认选择 (${selectedSubgroups.size} 个字幕组)`
+                      : "请选择字幕组"}
+                  </Button>
+                </div>
               </>
             )}
           </div>

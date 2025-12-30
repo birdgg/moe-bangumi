@@ -1,5 +1,5 @@
 use downloader::AddTaskOptions;
-use parser::Parser;
+use parser::{ParseResult, Parser};
 use regex::Regex;
 use rss::{RssClient, RssItem, RssSource};
 use sqlx::SqlitePool;
@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use crate::models::{Bangumi, CreateTorrent, Rss, Torrent};
+use crate::priority::{ComparableTorrent, PriorityCalculator};
 use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::{DownloaderService, SettingsService};
 
@@ -78,8 +79,9 @@ impl RssProcessingService {
         };
 
         // 4. Process each item
-        for (item, episode) in parsed_items {
-            self.process_item(rss, &ctx, &lookup, item, episode).await;
+        for (item, episode, parse_result) in parsed_items {
+            self.process_item(rss, &ctx, &lookup, item, episode, &parse_result)
+                .await;
         }
     }
 
@@ -104,13 +106,13 @@ impl RssProcessingService {
         Some(ProcessingContext { bangumi })
     }
 
-    /// Fetch RSS feed, apply filters, and parse episode numbers
+    /// Fetch RSS feed, apply filters, and parse episode numbers with metadata
     async fn fetch_and_parse_items(
         &self,
         rss: &Rss,
         global_exclude_filters: &[String],
         ctx: &ProcessingContext,
-    ) -> Option<Vec<(RssItem, i32)>> {
+    ) -> Option<Vec<(RssItem, i32, ParseResult)>> {
         // Parse URL to determine source type
         let source = parse_rss_source(&rss.url);
 
@@ -133,13 +135,18 @@ impl RssProcessingService {
         // Filter items by include/exclude patterns
         let filtered_items = filter_rss_items(items, &rss.include_filters, &all_exclude_filters);
 
-        // Parse all items upfront to extract episode numbers
+        // Parse all items upfront to extract episode numbers and metadata
         let mut parsed_items: Vec<_> = filtered_items
             .into_iter()
             .filter_map(|item| {
                 let title = item.title();
                 match self.parser.parse(title) {
-                    Ok(parse_result) => parse_result.episode.map(|ep| (item, ep)),
+                    Ok(parse_result) => {
+                        // Keep items that have episode numbers, along with full parse result
+                        parse_result
+                            .episode
+                            .map(|ep| (item, ep, parse_result.clone()))
+                    }
                     Err(e) => {
                         tracing::warn!("Failed to parse title '{}': {}", title, e);
                         None
@@ -151,7 +158,7 @@ impl RssProcessingService {
         // When auto_complete is disabled, only process the latest episode
         if !ctx.bangumi.auto_complete {
             parsed_items.sort_by(|a, b| b.1.cmp(&a.1));
-            if let Some((_, ep)) = parsed_items.first() {
+            if let Some((_, ep, _)) = parsed_items.first() {
                 tracing::debug!(
                     "auto_complete disabled for bangumi {}: only processing latest episode {}",
                     ctx.bangumi.id,
@@ -196,7 +203,7 @@ impl RssProcessingService {
         })
     }
 
-    /// Process a single RSS item: check duplicates, handle override, create record, add download
+    /// Process a single RSS item: check duplicates, compare priority, create record, add download
     async fn process_item(
         &self,
         rss: &Rss,
@@ -204,6 +211,7 @@ impl RssProcessingService {
         lookup: &TorrentLookup,
         item: RssItem,
         episode: i32,
+        parse_result: &ParseResult,
     ) {
         let title = item.title();
         let info_hash = item.info_hash();
@@ -215,21 +223,31 @@ impl RssProcessingService {
             return;
         }
 
-        // Check if episode already exists and handle override logic
+        // Check if episode already exists and handle priority-based washing
         if let Some(existing_torrents) = lookup.episodes_map.get(&episode) {
-            if !self
-                .should_override_existing(rss, existing_torrents, episode)
-                .await
-            {
+            if !self.should_replace_existing(existing_torrents, parse_result) {
+                tracing::debug!(
+                    "[{}] Skipping E{}: existing torrent has higher or equal priority",
+                    rss.title,
+                    episode
+                );
                 return;
             }
 
-            // Override ("洗版"): replace existing torrents from backup RSS
-            self.wash_episode(rss, ctx, existing_torrents, info_hash, torrent_url, episode)
-                .await;
+            // Wash ("洗版"): replace existing torrents with higher priority resource
+            self.wash_episode(
+                rss,
+                ctx,
+                existing_torrents,
+                info_hash,
+                torrent_url,
+                episode,
+                parse_result,
+            )
+            .await;
         } else {
             // No existing torrents, just create and add
-            self.create_and_add_task(rss, ctx, info_hash, torrent_url, episode)
+            self.create_and_add_task(rss, ctx, info_hash, torrent_url, episode, parse_result)
                 .await;
         }
     }
@@ -243,20 +261,16 @@ impl RssProcessingService {
         info_hash: &str,
         torrent_url: &str,
         episode: i32,
+        parse_result: &ParseResult,
     ) {
-        if existing_torrents.len() > 1 {
-            tracing::warn!(
-                "[{}] Found {} torrents for E{}, expected 1. Will delete all.",
-                rss.title,
-                existing_torrents.len(),
-                episode
-            );
-        }
-
         tracing::info!(
-            "[{}] Washing E{}: replacing backup RSS with primary RSS",
+            "[{}] Washing E{}: replacing {} existing torrent(s) with higher priority resource (group={:?}, lang={:?}, res={:?})",
             rss.title,
-            episode
+            episode,
+            existing_torrents.len(),
+            parse_result.subtitle_group,
+            parse_result.sub_type,
+            parse_result.resolution,
         );
 
         // Collect info_hashes for downloader cleanup (done after transaction)
@@ -278,7 +292,7 @@ impl RssProcessingService {
         for existing in existing_torrents {
             if let Err(e) = TorrentRepository::delete_with_executor(&mut *tx, existing.id).await {
                 tracing::error!(
-                    "[{}] Failed to delete backup torrent from database: {}",
+                    "[{}] Failed to delete old torrent from database: {}",
                     rss.title,
                     e
                 );
@@ -287,13 +301,16 @@ impl RssProcessingService {
             }
         }
 
-        // Create new torrent in transaction
+        // Create new torrent in transaction (with parsed metadata)
         let new_torrent = CreateTorrent {
             bangumi_id: rss.bangumi_id,
             rss_id: Some(rss.id),
             info_hash: info_hash.to_string(),
             torrent_url: torrent_url.to_string(),
             episode_number: Some(episode),
+            subtitle_group: parse_result.subtitle_group.clone(),
+            subtitle_language: parse_result.sub_type.clone(),
+            resolution: parse_result.resolution.clone(),
         };
 
         if let Err(e) = TorrentRepository::create_with_executor(&mut *tx, new_torrent).await {
@@ -318,77 +335,45 @@ impl RssProcessingService {
             .await;
     }
 
-    /// Determine if we should override existing episode torrents
+    /// Determine if we should replace existing episode torrents based on priority
     ///
-    /// Returns true only if:
-    /// - Current RSS is primary, AND
-    /// - ALL existing torrents are from backup RSS (not primary, not manual)
-    async fn should_override_existing(
+    /// Returns true only if the new torrent has higher priority than
+    /// the best existing torrent (comparing subtitle group, language, resolution).
+    fn should_replace_existing(
         &self,
-        rss: &Rss,
         existing_torrents: &[Torrent],
-        episode: i32,
+        new_parse_result: &ParseResult,
     ) -> bool {
-        // Backup RSS should not override existing episodes
-        if !rss.is_primary {
-            tracing::debug!("[{}] Skipping already downloaded episode E{}", rss.title, episode);
-            return false;
+        if existing_torrents.is_empty() {
+            return true;
         }
 
-        // Check for manual adds first (no RSS ID means manual add, don't override)
-        for existing in existing_torrents {
-            if existing.rss_id.is_none() {
-                tracing::debug!(
-                    "[{}] Skipping E{}: torrent {} is manually added",
-                    rss.title,
-                    episode,
-                    existing.id
-                );
-                return false;
-            }
-        }
+        // Build priority calculator from current settings
+        let settings = self.settings.get();
+        let priority_config = settings.priority.to_config();
+        let calculator = PriorityCalculator::new(priority_config);
 
-        // Batch fetch all RSS entities for existing torrents
-        let rss_ids: Vec<i64> = existing_torrents
-            .iter()
-            .filter_map(|t| t.rss_id)
-            .collect();
-
-        let existing_rss_list = match RssRepository::get_by_ids(&self.db, &rss_ids).await {
-            Ok(list) => list,
-            Err(e) => {
-                tracing::error!("[{}] Failed to fetch existing RSS: {}", rss.title, e);
-                return false;
-            }
+        // New torrent's comparable info
+        let new_comparable = ComparableTorrent {
+            subtitle_group: new_parse_result.subtitle_group.clone(),
+            subtitle_language: new_parse_result.sub_type.clone(),
+            resolution: new_parse_result.resolution.clone(),
         };
 
-        // Build a map for quick lookup
-        let rss_map: std::collections::HashMap<i64, &Rss> = existing_rss_list
+        // Convert existing torrents to comparable form
+        let existing_comparables: Vec<ComparableTorrent> = existing_torrents
             .iter()
-            .map(|r| (r.id, r))
+            .map(|t| t.to_comparable())
             .collect();
 
-        // Check if ALL existing torrents are from backup RSS
-        for existing in existing_torrents {
-            if let Some(existing_rss_id) = existing.rss_id {
-                let can_override = match rss_map.get(&existing_rss_id) {
-                    Some(existing_rss) => !existing_rss.is_primary,
-                    None => true, // RSS deleted, allow override
-                };
+        // Find the best existing torrent
+        let best_existing = match calculator.find_best(&existing_comparables) {
+            Some(best) => best,
+            None => return true, // No valid existing torrents, should add
+        };
 
-                if !can_override {
-                    tracing::debug!(
-                        "[{}] Skipping E{}: torrent {} is from primary RSS",
-                        rss.title,
-                        episode,
-                        existing.id
-                    );
-                    return false;
-                }
-            }
-        }
-
-        true
+        // Compare: new must be strictly higher priority to trigger washing
+        calculator.is_higher_priority(&new_comparable, best_existing)
     }
 
     /// Create torrent record in database and add download task to downloader
@@ -399,8 +384,9 @@ impl RssProcessingService {
         info_hash: &str,
         torrent_url: &str,
         episode: i32,
+        parse_result: &ParseResult,
     ) {
-        // Create torrent record with parsed episode number
+        // Create torrent record with parsed episode number and metadata
         if let Err(e) = TorrentRepository::create(
             &self.db,
             CreateTorrent {
@@ -409,6 +395,9 @@ impl RssProcessingService {
                 info_hash: info_hash.to_string(),
                 torrent_url: torrent_url.to_string(),
                 episode_number: Some(episode),
+                subtitle_group: parse_result.subtitle_group.clone(),
+                subtitle_language: parse_result.sub_type.clone(),
+                resolution: parse_result.resolution.clone(),
             },
         )
         .await
@@ -486,38 +475,20 @@ impl RssProcessingService {
     /// Used by the scheduled RSS fetch job to process all enabled subscriptions.
     /// RSS feeds are fetched and processed concurrently for better performance.
     ///
-    /// Processing is done in two phases to ensure primary RSS takes priority:
-    /// 1. First, all backup RSS feeds are processed concurrently
-    /// 2. Then, all primary RSS feeds are processed concurrently
-    ///
-    /// Primary RSS can override episodes downloaded by backup RSS, ensuring
-    /// the preferred source is always used when available.
+    /// With the priority-based washing system, all RSS feeds are processed equally.
+    /// Higher priority resources will automatically replace lower priority ones
+    /// based on subtitle group, language, and resolution settings.
     pub async fn process_batch(&self, rss_list: Vec<Rss>, global_exclude_filters: &[String]) {
-        // Partition into primary and backup RSS
-        let (primary, backup): (Vec<_>, Vec<_>) =
-            rss_list.into_iter().partition(|rss| rss.is_primary);
-
-        // Phase 1: Process all backup RSS concurrently
-        // Backup RSS downloads first as a fallback
-        if !backup.is_empty() {
-            tracing::debug!("Processing {} backup RSS feeds", backup.len());
-            let futures: Vec<_> = backup
-                .iter()
-                .map(|rss| self.process_single(rss, global_exclude_filters))
-                .collect();
-            futures::future::join_all(futures).await;
+        if rss_list.is_empty() {
+            return;
         }
 
-        // Phase 2: Process all primary RSS concurrently
-        // Primary RSS can override episodes from backup RSS
-        if !primary.is_empty() {
-            tracing::debug!("Processing {} primary RSS feeds", primary.len());
-            let futures: Vec<_> = primary
-                .iter()
-                .map(|rss| self.process_single(rss, global_exclude_filters))
-                .collect();
-            futures::future::join_all(futures).await;
-        }
+        tracing::debug!("Processing {} RSS feeds concurrently", rss_list.len());
+        let futures: Vec<_> = rss_list
+            .iter()
+            .map(|rss| self.process_single(rss, global_exclude_filters))
+            .collect();
+        futures::future::join_all(futures).await;
     }
 
     /// Spawn background tasks to process RSS subscriptions by their IDs.

@@ -359,6 +359,24 @@ export type NotificationSettings = {
 export type Platform = "tv" | "movie" | "ova";
 
 /**
+ * Priority configuration for torrent selection and washing
+ */
+export type PrioritySettings = {
+  /**
+   * Resolutions in priority order (first = highest priority)
+   */
+  resolutions?: Array<string>;
+  /**
+   * Subtitle groups in priority order (first = highest priority)
+   */
+  subtitle_groups?: Array<string>;
+  /**
+   * Subtitle languages in priority order (first = highest priority)
+   */
+  subtitle_languages?: Array<string>;
+};
+
+/**
  * Proxy configuration for HTTP client
  */
 export type ProxySettings = {
@@ -493,6 +511,10 @@ export type Settings = {
    * Notification configuration
    */
   notification?: NotificationSettings;
+  /**
+   * Priority configuration for torrent selection and washing
+   */
+  priority?: PrioritySettings;
   /**
    * Proxy configuration for HTTP client
    */
@@ -782,6 +804,24 @@ export type UpdateNotificationSettings = {
 };
 
 /**
+ * Request body for updating priority settings
+ */
+export type UpdatePrioritySettings = {
+  /**
+   * Resolutions in priority order (replaces entire array if provided)
+   */
+  resolutions?: Array<string> | null;
+  /**
+   * Subtitle groups in priority order (replaces entire array if provided)
+   */
+  subtitle_groups?: Array<string> | null;
+  /**
+   * Subtitle languages in priority order (replaces entire array if provided)
+   */
+  subtitle_languages?: Array<string> | null;
+};
+
+/**
  * Request body for updating proxy settings
  */
 export type UpdateProxySettings = {
@@ -825,6 +865,7 @@ export type UpdateSettings = {
   downloader?: null | UpdateDownloaderSettings;
   filter?: null | UpdateFilterSettings;
   notification?: null | UpdateNotificationSettings;
+  priority?: null | UpdatePrioritySettings;
   proxy?: null | UpdateProxySettings;
 };
 

@@ -8,10 +8,6 @@ pub async fn seed_bangumi(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     // Check if we already have data
     let existing = BangumiRepository::get_all(pool).await?;
     if !existing.is_empty() {
-        tracing::info!(
-            "Database already has {} bangumi, skipping seed",
-            existing.len()
-        );
         return Ok(());
     }
 

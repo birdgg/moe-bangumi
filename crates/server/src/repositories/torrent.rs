@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use chrono::{DateTime, Utc};
 use sqlx::{Executor, Sqlite, SqlitePool};
 
@@ -7,7 +9,8 @@ use crate::models::{CreateTorrent, Torrent, UpdateTorrent};
 const SELECT_TORRENT: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, rss_id, info_hash, torrent_url, episode_number
+        bangumi_id, rss_id, info_hash, torrent_url, episode_number,
+        subtitle_group, subtitle_language, resolution
     FROM torrent
 "#;
 
@@ -33,8 +36,8 @@ impl TorrentRepository {
     {
         let result = sqlx::query(
             r#"
-            INSERT INTO torrent (bangumi_id, rss_id, info_hash, torrent_url, episode_number)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO torrent (bangumi_id, rss_id, info_hash, torrent_url, episode_number, subtitle_group, subtitle_language, resolution)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             "#,
         )
@@ -43,6 +46,9 @@ impl TorrentRepository {
         .bind(&data.info_hash)
         .bind(&data.torrent_url)
         .bind(data.episode_number)
+        .bind(&data.subtitle_group)
+        .bind(&data.subtitle_language)
+        .bind(&data.resolution)
         .fetch_one(executor)
         .await?;
 
@@ -223,6 +229,100 @@ impl TorrentRepository {
 
         Ok(result > 0)
     }
+
+    /// Batch check which info_hashes already exist in the database
+    /// Returns a HashSet of existing info_hashes for O(1) lookup
+    pub async fn get_existing_hashes(
+        pool: &SqlitePool,
+        info_hashes: &[String],
+    ) -> Result<HashSet<String>, sqlx::Error> {
+        if info_hashes.is_empty() {
+            return Ok(HashSet::new());
+        }
+
+        // Build query with IN clause
+        let placeholders: Vec<String> = (1..=info_hashes.len()).map(|i| format!("${}", i)).collect();
+        let query = format!(
+            "SELECT info_hash FROM torrent WHERE info_hash IN ({})",
+            placeholders.join(", ")
+        );
+
+        let mut query_builder = sqlx::query_scalar::<_, String>(&query);
+        for hash in info_hashes {
+            query_builder = query_builder.bind(hash);
+        }
+
+        let existing: Vec<String> = query_builder.fetch_all(pool).await?;
+        Ok(existing.into_iter().collect())
+    }
+
+    /// Batch get torrents by episode numbers for a specific bangumi
+    /// Returns a HashMap of episode_number -> Vec<Torrent> for efficient lookup
+    pub async fn get_by_episodes(
+        pool: &SqlitePool,
+        bangumi_id: i64,
+        episode_numbers: &[i32],
+    ) -> Result<HashMap<i32, Vec<Torrent>>, sqlx::Error> {
+        if episode_numbers.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        // Build query with IN clause
+        let placeholders: Vec<String> = (2..=episode_numbers.len() + 1)
+            .map(|i| format!("${}", i))
+            .collect();
+        let query = format!(
+            "{} WHERE bangumi_id = $1 AND episode_number IN ({}) ORDER BY episode_number ASC",
+            SELECT_TORRENT,
+            placeholders.join(", ")
+        );
+
+        let mut query_builder = sqlx::query_as::<_, TorrentRow>(&query).bind(bangumi_id);
+        for ep in episode_numbers {
+            query_builder = query_builder.bind(ep);
+        }
+
+        let rows: Vec<TorrentRow> = query_builder.fetch_all(pool).await?;
+
+        // Group by episode number
+        let mut result: HashMap<i32, Vec<Torrent>> = HashMap::new();
+        for row in rows {
+            let torrent: Torrent = row.into();
+            if let Some(ep) = torrent.episode_number {
+                result.entry(ep).or_default().push(torrent);
+            }
+        }
+
+        Ok(result)
+    }
+
+    /// Get the best torrent for each episode of a bangumi
+    /// "Best" means the first torrent found for each episode (by created_at DESC)
+    pub async fn get_best_by_bangumi(
+        pool: &SqlitePool,
+        bangumi_id: i64,
+    ) -> Result<HashMap<i32, Torrent>, sqlx::Error> {
+        let query = format!(
+            "{} WHERE bangumi_id = $1 AND episode_number IS NOT NULL ORDER BY episode_number ASC, created_at DESC",
+            SELECT_TORRENT
+        );
+        let rows = sqlx::query_as::<_, TorrentRow>(&query)
+            .bind(bangumi_id)
+            .fetch_all(pool)
+            .await?;
+
+        // Keep only the first (best) torrent for each episode
+        let mut result: HashMap<i32, Torrent> = HashMap::new();
+        for row in rows {
+            let torrent: Torrent = row.into();
+            if let Some(ep) = torrent.episode_number {
+                // Only insert if not already present (first one is best due to ORDER BY)
+                result.entry(ep).or_insert(torrent);
+            }
+        }
+
+        Ok(result)
+    }
 }
 
 /// Internal row type for mapping SQLite results
@@ -236,6 +336,9 @@ struct TorrentRow {
     info_hash: String,
     torrent_url: String,
     episode_number: Option<i32>,
+    subtitle_group: Option<String>,
+    subtitle_language: Option<String>,
+    resolution: Option<String>,
 }
 
 impl From<TorrentRow> for Torrent {
@@ -249,6 +352,9 @@ impl From<TorrentRow> for Torrent {
             info_hash: row.info_hash,
             torrent_url: row.torrent_url,
             episode_number: row.episode_number,
+            subtitle_group: row.subtitle_group,
+            subtitle_language: row.subtitle_language,
+            resolution: row.resolution,
         }
     }
 }

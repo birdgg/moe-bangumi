@@ -534,6 +534,36 @@ export const PlatformSchema = {
   enum: ["tv", "movie", "ova"],
 } as const;
 
+export const PrioritySettingsSchema = {
+  type: "object",
+  description: "Priority configuration for torrent selection and washing",
+  properties: {
+    resolutions: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description: "Resolutions in priority order (first = highest priority)",
+    },
+    subtitle_groups: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description:
+        "Subtitle groups in priority order (first = highest priority)",
+    },
+    subtitle_languages: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+      description:
+        "Subtitle languages in priority order (first = highest priority)",
+    },
+  },
+} as const;
+
 export const ProxySettingsSchema = {
   type: "object",
   description: "Proxy configuration for HTTP client",
@@ -733,6 +763,10 @@ export const SettingsSchema = {
     notification: {
       $ref: "#/components/schemas/NotificationSettings",
       description: "Notification configuration",
+    },
+    priority: {
+      $ref: "#/components/schemas/PrioritySettings",
+      description: "Priority configuration for torrent selection and washing",
     },
     proxy: {
       $ref: "#/components/schemas/ProxySettings",
@@ -1224,6 +1258,37 @@ export const UpdateNotificationSettingsSchema = {
   },
 } as const;
 
+export const UpdatePrioritySettingsSchema = {
+  type: "object",
+  description: "Request body for updating priority settings",
+  properties: {
+    resolutions: {
+      type: ["array", "null"],
+      items: {
+        type: "string",
+      },
+      description:
+        "Resolutions in priority order (replaces entire array if provided)",
+    },
+    subtitle_groups: {
+      type: ["array", "null"],
+      items: {
+        type: "string",
+      },
+      description:
+        "Subtitle groups in priority order (replaces entire array if provided)",
+    },
+    subtitle_languages: {
+      type: ["array", "null"],
+      items: {
+        type: "string",
+      },
+      description:
+        "Subtitle languages in priority order (replaces entire array if provided)",
+    },
+  },
+} as const;
+
 export const UpdateProxySettingsSchema = {
   type: "object",
   description: "Request body for updating proxy settings",
@@ -1297,6 +1362,17 @@ export const UpdateSettingsSchema = {
         {
           $ref: "#/components/schemas/UpdateNotificationSettings",
           description: "Notification configuration updates",
+        },
+      ],
+    },
+    priority: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdatePrioritySettings",
+          description: "Priority configuration updates",
         },
       ],
     },

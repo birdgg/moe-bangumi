@@ -38,6 +38,11 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
         chat_id: settings?.notification?.telegram?.chat_id ?? "",
       },
     },
+    priority: {
+      subtitle_groups: settings?.priority?.subtitle_groups ?? [],
+      subtitle_languages: settings?.priority?.subtitle_languages ?? [],
+      resolutions: settings?.priority?.resolutions ?? [],
+    },
   };
 }
 
@@ -86,6 +91,11 @@ export function formDataToUpdateSettings(data: SettingsFormData): UpdateSettings
         chat_id: data.notification.telegram.chat_id.trim() || null,
       },
     },
+    priority: {
+      subtitle_groups: data.priority.subtitle_groups,
+      subtitle_languages: data.priority.subtitle_languages,
+      resolutions: data.priority.resolutions,
+    },
   };
 }
 
@@ -124,6 +134,10 @@ export function useSettingsForm(initialSettings?: Settings) {
       // Notification settings
       form.setFieldValue("notification.telegram.bot_token", formData.notification.telegram.bot_token);
       form.setFieldValue("notification.telegram.chat_id", formData.notification.telegram.chat_id);
+      // Priority settings
+      form.setFieldValue("priority.subtitle_groups", formData.priority.subtitle_groups);
+      form.setFieldValue("priority.subtitle_languages", formData.priority.subtitle_languages);
+      form.setFieldValue("priority.resolutions", formData.priority.resolutions);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSettings]);

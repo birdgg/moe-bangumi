@@ -107,6 +107,7 @@ The `web/` directory contains a React frontend application.
 - **Vite** - Build tool and dev server
 - **TailwindCSS 4** - Utility-first CSS
 - **Tanstack Router** - File-based routing
+- **Tanstack Form** - Form component
 - **shadcn/ui** - UI component library (base-ui based)
 - **Tabler Icons** - Icon library
 - **Bun** - Package manager and runtime

@@ -54,16 +54,12 @@ impl SchedulerService {
     /// Each job runs in its own tokio task and executes at its specified interval.
     /// This method returns immediately after spawning all tasks.
     pub fn start(&self) {
-        tracing::info!("Starting scheduler with {} jobs", self.jobs.len());
-
         for job in &self.jobs {
             let job = Arc::clone(job);
             tokio::spawn(async move {
                 Self::run_job_loop(job).await;
             });
         }
-
-        tracing::info!("Scheduler started");
     }
 
     /// Runs a single job in an infinite loop.

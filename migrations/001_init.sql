@@ -112,7 +112,12 @@ CREATE TABLE IF NOT EXISTS torrent (
     torrent_url TEXT NOT NULL,                      -- Torrent URL (.torrent file URL or magnet link)
 
     -- Episode number (optional, can be parsed from filename during rename)
-    episode_number INTEGER
+    episode_number INTEGER,
+
+    -- Parsed metadata for priority comparison (washing)
+    subtitle_group TEXT,                            -- Subtitle group name (e.g., "ANi", "喵萌奶茶屋")
+    subtitle_language TEXT,                         -- Subtitle language/type (e.g., "简日", "繁体")
+    resolution TEXT                                 -- Video resolution (e.g., "1080P", "720P")
 );
 
 -- Torrent indexes

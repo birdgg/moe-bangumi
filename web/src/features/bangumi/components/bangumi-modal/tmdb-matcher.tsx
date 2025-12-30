@@ -93,7 +93,7 @@ export function TmdbMatcher({
           type="button"
           onClick={handleToggleOpen}
           className={cn(
-            "flex flex-1 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm",
+            "flex flex-1 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm",
             "border-input bg-transparent",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -102,7 +102,7 @@ export function TmdbMatcher({
         >
           <span
             className={cn(
-              "truncate flex items-center gap-2",
+              "truncate flex items-center gap-2 min-w-0",
               !displayValue && "text-muted-foreground"
             )}
           >
@@ -169,7 +169,7 @@ export function TmdbMatcher({
                   ) : keyword ? (
                     "未找到结果"
                   ) : (
-                    "请输入中文标题以搜索"
+                    "请输入日文标题以搜索"
                   )}
                 </div>
               ) : (

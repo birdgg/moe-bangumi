@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::Clearable;
+use crate::priority::ComparableTorrent;
 
 /// Torrent entity representing a BitTorrent file for bangumi episodes
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -23,6 +24,26 @@ pub struct Torrent {
 
     /// Episode number (optional, can be parsed from filename during rename)
     pub episode_number: Option<i32>,
+
+    /// Parsed subtitle group name (for priority comparison)
+    pub subtitle_group: Option<String>,
+
+    /// Parsed subtitle language/type (for priority comparison)
+    pub subtitle_language: Option<String>,
+
+    /// Parsed video resolution (for priority comparison)
+    pub resolution: Option<String>,
+}
+
+impl Torrent {
+    /// Convert to ComparableTorrent for priority comparison
+    pub fn to_comparable(&self) -> ComparableTorrent {
+        ComparableTorrent {
+            subtitle_group: self.subtitle_group.clone(),
+            subtitle_language: self.subtitle_language.clone(),
+            resolution: self.resolution.clone(),
+        }
+    }
 }
 
 /// Request body for creating a new torrent
@@ -40,6 +61,15 @@ pub struct CreateTorrent {
 
     /// Episode number (optional, can be parsed from filename during rename)
     pub episode_number: Option<i32>,
+
+    /// Parsed subtitle group name (for priority comparison)
+    pub subtitle_group: Option<String>,
+
+    /// Parsed subtitle language/type (for priority comparison)
+    pub subtitle_language: Option<String>,
+
+    /// Parsed video resolution (for priority comparison)
+    pub resolution: Option<String>,
 }
 
 /// Request body for updating a torrent

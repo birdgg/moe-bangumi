@@ -73,6 +73,15 @@ export const notificationSchema = z.object({
 });
 
 /**
+ * Priority settings schema for torrent selection and washing
+ */
+export const prioritySchema = z.object({
+  subtitle_groups: z.array(z.string()),
+  subtitle_languages: z.array(z.string()),
+  resolutions: z.array(z.string()),
+});
+
+/**
  * Complete settings form schema
  */
 export const settingsFormSchema = z.object({
@@ -80,6 +89,7 @@ export const settingsFormSchema = z.object({
   filter: filterSchema,
   proxy: proxySchema,
   notification: notificationSchema,
+  priority: prioritySchema,
 });
 
 /**
@@ -93,4 +103,5 @@ export type FilterFormData = z.infer<typeof filterSchema>;
 export type ProxyFormData = z.infer<typeof proxySchema>;
 export type TelegramConfigFormData = z.infer<typeof telegramConfigSchema>;
 export type NotificationFormData = z.infer<typeof notificationSchema>;
+export type PriorityFormData = z.infer<typeof prioritySchema>;
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;

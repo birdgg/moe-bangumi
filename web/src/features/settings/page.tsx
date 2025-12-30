@@ -13,6 +13,7 @@ import {
   FilterSection,
   ProxySection,
   NotificationSection,
+  PrioritySection,
   SettingsSidebar,
   type SettingsSection,
 } from "./components";
@@ -50,6 +51,8 @@ export function SettingsPage() {
     switch (activeSection) {
       case "downloader":
         return <DownloaderSection form={form} />;
+      case "priority":
+        return <PrioritySection form={form} />;
       case "filter":
         return <FilterSection form={form} />;
       case "proxy":

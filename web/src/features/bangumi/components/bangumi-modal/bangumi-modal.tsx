@@ -333,8 +333,8 @@ export function BangumiModal({
                 </div>
 
                 {/* TMDB Matcher */}
-                <form.Subscribe selector={(state) => state.values.title_chinese}>
-                  {(titleChinese) => (
+                <form.Subscribe selector={(state) => state.values.title_japanese}>
+                  {(titleJapanese) => (
                     <Field>
                       <FieldLabel>
                         <IconMovie className="size-4 text-chart-3 dark:text-chart-1" />
@@ -342,7 +342,7 @@ export function BangumiModal({
                       </FieldLabel>
                       <TmdbMatcher
                         onChange={(show) => setSelectedTmdbId(show?.id ?? null)}
-                        keyword={titleChinese}
+                        keyword={titleJapanese}
                         initialTmdbId={data.tmdbId ?? undefined}
                       />
                     </Field>

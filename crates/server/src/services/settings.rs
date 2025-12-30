@@ -44,7 +44,6 @@ impl SettingsService {
         match tokio::fs::read_to_string(path).await {
             Ok(content) => {
                 let settings: Settings = toml::from_str(&content)?;
-                tracing::info!("Loaded settings from {}", path.display());
                 Ok(settings)
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
@@ -56,7 +55,6 @@ impl SettingsService {
                 let default = Settings::default();
                 let toml_str = toml::to_string_pretty(&default)?;
                 tokio::fs::write(path, toml_str).await?;
-                tracing::info!("Created default settings file at {}", path.display());
                 Ok(default)
             }
             Err(e) => Err(e.into()),

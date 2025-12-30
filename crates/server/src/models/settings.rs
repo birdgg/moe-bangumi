@@ -20,6 +20,9 @@ pub struct Settings {
     /// Notification configuration
     #[serde(default)]
     pub notification: NotificationSettings,
+    /// Priority configuration for torrent selection and washing
+    #[serde(default)]
+    pub priority: PrioritySettings,
 }
 
 /// Downloader configuration with per-type configs
@@ -199,6 +202,58 @@ impl FilterSettings {
     }
 }
 
+/// Priority configuration for torrent selection and washing
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PrioritySettings {
+    /// Subtitle groups in priority order (first = highest priority)
+    #[serde(default = "PrioritySettings::default_subtitle_groups")]
+    pub subtitle_groups: Vec<String>,
+    /// Subtitle languages in priority order (first = highest priority)
+    #[serde(default = "PrioritySettings::default_subtitle_languages")]
+    pub subtitle_languages: Vec<String>,
+    /// Resolutions in priority order (first = highest priority)
+    #[serde(default = "PrioritySettings::default_resolutions")]
+    pub resolutions: Vec<String>,
+}
+
+impl Default for PrioritySettings {
+    fn default() -> Self {
+        Self {
+            subtitle_groups: Self::default_subtitle_groups(),
+            subtitle_languages: Self::default_subtitle_languages(),
+            resolutions: Self::default_resolutions(),
+        }
+    }
+}
+
+impl PrioritySettings {
+    fn default_subtitle_groups() -> Vec<String> {
+        vec!["ANi".to_string(), "喵萌奶茶屋".to_string(), "桜都字幕组".to_string()]
+    }
+
+    fn default_subtitle_languages() -> Vec<String> {
+        vec![
+            "简日".to_string(),
+            "简繁日".to_string(),
+            "简体".to_string(),
+            "繁日".to_string(),
+        ]
+    }
+
+    fn default_resolutions() -> Vec<String> {
+        vec!["2160P".to_string(), "1080P".to_string(), "720P".to_string()]
+    }
+
+    /// Convert to PriorityConfig for the priority calculator
+    pub fn to_config(&self) -> crate::priority::PriorityConfig {
+        crate::priority::PriorityConfig {
+            subtitle_groups: self.subtitle_groups.clone(),
+            subtitle_languages: self.subtitle_languages.clone(),
+            resolutions: self.resolutions.clone(),
+        }
+    }
+}
+
 /// Proxy configuration for HTTP client
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProxySettings {
@@ -351,6 +406,21 @@ impl Settings {
             } else {
                 self.notification.clone()
             },
+            priority: if let Some(p) = update.priority {
+                PrioritySettings {
+                    subtitle_groups: p
+                        .subtitle_groups
+                        .unwrap_or_else(|| self.priority.subtitle_groups.clone()),
+                    subtitle_languages: p
+                        .subtitle_languages
+                        .unwrap_or_else(|| self.priority.subtitle_languages.clone()),
+                    resolutions: p
+                        .resolutions
+                        .unwrap_or_else(|| self.priority.resolutions.clone()),
+                }
+            } else {
+                self.priority.clone()
+            },
         }
     }
 }
@@ -371,6 +441,9 @@ pub struct UpdateSettings {
     /// Notification configuration updates
     #[serde(default)]
     pub notification: Option<UpdateNotificationSettings>,
+    /// Priority configuration updates
+    #[serde(default)]
+    pub priority: Option<UpdatePrioritySettings>,
 }
 
 /// Request body for updating downloader settings
@@ -475,4 +548,18 @@ pub struct UpdateTelegramConfig {
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub chat_id: Clearable<String>,
+}
+
+/// Request body for updating priority settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdatePrioritySettings {
+    /// Subtitle groups in priority order (replaces entire array if provided)
+    #[serde(default)]
+    pub subtitle_groups: Option<Vec<String>>,
+    /// Subtitle languages in priority order (replaces entire array if provided)
+    #[serde(default)]
+    pub subtitle_languages: Option<Vec<String>>,
+    /// Resolutions in priority order (replaces entire array if provided)
+    #[serde(default)]
+    pub resolutions: Option<Vec<String>>,
 }
