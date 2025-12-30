@@ -4,11 +4,6 @@ use std::net::SocketAddr;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-fn print_banner() {
-    let version = env!("CARGO_PKG_VERSION");
-    tracing::info!("MoeBangumi v{} - Your Bangumi Tracker", version);
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
@@ -25,8 +20,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(tracing_subscriber::fmt::layer())
         .with(DatabaseLayer::new(log_sender))
         .init();
-
-    print_banner();
 
     let app_env = Environment::from_str(&env::var("APP_ENV").unwrap_or_default());
     let port: u16 = env::var("PORT")
