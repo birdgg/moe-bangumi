@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { IconTrash, IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ interface DownloadsTableProps {
   onDelete: (hashes: string[]) => void;
   isDeleting?: boolean;
 }
+
+// Checkbox styling
+const checkboxClass =
+  "size-4 rounded border-border/50 bg-background text-chart-1 focus:ring-chart-1/50 focus:ring-offset-0 cursor-pointer accent-chart-1";
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -57,21 +61,102 @@ export function DownloadsTable({
   onDelete,
   isDeleting,
 }: DownloadsTableProps) {
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteTargets, setDeleteTargets] = useState<string[]>([]);
+
+  const allSelected = useMemo(
+    () => tasks.length > 0 && selectedIds.size === tasks.length,
+    [tasks.length, selectedIds.size]
+  );
+
+  const someSelected = useMemo(
+    () => selectedIds.size > 0 && selectedIds.size < tasks.length,
+    [tasks.length, selectedIds.size]
+  );
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(tasks.map((t) => t.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
 
   const handleDelete = () => {
-    if (deleteTarget) {
-      onDelete([deleteTarget]);
-      setDeleteTarget(null);
+    if (deleteTargets.length > 0) {
+      onDelete(deleteTargets);
+      setDeleteTargets([]);
+      setSelectedIds(new Set());
     }
+  };
+
+  const handleBatchDelete = () => {
+    setDeleteTargets(Array.from(selectedIds));
+  };
+
+  const handleSingleDelete = (id: string) => {
+    setDeleteTargets([id]);
   };
 
   return (
     <>
+      {/* Batch actions bar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-chart-1/30 bg-chart-1/5 px-4 py-2">
+          <span className="text-sm text-foreground">
+            已选择 <strong>{selectedIds.size}</strong> 项
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBatchDelete}
+            disabled={isDeleting}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            {isDeleting ? (
+              <IconLoader2 className="mr-1.5 size-4 animate-spin" />
+            ) : (
+              <IconTrash className="mr-1.5 size-4" />
+            )}
+            批量删除
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-muted-foreground"
+          >
+            取消选择
+          </Button>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50 text-left text-muted-foreground">
+              <th className="w-12 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={toggleSelectAll}
+                  className={checkboxClass}
+                  aria-label="全选"
+                />
+              </th>
               <th className="px-4 py-3 font-medium">名称</th>
               <th className="px-4 py-3 font-medium w-24">状态</th>
               <th className="px-4 py-3 font-medium w-40">进度</th>
@@ -87,8 +172,22 @@ export function DownloadsTable({
               return (
                 <tr
                   key={task.id}
-                  className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors"
+                  className={cn(
+                    "border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors",
+                    selectedIds.has(task.id) && "bg-chart-1/5"
+                  )}
                 >
+                  {/* Checkbox */}
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(task.id)}
+                      onChange={() => toggleSelect(task.id)}
+                      className={checkboxClass}
+                      aria-label={`选择 ${task.name}`}
+                    />
+                  </td>
+
                   {/* Name */}
                   <td className="px-4 py-3">
                     <Tooltip>
@@ -146,7 +245,7 @@ export function DownloadsTable({
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              onClick={() => setDeleteTarget(task.id)}
+                              onClick={() => handleSingleDelete(task.id)}
                               disabled={isDeleting}
                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             />
@@ -171,14 +270,16 @@ export function DownloadsTable({
 
       {/* Delete confirmation dialog */}
       <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={() => setDeleteTarget(null)}
+        open={deleteTargets.length > 0}
+        onOpenChange={() => setDeleteTargets([])}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除此下载任务吗？这将同时删除已下载的文件。
+              {deleteTargets.length === 1
+                ? "确定要删除此下载任务吗？这将同时删除已下载的文件。"
+                : `确定要删除选中的 ${deleteTargets.length} 个下载任务吗？这将同时删除已下载的文件。`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
