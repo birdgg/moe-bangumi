@@ -1,5 +1,6 @@
 mod bangumi;
 mod cache;
+mod calendar;
 mod downloader;
 mod http_client;
 mod log;
@@ -15,6 +16,7 @@ mod washing;
 
 pub use bangumi::{BangumiError, BangumiService};
 pub use cache::{CacheError, CacheService};
+pub use calendar::{CalendarError, CalendarService};
 pub use downloader::{
     AddTaskOptions, Downloader, DownloaderClient, DownloaderConfig, DownloaderError,
     DownloaderService, DownloaderType, Task, TaskFile, TaskFilter, TaskStatus,
@@ -26,7 +28,8 @@ pub use poster::{PosterError, PosterService};
 pub use rename::{RenameError, RenameService};
 pub use rss_processing::RssProcessingService;
 pub use scheduler::{
-    JobResult, LogCleanupJob, RenameJob, RssFetchJob, SchedulerJob, SchedulerService,
+    CalendarRefreshJob, JobResult, LogCleanupJob, RenameJob, RssFetchJob, SchedulerJob,
+    SchedulerService,
 };
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
 pub use torrent_search::{TorrentSearchError, TorrentSearchService};

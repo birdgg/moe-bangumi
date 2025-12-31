@@ -189,3 +189,12 @@ impl From<crate::services::TorrentSearchError> for AppError {
         AppError::ExternalApi(e.to_string())
     }
 }
+
+impl From<crate::services::CalendarError> for AppError {
+    fn from(e: crate::services::CalendarError) -> Self {
+        match e {
+            crate::services::CalendarError::Database(e) => AppError::Database(e),
+            crate::services::CalendarError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
+        }
+    }
+}

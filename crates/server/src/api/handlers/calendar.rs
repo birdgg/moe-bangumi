@@ -3,10 +3,10 @@ use bgmtv::CalendarDay;
 
 use crate::{error::AppResult, state::AppState};
 
-// Cache TTL for calendar data (1 hour)
-const CALENDAR_CACHE_TTL: i64 = 3600;
-
 /// Get BGM.tv calendar (weekly anime schedule)
+///
+/// Returns cached data from database. If the database is empty,
+/// automatically fetches from BGM.tv API and populates the database.
 #[utoipa::path(
     get,
     path = "/api/calendar",
@@ -16,15 +16,16 @@ const CALENDAR_CACHE_TTL: i64 = 3600;
     )
 )]
 pub async fn get_calendar(State(state): State<AppState>) -> AppResult<Json<Vec<CalendarDay>>> {
-    let cache_key = "bgmtv:calendar";
-    let bgmtv = state.bgmtv.clone();
+    // Try to get from database first
+    let calendar = state.calendar.get_calendar().await?;
 
-    let calendar = state
-        .cache
-        .get_or_fetch(cache_key, CALENDAR_CACHE_TTL, || async move {
-            bgmtv.get_calendar().await
-        })
-        .await?;
+    // If database is empty, fetch from API and cache it
+    if calendar.is_empty() {
+        tracing::info!("Calendar database is empty, fetching from BGM.tv API");
+        state.calendar.refresh_calendar().await?;
+        let calendar = state.calendar.get_calendar().await?;
+        return Ok(Json(calendar));
+    }
 
     Ok(Json(calendar))
 }

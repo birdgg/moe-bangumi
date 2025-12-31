@@ -7,9 +7,10 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    BangumiService, CacheService, DownloaderService, HttpClientService, LogCleanupJob, LogService,
-    NotificationService, PosterService, RenameJob, RenameService, RssFetchJob, RssProcessingService,
-    SchedulerService, SettingsService, TorrentSearchService, WashingService,
+    BangumiService, CacheService, CalendarRefreshJob, CalendarService, DownloaderService,
+    HttpClientService, LogCleanupJob, LogService, NotificationService, PosterService, RenameJob,
+    RenameService, RssFetchJob, RssProcessingService, SchedulerService, SettingsService,
+    TorrentSearchService, WashingService,
 };
 
 #[derive(Clone)]
@@ -29,6 +30,7 @@ pub struct AppState {
     pub logs: Arc<LogService>,
     pub bangumi: Arc<BangumiService>,
     pub cache: Arc<CacheService>,
+    pub calendar: Arc<CalendarService>,
     pub torrent_search: Arc<TorrentSearchService>,
     pub notification: Arc<NotificationService>,
     pub rename: Arc<RenameService>,
@@ -136,11 +138,16 @@ impl AppState {
             Arc::clone(&downloader_arc),
         ));
 
+        // Create calendar service (for BGM.tv weekly schedule)
+        let bgmtv_arc = Arc::new(bgmtv);
+        let calendar = Arc::new(CalendarService::new(db.clone(), Arc::clone(&bgmtv_arc)));
+
         // Create and start scheduler service
         let scheduler = SchedulerService::new()
             .with_arc_job(Arc::clone(&rss_fetch_job))
             .with_job(LogCleanupJob::new(Arc::clone(&logs)))
-            .with_job(RenameJob::new(Arc::clone(&rename)));
+            .with_job(RenameJob::new(Arc::clone(&rename)))
+            .with_job(CalendarRefreshJob::new(Arc::clone(&calendar)));
         scheduler.start();
 
         Self {
@@ -148,7 +155,7 @@ impl AppState {
             config: Arc::new(config),
             http_client_service,
             tmdb: Arc::new(tmdb),
-            bgmtv: Arc::new(bgmtv),
+            bgmtv: bgmtv_arc,
             mikan: Arc::new(mikan),
             rss: rss_arc,
             settings,
@@ -159,6 +166,7 @@ impl AppState {
             logs,
             bangumi,
             cache,
+            calendar,
             torrent_search,
             notification,
             rename,
