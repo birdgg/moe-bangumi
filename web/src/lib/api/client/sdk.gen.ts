@@ -28,6 +28,8 @@ import type {
   ListTorrentsData,
   ListTorrentsErrors,
   ListTorrentsResponses,
+  RefreshCalendarData,
+  RefreshCalendarResponses,
   ResetSettingsData,
   ResetSettingsResponses,
   SearchBgmtvData,
@@ -136,6 +138,9 @@ export const updateBangumi = <ThrowOnError extends boolean = false>(
 
 /**
  * Get BGM.tv calendar (weekly anime schedule)
+ *
+ * Returns cached data from database. If the database is empty,
+ * automatically fetches from BGM.tv API and populates the database.
  */
 export const getCalendar = <ThrowOnError extends boolean = false>(
   options?: Options<GetCalendarData, ThrowOnError>,
@@ -144,6 +149,21 @@ export const getCalendar = <ThrowOnError extends boolean = false>(
     url: "/api/calendar",
     ...options,
   });
+
+/**
+ * Refresh BGM.tv calendar data
+ *
+ * Forces a refresh of the calendar data from BGM.tv API.
+ * Returns the updated calendar data.
+ */
+export const refreshCalendar = <ThrowOnError extends boolean = false>(
+  options?: Options<RefreshCalendarData, ThrowOnError>,
+) =>
+  (options?.client ?? client).post<
+    RefreshCalendarResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/calendar/refresh", ...options });
 
 /**
  * Test downloader connection with provided credentials

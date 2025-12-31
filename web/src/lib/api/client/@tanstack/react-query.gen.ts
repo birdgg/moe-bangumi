@@ -22,6 +22,7 @@ import {
   getSettings,
   listTorrents,
   type Options,
+  refreshCalendar,
   resetSettings,
   searchBgmtv,
   searchMikan,
@@ -55,6 +56,8 @@ import type {
   GetSettingsResponse,
   ListTorrentsData,
   ListTorrentsResponse,
+  RefreshCalendarData,
+  RefreshCalendarResponse,
   ResetSettingsData,
   ResetSettingsResponse,
   SearchBgmtvData,
@@ -223,6 +226,9 @@ export const getCalendarQueryKey = (options?: Options<GetCalendarData>) =>
 
 /**
  * Get BGM.tv calendar (weekly anime schedule)
+ *
+ * Returns cached data from database. If the database is empty,
+ * automatically fetches from BGM.tv API and populates the database.
  */
 export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
   queryOptions<
@@ -242,6 +248,36 @@ export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
     },
     queryKey: getCalendarQueryKey(options),
   });
+
+/**
+ * Refresh BGM.tv calendar data
+ *
+ * Forces a refresh of the calendar data from BGM.tv API.
+ * Returns the updated calendar data.
+ */
+export const refreshCalendarMutation = (
+  options?: Partial<Options<RefreshCalendarData>>,
+): UseMutationOptions<
+  RefreshCalendarResponse,
+  DefaultError,
+  Options<RefreshCalendarData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RefreshCalendarResponse,
+    DefaultError,
+    Options<RefreshCalendarData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await refreshCalendar({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Test downloader connection with provided credentials

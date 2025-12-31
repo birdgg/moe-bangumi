@@ -33,7 +33,6 @@ export interface BangumiModalData {
 export interface RssFormEntry {
   url: string;
   filters: string[];
-  include_filters: string[];
   is_primary: boolean;
   group?: string | null;
 }

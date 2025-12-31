@@ -1023,6 +1023,23 @@ export type GetCalendarResponses = {
 export type GetCalendarResponse =
   GetCalendarResponses[keyof GetCalendarResponses];
 
+export type RefreshCalendarData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/calendar/refresh";
+};
+
+export type RefreshCalendarResponses = {
+  /**
+   * Calendar refreshed successfully
+   */
+  200: Array<CalendarDay>;
+};
+
+export type RefreshCalendarResponse =
+  RefreshCalendarResponses[keyof RefreshCalendarResponses];
+
 export type TestDownloaderConnectionData = {
   body: TestDownloaderRequest;
   path?: never;

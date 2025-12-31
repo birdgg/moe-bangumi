@@ -51,13 +51,6 @@ export function RssEntryItem({
     });
   };
 
-  const handleRemoveIncludeFilter = (filterIndex: number) => {
-    onUpdate({
-      ...entry,
-      include_filters: entry.include_filters.filter((_, fi) => fi !== filterIndex),
-    });
-  };
-
   return (
     <div
       className={cn(
@@ -142,28 +135,6 @@ export function RssEntryItem({
           <IconTrash className="size-4" />
         </Button>
       </div>
-
-      {/* Include Filter Tags (green theme) - only shown if there are filters */}
-      {entry.include_filters.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-muted-foreground shrink-0">包含:</span>
-          {entry.include_filters.map((filter, filterIndex) => (
-            <span
-              key={filterIndex}
-              className="inline-flex items-center gap-1 pl-2 pr-1.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 dark:bg-green-500/30 text-green-600 dark:text-green-400 border border-green-500/40 dark:border-green-500/50"
-            >
-              <code>{filter}</code>
-              <button
-                type="button"
-                onClick={() => handleRemoveIncludeFilter(filterIndex)}
-                className="flex items-center justify-center size-4 rounded-full hover:bg-green-500/30 transition-colors"
-              >
-                <IconX className="size-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* Exclude Filter Tags (red theme) */}
       <div className="flex flex-wrap gap-1.5 items-center">

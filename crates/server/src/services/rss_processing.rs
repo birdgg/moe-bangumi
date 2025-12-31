@@ -135,8 +135,8 @@ impl RssProcessingService {
             .cloned()
             .collect();
 
-        // Filter items by include/exclude patterns
-        let filtered_items = filter_rss_items(items, &rss.include_filters, &all_exclude_filters);
+        // Filter items by exclude patterns
+        let filtered_items = filter_rss_items(items, &all_exclude_filters);
 
         // Parse all items upfront to extract episode numbers and metadata
         let mut parsed_items: Vec<_> = filtered_items
@@ -446,30 +446,14 @@ fn matches_any_filter(title: &str, filters: &[Regex]) -> bool {
     filters.iter().any(|re| re.is_match(title))
 }
 
-/// Check if title matches all of the include filters (AND logic)
-fn matches_all_filters(title: &str, filters: &[Regex]) -> bool {
-    filters.iter().all(|re| re.is_match(title))
-}
-
-/// Filter RSS items by include/exclude filters
-fn filter_rss_items(
-    items: Vec<rss::RssItem>,
-    include_patterns: &[String],
-    exclude_patterns: &[String],
-) -> Vec<rss::RssItem> {
-    let include_filters = compile_filters(include_patterns);
+/// Filter RSS items by exclude filters
+fn filter_rss_items(items: Vec<rss::RssItem>, exclude_patterns: &[String]) -> Vec<rss::RssItem> {
     let exclude_filters = compile_filters(exclude_patterns);
 
     items
         .into_iter()
         .filter(|item| {
             let title = item.title();
-
-            // Must match ALL include filters (if any)
-            if !include_filters.is_empty() && !matches_all_filters(title, &include_filters) {
-                return false;
-            }
-
             // Must NOT match ANY exclude filter
             !matches_any_filter(title, &exclude_filters)
         })

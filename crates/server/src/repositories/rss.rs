@@ -7,7 +7,7 @@ use crate::models::{CreateRss, Rss, UpdateRss};
 const SELECT_RSS: &str = r#"
     SELECT
         id, created_at, updated_at,
-        bangumi_id, title, url, enabled, exclude_filters, include_filters, is_primary, "group"
+        bangumi_id, title, url, enabled, exclude_filters, is_primary, "group"
     FROM rss
 "#;
 
@@ -18,8 +18,6 @@ impl RssRepository {
     pub async fn create(pool: &SqlitePool, data: CreateRss) -> Result<Rss, sqlx::Error> {
         let exclude_filters_json = serde_json::to_string(&data.exclude_filters)
             .unwrap_or_else(|_| "[]".to_string());
-        let include_filters_json = serde_json::to_string(&data.include_filters)
-            .unwrap_or_else(|_| "[]".to_string());
 
         // If creating a primary RSS, demote any existing primary for this bangumi
         if data.is_primary {
@@ -28,8 +26,8 @@ impl RssRepository {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO rss (bangumi_id, title, url, enabled, exclude_filters, include_filters, is_primary, "group")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO rss (bangumi_id, title, url, enabled, exclude_filters, is_primary, "group")
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id
             "#,
         )
@@ -38,7 +36,6 @@ impl RssRepository {
         .bind(&data.url)
         .bind(data.enabled)
         .bind(&exclude_filters_json)
-        .bind(&include_filters_json)
         .bind(data.is_primary)
         .bind(&data.group)
         .fetch_one(pool)
@@ -138,9 +135,6 @@ impl RssRepository {
         let exclude_filters = data.exclude_filters.unwrap_or(existing.exclude_filters);
         let exclude_filters_json = serde_json::to_string(&exclude_filters)
             .unwrap_or_else(|_| "[]".to_string());
-        let include_filters = data.include_filters.unwrap_or(existing.include_filters);
-        let include_filters_json = serde_json::to_string(&include_filters)
-            .unwrap_or_else(|_| "[]".to_string());
         let is_primary = data.is_primary.unwrap_or(existing.is_primary);
         let group = data.group.or(existing.group);
 
@@ -155,16 +149,14 @@ impl RssRepository {
                 url = $1,
                 enabled = $2,
                 exclude_filters = $3,
-                include_filters = $4,
-                is_primary = $5,
-                "group" = $6
-            WHERE id = $7
+                is_primary = $4,
+                "group" = $5
+            WHERE id = $6
             "#,
         )
         .bind(&url)
         .bind(enabled)
         .bind(&exclude_filters_json)
-        .bind(&include_filters_json)
         .bind(is_primary)
         .bind(&group)
         .bind(id)
@@ -231,7 +223,6 @@ struct RssRow {
     url: String,
     enabled: bool,
     exclude_filters: String,
-    include_filters: String,
     is_primary: bool,
     group: Option<String>,
 }
@@ -239,8 +230,6 @@ struct RssRow {
 impl From<RssRow> for Rss {
     fn from(row: RssRow) -> Self {
         let exclude_filters: Vec<String> = serde_json::from_str(&row.exclude_filters)
-            .unwrap_or_default();
-        let include_filters: Vec<String> = serde_json::from_str(&row.include_filters)
             .unwrap_or_default();
 
         Self {
@@ -252,7 +241,6 @@ impl From<RssRow> for Rss {
             url: row.url,
             enabled: row.enabled,
             exclude_filters,
-            include_filters,
             is_primary: row.is_primary,
             group: row.group,
         }
