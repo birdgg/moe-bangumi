@@ -29,6 +29,7 @@ export {
 export type {
   Bangumi,
   BangumiDetail,
+  BangumiWithMetadata,
   BangumiWithRss,
   CalendarCollection,
   CalendarDay,
@@ -42,6 +43,7 @@ export type {
   CreateBangumiData,
   CreateBangumiResponse,
   CreateBangumiResponses,
+  CreateMetadata,
   DeleteTorrentsData,
   DeleteTorrentsErrors,
   DeleteTorrentsRequest,
@@ -80,6 +82,7 @@ export type {
   ListTorrentsResponses,
   Log,
   LogLevel,
+  Metadata,
   NotificationSettings,
   Platform,
   PrioritySettings,

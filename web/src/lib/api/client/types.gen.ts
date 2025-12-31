@@ -5,25 +5,14 @@ export type ClientOptions = {
 };
 
 /**
- * Bangumi (anime) main entity
+ * Bangumi (anime) subscription entity
+ * Stores user's subscription state and download configuration
  */
 export type Bangumi = {
   /**
-   * First air date (YYYY-MM-DD format, required)
-   */
-  air_date: string;
-  /**
-   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
-   */
-  air_week: number;
-  /**
-   * Only download the latest episode
+   * Only download first matching episode per RSS check
    */
   auto_complete: boolean;
-  /**
-   * Bangumi.tv ID
-   */
-  bgmtv_id?: number | null;
   created_at: string;
   /**
    * Current downloaded episode
@@ -33,60 +22,20 @@ export type Bangumi = {
    * Episode offset
    */
   episode_offset: number;
-  /**
-   * Whether the bangumi has finished airing
-   */
-  finished: boolean;
   id: number;
   /**
-   * Platform type (TV, Movie, OVA)
+   * Reference to metadata (foreign key)
    */
-  platform: Platform;
-  /**
-   * Poster URL
-   */
-  poster_url?: string | null;
+  metadata_id: number;
   /**
    * Save path (required)
    */
   save_path: string;
   /**
-   * Season number
-   */
-  season: number;
-  /**
    * Source type: webrip or bdrip
    */
   source_type: SourceType;
-  /**
-   * Chinese title (primary display)
-   */
-  title_chinese: string;
-  /**
-   * Japanese original name
-   */
-  title_japanese?: string | null;
-  /**
-   * Original Chinese title (native language, required, unique)
-   */
-  title_original_chinese: string;
-  /**
-   * Original Japanese title
-   */
-  title_original_japanese?: string | null;
-  /**
-   * TMDB ID
-   */
-  tmdb_id?: number | null;
-  /**
-   * Total episodes (0=unknown)
-   */
-  total_episodes: number;
   updated_at: string;
-  /**
-   * Year
-   */
-  year: number;
 };
 
 export type BangumiDetail = {
@@ -94,9 +43,23 @@ export type BangumiDetail = {
 };
 
 /**
- * Bangumi with its RSS subscriptions
+ * Bangumi with its associated metadata
+ */
+export type BangumiWithMetadata = Bangumi & {
+  /**
+   * Associated metadata
+   */
+  metadata: Metadata;
+};
+
+/**
+ * Bangumi with metadata and RSS subscriptions
  */
 export type BangumiWithRss = Bangumi & {
+  /**
+   * Associated metadata
+   */
+  metadata: Metadata;
   /**
    * RSS subscriptions for this bangumi
    */
@@ -148,49 +111,64 @@ export type CalendarSubject = {
  */
 export type CreateBangumi = {
   /**
-   * First air date (YYYY-MM-DD format, required)
-   */
-  air_date: string;
-  /**
-   * Day of week when new episodes air (0=Sunday, 1=Monday, ..., 6=Saturday, required)
-   */
-  air_week: number;
-  /**
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean;
   /**
-   * Bangumi.tv ID
-   */
-  bgmtv_id?: number | null;
-  /**
    * Episode offset
    */
   episode_offset?: number;
+  metadata?: null | CreateMetadata;
   /**
-   * Whether the bangumi has finished airing
+   * Metadata ID (if using existing metadata)
    */
-  finished?: boolean;
-  /**
-   * Platform type (TV, Movie, OVA)
-   */
-  platform?: Platform;
-  /**
-   * Poster URL
-   */
-  poster_url?: string | null;
+  metadata_id?: number | null;
   /**
    * RSS subscriptions to create with this bangumi
    */
   rss_entries?: Array<RssEntry>;
   /**
-   * Season number (default: 1)
-   */
-  season?: number;
-  /**
    * Source type
    */
   source_type?: SourceType;
+};
+
+/**
+ * Request body for creating new metadata
+ */
+export type CreateMetadata = {
+  /**
+   * First air date (YYYY-MM-DD format)
+   */
+  air_date?: string | null;
+  /**
+   * Day of week when new episodes air (0=Sunday ~ 6=Saturday)
+   */
+  air_week: number;
+  /**
+   * BGM.tv subject ID
+   */
+  bgmtv_id?: number | null;
+  /**
+   * Whether the anime has finished airing
+   */
+  finished?: boolean;
+  /**
+   * Mikan bangumi ID
+   */
+  mikan_id?: string | null;
+  /**
+   * Platform type (TV, Movie, OVA)
+   */
+  platform?: Platform;
+  /**
+   * Poster image URL
+   */
+  poster_url?: string | null;
+  /**
+   * Season number (default: 1)
+   */
+  season?: number;
   /**
    * Chinese title (required)
    */
@@ -200,11 +178,11 @@ export type CreateBangumi = {
    */
   title_japanese?: string | null;
   /**
-   * Original Chinese title (native language, required, unique)
+   * Original Chinese title (from API, defaults to title_chinese if not provided)
    */
-  title_original_chinese: string;
+  title_original_chinese?: string | null;
   /**
-   * Original Japanese title
+   * Original Japanese title (from API)
    */
   title_original_japanese?: string | null;
   /**
@@ -340,6 +318,76 @@ export type Log = {
 export type LogLevel = "info" | "warning" | "error";
 
 /**
+ * Metadata entity for anime information
+ * Unified metadata center caching data from BGM.tv, TMDB, and Mikan
+ */
+export type Metadata = {
+  /**
+   * First air date (YYYY-MM-DD format)
+   */
+  air_date?: string | null;
+  /**
+   * Day of week when new episodes air (0=Sunday ~ 6=Saturday)
+   */
+  air_week: number;
+  /**
+   * BGM.tv subject ID
+   */
+  bgmtv_id?: number | null;
+  created_at: string;
+  /**
+   * Whether the anime has finished airing
+   */
+  finished: boolean;
+  id: number;
+  /**
+   * Mikan bangumi ID
+   */
+  mikan_id?: string | null;
+  /**
+   * Platform type (TV, Movie, OVA)
+   */
+  platform: Platform;
+  /**
+   * Poster image URL
+   */
+  poster_url?: string | null;
+  /**
+   * Season number
+   */
+  season: number;
+  /**
+   * Chinese title (primary display)
+   */
+  title_chinese: string;
+  /**
+   * Japanese original name
+   */
+  title_japanese?: string | null;
+  /**
+   * Original Chinese title (from API)
+   */
+  title_original_chinese: string;
+  /**
+   * Original Japanese title (from API)
+   */
+  title_original_japanese?: string | null;
+  /**
+   * TMDB ID
+   */
+  tmdb_id?: number | null;
+  /**
+   * Total episodes (0=unknown)
+   */
+  total_episodes: number;
+  updated_at: string;
+  /**
+   * Year
+   */
+  year: number;
+};
+
+/**
  * Notification configuration
  */
 export type NotificationSettings = {
@@ -435,15 +483,6 @@ export type Rss = {
   group?: string | null;
   id: number;
   /**
-   * Regex patterns to include (AND logic - title must match ALL patterns if not empty)
-   */
-  include_filters: Array<string>;
-  /**
-   * Whether this is the primary RSS source (only one per bangumi)
-   * Episodes from primary RSS can override those from backup RSS
-   */
-  is_primary: boolean;
-  /**
    * RSS subscription title: [group] {bangumi} S{season}
    */
   title: string;
@@ -466,14 +505,6 @@ export type RssEntry = {
    * Optional subtitle group name
    */
   group?: string | null;
-  /**
-   * Regex patterns to include (AND logic)
-   */
-  include_filters?: Array<string>;
-  /**
-   * Whether this is the primary RSS source (default: false)
-   */
-  is_primary?: boolean;
   /**
    * RSS feed URL
    */
@@ -748,14 +779,6 @@ export type TvShow = {
  */
 export type UpdateBangumiRequest = {
   /**
-   * First air date (None = unchanged, Some = new value)
-   */
-  air_date?: string | null;
-  /**
-   * Day of week when new episodes air (None = unchanged, Some = new value)
-   */
-  air_week?: number | null;
-  /**
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean | null;
@@ -926,7 +949,7 @@ export type GetBangumiResponses = {
   /**
    * List of all bangumi
    */
-  200: Array<Bangumi>;
+  200: Array<BangumiWithMetadata>;
 };
 
 export type GetBangumiResponse = GetBangumiResponses[keyof GetBangumiResponses];
@@ -942,7 +965,7 @@ export type CreateBangumiResponses = {
   /**
    * Bangumi created successfully
    */
-  201: Bangumi;
+  201: BangumiWithMetadata;
 };
 
 export type CreateBangumiResponse =

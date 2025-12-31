@@ -389,43 +389,32 @@ export function BangumiModal({
                         </Button>
                       </div>
                       <div className="space-y-3">
-                        {(Array.isArray(field.state.value) ? field.state.value : [])
-                          .map((entry, index) => ({ entry, originalIndex: index }))
-                          .sort((a, b) => (b.entry.is_primary ? 1 : 0) - (a.entry.is_primary ? 1 : 0))
-                          .map(({ entry, originalIndex }) => (
-                          <RssEntryItem
-                            key={originalIndex}
-                            entry={entry}
-                            isPrimary={entry.is_primary}
-                            onUpdate={(updatedEntry) => {
-                              const newEntries = [...field.state.value];
-                              newEntries[originalIndex] = updatedEntry;
-                              field.handleChange(newEntries);
-                            }}
-                            onRemove={() => {
-                              const newEntries = field.state.value.filter(
-                                (_, i) => i !== originalIndex
-                              );
-                              field.handleChange(newEntries);
-                            }}
-                            onSetPrimary={() => {
-                              const newEntries = field.state.value.map(
-                                (e, i) => ({
-                                  ...e,
-                                  is_primary: i === originalIndex,
-                                })
-                              );
-                              field.handleChange(newEntries);
-                            }}
-                          />
-                        ))}
+                        {(Array.isArray(field.state.value) ? field.state.value : []).map(
+                          (entry, index) => (
+                            <RssEntryItem
+                              key={index}
+                              entry={entry}
+                              onUpdate={(updatedEntry) => {
+                                const newEntries = [...field.state.value];
+                                newEntries[index] = updatedEntry;
+                                field.handleChange(newEntries);
+                              }}
+                              onRemove={() => {
+                                const newEntries = field.state.value.filter(
+                                  (_, i) => i !== index
+                                );
+                                field.handleChange(newEntries);
+                              }}
+                            />
+                          )
+                        )}
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() =>
                             field.handleChange([
                               ...field.state.value,
-                              { url: "", filters: [], is_primary: false, group: null },
+                              { url: "", filters: [], group: null },
                             ])
                           }
                           className="w-full gap-2 border-dashed border-chart-3/30 dark:border-chart-1/30 hover:bg-chart-3/10 dark:hover:bg-chart-1/20"
@@ -442,16 +431,12 @@ export function BangumiModal({
                           const existingUrls = new Set(
                             existingEntries.map((e) => e.url)
                           );
-                          const hasPrimary = existingEntries.some(
-                            (e) => e.is_primary
-                          );
                           const newEntries = selectedEntries
                             .filter((entry) => !existingUrls.has(entry.url))
-                            .map((entry, idx) => ({
+                            .map((entry) => ({
                               url: entry.url,
                               group: entry.group,
                               filters: entry.filters,
-                              is_primary: !hasPrimary && idx === 0,
                             }));
                           if (newEntries.length > 0) {
                             field.handleChange([

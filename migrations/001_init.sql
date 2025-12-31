@@ -98,7 +98,6 @@ CREATE TABLE IF NOT EXISTS rss (
     url TEXT NOT NULL,                              -- RSS feed URL
     enabled INTEGER NOT NULL DEFAULT 1,             -- Whether subscription is enabled (boolean)
     exclude_filters TEXT NOT NULL DEFAULT '[]',     -- JSON array of regex patterns to exclude
-    is_primary INTEGER NOT NULL DEFAULT 0,          -- Primary RSS flag (only one per bangumi)
     "group" TEXT,                                   -- Optional subtitle group name
 
     -- HTTP caching for incremental updates
@@ -111,11 +110,6 @@ CREATE TABLE IF NOT EXISTS rss (
 CREATE INDEX IF NOT EXISTS idx_rss_bangumi_id ON rss(bangumi_id);
 CREATE INDEX IF NOT EXISTS idx_rss_title ON rss(title);
 CREATE INDEX IF NOT EXISTS idx_rss_enabled ON rss(enabled);
-CREATE INDEX IF NOT EXISTS idx_rss_is_primary ON rss(is_primary);
-
--- Unique partial index to ensure only one primary RSS per bangumi
-CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_bangumi_primary
-ON rss(bangumi_id) WHERE is_primary = 1;
 
 -- Trigger to update updated_at on row modification
 CREATE TRIGGER IF NOT EXISTS update_rss_timestamp
