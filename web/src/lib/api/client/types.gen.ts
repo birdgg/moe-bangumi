@@ -511,6 +511,8 @@ export type SearchSubjectsResponse = {
   total: number;
 };
 
+export type Season = "winter" | "spring" | "summer" | "fall";
+
 /**
  * Application settings stored in TOML file
  */
@@ -1017,7 +1019,16 @@ export type UpdateBangumiResponse =
 export type GetCalendarData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Year (e.g., 2025). Defaults to current year.
+     */
+    year?: number | null;
+    /**
+     * Season: winter, spring, summer, fall. Defaults to current season.
+     */
+    season?: null | Season;
+  };
   url: "/api/calendar";
 };
 
@@ -1034,7 +1045,16 @@ export type GetCalendarResponse =
 export type RefreshCalendarData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Year (e.g., 2025). Defaults to current year.
+     */
+    year?: number | null;
+    /**
+     * Season: winter, spring, summer, fall. Defaults to current season.
+     */
+    season?: null | Season;
+  };
   url: "/api/calendar/refresh";
 };
 

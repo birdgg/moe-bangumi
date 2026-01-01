@@ -3,13 +3,19 @@ import { cn } from "@/lib/utils";
 import { useCalendar, useRefreshCalendar } from "./hooks/use-calendar";
 import { CalendarCard, CalendarCardSkeleton } from "./components";
 import { BangumiModal } from "@/features/bangumi/components";
-import type { CalendarSubject } from "@/lib/api";
+import type { CalendarSubject, Season } from "@/lib/api";
 import {
   IconAlertCircle,
   IconCalendarWeek,
   IconRefresh,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { calendarSubjectToModalData } from "@/lib/converters";
 
 // Get today's weekday (1-7, Monday-Sunday)
@@ -30,14 +36,79 @@ const WEEKDAY_LABELS: Record<number, string> = {
   7: "周日",
 };
 
+// Season order and labels
+const SEASONS: Season[] = ["winter", "spring", "summer", "fall"];
+const SEASON_LABELS: Record<Season, string> = {
+  winter: "冬",
+  spring: "春",
+  summer: "夏",
+  fall: "秋",
+};
+
+// Year range
+const MIN_YEAR = 2012;
+const MAX_YEAR = new Date().getFullYear();
+
+// Season option type
+interface SeasonOption {
+  value: string; // "2025-winter"
+  label: string; // "2025 冬"
+  year: number;
+  season: Season;
+}
+
+// Generate all season options (newest first)
+function getSeasonOptions(): SeasonOption[] {
+  const options: SeasonOption[] = [];
+  for (let year = MAX_YEAR; year >= MIN_YEAR; year--) {
+    // Reverse order within year: fall -> summer -> spring -> winter
+    for (const season of [...SEASONS].reverse()) {
+      options.push({
+        value: `${year}-${season}`,
+        label: `${year} ${SEASON_LABELS[season]}`,
+        year,
+        season,
+      });
+    }
+  }
+  return options;
+}
+
+// Get current season based on month
+function getCurrentSeason(): Season {
+  const month = new Date().getMonth() + 1;
+  if (month >= 1 && month <= 3) return "winter";
+  if (month >= 4 && month <= 6) return "spring";
+  if (month >= 7 && month <= 9) return "summer";
+  return "fall";
+}
+
 export function SchedulePage() {
-  const { data: calendar, isLoading, error } = useCalendar();
-  const refreshMutation = useRefreshCalendar();
+  // Season selection state - combined year and season
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [selectedSeason, setSelectedSeason] = useState<Season>(getCurrentSeason);
+
+  const calendarParams = { year: selectedYear, season: selectedSeason };
+  const { data: calendar, isLoading, error } = useCalendar(calendarParams);
+  const refreshMutation = useRefreshCalendar(calendarParams);
+
   const [selectedSubject, setSelectedSubject] =
     useState<CalendarSubject | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const isRefreshing = refreshMutation.isPending;
+
+  const seasonOptions = useMemo(() => getSeasonOptions(), []);
+  const selectedValue = `${selectedYear}-${selectedSeason}`;
+
+  const handleSeasonChange = (value: string | null) => {
+    if (!value) return;
+    const option = seasonOptions.find((o) => o.value === value);
+    if (option) {
+      setSelectedYear(option.year);
+      setSelectedSeason(option.season);
+    }
+  };
 
   // Sort calendar by weekday, starting from today
   const todayWeekday = getTodayWeekday();
@@ -82,17 +153,38 @@ export function SchedulePage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-lg font-medium text-foreground">每日放送</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => refreshMutation.mutate({})}
-            disabled={isLoading || isRefreshing}
-          >
-            <IconRefresh
-              className={cn("size-4", isRefreshing && "animate-spin")}
-            />
-            <span className="ml-1">刷新</span>
-          </Button>
+
+          {/* Season Selector */}
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedValue}
+              onValueChange={handleSeasonChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger size="sm">
+                <span>{selectedYear} {SEASON_LABELS[selectedSeason]}</span>
+              </SelectTrigger>
+              <SelectContent>
+                {seasonOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refreshMutation.mutate({})}
+              disabled={isLoading || isRefreshing}
+            >
+              <IconRefresh
+                className={cn("size-4", isRefreshing && "animate-spin")}
+              />
+              <span className="ml-1">刷新</span>
+            </Button>
+          </div>
         </div>
 
         {/* Loading state */}

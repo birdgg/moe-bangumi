@@ -225,10 +225,11 @@ export const getCalendarQueryKey = (options?: Options<GetCalendarData>) =>
   createQueryKey("getCalendar", options);
 
 /**
- * Get BGM.tv calendar (weekly anime schedule)
+ * Get calendar (weekly anime schedule)
  *
- * Returns cached data from database. If the database is empty,
- * automatically fetches from BGM.tv API and populates the database.
+ * Returns cached data from database. If the database is empty for the requested season,
+ * automatically fetches from Mikan/BGM.tv and populates the database.
+ * Defaults to current season if year/season not specified.
  */
 export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
   queryOptions<
@@ -250,10 +251,11 @@ export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
   });
 
 /**
- * Refresh BGM.tv calendar data
+ * Refresh calendar data
  *
- * Forces a refresh of the calendar data from BGM.tv API.
+ * Forces a refresh of the calendar data from Mikan/BGM.tv API.
  * Returns the updated calendar data.
+ * Defaults to current season if year/season not specified.
  */
 export const refreshCalendarMutation = (
   options?: Partial<Options<RefreshCalendarData>>,

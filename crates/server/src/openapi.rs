@@ -33,6 +33,7 @@ use crate::services::{Task, TaskStatus};
         bgmtv::Weekday,
         bgmtv::SubjectImages,
         bgmtv::SubjectType,
+        mikan::Season,
         Metadata,
         CreateMetadata,
         Bangumi,

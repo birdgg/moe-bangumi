@@ -94,6 +94,14 @@ impl CalendarRepository {
         Ok(count.0 > 0)
     }
 
+    /// Check if calendar table is empty
+    pub async fn is_empty(pool: &SqlitePool) -> Result<bool, sqlx::Error> {
+        let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM calendar")
+            .fetch_one(pool)
+            .await?;
+        Ok(count.0 == 0)
+    }
+
     /// Delete calendar entries for a specific season
     pub async fn delete_by_season(
         pool: &SqlitePool,

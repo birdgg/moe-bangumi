@@ -110,6 +110,7 @@ export type {
   SearchTorrentsData,
   SearchTorrentsResponse,
   SearchTorrentsResponses,
+  Season,
   Settings,
   SourceType,
   StreamLogsData,

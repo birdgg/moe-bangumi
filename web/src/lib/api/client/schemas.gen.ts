@@ -786,6 +786,11 @@ export const SearchSubjectsResponseSchema = {
   },
 } as const;
 
+export const SeasonSchema = {
+  type: "string",
+  enum: ["winter", "spring", "summer", "fall"],
+} as const;
+
 export const SettingsSchema = {
   type: "object",
   description: "Application settings stored in TOML file",

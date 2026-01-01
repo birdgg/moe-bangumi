@@ -1,12 +1,15 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, LazyLock};
+use std::time::Duration;
 
 use crate::{
     models::{BangumiDetail, Episode, Season, SeasonalBangumi, SearchResult, Subgroup},
     MikanError, Result,
 };
 use regex::Regex;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use scraper::{ElementRef, Html, Selector};
 
 // Static regex for BGM.tv ID parsing
@@ -49,6 +52,11 @@ static SEASONAL_POSTER_SELECTOR: LazyLock<Selector> =
 
 const BASE_URL: &str = "https://mikanani.me";
 
+/// Default retry configuration
+const DEFAULT_MAX_RETRIES: u32 = 3;
+const DEFAULT_MIN_RETRY_INTERVAL: Duration = Duration::from_millis(500);
+const DEFAULT_MAX_RETRY_INTERVAL: Duration = Duration::from_secs(5);
+
 /// A function that asynchronously provides an HTTP client.
 /// Used for dynamic proxy configuration support.
 pub type ClientProvider = Arc<
@@ -57,32 +65,46 @@ pub type ClientProvider = Arc<
         + Sync,
 >;
 
+/// Wrap a reqwest Client with retry middleware
+fn wrap_with_retry(client: reqwest::Client) -> ClientWithMiddleware {
+    let retry_policy = ExponentialBackoff::builder()
+        .retry_bounds(DEFAULT_MIN_RETRY_INTERVAL, DEFAULT_MAX_RETRY_INTERVAL)
+        .build_with_max_retries(DEFAULT_MAX_RETRIES);
+
+    ClientBuilder::new(client)
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build()
+}
+
 pub struct MikanClient {
     client_provider: Option<ClientProvider>,
-    static_client: Option<reqwest::Client>,
+    static_client: Option<ClientWithMiddleware>,
     base_url: String,
 }
 
 impl MikanClient {
     /// Create a MikanClient with a static reqwest Client.
+    /// Automatically wraps with retry middleware (3 retries with exponential backoff).
     pub fn new(client: reqwest::Client) -> Self {
         Self {
             client_provider: None,
-            static_client: Some(client),
+            static_client: Some(wrap_with_retry(client)),
             base_url: BASE_URL.to_string(),
         }
     }
 
     /// Create a MikanClient with a static reqwest Client and custom base URL.
+    /// Automatically wraps with retry middleware.
     pub fn with_base_url(client: reqwest::Client, base_url: impl Into<String>) -> Self {
         Self {
             client_provider: None,
-            static_client: Some(client),
+            static_client: Some(wrap_with_retry(client)),
             base_url: base_url.into(),
         }
     }
 
     /// Create a MikanClient with a dynamic client provider.
+    /// Each request will get a fresh client from the provider, wrapped with retry middleware.
     pub fn with_client_provider(provider: ClientProvider) -> Self {
         Self {
             client_provider: Some(provider),
@@ -92,11 +114,12 @@ impl MikanClient {
     }
 
     /// Get the HTTP client for making requests.
-    async fn client(&self) -> Result<reqwest::Client> {
+    async fn client(&self) -> Result<ClientWithMiddleware> {
         if let Some(provider) = &self.client_provider {
-            provider()
+            let client = provider()
                 .await
-                .map_err(|e| MikanError::HttpClient(e.to_string()))
+                .map_err(|e| MikanError::HttpClient(e.to_string()))?;
+            Ok(wrap_with_retry(client))
         } else if let Some(client) = &self.static_client {
             Ok(client.clone())
         } else {

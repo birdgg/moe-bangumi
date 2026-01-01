@@ -3,22 +3,46 @@ import {
   getCalendarOptions,
   getCalendarQueryKey,
   refreshCalendarMutation,
+  type Season,
 } from "@/lib/api";
 import { toast } from "sonner";
 
-export function useCalendar() {
+export interface CalendarParams {
+  year?: number;
+  season?: Season;
+}
+
+export function useCalendar(params?: CalendarParams) {
   return useQuery({
-    ...getCalendarOptions(),
+    ...getCalendarOptions({
+      query: {
+        year: params?.year,
+        season: params?.season,
+      },
+    }),
   });
 }
 
-export function useRefreshCalendar() {
+export function useRefreshCalendar(params?: CalendarParams) {
   const queryClient = useQueryClient();
   return useMutation({
-    ...refreshCalendarMutation(),
+    ...refreshCalendarMutation({
+      query: {
+        year: params?.year,
+        season: params?.season,
+      },
+    }),
     onSuccess: (data) => {
       // Update the calendar query cache with the new data
-      queryClient.setQueryData(getCalendarQueryKey(), data);
+      queryClient.setQueryData(
+        getCalendarQueryKey({
+          query: {
+            year: params?.year,
+            season: params?.season,
+          },
+        }),
+        data
+      );
       toast.success("日历数据已刷新");
     },
     onError: () => {

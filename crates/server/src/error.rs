@@ -196,6 +196,10 @@ impl From<crate::services::CalendarError> for AppError {
             crate::services::CalendarError::Database(e) => AppError::Database(e),
             crate::services::CalendarError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
             crate::services::CalendarError::Mikan(e) => AppError::ExternalApi(e.to_string()),
+            crate::services::CalendarError::JsonParse(e) => {
+                AppError::internal(format!("JSON parse error: {}", e))
+            }
+            crate::services::CalendarError::Http(e) => AppError::ExternalApi(e.to_string()),
         }
     }
 }

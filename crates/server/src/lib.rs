@@ -8,6 +8,7 @@ pub mod openapi;
 pub mod repositories;
 pub mod services;
 pub mod state;
+pub mod utils;
 
 use std::net::SocketAddr;
 use std::path::Path;
@@ -22,6 +23,7 @@ pub use db::create_pool;
 pub use error::{AppError, AppResult};
 pub use services::{create_log_channel, start_log_writer, DatabaseLayer, LogReceiver, SettingsService};
 pub use state::AppState;
+pub use utils::SeasonIterator;
 
 const STATIC_DIR: &str = "/app/dist";
 
@@ -43,6 +45,15 @@ pub async fn run_server(
     let settings = SettingsService::new(&config).await?;
     let posters_path = config.posters_path();
     let state = AppState::new(pool, config, settings);
+
+    // Import calendar seed data if needed (first startup)
+    if state.calendar.needs_seed_import().await.unwrap_or(false) {
+        tracing::info!("Importing calendar seed data...");
+        match state.calendar.import_seed_data().await {
+            Ok(count) => tracing::info!("Imported {} calendar entries from seed data", count),
+            Err(e) => tracing::warn!("Failed to import calendar seed data: {}", e),
+        }
+    }
 
     // Start notification worker
     if let Err(e) = state.notification.start().await {

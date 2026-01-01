@@ -17,7 +17,7 @@ build-release:
 
 # Run the server
 run:
-    cargo run -p cli
+    cargo run -p cli --bin moe
 
 # Check compilation without building
 check:
@@ -29,7 +29,7 @@ test:
 
 # Watch mode (requires cargo-watch: cargo install cargo-watch)
 watch:
-    cargo watch -x 'run -p cli'
+    cargo watch -x 'run -p cli --bin moe'
 
 # Alias for run
 dev: run
@@ -66,7 +66,7 @@ web-preview:
 dev-all:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
-    cargo run -p cli &
+    cargo run -p cli --bin moe &
     cd web && bun run dev &
     wait
 
