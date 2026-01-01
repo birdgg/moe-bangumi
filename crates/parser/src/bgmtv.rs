@@ -17,11 +17,11 @@ static BGMTV_SEASON_PATTERN: LazyLock<Regex> =
 
 /// 解析 BGM.tv 风格的番剧名称
 ///
-/// 注意："部分"、"クール" 表示分割放送，始终解析为第一季
+/// 注意："部分"、"クール" 表示分割放送，始终解析为第一季，且保留完整名称
 ///
 /// 例如：
-/// - "间谍过家家 第2部分" -> BgmtvParseResult { name: "间谍过家家", season: Some(1) }
-/// - "SPY×FAMILY 第2クール" -> BgmtvParseResult { name: "SPY×FAMILY", season: Some(1) }
+/// - "间谍过家家 第2部分" -> BgmtvParseResult { name: "间谍过家家 第2部分", season: Some(1) }
+/// - "SPY×FAMILY 第2クール" -> BgmtvParseResult { name: "SPY×FAMILY 第2クール", season: Some(1) }
 /// - "我推的孩子 第二季" -> BgmtvParseResult { name: "我推的孩子", season: Some(2) }
 pub fn parse_bgmtv_name(name: &str) -> BgmtvParseResult {
     let name = name.trim();
@@ -30,18 +30,23 @@ pub fn parse_bgmtv_name(name: &str) -> BgmtvParseResult {
         let season_str = captures.get(1).map(|m| m.as_str()).unwrap_or("");
         let suffix = captures.get(2).map(|m| m.as_str()).unwrap_or("");
 
-        // "部分"、"クール" 表示分割放送，始终为第一季
-        let season = if suffix == "部分" || suffix == "クール" {
+        // "部分"、"クール" 表示分割放送，始终为第一季，保留完整名称
+        let is_split_broadcast = suffix == "部分" || suffix == "クール";
+        let season = if is_split_broadcast {
             1
         } else {
             parse_season_number(season_str)
         };
 
-        // 移除季度信息，获取纯净的番剧名称
-        let bangumi_name = BGMTV_SEASON_PATTERN
-            .replace(name, "")
-            .trim()
-            .to_string();
+        // 分割放送保留完整名称，真正的季度则移除季度信息
+        let bangumi_name = if is_split_broadcast {
+            name.to_string()
+        } else {
+            BGMTV_SEASON_PATTERN
+                .replace(name, "")
+                .trim()
+                .to_string()
+        };
 
         BgmtvParseResult {
             name: bangumi_name,
@@ -77,14 +82,14 @@ mod tests {
 
     #[test]
     fn test_parse_bgmtv_name() {
-        // "部分" 表示分割放送，始终为第一季
+        // "部分" 表示分割放送，始终为第一季，保留完整名称
         let result = parse_bgmtv_name("间谍过家家 第2部分");
-        assert_eq!(result.name, "间谍过家家");
+        assert_eq!(result.name, "间谍过家家 第2部分");
         assert_eq!(result.season, Some(1));
 
-        // "クール" 表示分割放送，始终为第一季
+        // "クール" 表示分割放送，始终为第一季，保留完整名称
         let result = parse_bgmtv_name("SPY×FAMILY 第2クール");
-        assert_eq!(result.name, "SPY×FAMILY");
+        assert_eq!(result.name, "SPY×FAMILY 第2クール");
         assert_eq!(result.season, Some(1));
 
         let result = parse_bgmtv_name("我推的孩子 第二季");
