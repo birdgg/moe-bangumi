@@ -49,12 +49,6 @@ export function MikanRssModal({
   const isSearchingAny = isSearching || isSearchFetching;
   const isLoadingDetailAny = isLoadingDetail || isFetchingDetail;
 
-  // Auto-expand first subgroup when detail is loaded
-  React.useEffect(() => {
-    if (bangumiDetail && bangumiDetail.subgroups.length > 0 && !expandedSubgroup) {
-      setExpandedSubgroup(bangumiDetail.subgroups[0].id);
-    }
-  }, [bangumiDetail, expandedSubgroup]);
 
   // Auto-select when there's only one search result (only once per modal open)
   React.useEffect(() => {
