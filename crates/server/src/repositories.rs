@@ -8,7 +8,7 @@ mod torrent;
 
 pub use bangumi::{BangumiRepository, CreateBangumiData};
 pub use cache::CacheRepository;
-pub use calendar::{CalendarRepository, CalendarSubjectRow};
+pub use calendar::{CalendarEntry, CalendarRepository, CalendarWithMetadata};
 pub use log::LogRepository;
 pub use metadata::MetadataRepository;
 pub use rss::RssRepository;

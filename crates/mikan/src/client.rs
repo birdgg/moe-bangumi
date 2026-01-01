@@ -39,9 +39,13 @@ static DETAIL_NAME_SELECTOR: LazyLock<Selector> =
 static DETAIL_TORRENT_SELECTOR: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("a.magnet-link").expect("Invalid selector"));
 
-// Static selector for get_seasonal_bangumi_list
+// Static selectors for get_seasonal_bangumi_list
 static SEASONAL_A_SELECTOR: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("a[href^='/Home/Bangumi/']").expect("Invalid selector"));
+static SEASONAL_SK_BANGUMI_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.sk-bangumi").expect("Invalid selector"));
+static SEASONAL_POSTER_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("span.js-expand_bangumi[data-src]").expect("Invalid selector"));
 
 const BASE_URL: &str = "https://mikanani.me";
 
@@ -226,6 +230,7 @@ impl MikanClient {
 
     /// Get the list of bangumi for a specific season.
     /// URL: /Home/BangumiCoverFlowByDayOfWeek?year={year}&seasonStr={season_chinese}
+    /// Returns bangumi with air_week (0=Sunday, 1=Monday, ..., 6=Saturday).
     pub async fn get_seasonal_bangumi_list(
         &self,
         year: i32,
@@ -241,35 +246,63 @@ impl MikanClient {
 
         let document = Html::parse_document(&html);
 
+        // Build a map of mikan_id -> poster_url from span elements
+        let mut poster_map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        for span in document.select(&SEASONAL_POSTER_SELECTOR) {
+            if let Some(bangumi_id) = span.value().attr("data-bangumiid") {
+                if let Some(data_src) = span.value().attr("data-src") {
+                    // Remove query params from URL
+                    let path = data_src.split('?').next().unwrap_or(data_src);
+                    // Convert relative URL to absolute
+                    let full_url = if path.starts_with('/') {
+                        format!("{}{}", self.base_url, path)
+                    } else {
+                        path.to_string()
+                    };
+                    poster_map.insert(bangumi_id.to_string(), full_url);
+                }
+            }
+        }
+
         let mut results = Vec::new();
         let mut seen_ids = std::collections::HashSet::new();
 
-        for a in document.select(&SEASONAL_A_SELECTOR) {
-            let href = a.value().attr("href").unwrap_or_default();
-            let mikan_id = href.trim_start_matches("/Home/Bangumi/").to_string();
+        // Iterate over each sk-bangumi div and get dayofweek
+        for sk_bangumi in document.select(&SEASONAL_SK_BANGUMI_SELECTOR) {
+            let dayofweek_str = sk_bangumi.value().attr("data-dayofweek").unwrap_or("");
+            let air_week: i32 = match dayofweek_str.parse() {
+                Ok(d) if d < 7 => d,
+                _ => continue, // Skip dayofweek 7, 8 or invalid (special/non-weekly items)
+            };
 
-            if mikan_id.is_empty() || seen_ids.contains(&mikan_id) {
-                continue;
-            }
-            seen_ids.insert(mikan_id.clone());
+            for a in sk_bangumi.select(&SEASONAL_A_SELECTOR) {
+                let href = a.value().attr("href").unwrap_or_default();
+                let mikan_id = href.trim_start_matches("/Home/Bangumi/").to_string();
 
-            let name = a
-                .value()
-                .attr("title")
-                .map(|s| s.to_string())
-                .or_else(|| {
-                    let text = a.text().collect::<String>();
-                    let trimmed = text.trim();
-                    if trimmed.is_empty() {
-                        None
-                    } else {
-                        Some(trimmed.to_string())
-                    }
-                })
-                .unwrap_or_default();
+                if mikan_id.is_empty() || seen_ids.contains(&mikan_id) {
+                    continue;
+                }
+                seen_ids.insert(mikan_id.clone());
 
-            if !name.is_empty() {
-                results.push(SeasonalBangumi { mikan_id, name });
+                let name = a
+                    .value()
+                    .attr("title")
+                    .map(|s| s.to_string())
+                    .or_else(|| {
+                        let text = a.text().collect::<String>();
+                        let trimmed = text.trim();
+                        if trimmed.is_empty() {
+                            None
+                        } else {
+                            Some(trimmed.to_string())
+                        }
+                    })
+                    .unwrap_or_default();
+
+                if !name.is_empty() {
+                    let poster_url = poster_map.get(&mikan_id).cloned();
+                    results.push(SeasonalBangumi { mikan_id, name, air_week, poster_url });
+                }
             }
         }
 
@@ -305,5 +338,30 @@ mod tests {
         let detail = client.get_bangumi_detail("3742").await.unwrap();
         assert_eq!(detail.bgmtv_id, Some(524195));
         assert!(!detail.subgroups.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_seasonal_bangumi_list_2025_fall() {
+        let client = MikanClient::new(reqwest::Client::new());
+        let results = client
+            .get_seasonal_bangumi_list(2025, Season::Fall)
+            .await
+            .unwrap();
+
+        let weekday_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        println!("2025 Fall Bangumi List ({} items):", results.len());
+        for bangumi in &results {
+            println!("  - {} (mikan_id: {}, air_week: {} ({}), poster: {})",
+                bangumi.name,
+                bangumi.mikan_id,
+                bangumi.air_week,
+                weekday_names[bangumi.air_week as usize],
+                bangumi.poster_url.as_deref().unwrap_or("N/A")
+            );
+        }
+        assert!(!results.is_empty());
+        // Check that at least some posters were found
+        let with_poster = results.iter().filter(|b| b.poster_url.is_some()).count();
+        println!("\n{} out of {} have poster URLs", with_poster, results.len());
     }
 }

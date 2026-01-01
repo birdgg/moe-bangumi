@@ -189,48 +189,38 @@ CREATE INDEX IF NOT EXISTS idx_log_created_at ON log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_log_level ON log(level);
 CREATE INDEX IF NOT EXISTS idx_log_level_created ON log(level, created_at DESC);
 
--- BGM.tv Calendar table for weekly anime schedule
--- Stores the latest snapshot, refreshed daily by CalendarRefreshJob
-CREATE TABLE IF NOT EXISTS calendar_subject (
-    -- Primary key: BGM.tv subject ID (unique identifier)
-    bgmtv_id INTEGER PRIMARY KEY,
+-- Calendar table for seasonal anime schedule
+-- Links to metadata table, stores seasonal grouping and display priority
+CREATE TABLE IF NOT EXISTS calendar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Basic info
-    subject_type INTEGER NOT NULL,              -- Subject type: 1=Book, 2=Anime, 3=Music, 4=Game, 6=Real
-    name TEXT NOT NULL,                         -- Original name
-    name_cn TEXT NOT NULL,                      -- Chinese name
-    summary TEXT NOT NULL DEFAULT '',           -- Summary description
+    -- Foreign key to metadata (required)
+    metadata_id INTEGER NOT NULL REFERENCES metadata(id) ON DELETE CASCADE,
 
-    -- Air info
-    air_date TEXT NOT NULL,                     -- First air date (YYYY-MM-DD)
-    air_weekday INTEGER NOT NULL,               -- Air weekday: 1=Monday ~ 7=Sunday
+    -- Season identification
+    year INTEGER NOT NULL,                      -- Year (e.g., 2024)
+    season TEXT NOT NULL CHECK(season IN ('winter', 'spring', 'summer', 'fall')),
 
-    -- Rating stats
-    rating_total INTEGER,                       -- Total ratings count
-    rating_score REAL,                          -- Rating score (0-10)
-    rank INTEGER,                               -- Ranking
-
-    -- Collection stats
-    collection_doing INTEGER NOT NULL DEFAULT 0,-- Number of users currently watching
-
-    -- Images (JSON string of SubjectImages struct)
-    images_json TEXT NOT NULL,                  -- {"small":"...","grid":"...","large":"...","medium":"...","common":"..."}
-
-    -- Last update time
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    -- Display priority (based on BGM.tv collection_doing)
+    priority INTEGER NOT NULL DEFAULT 0
 );
 
--- Index: query by weekday (main query scenario)
-CREATE INDEX IF NOT EXISTS idx_calendar_air_weekday ON calendar_subject(air_weekday);
+-- Unique index: one entry per metadata per season
+CREATE UNIQUE INDEX IF NOT EXISTS idx_calendar_metadata_season ON calendar(metadata_id, year, season);
 
--- Index: sort by collection count
-CREATE INDEX IF NOT EXISTS idx_calendar_collection ON calendar_subject(collection_doing DESC);
+-- Index: query by season
+CREATE INDEX IF NOT EXISTS idx_calendar_season ON calendar(year, season);
+
+-- Index: sort by priority
+CREATE INDEX IF NOT EXISTS idx_calendar_priority ON calendar(priority DESC);
 
 -- Trigger to update updated_at
-CREATE TRIGGER IF NOT EXISTS update_calendar_subject_timestamp
-AFTER UPDATE ON calendar_subject
+CREATE TRIGGER IF NOT EXISTS update_calendar_timestamp
+AFTER UPDATE ON calendar
 FOR EACH ROW
 BEGIN
-    UPDATE calendar_subject SET updated_at = CURRENT_TIMESTAMP WHERE bgmtv_id = OLD.bgmtv_id;
+    UPDATE calendar SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
 

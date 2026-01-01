@@ -149,11 +149,17 @@ impl AppState {
             Arc::clone(&downloader_arc),
         ));
 
-        // Create calendar service (for BGM.tv weekly schedule)
-        let calendar = Arc::new(CalendarService::new(db.clone(), Arc::clone(&bgmtv)));
+        // Create Mikan client Arc (shared by calendar and mikan_mapping)
+        let mikan_arc = Arc::new(mikan);
+
+        // Create calendar service (fetches from Mikan -> BGM.tv)
+        let calendar = Arc::new(CalendarService::new(
+            db.clone(),
+            Arc::clone(&bgmtv),
+            Arc::clone(&mikan_arc),
+        ));
 
         // Create Mikan mapping service (for Mikan-BGM.tv ID mapping)
-        let mikan_arc = Arc::new(mikan);
         let mikan_mapping = Arc::new(MikanMappingService::new(
             db.clone(),
             Arc::clone(&mikan_arc),

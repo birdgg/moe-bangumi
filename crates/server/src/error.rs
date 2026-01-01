@@ -195,6 +195,7 @@ impl From<crate::services::CalendarError> for AppError {
         match e {
             crate::services::CalendarError::Database(e) => AppError::Database(e),
             crate::services::CalendarError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
+            crate::services::CalendarError::Mikan(e) => AppError::ExternalApi(e.to_string()),
         }
     }
 }

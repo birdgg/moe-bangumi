@@ -12,6 +12,10 @@ pub struct SearchResult {
 pub struct SeasonalBangumi {
     pub mikan_id: String,
     pub name: String,
+    /// Air weekday (0=Sunday, 1=Monday, ..., 6=Saturday)
+    pub air_week: i32,
+    /// Poster image URL
+    pub poster_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]

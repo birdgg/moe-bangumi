@@ -7,7 +7,7 @@ use crate::services::CalendarService;
 
 /// Calendar refresh job that runs daily.
 ///
-/// This job fetches the latest calendar data from BGM.tv and updates the database.
+/// This job fetches the latest calendar data from Mikan/BGM.tv and updates the database.
 /// Runs every 24 hours to keep the weekly schedule fresh.
 pub struct CalendarRefreshJob {
     calendar_service: Arc<CalendarService>,
@@ -32,11 +32,12 @@ impl SchedulerJob for CalendarRefreshJob {
     }
 
     async fn execute(&self) -> JobResult {
-        tracing::info!("Starting calendar refresh job");
+        let (year, season) = CalendarService::current_season();
+        tracing::info!("Starting calendar refresh job for {} {:?}", year, season);
 
-        match self.calendar_service.refresh_calendar().await {
+        match self.calendar_service.refresh_calendar(year, season).await {
             Ok(count) => {
-                tracing::info!("Calendar refresh completed: {} subjects updated", count);
+                tracing::info!("Calendar refresh completed: {} entries updated", count);
                 Ok(())
             }
             Err(e) => {

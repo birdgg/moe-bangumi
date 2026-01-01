@@ -90,12 +90,11 @@ impl MikanMappingService {
                         bgmtv_id
                     );
                     // (mikan_id, bgmtv_id, title_chinese, air_week)
-                    // SeasonalBangumi doesn't have air_weekday, use 0 as default
                     mappings.push((
                         bangumi.mikan_id.clone(),
                         bgmtv_id,
                         bangumi.name.clone(),
-                        0, // air_week unknown from seasonal list
+                        bangumi.air_week,
                     ));
                 }
                 Ok(None) => {
