@@ -1,6 +1,6 @@
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use crate::{
     models::{BangumiDetail, Episode, Season, SeasonalBangumi, SearchResult, Subgroup},
@@ -8,6 +8,40 @@ use crate::{
 };
 use regex::Regex;
 use scraper::{ElementRef, Html, Selector};
+
+// Static regex for BGM.tv ID parsing
+static BGMTV_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"bgm\.tv/subject/(\d+)").expect("Invalid regex pattern"));
+
+// Static selectors for search_bangumi
+static SEARCH_UL_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("ul.list-inline.an-ul").expect("Invalid selector"));
+static SEARCH_LI_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("li").expect("Invalid selector"));
+static SEARCH_A_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a").expect("Invalid selector"));
+static SEARCH_AN_TEXT_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.an-text").expect("Invalid selector"));
+
+// Static selectors for get_bangumi_detail
+static DETAIL_BGMTV_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse("div.leftbar-container .bangumi-info a[href*=\"bgm.tv/subject/\"]")
+        .expect("Invalid selector")
+});
+static DETAIL_SUBGROUP_TEXT_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.subgroup-text").expect("Invalid selector"));
+static DETAIL_A_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a").expect("Invalid selector"));
+static DETAIL_TR_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("tbody tr").expect("Invalid selector"));
+static DETAIL_NAME_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a.magnet-link-wrap").expect("Invalid selector"));
+static DETAIL_TORRENT_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a.magnet-link").expect("Invalid selector"));
+
+// Static selector for get_seasonal_bangumi_list
+static SEASONAL_A_SELECTOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[href^='/Home/Bangumi/']").expect("Invalid selector"));
 
 const BASE_URL: &str = "https://mikanani.me";
 
@@ -83,18 +117,12 @@ impl MikanClient {
             .await?;
 
         let document = Html::parse_document(&html);
-        let ul_selector = Selector::parse("ul.list-inline.an-ul")
-            .map_err(|e| MikanError::Parse(e.to_string()))?;
-        let li_selector = Selector::parse("li").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let a_selector = Selector::parse("a").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let an_text_selector =
-            Selector::parse("div.an-text").map_err(|e| MikanError::Parse(e.to_string()))?;
 
         let mut results = Vec::new();
 
-        if let Some(ul) = document.select(&ul_selector).next() {
-            for li in ul.select(&li_selector) {
-                let Some(a) = li.select(&a_selector).next() else {
+        if let Some(ul) = document.select(&SEARCH_UL_SELECTOR).next() {
+            for li in ul.select(&SEARCH_LI_SELECTOR) {
+                let Some(a) = li.select(&SEARCH_A_SELECTOR).next() else {
                     continue;
                 };
 
@@ -102,7 +130,7 @@ impl MikanClient {
                 let id = href.trim_start_matches("/Home/Bangumi/").to_string();
 
                 let name = li
-                    .select(&an_text_selector)
+                    .select(&SEARCH_AN_TEXT_SELECTOR)
                     .next()
                     .and_then(|div| div.value().attr("title"))
                     .map(|s| s.to_string())
@@ -119,19 +147,21 @@ impl MikanClient {
         let html = self.fetch_html(&format!("/Home/Bangumi/{}", id)).await?;
 
         let document = Html::parse_document(&html);
-        let subgroup_text_selector =
-            Selector::parse("div.subgroup-text").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let a_selector = Selector::parse("a").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let tr_selector =
-            Selector::parse("tbody tr").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let name_selector =
-            Selector::parse("a.magnet-link-wrap").map_err(|e| MikanError::Parse(e.to_string()))?;
-        let torrent_selector =
-            Selector::parse("a.magnet-link").map_err(|e| MikanError::Parse(e.to_string()))?;
+
+        // Parse bgmtv_id from leftbar-container .bangumi-info a[href*="bgm.tv/subject/"]
+        let bgmtv_id = document
+            .select(&DETAIL_BGMTV_SELECTOR)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|href| {
+                href.split("/subject/")
+                    .nth(1)
+                    .and_then(|id_str| id_str.parse::<i64>().ok())
+            });
 
         let mut subgroups = Vec::new();
 
-        for subgroup_text in document.select(&subgroup_text_selector) {
+        for subgroup_text in document.select(&DETAIL_SUBGROUP_TEXT_SELECTOR) {
             // Parse subgroup info
             let subgroup_id = subgroup_text
                 .value()
@@ -140,7 +170,7 @@ impl MikanClient {
                 .to_string();
 
             let subgroup_name = subgroup_text
-                .select(&a_selector)
+                .select(&DETAIL_A_SELECTOR)
                 .next()
                 .map(|a| a.text().collect::<String>().trim().to_string())
                 .unwrap_or_default();
@@ -154,15 +184,15 @@ impl MikanClient {
             // Parse episodes
             let mut episodes = Vec::new();
             if let Some(episode_table) = episode_table {
-                for tr in episode_table.select(&tr_selector) {
+                for tr in episode_table.select(&DETAIL_TR_SELECTOR) {
                     let name = tr
-                        .select(&name_selector)
+                        .select(&DETAIL_NAME_SELECTOR)
                         .next()
                         .map(|a| a.text().collect::<String>().trim().to_string())
                         .unwrap_or_default();
 
                     let torrent_url = tr
-                        .select(&torrent_selector)
+                        .select(&DETAIL_TORRENT_SELECTOR)
                         .next()
                         .and_then(|a| a.value().attr("data-clipboard-text"))
                         .map(|s| s.to_string());
@@ -191,7 +221,7 @@ impl MikanClient {
             });
         }
 
-        Ok(BangumiDetail { subgroups })
+        Ok(BangumiDetail { bgmtv_id, subgroups })
     }
 
     /// Get the list of bangumi for a specific season.
@@ -210,13 +240,11 @@ impl MikanClient {
             .await?;
 
         let document = Html::parse_document(&html);
-        let a_selector =
-            Selector::parse("a[href^='/Home/Bangumi/']").map_err(|e| MikanError::Parse(e.to_string()))?;
 
         let mut results = Vec::new();
         let mut seen_ids = std::collections::HashSet::new();
 
-        for a in document.select(&a_selector) {
+        for a in document.select(&SEASONAL_A_SELECTOR) {
             let href = a.value().attr("href").unwrap_or_default();
             let mikan_id = href.trim_start_matches("/Home/Bangumi/").to_string();
 
@@ -255,9 +283,7 @@ impl MikanClient {
             .fetch_html(&format!("/Home/Bangumi/{}", mikan_id))
             .await?;
 
-        let re = Regex::new(r"bgm\.tv/subject/(\d+)").map_err(|e| MikanError::Parse(e.to_string()))?;
-
-        if let Some(caps) = re.captures(&html) {
+        if let Some(caps) = BGMTV_ID_RE.captures(&html) {
             if let Some(id_match) = caps.get(1) {
                 if let Ok(id) = id_match.as_str().parse::<i64>() {
                     return Ok(Some(id));
@@ -266,5 +292,18 @@ impl MikanClient {
         }
 
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_bangumi_detail_bgmtv_id() {
+        let client = MikanClient::new(reqwest::Client::new());
+        let detail = client.get_bangumi_detail("3742").await.unwrap();
+        assert_eq!(detail.bgmtv_id, Some(524195));
+        assert!(!detail.subgroups.is_empty());
     }
 }
