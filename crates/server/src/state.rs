@@ -72,8 +72,8 @@ impl AppState {
         let client_provider = create_client_provider(Arc::clone(&http_client_service));
 
         // Create API clients with dynamic client provider
-        let tmdb = TmdbClient::with_client_provider(Arc::clone(&client_provider), &config.tmdb_api_key);
-        let bgmtv = BgmtvClient::with_client_provider(Arc::clone(&client_provider));
+        let tmdb = Arc::new(TmdbClient::with_client_provider(Arc::clone(&client_provider), &config.tmdb_api_key));
+        let bgmtv = Arc::new(BgmtvClient::with_client_provider(Arc::clone(&client_provider)));
         let mikan = MikanClient::with_client_provider(Arc::clone(&client_provider));
         let rss = RssClient::with_client_provider(Arc::clone(&client_provider));
 
@@ -116,7 +116,11 @@ impl AppState {
         ));
 
         // Create metadata service
-        let metadata = Arc::new(MetadataService::new(db.clone()));
+        let metadata = Arc::new(MetadataService::new(
+            db.clone(),
+            Arc::clone(&bgmtv),
+            Arc::clone(&tmdb),
+        ));
 
         // Create bangumi service (with MetadataService and RSS processing for immediate fetch)
         let bangumi = Arc::new(BangumiService::new(
@@ -146,8 +150,7 @@ impl AppState {
         ));
 
         // Create calendar service (for BGM.tv weekly schedule)
-        let bgmtv_arc = Arc::new(bgmtv);
-        let calendar = Arc::new(CalendarService::new(db.clone(), Arc::clone(&bgmtv_arc)));
+        let calendar = Arc::new(CalendarService::new(db.clone(), Arc::clone(&bgmtv)));
 
         // Create Mikan mapping service (for Mikan-BGM.tv ID mapping)
         let mikan_arc = Arc::new(mikan);
@@ -169,8 +172,8 @@ impl AppState {
             db,
             config: Arc::new(config),
             http_client_service,
-            tmdb: Arc::new(tmdb),
-            bgmtv: bgmtv_arc,
+            tmdb,
+            bgmtv,
             mikan: mikan_arc,
             rss: rss_arc,
             settings,

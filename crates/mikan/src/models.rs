@@ -55,6 +55,7 @@ impl Season {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BangumiDetail {
+    pub bgmtv_id: Option<i64>,
     pub subgroups: Vec<Subgroup>,
 }
 

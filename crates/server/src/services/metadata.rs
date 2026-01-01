@@ -1,7 +1,11 @@
+use std::sync::Arc;
+
+use bgmtv::BgmtvClient;
 use sqlx::SqlitePool;
 use thiserror::Error;
+use tmdb::{DiscoverBangumiParams, TmdbClient};
 
-use crate::models::{CreateMetadata, Metadata, UpdateMetadata};
+use crate::models::{CreateMetadata, Metadata, Platform, UpdateMetadata};
 use crate::repositories::MetadataRepository;
 
 #[derive(Debug, Error)]
@@ -10,17 +14,61 @@ pub enum MetadataError {
     Database(#[from] sqlx::Error),
     #[error("Metadata not found")]
     NotFound,
+    #[error("BGM.tv API error: {0}")]
+    Bgmtv(#[from] bgmtv::BgmtvError),
+    #[error("TMDB API error: {0}")]
+    Tmdb(#[from] tmdb::TmdbError),
+}
+
+/// Fetched metadata from BGM.tv (not persisted yet)
+#[derive(Debug, Clone)]
+pub struct FetchedMetadata {
+    pub bgmtv_id: i64,
+    pub title_chinese: Option<String>,
+    pub title_japanese: Option<String>,
+    pub year: Option<i32>,
+    pub total_episodes: i32,
+    pub poster_url: Option<String>,
+    pub air_date: Option<String>,
+    pub platform: Option<Platform>,
 }
 
 /// Service for managing Metadata entities
 pub struct MetadataService {
     db: SqlitePool,
+    bgmtv: Arc<BgmtvClient>,
+    tmdb: Arc<TmdbClient>,
 }
 
 impl MetadataService {
     /// Create a new MetadataService
-    pub fn new(db: SqlitePool) -> Self {
-        Self { db }
+    pub fn new(db: SqlitePool, bgmtv: Arc<BgmtvClient>, tmdb: Arc<TmdbClient>) -> Self {
+        Self { db, bgmtv, tmdb }
+    }
+
+    /// Fetch metadata from BGM.tv by ID (does not persist)
+    pub async fn fetch_from_bgmtv(&self, id: i64) -> Result<FetchedMetadata, MetadataError> {
+        let detail = self.bgmtv.get_subject(id).await?;
+
+        Ok(FetchedMetadata {
+            bgmtv_id: detail.id,
+            title_chinese: Some(detail.name_cn).filter(|s| !s.is_empty()),
+            title_japanese: Some(detail.name).filter(|s| !s.is_empty()),
+            year: detail.date.as_deref().and_then(parse_year),
+            total_episodes: detail.total_episodes as i32,
+            poster_url: Some(detail.images.large),
+            air_date: detail.date,
+            platform: detail.platform.as_deref().and_then(parse_platform),
+        })
+    }
+
+    /// Search for TMDB ID by title
+    pub async fn find_tmdb_id(&self, title: &str) -> Result<Option<i64>, MetadataError> {
+        let params = DiscoverBangumiParams {
+            with_text_query: Some(title.to_string()),
+        };
+        let response = self.tmdb.discover_bangumi(params).await?;
+        Ok(response.results.into_iter().next().map(|show| show.id))
     }
 
     /// Create new metadata
@@ -109,5 +157,18 @@ impl MetadataService {
     /// Get database pool reference (for repositories that need direct access)
     pub fn pool(&self) -> &SqlitePool {
         &self.db
+    }
+}
+
+fn parse_year(date_str: &str) -> Option<i32> {
+    date_str.get(0..4).and_then(|s| s.parse().ok())
+}
+
+fn parse_platform(platform: &str) -> Option<Platform> {
+    match platform.to_lowercase().as_str() {
+        "tv" => Some(Platform::Tv),
+        "movie" | "劇場版" => Some(Platform::Movie),
+        "ova" => Some(Platform::Ova),
+        _ => None,
     }
 }
