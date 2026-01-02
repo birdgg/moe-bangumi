@@ -1,4 +1,4 @@
-use crate::models::{ParseResult, CHINESE_NUMBER_MAP};
+use crate::models::{ParseResult, SubType, CHINESE_NUMBER_MAP};
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -217,7 +217,7 @@ impl Parser {
     }
 
     /// 从其他信息中提取字幕类型和分辨率
-    fn find_tags(other: &str) -> (Vec<String>, Option<String>) {
+    fn find_tags(other: &str) -> (Vec<SubType>, Option<String>) {
         let replaced = BRACKET_PATTERN.replace_all(other, " ").into_owned();
         let elements: Vec<&str> = replaced.split_whitespace().collect();
 
@@ -226,16 +226,16 @@ impl Parser {
 
         for &element in &elements {
             if SUB_CHS_PATTERN.is_match(element) {
-                subs.push("CHS".to_string());
+                subs.push(SubType::Chs);
             }
             if SUB_CHT_PATTERN.is_match(element) {
-                subs.push("CHT".to_string());
+                subs.push(SubType::Cht);
             }
             if SUB_JPN_PATTERN.is_match(element) {
-                subs.push("JPN".to_string());
+                subs.push(SubType::Jpn);
             }
             if SUB_ENG_PATTERN.is_match(element) {
-                subs.push("ENG".to_string());
+                subs.push(SubType::Eng);
             }
             if RESOLUTION_1080_PATTERN.is_match(element) {
                 resolution = Some("1080P".to_string());
@@ -253,13 +253,6 @@ impl Parser {
         subs.dedup();
 
         (subs, resolution)
-    }
-
-    /// 清理字幕类型信息，移除无关后缀
-    fn clean_sub(subs: Vec<String>) -> Vec<String> {
-        subs.into_iter()
-            .map(|s| s.replace("_MP4", "").replace("_MKV", ""))
-            .collect()
     }
 
     #[allow(dead_code)]
@@ -309,7 +302,6 @@ impl Parser {
 
         // 处理其他标签
         let (sub, resolution) = Self::find_tags(other);
-        let sub = Self::clean_sub(sub);
 
         // 返回解析结果
         Ok(ParseResult {

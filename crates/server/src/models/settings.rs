@@ -1,5 +1,6 @@
 use super::DownloaderType;
 use downloader::DownloaderConfig;
+use parser::SubType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -210,7 +211,7 @@ pub struct PrioritySettings {
     pub subtitle_groups: Vec<String>,
     /// Subtitle languages in priority order (first = highest priority)
     #[serde(default = "PrioritySettings::default_subtitle_languages")]
-    pub subtitle_languages: Vec<String>,
+    pub subtitle_languages: Vec<SubType>,
 }
 
 impl Default for PrioritySettings {
@@ -227,7 +228,7 @@ impl PrioritySettings {
         vec![]
     }
 
-    fn default_subtitle_languages() -> Vec<String> {
+    fn default_subtitle_languages() -> Vec<SubType> {
         vec![]
     }
 
@@ -541,5 +542,5 @@ pub struct UpdatePrioritySettings {
     pub subtitle_groups: Option<Vec<String>>,
     /// Subtitle languages in priority order (replaces entire array if provided)
     #[serde(default)]
-    pub subtitle_languages: Option<Vec<String>>,
+    pub subtitle_languages: Option<Vec<SubType>>,
 }

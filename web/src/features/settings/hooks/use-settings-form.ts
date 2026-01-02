@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useForm } from "@tanstack/react-form";
-import { settingsFormSchema, type SettingsFormData } from "../schema";
+import { settingsFormSchema, type SettingsFormData, type SubtitleLanguage } from "../schema";
 import type { Settings, UpdateSettings } from "@/lib/api/client/types.gen";
 
 /**
@@ -40,7 +40,8 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
     },
     priority: {
       subtitle_groups: settings?.priority?.subtitle_groups ?? [],
-      subtitle_languages: settings?.priority?.subtitle_languages ?? [],
+      // Cast from API type (may be string[]) to SubtitleLanguage[]
+      subtitle_languages: (settings?.priority?.subtitle_languages ?? []) as SubtitleLanguage[],
     },
   };
 }

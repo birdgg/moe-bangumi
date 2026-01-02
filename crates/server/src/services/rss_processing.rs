@@ -338,11 +338,7 @@ impl RssProcessingService {
                 torrent_url: torrent_url.to_string(),
                 episode_number: Some(episode),
                 subtitle_group: parse_result.subtitle_group.clone(),
-                subtitle_language: if parse_result.sub_type.is_empty() {
-                    None
-                } else {
-                    Some(parse_result.sub_type.join(" "))
-                },
+                subtitle_languages: parse_result.sub_type.clone(),
                 resolution: parse_result.resolution.clone(),
             },
         )

@@ -17,6 +17,7 @@ urlencoding.workspace = true
 utoipa.workspace = true
 regex.workspace = true
 chrono.workspace = true
+parser = { path = "../parser" }
 
 [dev-dependencies]
 tokio.workspace = true

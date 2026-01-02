@@ -1,4 +1,5 @@
 use chrono::Datelike;
+use parser::SubType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -76,8 +77,8 @@ pub struct Episode {
     pub name: String,
     pub torrent_url: Option<String>,
     // 解析后的元数据
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sub_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sub_types: Vec<SubType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resolution: Option<String>,
 }

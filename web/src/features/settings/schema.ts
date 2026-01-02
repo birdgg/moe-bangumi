@@ -1,6 +1,20 @@
 import { z } from "zod";
 
 /**
+ * Subtitle language types (must match backend SubType enum)
+ */
+export const subtitleLanguages = ["CHS", "CHT", "JPN", "ENG", "UNKNOWN"] as const;
+export type SubtitleLanguage = (typeof subtitleLanguages)[number];
+
+export const subtitleLanguageLabels: Record<SubtitleLanguage, string> = {
+  CHS: "简体中文",
+  CHT: "繁体中文",
+  JPN: "日语",
+  ENG: "英语",
+  UNKNOWN: "未知",
+};
+
+/**
  * Downloader types supported by the system
  */
 export const downloaderTypes = ["qBittorrent", "Transmission"] as const;
@@ -77,7 +91,7 @@ export const notificationSchema = z.object({
  */
 export const prioritySchema = z.object({
   subtitle_groups: z.array(z.string()),
-  subtitle_languages: z.array(z.string()),
+  subtitle_languages: z.array(z.enum(subtitleLanguages)),
 });
 
 /**

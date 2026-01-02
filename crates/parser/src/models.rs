@@ -1,3 +1,40 @@
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
+/// 字幕类型枚举
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum SubType {
+    /// 简体中文
+    Chs,
+    /// 繁体中文
+    Cht,
+    /// 日语
+    Jpn,
+    /// 英语
+    Eng,
+    /// 未知
+    Unknown,
+}
+
+impl Default for SubType {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
+impl std::fmt::Display for SubType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SubType::Chs => write!(f, "CHS"),
+            SubType::Cht => write!(f, "CHT"),
+            SubType::Jpn => write!(f, "JPN"),
+            SubType::Eng => write!(f, "ENG"),
+            SubType::Unknown => write!(f, "UNKNOWN"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ParseResult {
     pub name_en: Option<String>,
@@ -7,7 +44,7 @@ pub struct ParseResult {
     pub season: Option<i32>,
     pub subtitle_group: Option<String>,
     pub resolution: Option<String>,
-    pub sub_type: Vec<String>,
+    pub sub_type: Vec<SubType>,
 }
 
 // 中文数字映射

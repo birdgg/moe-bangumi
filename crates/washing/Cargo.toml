@@ -5,4 +5,4 @@ edition.workspace = true
 description = "Priority-based torrent washing algorithm library"
 
 [dependencies]
-# No external dependencies - pure algorithm library
+parser = { path = "../parser" }

@@ -9,17 +9,18 @@
 //!
 //! ```
 //! use washing::{PriorityConfig, PriorityCalculator, ComparableTorrent};
+//! use parser::SubType;
 //!
 //! let config = PriorityConfig {
 //!     subtitle_groups: vec!["ANi".to_string(), "LoliHouse".to_string()],
-//!     subtitle_languages: vec!["简日".to_string(), "简体".to_string()],
+//!     subtitle_languages: vec![SubType::Chs, SubType::Cht],
 //! };
 //!
 //! let calculator = PriorityCalculator::new(config);
 //!
 //! let torrent = ComparableTorrent {
 //!     subtitle_group: Some("ANi".to_string()),
-//!     subtitle_language: Some("简日".to_string()),
+//!     subtitle_languages: vec![SubType::Chs, SubType::Jpn],
 //! };
 //!
 //! let score = calculator.calculate_score(&torrent);
@@ -28,13 +29,15 @@
 
 use std::cmp::Ordering;
 
+pub use parser::SubType;
+
 /// Priority configuration from settings
 #[derive(Debug, Clone, Default)]
 pub struct PriorityConfig {
     /// Subtitle groups in priority order (first = highest priority)
     pub subtitle_groups: Vec<String>,
     /// Subtitle languages in priority order (first = highest priority)
-    pub subtitle_languages: Vec<String>,
+    pub subtitle_languages: Vec<SubType>,
 }
 
 /// Priority score for comparison (lower rank = higher priority)
@@ -83,8 +86,8 @@ impl PartialOrd for PriorityScore {
 pub struct ComparableTorrent {
     /// Subtitle group name
     pub subtitle_group: Option<String>,
-    /// Subtitle language/type (e.g., "简日", "繁体")
-    pub subtitle_language: Option<String>,
+    /// Subtitle languages/types (e.g., [Chs, Jpn])
+    pub subtitle_languages: Vec<SubType>,
 }
 
 /// Priority calculator for comparing torrents
@@ -101,18 +104,17 @@ impl PriorityCalculator {
     /// Calculate priority score for a torrent
     pub fn calculate_score(&self, torrent: &ComparableTorrent) -> PriorityScore {
         PriorityScore {
-            group_rank: self.get_rank(&self.config.subtitle_groups, &torrent.subtitle_group),
-            language_rank: self.get_rank_fuzzy(
-                &self.config.subtitle_languages,
-                &torrent.subtitle_language,
-            ),
+            group_rank: self.get_group_rank(&torrent.subtitle_group),
+            language_rank: self.get_language_rank(&torrent.subtitle_languages),
         }
     }
 
-    /// Get exact match rank in the priority list
-    fn get_rank(&self, priority_list: &[String], value: &Option<String>) -> usize {
+    /// Get exact match rank for subtitle group
+    fn get_group_rank(&self, value: &Option<String>) -> usize {
         match value {
-            Some(v) => priority_list
+            Some(v) => self
+                .config
+                .subtitle_groups
                 .iter()
                 .position(|configured| configured == v)
                 .unwrap_or(usize::MAX),
@@ -120,15 +122,24 @@ impl PriorityCalculator {
         }
     }
 
-    /// Get fuzzy match rank (value contains configured or configured contains value)
-    fn get_rank_fuzzy(&self, priority_list: &[String], value: &Option<String>) -> usize {
-        match value {
-            Some(v) => priority_list
-                .iter()
-                .position(|configured| v.contains(configured) || configured.contains(v))
-                .unwrap_or(usize::MAX),
-            None => usize::MAX,
+    /// Get best matching rank for subtitle languages
+    /// Returns the best (lowest) rank among all languages in the torrent
+    fn get_language_rank(&self, languages: &[SubType]) -> usize {
+        if languages.is_empty() {
+            return usize::MAX;
         }
+
+        // Find the best (lowest) rank among all languages
+        languages
+            .iter()
+            .filter_map(|lang| {
+                self.config
+                    .subtitle_languages
+                    .iter()
+                    .position(|configured| configured == lang)
+            })
+            .min()
+            .unwrap_or(usize::MAX)
     }
 
     /// Check if new torrent has higher priority than existing
@@ -178,11 +189,7 @@ mod tests {
                 "喵萌奶茶屋".to_string(),
                 "桜都字幕组".to_string(),
             ],
-            subtitle_languages: vec![
-                "简日".to_string(),
-                "简体".to_string(),
-                "繁日".to_string(),
-            ],
+            subtitle_languages: vec![SubType::Chs, SubType::Cht, SubType::Jpn],
         }
     }
 
@@ -214,7 +221,7 @@ mod tests {
 
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
-            subtitle_language: Some("简日".to_string()),
+            subtitle_languages: vec![SubType::Chs],
         };
 
         let score = calculator.calculate_score(&torrent);
@@ -229,7 +236,7 @@ mod tests {
 
         let torrent = ComparableTorrent {
             subtitle_group: Some("未知字幕组".to_string()),
-            subtitle_language: None,
+            subtitle_languages: vec![],
         };
 
         let score = calculator.calculate_score(&torrent);
@@ -244,12 +251,12 @@ mod tests {
 
         let torrent_ani = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
-            subtitle_language: Some("简日".to_string()),
+            subtitle_languages: vec![SubType::Chs],
         };
 
         let torrent_other = ComparableTorrent {
             subtitle_group: Some("喵萌奶茶屋".to_string()),
-            subtitle_language: Some("简日".to_string()),
+            subtitle_languages: vec![SubType::Chs],
         };
 
         // ANi has higher priority than 喵萌奶茶屋
@@ -265,15 +272,15 @@ mod tests {
         let torrents = vec![
             ComparableTorrent {
                 subtitle_group: Some("桜都字幕组".to_string()),
-                subtitle_language: Some("简体".to_string()),
+                subtitle_languages: vec![SubType::Cht],
             },
             ComparableTorrent {
                 subtitle_group: Some("ANi".to_string()),
-                subtitle_language: Some("简日".to_string()),
+                subtitle_languages: vec![SubType::Chs, SubType::Jpn],
             },
             ComparableTorrent {
                 subtitle_group: Some("喵萌奶茶屋".to_string()),
-                subtitle_language: Some("繁日".to_string()),
+                subtitle_languages: vec![SubType::Jpn],
             },
         ];
 
@@ -283,27 +290,41 @@ mod tests {
     }
 
     #[test]
-    fn test_fuzzy_language_matching() {
+    fn test_multi_language_best_rank() {
         let config = create_test_config();
         let calculator = PriorityCalculator::new(config);
 
-        // "简繁日内封字幕" contains "繁日" (position 2 in config)
+        // Torrent with multiple languages - should match best one
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
-            subtitle_language: Some("简繁日内封字幕".to_string()),
+            subtitle_languages: vec![SubType::Cht, SubType::Jpn], // Cht is rank 1, Jpn is rank 2
         };
 
         let score = calculator.calculate_score(&torrent);
-        // Should match "繁日" at position 2 (0-indexed)
-        assert_eq!(score.language_rank, 2);
+        // Should get the best (lowest) rank among languages
+        assert_eq!(score.language_rank, 1); // Cht is at position 1
 
-        // Test with a string that actually contains "简日"
+        // Test with Chs included - should be rank 0
         let torrent2 = ComparableTorrent {
             subtitle_group: None,
-            subtitle_language: Some("简日双语".to_string()),
+            subtitle_languages: vec![SubType::Jpn, SubType::Chs], // Chs is rank 0
         };
         let score2 = calculator.calculate_score(&torrent2);
-        // Should match "简日" at position 0
         assert_eq!(score2.language_rank, 0);
+    }
+
+    #[test]
+    fn test_unknown_language_not_in_config() {
+        let config = create_test_config();
+        let calculator = PriorityCalculator::new(config);
+
+        // Torrent with Eng which is not in config
+        let torrent = ComparableTorrent {
+            subtitle_group: Some("ANi".to_string()),
+            subtitle_languages: vec![SubType::Eng],
+        };
+
+        let score = calculator.calculate_score(&torrent);
+        assert_eq!(score.language_rank, usize::MAX);
     }
 }

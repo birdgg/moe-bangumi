@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use chrono::{DateTime, Utc};
+use parser::SubType;
 use sqlx::{Executor, Sqlite, SqlitePool};
 
 use crate::models::{CreateTorrent, Torrent, UpdateTorrent};
@@ -34,6 +35,23 @@ impl TorrentRepository {
     where
         E: Executor<'e, Database = Sqlite>,
     {
+        // Serialize subtitle_languages to JSON string for storage
+        let subtitle_languages_json = if data.subtitle_languages.is_empty() {
+            None
+        } else {
+            match serde_json::to_string(&data.subtitle_languages) {
+                Ok(json) => Some(json),
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to serialize subtitle_languages for torrent {}: {}",
+                        data.info_hash,
+                        e
+                    );
+                    None
+                }
+            }
+        };
+
         let result = sqlx::query(
             r#"
             INSERT INTO torrent (bangumi_id, rss_id, info_hash, torrent_url, episode_number, subtitle_group, subtitle_language, resolution)
@@ -47,7 +65,7 @@ impl TorrentRepository {
         .bind(&data.torrent_url)
         .bind(data.episode_number)
         .bind(&data.subtitle_group)
-        .bind(&data.subtitle_language)
+        .bind(&subtitle_languages_json)
         .bind(&data.resolution)
         .fetch_one(executor)
         .await?;
@@ -343,6 +361,25 @@ struct TorrentRow {
 
 impl From<TorrentRow> for Torrent {
     fn from(row: TorrentRow) -> Self {
+        // Parse subtitle_languages from JSON, falling back to empty vec
+        let subtitle_languages = row
+            .subtitle_language
+            .as_ref()
+            .and_then(|s| {
+                serde_json::from_str::<Vec<SubType>>(s)
+                    .map_err(|e| {
+                        tracing::warn!(
+                            "Failed to parse subtitle_languages for torrent id={}: {} (raw: {:?})",
+                            row.id,
+                            e,
+                            s
+                        );
+                        e
+                    })
+                    .ok()
+            })
+            .unwrap_or_default();
+
         Self {
             id: row.id,
             created_at: row.created_at,
@@ -353,7 +390,7 @@ impl From<TorrentRow> for Torrent {
             torrent_url: row.torrent_url,
             episode_number: row.episode_number,
             subtitle_group: row.subtitle_group,
-            subtitle_language: row.subtitle_language,
+            subtitle_languages,
             resolution: row.resolution,
         }
     }

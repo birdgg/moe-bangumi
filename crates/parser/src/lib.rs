@@ -2,11 +2,12 @@ pub mod bgmtv;
 pub mod models;
 pub mod parser;
 
-pub use models::ParseResult;
+pub use models::{ParseResult, SubType};
 pub use parser::Parser;
 
 #[cfg(test)]
 mod tests {
+    use crate::models::SubType;
     use crate::parser::Parser;
     use serde::Deserialize;
     use std::fs;
@@ -20,7 +21,7 @@ mod tests {
         season: Option<i32>,
         subtitle_group: Option<String>,
         resolution: Option<String>,
-        sub_type: Vec<String>,
+        sub_type: Vec<SubType>,
     }
 
     #[derive(Debug, Deserialize)]

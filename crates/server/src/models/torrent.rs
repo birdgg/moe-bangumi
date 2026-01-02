@@ -1,3 +1,4 @@
+use parser::SubType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use washing::ComparableTorrent;
@@ -28,8 +29,8 @@ pub struct Torrent {
     /// Parsed subtitle group name (for priority comparison)
     pub subtitle_group: Option<String>,
 
-    /// Parsed subtitle language/type (for priority comparison)
-    pub subtitle_language: Option<String>,
+    /// Parsed subtitle languages (for priority comparison)
+    pub subtitle_languages: Vec<SubType>,
 
     /// Parsed video resolution (stored for display purposes only)
     pub resolution: Option<String>,
@@ -40,7 +41,7 @@ impl Torrent {
     pub fn to_comparable(&self) -> ComparableTorrent {
         ComparableTorrent {
             subtitle_group: self.subtitle_group.clone(),
-            subtitle_language: self.subtitle_language.clone(),
+            subtitle_languages: self.subtitle_languages.clone(),
         }
     }
 }
@@ -64,8 +65,8 @@ pub struct CreateTorrent {
     /// Parsed subtitle group name (for priority comparison)
     pub subtitle_group: Option<String>,
 
-    /// Parsed subtitle language/type (for priority comparison)
-    pub subtitle_language: Option<String>,
+    /// Parsed subtitle languages (for priority comparison)
+    pub subtitle_languages: Vec<SubType>,
 
     /// Parsed video resolution (stored for display purposes only)
     pub resolution: Option<String>,
