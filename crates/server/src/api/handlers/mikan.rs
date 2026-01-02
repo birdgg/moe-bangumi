@@ -39,7 +39,7 @@ pub async fn get_mikan_rss(
     for subgroup in &mut detail.subgroups {
         for episode in &mut subgroup.episodes {
             if let Ok(parsed) = parser.parse(&episode.name) {
-                episode.sub_types = parsed.sub_type;
+                episode.subtitle_languages = parsed.subtitle_language;
                 episode.resolution = parsed.resolution;
             }
         }

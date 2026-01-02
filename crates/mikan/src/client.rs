@@ -228,7 +228,7 @@ impl MikanClient {
                         episodes.push(Episode {
                             name,
                             torrent_url,
-                            sub_types: vec![],
+                            subtitle_languages: vec![],
                             resolution: None,
                         });
                     }

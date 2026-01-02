@@ -269,7 +269,7 @@ impl RssProcessingService {
                 .min_by_key(|(_, _, parse_result)| {
                     let comparable = ComparableTorrent {
                         subtitle_group: parse_result.subtitle_group.clone(),
-                        subtitle_languages: parse_result.sub_type.clone(),
+                        subtitle_languages: parse_result.subtitle_language.clone(),
                     };
                     calculator.calculate_score(&comparable)
                 });
@@ -280,7 +280,7 @@ impl RssProcessingService {
                         "E{}: kept highest priority item (group={:?}, lang={:?}) from {} candidates",
                         episode,
                         item.2.subtitle_group,
-                        item.2.sub_type,
+                        item.2.subtitle_language,
                         item_count
                     );
                 }
@@ -401,7 +401,7 @@ impl RssProcessingService {
                 torrent_url: torrent_url.to_string(),
                 episode_number: Some(episode),
                 subtitle_group: parse_result.subtitle_group.clone(),
-                subtitle_languages: parse_result.sub_type.clone(),
+                subtitle_languages: parse_result.subtitle_language.clone(),
                 resolution: parse_result.resolution.clone(),
             },
         )

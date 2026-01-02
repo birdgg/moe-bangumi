@@ -21,7 +21,7 @@ mod tests {
         season: Option<i32>,
         subtitle_group: Option<String>,
         resolution: Option<String>,
-        sub_type: Vec<SubType>,
+        subtitle_language: Vec<SubType>,
     }
 
     #[derive(Debug, Deserialize)]
@@ -101,8 +101,8 @@ mod tests {
                 case.description
             );
             assert_eq!(
-                result.sub_type, case.expected.sub_type,
-                "Failed on '{}' - sub_type mismatch",
+                result.subtitle_language, case.expected.subtitle_language,
+                "Failed on '{}' - subtitle_language mismatch",
                 case.description
             );
         }

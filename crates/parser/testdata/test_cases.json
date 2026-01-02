@@ -11,7 +11,7 @@
         "season": null,
         "subtitle_group": "Nekomoe kissaten",
         "resolution": "1080P",
-        "sub_type": ["CHS", "JPN"]
+        "subtitle_language": ["CHS", "JPN"]
       }
     },
     {
@@ -25,7 +25,7 @@
         "season": 2,
         "subtitle_group": "ANi",
         "resolution": "1080P",
-        "sub_type": ["CHT"]
+        "subtitle_language": ["CHT"]
       }
     },
     {
@@ -39,7 +39,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -53,7 +53,7 @@
         "season": null,
         "subtitle_group": "喵萌奶茶屋&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT", "JPN"]
+        "subtitle_language": ["CHS", "CHT", "JPN"]
       }
     },
     {
@@ -67,7 +67,7 @@
         "season": null,
         "subtitle_group": "桜都字幕组",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -81,7 +81,7 @@
         "season": 3,
         "subtitle_group": "Lilith-Raws",
         "resolution": "1080P",
-        "sub_type": ["CHT"]
+        "subtitle_language": ["CHT"]
       }
     },
     {
@@ -95,7 +95,7 @@
         "season": 2,
         "subtitle_group": "喵萌Production&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -109,7 +109,7 @@
         "season": null,
         "subtitle_group": "Sakurato",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -123,7 +123,7 @@
         "season": 2,
         "subtitle_group": "NC-Raws",
         "resolution": "2160P",
-        "sub_type": []
+        "subtitle_language": []
       }
     },
     {
@@ -137,7 +137,7 @@
         "season": 1,
         "subtitle_group": "Strange-Raw",
         "resolution": "1080P",
-        "sub_type": ["CHS", "JPN"]
+        "subtitle_language": ["CHS", "JPN"]
       }
     },
     {
@@ -151,7 +151,7 @@
         "season": 2,
         "subtitle_group": "Skymoon-Raws",
         "resolution": "1080P",
-        "sub_type": []
+        "subtitle_language": []
       }
     },
     {
@@ -165,7 +165,7 @@
         "season": null,
         "subtitle_group": "Up to 21°C",
         "resolution": "1080P",
-        "sub_type": []
+        "subtitle_language": []
       }
     },
     {
@@ -179,7 +179,7 @@
         "season": null,
         "subtitle_group": "ANi",
         "resolution": "1080P",
-        "sub_type": ["CHT"]
+        "subtitle_language": ["CHT"]
       }
     },
     {
@@ -193,7 +193,7 @@
         "season": null,
         "subtitle_group": "AnimeRep",
         "resolution": "1080P",
-        "sub_type": ["CHS"]
+        "subtitle_language": ["CHS"]
       }
     },
     {
@@ -207,7 +207,7 @@
         "season": null,
         "subtitle_group": "Up to 21°C",
         "resolution": "1080P",
-        "sub_type": []
+        "subtitle_language": []
       }
     },
     {
@@ -221,7 +221,7 @@
         "season": null,
         "subtitle_group": "TOC",
         "resolution": "1080P",
-        "sub_type": ["CHT"]
+        "subtitle_language": ["CHT"]
       }
     },
     {
@@ -235,7 +235,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -249,7 +249,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -263,7 +263,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -277,7 +277,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -291,7 +291,7 @@
         "season": null,
         "subtitle_group": "动漫国字幕组&LoliHouse",
         "resolution": "1080P",
-        "sub_type": ["CHS", "CHT"]
+        "subtitle_language": ["CHS", "CHT"]
       }
     },
     {
@@ -305,7 +305,7 @@
         "season": null,
         "subtitle_group": "DHR动研字幕组&KNA字幕组&动漫国字幕组",
         "resolution": "720P",
-        "sub_type": ["CHT"]
+        "subtitle_language": ["CHT"]
       }
     }
   ]

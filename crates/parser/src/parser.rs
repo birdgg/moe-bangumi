@@ -313,7 +313,7 @@ impl Parser {
             season,
             subtitle_group: group,
             resolution,
-            sub_type: sub,
+            subtitle_language: sub,
         })
     }
 }

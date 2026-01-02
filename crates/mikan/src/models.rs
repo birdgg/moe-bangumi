@@ -78,7 +78,7 @@ pub struct Episode {
     pub torrent_url: Option<String>,
     // 解析后的元数据
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub sub_types: Vec<SubType>,
+    pub subtitle_languages: Vec<SubType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resolution: Option<String>,
 }
