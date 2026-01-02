@@ -9,14 +9,17 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 
 use crate::models::{
-    CalendarDay, CalendarSeedData, CalendarSeedEntry, CalendarSubject, CreateMetadata, Platform,
-    Weekday,
+    CalendarDay, CalendarSeedEntry, CalendarSubject, CreateMetadata, Platform, SeasonData, Weekday,
 };
 use crate::repositories::{CalendarEntry, CalendarRepository, MetadataRepository};
+use crate::SeasonIterator;
 
-/// URL to download calendar seed data from GitHub
-const CALENDAR_SEED_URL: &str =
-    "https://raw.githubusercontent.com/birdgg/moe-bangumi/main/assets/seed/calendar.json";
+/// Base URL for downloading calendar seed data from GitHub
+const CALENDAR_SEED_BASE_URL: &str =
+    "https://raw.githubusercontent.com/birdgg/moe-bangumi/main/assets/seed";
+
+/// End year for seed data (earliest season available)
+const SEED_END_YEAR: i32 = 2013;
 
 /// Mikan data passed through the calendar refresh pipeline
 struct MikanData {
@@ -174,53 +177,176 @@ impl CalendarService {
         Ok(CalendarRepository::is_empty(&self.db).await?)
     }
 
-    /// Import calendar data from GitHub seed JSON
+    /// Import calendar data from GitHub seed JSON files
+    /// Downloads individual season files for incremental updates
     /// Returns the number of entries imported
     pub async fn import_seed_data(&self) -> Result<usize> {
-        tracing::info!("Downloading calendar seed data from GitHub...");
+        let is_empty = CalendarRepository::is_empty(&self.db).await?;
 
-        let response = reqwest::get(CALENDAR_SEED_URL).await?;
-        let json_text = response.text().await?;
-        let seed_data: CalendarSeedData = serde_json::from_str(&json_text)?;
+        if is_empty {
+            // Full import: download all seasons
+            tracing::info!("Calendar is empty, performing full seed import...");
+            self.import_all_seasons().await
+        } else {
+            // Incremental update: only current and previous season
+            tracing::info!("Calendar has data, performing incremental update...");
+            self.import_recent_seasons().await
+        }
+    }
 
-        tracing::info!(
-            "Downloaded seed data: {} seasons",
-            seed_data.seasons.len()
-        );
+    /// Import all seasons from seed data (full import)
+    async fn import_all_seasons(&self) -> Result<usize> {
+        let iterator = SeasonIterator::from_current_to(SEED_END_YEAR, Season::Winter);
+        let seasons: Vec<_> = iterator.collect();
+        let total = seasons.len();
+
+        tracing::info!("Downloading {} seasons from GitHub...", total);
 
         let mut total_imported = 0;
 
-        for season_data in &seed_data.seasons {
-            let mut calendar_entries = Vec::new();
+        for (idx, (year, season)) in seasons.into_iter().enumerate() {
+            let season_str = season.to_db_string();
+            tracing::info!(
+                "[{}/{}] Importing {} {}...",
+                idx + 1,
+                total,
+                year,
+                season_str
+            );
 
-            for entry in &season_data.entries {
-                // Check if metadata already exists by bgmtv_id
-                let existing = MetadataRepository::get_by_bgmtv_id(&self.db, entry.bgmtv_id).await?;
-
-                let metadata_id = if let Some(metadata) = existing {
-                    metadata.id
-                } else {
-                    // Create new metadata from seed entry
-                    let create_data = Self::build_create_metadata_from_seed(entry);
-                    let metadata = MetadataRepository::create(&self.db, create_data).await?;
-                    metadata.id
-                };
-
-                calendar_entries.push(CalendarEntry {
-                    metadata_id,
-                    year: season_data.year,
-                    season: season_data.season.clone(),
-                    priority: 0,
-                });
-            }
-
-            if !calendar_entries.is_empty() {
-                CalendarRepository::upsert_batch(&self.db, &calendar_entries).await?;
-                total_imported += calendar_entries.len();
+            match self.import_season(year, &season_str).await {
+                Ok(count) => {
+                    total_imported += count;
+                    tracing::info!(
+                        "[{}/{}] Imported {} entries for {} {}",
+                        idx + 1,
+                        total,
+                        count,
+                        year,
+                        season_str
+                    );
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "[{}/{}] Failed to import {} {}: {}",
+                        idx + 1,
+                        total,
+                        year,
+                        season_str,
+                        e
+                    );
+                }
             }
         }
 
+        tracing::info!("Full seed import complete: {} total entries", total_imported);
         Ok(total_imported)
+    }
+
+    /// Import only current and previous seasons (incremental update)
+    async fn import_recent_seasons(&self) -> Result<usize> {
+        let (current_year, current_season) = Self::current_season();
+        let current_season_str = current_season.to_db_string();
+
+        let (prev_year, prev_season) = Self::prev_season(current_year, current_season);
+        let prev_season_str = prev_season.to_db_string();
+
+        let mut total_imported = 0;
+
+        // Import current season
+        tracing::info!("Importing current season: {} {}...", current_year, current_season_str);
+        match self.import_season(current_year, &current_season_str).await {
+            Ok(count) => {
+                total_imported += count;
+                tracing::info!("Imported {} entries for {} {}", count, current_year, current_season_str);
+            }
+            Err(e) => {
+                tracing::warn!("Failed to import {} {}: {}", current_year, current_season_str, e);
+            }
+        }
+
+        // Import previous season
+        tracing::info!("Importing previous season: {} {}...", prev_year, prev_season_str);
+        match self.import_season(prev_year, &prev_season_str).await {
+            Ok(count) => {
+                total_imported += count;
+                tracing::info!("Imported {} entries for {} {}", count, prev_year, prev_season_str);
+            }
+            Err(e) => {
+                tracing::warn!("Failed to import {} {}: {}", prev_year, prev_season_str, e);
+            }
+        }
+
+        tracing::info!("Incremental update complete: {} total entries", total_imported);
+        Ok(total_imported)
+    }
+
+    /// Import a single season from GitHub
+    async fn import_season(&self, year: i32, season_str: &str) -> Result<usize> {
+        let url = format!("{}/{}-{}.json", CALENDAR_SEED_BASE_URL, year, season_str);
+
+        let response = reqwest::get(&url).await?;
+        if !response.status().is_success() {
+            tracing::debug!("Season file not found: {}", url);
+            return Ok(0);
+        }
+
+        let json_text = response.text().await?;
+        let season_data: SeasonData = serde_json::from_str(&json_text)?;
+
+        let mut calendar_entries = Vec::new();
+
+        for entry in &season_data.entries {
+            // Check if metadata already exists by bgmtv_id
+            let existing = MetadataRepository::get_by_bgmtv_id(&self.db, entry.bgmtv_id).await?;
+
+            let metadata_id = if let Some(metadata) = existing {
+                metadata.id
+            } else {
+                // Create new metadata from seed entry
+                let create_data = Self::build_create_metadata_from_seed(entry);
+                let metadata = MetadataRepository::create(&self.db, create_data).await?;
+                metadata.id
+            };
+
+            calendar_entries.push(CalendarEntry {
+                metadata_id,
+                year: season_data.year,
+                season: season_data.season.clone(),
+                priority: 0,
+            });
+        }
+
+        if !calendar_entries.is_empty() {
+            CalendarRepository::upsert_batch(&self.db, &calendar_entries).await?;
+
+            // Clean up stale entries for this season
+            let keep_metadata_ids: Vec<i64> =
+                calendar_entries.iter().map(|e| e.metadata_id).collect();
+            let deleted =
+                CalendarRepository::delete_except(&self.db, year, season_str, &keep_metadata_ids)
+                    .await?;
+            if deleted > 0 {
+                tracing::debug!(
+                    "Removed {} stale entries for {} {}",
+                    deleted,
+                    year,
+                    season_str
+                );
+            }
+        }
+
+        Ok(calendar_entries.len())
+    }
+
+    /// Get previous season
+    fn prev_season(year: i32, season: Season) -> (i32, Season) {
+        match season {
+            Season::Winter => (year - 1, Season::Fall),
+            Season::Spring => (year, Season::Winter),
+            Season::Summer => (year, Season::Spring),
+            Season::Fall => (year, Season::Summer),
+        }
     }
 
     /// Build CreateMetadata from seed entry

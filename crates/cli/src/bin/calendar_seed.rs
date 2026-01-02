@@ -1,9 +1,11 @@
 //! Calendar seed data generator
 //!
 //! This script fetches historical calendar data from Mikan and BGM.tv,
-//! then saves it as a JSON file for seeding the database on first startup.
+//! then saves it as individual JSON files per season for incremental updates.
 //!
-//! Usage: cargo run --bin calendar_seed
+//! Usage:
+//!   cargo run --bin calendar_seed           # Fetch all seasons (2013 to current)
+//!   cargo run --bin calendar_seed -- --recent 2   # Fetch only recent 2 seasons
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -11,11 +13,11 @@ use std::time::Duration;
 use bgmtv::BgmtvClient;
 use futures::stream::{self, StreamExt};
 use mikan::{MikanClient, Season};
-use server::models::{CalendarSeedData, CalendarSeedEntry, SeasonData};
+use server::models::{CalendarSeedEntry, SeasonData};
 use server::SeasonIterator;
 use tracing_subscriber::EnvFilter;
 
-const OUTPUT_PATH: &str = "assets/seed/calendar.json";
+const OUTPUT_DIR: &str = "assets/seed";
 const REQUEST_DELAY_SECS: u64 = 60;
 const END_YEAR: i32 = 2013;
 
@@ -26,8 +28,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_env_filter(EnvFilter::new("info"))
         .init();
 
-    tracing::info!("Starting calendar seed data generation");
-    tracing::info!("Target: {} Winter to current season", END_YEAR);
+    // Parse command line arguments
+    let args: Vec<String> = std::env::args().collect();
+    let recent_count = parse_recent_arg(&args);
+
+    if let Some(count) = recent_count {
+        tracing::info!(
+            "Starting calendar seed data generation (recent {} seasons)",
+            count
+        );
+    } else {
+        tracing::info!("Starting calendar seed data generation (all seasons)");
+        tracing::info!("Target: {} Winter to current season", END_YEAR);
+    }
     tracing::info!("Request delay: {} seconds between seasons", REQUEST_DELAY_SECS);
 
     // Create HTTP client
@@ -40,12 +53,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mikan = Arc::new(MikanClient::new(http_client.clone()));
     let bgmtv = Arc::new(BgmtvClient::with_client(http_client));
 
-    let mut all_seasons = Vec::new();
+    // Create output directory if needed
+    std::fs::create_dir_all(OUTPUT_DIR)?;
+
     let iterator = SeasonIterator::from_current_to(END_YEAR, Season::Winter);
     let seasons: Vec<_> = iterator.collect();
+
+    // Limit to recent seasons if specified
+    let seasons: Vec<_> = if let Some(count) = recent_count {
+        seasons.into_iter().take(count).collect()
+    } else {
+        seasons
+    };
     let total = seasons.len();
 
     tracing::info!("Will process {} seasons", total);
+
+    let mut total_entries = 0;
+    let mut seasons_saved = 0;
 
     for (idx, (year, season)) in seasons.into_iter().enumerate() {
         let season_str = season.to_db_string();
@@ -59,15 +84,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match fetch_season_data(&mikan, &bgmtv, year, season).await {
             Ok(data) => {
+                let entry_count = data.entries.len();
                 tracing::info!(
                     "[{}/{}] Got {} entries for {} {}",
                     idx + 1,
                     total,
-                    data.entries.len(),
+                    entry_count,
                     year,
                     season_str
                 );
-                all_seasons.push(data);
+
+                // Save each season to its own file
+                let filename = format!("{}/{}-{}.json", OUTPUT_DIR, year, season_str);
+                let json = serde_json::to_string_pretty(&data)?;
+                std::fs::write(&filename, &json)?;
+                tracing::info!("Saved {}", filename);
+
+                total_entries += entry_count;
+                seasons_saved += 1;
             }
             Err(e) => {
                 tracing::warn!(
@@ -88,19 +122,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Create output directory if needed
-    std::fs::create_dir_all("assets/seed")?;
-
-    // Save to JSON file
-    let seed_data = CalendarSeedData { seasons: all_seasons };
-    let json = serde_json::to_string_pretty(&seed_data)?;
-    std::fs::write(OUTPUT_PATH, &json)?;
-
-    let total_entries: usize = seed_data.seasons.iter().map(|s| s.entries.len()).sum();
     tracing::info!(
-        "Seed data saved to {} ({} seasons, {} total entries)",
-        OUTPUT_PATH,
-        seed_data.seasons.len(),
+        "Seed data generation complete: {} seasons, {} total entries",
+        seasons_saved,
         total_entries
     );
 
@@ -245,4 +269,17 @@ async fn fetch_season_data(
         season: season_str,
         entries,
     })
+}
+
+/// Parse --recent N argument from command line
+fn parse_recent_arg(args: &[String]) -> Option<usize> {
+    let mut iter = args.iter();
+    while let Some(arg) = iter.next() {
+        if arg == "--recent" {
+            if let Some(count_str) = iter.next() {
+                return count_str.parse().ok();
+            }
+        }
+    }
+    None
 }

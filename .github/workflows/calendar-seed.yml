@@ -1,0 +1,70 @@
+name: Update Calendar Seed Data
+
+on:
+  # Run at the beginning of each season (1st of Jan, Apr, Jul, Oct at 00:00 UTC)
+  schedule:
+    - cron: '0 0 1 1,4,7,10 *'
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      recent_count:
+        description: 'Number of recent seasons to fetch (default: 2)'
+        required: false
+        default: '2'
+
+jobs:
+  update-seed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build calendar_seed
+        run: cargo build --release --bin calendar_seed
+
+      - name: Fetch recent calendar data
+        run: |
+          RECENT_COUNT="${{ github.event.inputs.recent_count || '2' }}"
+          echo "Fetching recent $RECENT_COUNT seasons..."
+          ./target/release/calendar_seed --recent $RECENT_COUNT
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet assets/seed/; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in seed data"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in seed data:"
+            git diff --stat assets/seed/
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add assets/seed/*.json
+          git commit -m "chore: update calendar seed data
+
+          Automatically updated by GitHub Actions.
+          "
+          git push
