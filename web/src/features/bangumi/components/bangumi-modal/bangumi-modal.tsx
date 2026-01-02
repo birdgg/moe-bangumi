@@ -76,8 +76,6 @@ export function BangumiModal({
 
   const form = useForm({
     defaultValues: {
-      title_chinese: "",
-      title_japanese: "",
       episode_offset: 0,
       auto_complete: true,
       rss_entries: [] as RssFormEntry[],
@@ -110,8 +108,8 @@ export function BangumiModal({
           await createBangumi.mutateAsync({
             body: {
               metadata: {
-                title_chinese: value.title_chinese,
-                title_japanese: value.title_japanese || null,
+                title_chinese: data.titleChinese,
+                title_japanese: data.titleJapanese || null,
                 year: data.year || new Date().getFullYear(),
                 bgmtv_id: data.bgmtvId,
                 tmdb_id: selectedTmdbId ?? data.tmdbId ?? null,
@@ -130,7 +128,7 @@ export function BangumiModal({
             },
           });
           toast.success("添加成功", {
-            description: `「${value.title_chinese}」已添加到追番列表`,
+            description: `「${data.titleChinese}」已添加到追番列表`,
           });
         }
         onSuccess?.();
@@ -168,8 +166,6 @@ export function BangumiModal({
     if (isEdit) {
       // Edit mode: wait for API data
       if (bangumiWithRss && bangumiWithRss.id === data.id) {
-        form.setFieldValue("title_chinese", data.titleChinese);
-        form.setFieldValue("title_japanese", data.titleJapanese || "");
         form.setFieldValue("episode_offset", bangumiWithRss.episode_offset);
         form.setFieldValue("auto_complete", bangumiWithRss.auto_complete);
         form.setFieldValue(
@@ -179,8 +175,6 @@ export function BangumiModal({
       }
     } else {
       // Add mode: use data directly
-      form.setFieldValue("title_chinese", data.titleChinese);
-      form.setFieldValue("title_japanese", data.titleJapanese || "");
       form.setFieldValue("episode_offset", calculatedEpisodeOffset);
       form.setFieldValue("auto_complete", data.autoComplete ?? true);
 
@@ -294,56 +288,18 @@ export function BangumiModal({
                     : undefined
                 }
               >
-                {/* Title inputs in one row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <form.Field name="title_chinese">
-                    {(field) => (
-                      <Field>
-                        <FieldLabel htmlFor={field.name}>中文标题</FieldLabel>
-                        <Input
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="中文标题"
-                        />
-                      </Field>
-                    )}
-                  </form.Field>
-                  <form.Field name="title_japanese">
-                    {(field) => (
-                      <Field>
-                        <FieldLabel htmlFor={field.name}>日文标题</FieldLabel>
-                        <Input
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="日文标题"
-                        />
-                      </Field>
-                    )}
-                  </form.Field>
-                </div>
-
                 {/* TMDB Matcher */}
-                <form.Subscribe selector={(state) => state.values.title_japanese}>
-                  {(titleJapanese) => (
-                    <Field>
-                      <FieldLabel>
-                        <IconMovie className="size-4 text-chart-3 dark:text-chart-1" />
-                        TMDB 匹配
-                      </FieldLabel>
-                      <TmdbMatcher
-                        onChange={(show) => setSelectedTmdbId(show?.id ?? null)}
-                        keyword={titleJapanese}
-                        initialTmdbId={data.tmdbId ?? undefined}
-                      />
-                    </Field>
-                  )}
-                </form.Subscribe>
+                <Field>
+                  <FieldLabel>
+                    <IconMovie className="size-4 text-chart-3 dark:text-chart-1" />
+                    TMDB 匹配
+                  </FieldLabel>
+                  <TmdbMatcher
+                    onChange={(show) => setSelectedTmdbId(show?.id ?? null)}
+                    keyword={data.titleJapanese || data.titleChinese}
+                    initialTmdbId={data.tmdbId ?? undefined}
+                  />
+                </Field>
 
                 {/* Episode Offset */}
                 <form.Field name="episode_offset">
