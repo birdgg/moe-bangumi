@@ -92,6 +92,7 @@ export type {
   LogLevel,
   Metadata,
   NotificationSettings,
+  ParsedSubject,
   Platform,
   PrioritySettings,
   ProxySettings,

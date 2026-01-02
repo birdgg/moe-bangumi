@@ -7,8 +7,8 @@ use std::sync::LazyLock;
 pub struct BgmtvParseResult {
     /// 番剧名称
     pub name: String,
-    /// 季度/部分
-    pub season: Option<i32>,
+    /// 季度（默认为 1）
+    pub season: i32,
 }
 
 // 匹配真正的季度信息: "第X季"、"第X期"、"S01"、"Season 2"、"SEASON2" (大小写不敏感)
@@ -64,7 +64,7 @@ pub fn parse_bgmtv_name(name: &str) -> BgmtvParseResult {
 
     BgmtvParseResult {
         name: result_name,
-        season: Some(season),
+        season,
     }
 }
 
@@ -93,58 +93,58 @@ mod tests {
         // 季度 + 分割放送组合: 提取季度，移除分割放送信息
         let result = parse_bgmtv_name("魔法使的新娘 第二季 第2部分");
         assert_eq!(result.name, "魔法使的新娘");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         let result = parse_bgmtv_name("魔法使いの嫁 SEASON2 第2クール");
         assert_eq!(result.name, "魔法使いの嫁");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         // 纯分割放送: 默认第一季，移除分割放送信息
         let result = parse_bgmtv_name("间谍过家家 第2部分");
         assert_eq!(result.name, "间谍过家家");
-        assert_eq!(result.season, Some(1));
+        assert_eq!(result.season, 1);
 
         let result = parse_bgmtv_name("SPY×FAMILY 第2クール");
         assert_eq!(result.name, "SPY×FAMILY");
-        assert_eq!(result.season, Some(1));
+        assert_eq!(result.season, 1);
 
         // 纯季度信息
         let result = parse_bgmtv_name("我推的孩子 第二季");
         assert_eq!(result.name, "我推的孩子");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         let result = parse_bgmtv_name("葬送的芙莉莲 第1期");
         assert_eq!(result.name, "葬送的芙莉莲");
-        assert_eq!(result.season, Some(1));
+        assert_eq!(result.season, 1);
 
         // 无季度信息时默认为第一季
         let result = parse_bgmtv_name("无职转生");
         assert_eq!(result.name, "无职转生");
-        assert_eq!(result.season, Some(1));
+        assert_eq!(result.season, 1);
 
         // 英文格式测试 S02
         let result = parse_bgmtv_name("Frieren S02");
         assert_eq!(result.name, "Frieren");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         // 英文格式测试 s02 (小写)
         let result = parse_bgmtv_name("Frieren s02");
         assert_eq!(result.name, "Frieren");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         // 英文格式测试 Season 2 (混合大小写带空格)
         let result = parse_bgmtv_name("Spy x Family Season 2");
         assert_eq!(result.name, "Spy x Family");
-        assert_eq!(result.season, Some(2));
+        assert_eq!(result.season, 2);
 
         // 英文格式测试 season2 (全小写无空格)
         let result = parse_bgmtv_name("Attack on Titan season3");
         assert_eq!(result.name, "Attack on Titan");
-        assert_eq!(result.season, Some(3));
+        assert_eq!(result.season, 3);
 
         // 英文格式测试 SEASON2 (全大写无空格)
         let result = parse_bgmtv_name("Attack on Titan SEASON3");
         assert_eq!(result.name, "Attack on Titan");
-        assert_eq!(result.season, Some(3));
+        assert_eq!(result.season, 3);
     }
 }

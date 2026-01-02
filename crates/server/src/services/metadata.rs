@@ -57,8 +57,8 @@ impl MetadataService {
         // Parse Japanese title to extract clean name
         let parsed_jp = parse_bgmtv_name(&detail.name);
 
-        // Use parsed season from Chinese title, fallback to Japanese title
-        let season = parsed_cn.season.or(parsed_jp.season);
+        // Use parsed season from Chinese title (defaults to 1)
+        let season = Some(parsed_cn.season);
 
         Ok(FetchedMetadata {
             bgmtv_id: detail.id,

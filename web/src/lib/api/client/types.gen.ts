@@ -96,6 +96,10 @@ export type CalendarSubject = {
    */
   mikan_id?: string | null;
   /**
+   * Parsed Chinese title (without season info)
+   */
+  parsed_name: string;
+  /**
    * Platform type (tv, movie, ova)
    */
   platform: Platform;
@@ -103,6 +107,10 @@ export type CalendarSubject = {
    * Poster image URL
    */
   poster_url?: string | null;
+  /**
+   * Parsed season number (defaults to 1)
+   */
+  season: number;
   /**
    * Chinese title
    */
@@ -394,6 +402,45 @@ export type NotificationSettings = {
    * Telegram configuration
    */
   telegram?: TelegramConfig;
+};
+
+/**
+ * Parsed BGM.tv subject with extracted season info
+ */
+export type ParsedSubject = {
+  /**
+   * Release date
+   */
+  date: string;
+  /**
+   * Total episodes
+   */
+  eps: number;
+  id: number;
+  /**
+   * Poster image URL
+   */
+  image: string;
+  /**
+   * Original name (Japanese)
+   */
+  name: string;
+  /**
+   * Chinese name
+   */
+  name_cn: string;
+  /**
+   * Parsed Chinese name (without season info)
+   */
+  parsed_name: string;
+  /**
+   * Platform (TV, Movie, OVA)
+   */
+  platform: string;
+  /**
+   * Parsed season number (defaults to 1)
+   */
+  season: number;
 };
 
 /**
@@ -1422,7 +1469,7 @@ export type SearchBgmtvResponses = {
   /**
    * Search results
    */
-  200: Array<Subject>;
+  200: Array<ParsedSubject>;
 };
 
 export type SearchBgmtvResponse =

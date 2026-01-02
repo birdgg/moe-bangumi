@@ -140,7 +140,14 @@ export const CalendarDaySchema = {
 export const CalendarSubjectSchema = {
   type: "object",
   description: "Subject item in calendar results",
-  required: ["title_chinese", "air_week", "platform", "total_episodes"],
+  required: [
+    "title_chinese",
+    "parsed_name",
+    "season",
+    "air_week",
+    "platform",
+    "total_episodes",
+  ],
   properties: {
     air_date: {
       type: ["string", "null"],
@@ -160,6 +167,10 @@ export const CalendarSubjectSchema = {
       type: ["string", "null"],
       description: "Mikan bangumi ID",
     },
+    parsed_name: {
+      type: "string",
+      description: "Parsed Chinese title (without season info)",
+    },
     platform: {
       $ref: "#/components/schemas/Platform",
       description: "Platform type (tv, movie, ova)",
@@ -167,6 +178,11 @@ export const CalendarSubjectSchema = {
     poster_url: {
       type: ["string", "null"],
       description: "Poster image URL",
+    },
+    season: {
+      type: "integer",
+      format: "int32",
+      description: "Parsed season number (defaults to 1)",
     },
     title_chinese: {
       type: "string",
@@ -542,6 +558,62 @@ export const NotificationSettingsSchema = {
     telegram: {
       $ref: "#/components/schemas/TelegramConfig",
       description: "Telegram configuration",
+    },
+  },
+} as const;
+
+export const ParsedSubjectSchema = {
+  type: "object",
+  description: "Parsed BGM.tv subject with extracted season info",
+  required: [
+    "id",
+    "name",
+    "name_cn",
+    "parsed_name",
+    "season",
+    "date",
+    "platform",
+    "image",
+    "eps",
+  ],
+  properties: {
+    date: {
+      type: "string",
+      description: "Release date",
+    },
+    eps: {
+      type: "integer",
+      format: "int64",
+      description: "Total episodes",
+    },
+    id: {
+      type: "integer",
+      format: "int64",
+    },
+    image: {
+      type: "string",
+      description: "Poster image URL",
+    },
+    name: {
+      type: "string",
+      description: "Original name (Japanese)",
+    },
+    name_cn: {
+      type: "string",
+      description: "Chinese name",
+    },
+    parsed_name: {
+      type: "string",
+      description: "Parsed Chinese name (without season info)",
+    },
+    platform: {
+      type: "string",
+      description: "Platform (TV, Movie, OVA)",
+    },
+    season: {
+      type: "integer",
+      format: "int32",
+      description: "Parsed season number (defaults to 1)",
     },
   },
 } as const;

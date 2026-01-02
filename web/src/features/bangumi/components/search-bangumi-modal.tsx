@@ -3,7 +3,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { cn } from "@/lib/utils";
 import { useSearchBangumi } from "../hooks/use-bangumi";
-import { type Subject } from "@/lib/api";
+import { type ParsedSubject } from "@/lib/api";
 import {
   IconSearch,
   IconX,
@@ -17,7 +17,7 @@ import { PlatformBadge } from "./platform-badge";
 interface SearchBangumiModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect?: (subject: Subject) => void;
+  onSelect?: (subject: ParsedSubject) => void;
 }
 
 export function SearchBangumiModal({
@@ -42,7 +42,7 @@ export function SearchBangumiModal({
 
   const { data: results, isLoading, isError } = useSearchBangumi(debouncedQuery);
 
-  const handleSelect = (subject: Subject) => {
+  const handleSelect = (subject: ParsedSubject) => {
     setSelectedId(subject.id);
     onSelect?.(subject);
     // Close after brief delay to show selection
