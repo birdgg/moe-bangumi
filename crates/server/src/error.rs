@@ -203,3 +203,14 @@ impl From<crate::services::CalendarError> for AppError {
         }
     }
 }
+
+impl From<crate::services::MetadataError> for AppError {
+    fn from(e: crate::services::MetadataError) -> Self {
+        match e {
+            crate::services::MetadataError::Database(e) => AppError::Database(e),
+            crate::services::MetadataError::NotFound => AppError::NotFound("Metadata not found".to_string()),
+            crate::services::MetadataError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
+            crate::services::MetadataError::Tmdb(e) => AppError::ExternalApi(e.to_string()),
+        }
+    }
+}

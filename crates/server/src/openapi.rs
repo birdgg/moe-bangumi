@@ -19,6 +19,7 @@ use crate::services::{Task, TaskStatus};
     tags(
         (name = "search", description = "Bangumi search endpoints"),
         (name = "bangumi", description = "Bangumi management endpoints"),
+        (name = "metadata", description = "Metadata management endpoints"),
         (name = "calendar", description = "Anime calendar endpoints"),
         (name = "settings", description = "Application settings endpoints"),
         (name = "logs", description = "System logs endpoints"),

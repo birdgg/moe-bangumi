@@ -56,13 +56,13 @@ impl BangumiService {
         // Extract RSS entries
         let rss_entries = data.rss_entries.clone();
 
-        // Get or create metadata
+        // Get or create/update metadata
         let metadata = if let Some(metadata_id) = data.metadata_id {
             // Use existing metadata
             self.metadata.get_by_id(metadata_id).await?
         } else if let Some(create_metadata) = data.metadata {
-            // Create new metadata (or find existing by external ID)
-            self.metadata.find_or_create(create_metadata).await?
+            // Create new metadata or update existing by external ID
+            self.metadata.find_or_update(create_metadata).await?
         } else {
             return Err(BangumiError::MissingMetadata);
         };

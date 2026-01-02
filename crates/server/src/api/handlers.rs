@@ -3,6 +3,7 @@ mod calendar;
 mod downloader;
 mod episodes;
 mod logs;
+mod metadata;
 mod mikan;
 mod search;
 mod settings;
@@ -56,6 +57,7 @@ pub use calendar::{get_calendar, refresh_calendar};
 pub use downloader::{test_downloader_connection, TestDownloaderRequest};
 pub use episodes::get_episodes;
 pub use logs::{cleanup_logs, get_logs, stream_logs};
+pub use metadata::{get_metadata, get_metadata_by_id, update_metadata};
 pub use mikan::get_mikan_rss;
 pub use search::{search_bgmtv, search_mikan, search_tmdb};
 pub use settings::{
@@ -78,6 +80,8 @@ pub use downloader::__path_test_downloader_connection;
 pub use episodes::__path_get_episodes;
 #[doc(hidden)]
 pub use logs::{__path_cleanup_logs, __path_get_logs, __path_stream_logs};
+#[doc(hidden)]
+pub use metadata::{__path_get_metadata, __path_get_metadata_by_id, __path_update_metadata};
 #[doc(hidden)]
 pub use mikan::__path_get_mikan_rss;
 #[doc(hidden)]

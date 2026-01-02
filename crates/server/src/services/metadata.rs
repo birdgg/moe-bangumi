@@ -143,6 +143,37 @@ impl MetadataService {
         self.create(data).await
     }
 
+    /// Find existing metadata by external ID and update it, or create new if not found.
+    ///
+    /// This method implements a "merge update" strategy:
+    /// - If metadata with matching external ID (mikan_id, bgmtv_id, or tmdb_id) exists,
+    ///   update it with the new data while preserving unspecified optional fields.
+    /// - If no matching metadata exists, create a new record.
+    ///
+    /// # Merge Behavior
+    /// When updating existing metadata, only fields provided in `CreateMetadata` are updated.
+    /// Optional fields that are `None` in the input will preserve their existing values.
+    /// This allows partial updates when creating Bangumi with incomplete metadata.
+    ///
+    /// # Note
+    /// If multiple Bangumi share the same metadata (via metadata_id), updating through
+    /// this method will affect all of them. This is intentional as metadata represents
+    /// the canonical information about an anime.
+    pub async fn find_or_update(&self, data: CreateMetadata) -> Result<Metadata, MetadataError> {
+        // Try to find existing metadata by external IDs
+        if let Some(existing) = self
+            .get_by_external_id(data.mikan_id.as_deref(), data.bgmtv_id, data.tmdb_id)
+            .await?
+        {
+            // Convert CreateMetadata to UpdateMetadata and merge
+            let update_data = data.into_update();
+            return self.update(existing.id, update_data).await;
+        }
+
+        // Create new metadata
+        self.create(data).await
+    }
+
     /// Update metadata
     pub async fn update(&self, id: i64, data: UpdateMetadata) -> Result<Metadata, MetadataError> {
         MetadataRepository::update(&self.db, id, data)

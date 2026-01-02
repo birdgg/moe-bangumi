@@ -406,10 +406,6 @@ export type Platform = "tv" | "movie" | "ova";
  */
 export type PrioritySettings = {
   /**
-   * Resolutions in priority order (first = highest priority)
-   */
-  resolutions?: Array<string>;
-  /**
    * Subtitle groups in priority order (first = highest priority)
    */
   subtitle_groups?: Array<string>;
@@ -821,6 +817,62 @@ export type UpdateFilterSettings = {
 };
 
 /**
+ * Request body for updating metadata
+ * For Clearable fields: null means clear the value, value means set new value, absent means unchanged
+ */
+export type UpdateMetadata = {
+  /**
+   * First air date in YYYY-MM-DD format (null to clear)
+   */
+  air_date?: string | null;
+  /**
+   * Day of week when new episodes air (0=Sunday ~ 6=Saturday)
+   */
+  air_week?: number | null;
+  /**
+   * BGM.tv subject ID (null to clear)
+   */
+  bgmtv_id?: number | null;
+  /**
+   * Whether the anime has finished airing
+   */
+  finished?: boolean | null;
+  /**
+   * Mikan bangumi ID (null to clear)
+   */
+  mikan_id?: string | null;
+  platform?: null | Platform;
+  /**
+   * Poster image URL (null to clear)
+   */
+  poster_url?: string | null;
+  /**
+   * Season number
+   */
+  season?: number | null;
+  /**
+   * Chinese title
+   */
+  title_chinese?: string | null;
+  /**
+   * Japanese original name (null to clear)
+   */
+  title_japanese?: string | null;
+  /**
+   * TMDB ID (null to clear)
+   */
+  tmdb_id?: number | null;
+  /**
+   * Total episodes
+   */
+  total_episodes?: number | null;
+  /**
+   * Year
+   */
+  year?: number | null;
+};
+
+/**
  * Request body for updating notification settings
  */
 export type UpdateNotificationSettings = {
@@ -835,10 +887,6 @@ export type UpdateNotificationSettings = {
  * Request body for updating priority settings
  */
 export type UpdatePrioritySettings = {
-  /**
-   * Resolutions in priority order (replaces entire array if provided)
-   */
-  resolutions?: Array<string> | null;
   /**
    * Subtitle groups in priority order (replaces entire array if provided)
    */
@@ -1200,6 +1248,81 @@ export type StreamLogsResponses = {
    */
   200: unknown;
 };
+
+export type GetMetadataData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/metadata";
+};
+
+export type GetMetadataResponses = {
+  /**
+   * List of all metadata
+   */
+  200: Array<Metadata>;
+};
+
+export type GetMetadataResponse =
+  GetMetadataResponses[keyof GetMetadataResponses];
+
+export type GetMetadataByIdData = {
+  body?: never;
+  path: {
+    /**
+     * Metadata ID
+     */
+    id: number;
+  };
+  query?: never;
+  url: "/api/metadata/{id}";
+};
+
+export type GetMetadataByIdErrors = {
+  /**
+   * Metadata not found
+   */
+  404: unknown;
+};
+
+export type GetMetadataByIdResponses = {
+  /**
+   * Metadata details
+   */
+  200: Metadata;
+};
+
+export type GetMetadataByIdResponse =
+  GetMetadataByIdResponses[keyof GetMetadataByIdResponses];
+
+export type UpdateMetadataData = {
+  body: UpdateMetadata;
+  path: {
+    /**
+     * Metadata ID
+     */
+    id: number;
+  };
+  query?: never;
+  url: "/api/metadata/{id}";
+};
+
+export type UpdateMetadataErrors = {
+  /**
+   * Metadata not found
+   */
+  404: unknown;
+};
+
+export type UpdateMetadataResponses = {
+  /**
+   * Metadata updated successfully
+   */
+  200: Metadata;
+};
+
+export type UpdateMetadataResponse =
+  UpdateMetadataResponses[keyof UpdateMetadataResponses];
 
 export type GetMikanRssData = {
   body?: never;

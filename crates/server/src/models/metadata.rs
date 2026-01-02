@@ -122,36 +122,109 @@ fn default_season() -> i32 {
     1
 }
 
+impl CreateMetadata {
+    /// Convert CreateMetadata to UpdateMetadata for merging with existing metadata.
+    ///
+    /// # Conversion Rules
+    /// - Required fields (title_chinese, season, year, platform, etc.): Always set as `Some(value)`
+    /// - Optional fields with `Some(value)`: Converted to `Clearable::Set(value)`
+    /// - Optional fields with `None`: Converted to `Clearable::Unchanged` (preserves existing value)
+    ///
+    /// # Use Case
+    /// This method is used by `MetadataService::find_or_update()` to update existing metadata
+    /// while preserving fields that are not provided in the new data. This is useful when
+    /// creating a Bangumi with partial metadata - existing values won't be overwritten.
+    ///
+    /// # Example
+    /// If existing metadata has `tmdb_id = Some(12345)` and new CreateMetadata has
+    /// `tmdb_id = None`, the resulting UpdateMetadata will keep the existing TMDB ID.
+    pub fn into_update(self) -> UpdateMetadata {
+        UpdateMetadata {
+            mikan_id: match self.mikan_id {
+                Some(id) => Clearable::Set(id),
+                None => Clearable::Unchanged,
+            },
+            bgmtv_id: match self.bgmtv_id {
+                Some(id) => Clearable::Set(id),
+                None => Clearable::Unchanged,
+            },
+            tmdb_id: match self.tmdb_id {
+                Some(id) => Clearable::Set(id),
+                None => Clearable::Unchanged,
+            },
+            title_chinese: Some(self.title_chinese),
+            title_japanese: match self.title_japanese {
+                Some(title) => Clearable::Set(title),
+                None => Clearable::Unchanged,
+            },
+            season: Some(self.season),
+            year: Some(self.year),
+            platform: Some(self.platform),
+            total_episodes: Some(self.total_episodes),
+            poster_url: match self.poster_url {
+                Some(url) => Clearable::Set(url),
+                None => Clearable::Unchanged,
+            },
+            air_date: match self.air_date {
+                Some(date) => Clearable::Set(date),
+                None => Clearable::Unchanged,
+            },
+            air_week: Some(self.air_week),
+            finished: Some(self.finished),
+        }
+    }
+}
+
 /// Request body for updating metadata
-#[derive(Debug, Clone, Default, Deserialize)]
+/// For Clearable fields: null means clear the value, value means set new value, absent means unchanged
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
 pub struct UpdateMetadata {
+    /// Mikan bangumi ID (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<String>)]
     pub mikan_id: Clearable<String>,
+    /// BGM.tv subject ID (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<i64>)]
     pub bgmtv_id: Clearable<i64>,
+    /// TMDB ID (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<i64>)]
     pub tmdb_id: Clearable<i64>,
 
+    /// Chinese title
     #[serde(default)]
     pub title_chinese: Option<String>,
+    /// Japanese original name (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<String>)]
     pub title_japanese: Clearable<String>,
 
+    /// Season number
     #[serde(default)]
     pub season: Option<i32>,
+    /// Year
     #[serde(default)]
     pub year: Option<i32>,
+    /// Platform type (TV, Movie, OVA)
     #[serde(default)]
     pub platform: Option<Platform>,
 
+    /// Total episodes
     #[serde(default)]
     pub total_episodes: Option<i32>,
+    /// Poster image URL (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<String>)]
     pub poster_url: Clearable<String>,
+    /// First air date in YYYY-MM-DD format (null to clear)
     #[serde(default)]
+    #[schema(value_type = Option<String>)]
     pub air_date: Clearable<String>,
+    /// Day of week when new episodes air (0=Sunday ~ 6=Saturday)
     #[serde(default)]
     pub air_week: Option<i32>,
+    /// Whether the anime has finished airing
     #[serde(default)]
     pub finished: Option<bool>,
 }

@@ -556,13 +556,6 @@ export const PrioritySettingsSchema = {
   type: "object",
   description: "Priority configuration for torrent selection and washing",
   properties: {
-    resolutions: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-      description: "Resolutions in priority order (first = highest priority)",
-    },
     subtitle_groups: {
       type: "array",
       items: {
@@ -1238,6 +1231,79 @@ export const UpdateFilterSettingsSchema = {
   },
 } as const;
 
+export const UpdateMetadataSchema = {
+  type: "object",
+  description:
+    "Request body for updating metadata\nFor Clearable fields: null means clear the value, value means set new value, absent means unchanged",
+  properties: {
+    air_date: {
+      type: ["string", "null"],
+      description: "First air date in YYYY-MM-DD format (null to clear)",
+    },
+    air_week: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Day of week when new episodes air (0=Sunday ~ 6=Saturday)",
+    },
+    bgmtv_id: {
+      type: ["integer", "null"],
+      format: "int64",
+      description: "BGM.tv subject ID (null to clear)",
+    },
+    finished: {
+      type: ["boolean", "null"],
+      description: "Whether the anime has finished airing",
+    },
+    mikan_id: {
+      type: ["string", "null"],
+      description: "Mikan bangumi ID (null to clear)",
+    },
+    platform: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/Platform",
+          description: "Platform type (TV, Movie, OVA)",
+        },
+      ],
+    },
+    poster_url: {
+      type: ["string", "null"],
+      description: "Poster image URL (null to clear)",
+    },
+    season: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Season number",
+    },
+    title_chinese: {
+      type: ["string", "null"],
+      description: "Chinese title",
+    },
+    title_japanese: {
+      type: ["string", "null"],
+      description: "Japanese original name (null to clear)",
+    },
+    tmdb_id: {
+      type: ["integer", "null"],
+      format: "int64",
+      description: "TMDB ID (null to clear)",
+    },
+    total_episodes: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Total episodes",
+    },
+    year: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Year",
+    },
+  },
+} as const;
+
 export const UpdateNotificationSettingsSchema = {
   type: "object",
   description: "Request body for updating notification settings",
@@ -1264,14 +1330,6 @@ export const UpdatePrioritySettingsSchema = {
   type: "object",
   description: "Request body for updating priority settings",
   properties: {
-    resolutions: {
-      type: ["array", "null"],
-      items: {
-        type: "string",
-      },
-      description:
-        "Resolutions in priority order (replaces entire array if provided)",
-    },
     subtitle_groups: {
       type: ["array", "null"],
       items: {

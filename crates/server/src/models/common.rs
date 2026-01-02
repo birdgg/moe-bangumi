@@ -4,6 +4,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 /// - `Unchanged`: Field was not provided in the request, keep existing value
 /// - `Clear`: Field was explicitly set to null, clear the value
 /// - `Set(T)`: Field was set to a new value
+///
+/// In JSON: null means Clear, value means Set(value), absent means Unchanged
 #[derive(Debug, Clone, Default)]
 pub enum Clearable<T> {
     #[default]

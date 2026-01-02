@@ -21,6 +21,11 @@ import type {
   GetEpisodesResponses,
   GetLogsData,
   GetLogsResponses,
+  GetMetadataByIdData,
+  GetMetadataByIdErrors,
+  GetMetadataByIdResponses,
+  GetMetadataData,
+  GetMetadataResponses,
   GetMikanRssData,
   GetMikanRssResponses,
   GetSettingsData,
@@ -54,6 +59,9 @@ import type {
   UpdateBangumiData,
   UpdateBangumiErrors,
   UpdateBangumiResponses,
+  UpdateMetadataData,
+  UpdateMetadataErrors,
+  UpdateMetadataResponses,
   UpdateSettingsData,
   UpdateSettingsResponses,
 } from "./types.gen";
@@ -231,6 +239,48 @@ export const streamLogs = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: "/api/logs/stream", ...options });
+
+/**
+ * Get all metadata
+ */
+export const getMetadata = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMetadataData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<GetMetadataResponses, unknown, ThrowOnError>({
+    url: "/api/metadata",
+    ...options,
+  });
+
+/**
+ * Get a metadata by ID
+ */
+export const getMetadataById = <ThrowOnError extends boolean = false>(
+  options: Options<GetMetadataByIdData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetMetadataByIdResponses,
+    GetMetadataByIdErrors,
+    ThrowOnError
+  >({ url: "/api/metadata/{id}", ...options });
+
+/**
+ * Update a metadata
+ */
+export const updateMetadata = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateMetadataData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateMetadataResponses,
+    UpdateMetadataErrors,
+    ThrowOnError
+  >({
+    url: "/api/metadata/{id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * Get bangumi detail with RSS URLs from Mikan

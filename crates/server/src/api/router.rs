@@ -18,6 +18,8 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
         .routes(routes!(handlers::create_bangumi))
         .routes(routes!(handlers::get_bangumi))
         .routes(routes!(handlers::get_bangumi_by_id, handlers::update_bangumi))
+        .routes(routes!(handlers::get_metadata))
+        .routes(routes!(handlers::get_metadata_by_id, handlers::update_metadata))
         .routes(routes!(handlers::get_episodes))
         .routes(routes!(handlers::get_settings))
         .routes(routes!(handlers::update_settings))
