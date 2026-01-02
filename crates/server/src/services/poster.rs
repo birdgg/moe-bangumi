@@ -122,6 +122,30 @@ impl PosterService {
         }
     }
 
+    /// Normalize a BGM.tv URL by removing thumbnail size prefix.
+    ///
+    /// Converts:
+    /// - "https://lain.bgm.tv/r/400/pic/cover/l/3c/82/373267_ffBO8.jpg"
+    /// - to "https://lain.bgm.tv/pic/cover/l/3c/82/373267_ffBO8.jpg"
+    fn normalize_bgm_url(url: &str) -> String {
+        // Pattern: /r/{size}/ where size is a number
+        if let Some(idx) = url.find("/r/") {
+            // Find the end of /r/{size}/ pattern
+            let after_r = &url[idx + 3..]; // skip "/r/"
+            if let Some(slash_idx) = after_r.find('/') {
+                // Check if the part between /r/ and next / is a number
+                let size_part = &after_r[..slash_idx];
+                if size_part.chars().all(|c| c.is_ascii_digit()) {
+                    // Remove /r/{size} part
+                    let before = &url[..idx];
+                    let after = &after_r[slash_idx..];
+                    return format!("{}{}", before, after);
+                }
+            }
+        }
+        url.to_string()
+    }
+
     /// Download a poster from a URL and return the local path.
     ///
     /// # Arguments
@@ -181,6 +205,7 @@ impl PosterService {
     ///
     /// Handles different URL formats:
     /// - BGM.tv URL: "https://lain.bgm.tv/pic/cover/l/de/4a/329906_hmtVD.jpg"
+    /// - BGM.tv thumbnail URL: "https://lain.bgm.tv/r/400/pic/cover/l/3c/82/373267_ffBO8.jpg" (normalized to full size)
     /// - Local path: "/posters/abc.jpg" (returns as-is)
     ///
     /// # Returns
@@ -193,9 +218,11 @@ impl PosterService {
             return Some(url.to_string());
         }
 
-        let filename = Self::extract_bgm_filename(url)?;
+        // Normalize BGM.tv URL to remove thumbnail size prefix
+        let normalized_url = Self::normalize_bgm_url(url);
+        let filename = Self::extract_bgm_filename(&normalized_url)?;
 
-        match self.download_poster(url, filename).await {
+        match self.download_poster(&normalized_url, filename).await {
             Ok(local_path) => Some(local_path),
             Err(e) => {
                 tracing::warn!("Failed to download poster: {}", e);
@@ -265,5 +292,40 @@ impl PosterService {
 
             tracing::debug!("Background poster download for metadata {} completed", metadata_id);
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_bgm_url_with_thumbnail() {
+        let url = "https://lain.bgm.tv/r/400/pic/cover/l/3c/82/373267_ffBO8.jpg";
+        let expected = "https://lain.bgm.tv/pic/cover/l/3c/82/373267_ffBO8.jpg";
+        assert_eq!(PosterService::normalize_bgm_url(url), expected);
+    }
+
+    #[test]
+    fn test_normalize_bgm_url_without_thumbnail() {
+        let url = "https://lain.bgm.tv/pic/cover/l/de/4a/329906_hmtVD.jpg";
+        assert_eq!(PosterService::normalize_bgm_url(url), url);
+    }
+
+    #[test]
+    fn test_normalize_bgm_url_different_sizes() {
+        // Test with different thumbnail sizes
+        let url_200 = "https://lain.bgm.tv/r/200/pic/cover/l/3c/82/373267_ffBO8.jpg";
+        let url_800 = "https://lain.bgm.tv/r/800/pic/cover/l/3c/82/373267_ffBO8.jpg";
+        let expected = "https://lain.bgm.tv/pic/cover/l/3c/82/373267_ffBO8.jpg";
+
+        assert_eq!(PosterService::normalize_bgm_url(url_200), expected);
+        assert_eq!(PosterService::normalize_bgm_url(url_800), expected);
+    }
+
+    #[test]
+    fn test_normalize_bgm_url_non_bgm() {
+        let url = "https://mikanani.me/images/Bangumi/202501/b95edb86.jpg";
+        assert_eq!(PosterService::normalize_bgm_url(url), url);
     }
 }

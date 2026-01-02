@@ -18,7 +18,7 @@ use server::SeasonIterator;
 use tracing_subscriber::EnvFilter;
 
 const OUTPUT_DIR: &str = "assets/seed";
-const REQUEST_DELAY_SECS: u64 = 60;
+const REQUEST_DELAY_SECS: u64 = 30;
 const END_YEAR: i32 = 2013;
 
 #[tokio::main]
@@ -41,7 +41,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Starting calendar seed data generation (all seasons)");
         tracing::info!("Target: {} Winter to current season", END_YEAR);
     }
-    tracing::info!("Request delay: {} seconds between seasons", REQUEST_DELAY_SECS);
+    tracing::info!(
+        "Request delay: {} seconds between seasons",
+        REQUEST_DELAY_SECS
+    );
 
     // Create HTTP client
     let http_client = reqwest::Client::builder()
@@ -117,7 +120,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Delay between seasons (skip delay after last one)
         if idx + 1 < total {
-            tracing::info!("Waiting {} seconds before next request...", REQUEST_DELAY_SECS);
+            tracing::info!(
+                "Waiting {} seconds before next request...",
+                REQUEST_DELAY_SECS
+            );
             tokio::time::sleep(Duration::from_secs(REQUEST_DELAY_SECS)).await;
         }
     }
@@ -210,55 +216,57 @@ async fn fetch_season_data(
         .collect();
 
     let entries: Vec<CalendarSeedEntry> = stream::iter(tasks)
-        .map(|(mikan_id, bgmtv_id, air_week, poster_url, _name, bgmtv)| async move {
-            match bgmtv.get_subject(bgmtv_id).await {
-                Ok(subject) => {
-                    // Parse year from date
-                    let subject_year = subject
-                        .date
-                        .as_ref()
-                        .and_then(|date| date.get(0..4))
-                        .and_then(|s| s.parse().ok())
-                        .unwrap_or(year);
+        .map(
+            |(mikan_id, bgmtv_id, air_week, _poster_url, _name, bgmtv)| async move {
+                match bgmtv.get_subject(bgmtv_id).await {
+                    Ok(subject) => {
+                        // Parse year from date
+                        let subject_year = subject
+                            .date
+                            .as_ref()
+                            .and_then(|date| date.get(0..4))
+                            .and_then(|s| s.parse().ok())
+                            .unwrap_or(year);
 
-                    // Parse platform
-                    let platform = subject
-                        .platform
-                        .as_ref()
-                        .map(|p| match p.to_lowercase().as_str() {
-                            "movie" | "劇場版" => "movie",
-                            "ova" => "ova",
-                            _ => "tv",
+                        // Parse platform
+                        let platform = subject
+                            .platform
+                            .as_ref()
+                            .map(|p| match p.to_lowercase().as_str() {
+                                "movie" | "劇場版" => "movie",
+                                "ova" => "ova",
+                                _ => "tv",
+                            })
+                            .unwrap_or("tv")
+                            .to_string();
+
+                        // Use BGM.tv poster_url (preferred for better quality)
+                        let final_poster_url = Some(subject.images.large.clone());
+
+                        Some(CalendarSeedEntry {
+                            mikan_id,
+                            bgmtv_id,
+                            title_chinese: if subject.name_cn.is_empty() {
+                                subject.name.clone()
+                            } else {
+                                subject.name_cn.clone()
+                            },
+                            title_japanese: Some(subject.name).filter(|s| !s.is_empty()),
+                            air_week,
+                            poster_url: final_poster_url,
+                            year: subject_year,
+                            platform,
+                            total_episodes: subject.total_episodes as i32,
+                            air_date: subject.date,
                         })
-                        .unwrap_or("tv")
-                        .to_string();
-
-                    // Use Mikan poster_url, fallback to BGM.tv
-                    let final_poster_url = poster_url.or(Some(subject.images.large.clone()));
-
-                    Some(CalendarSeedEntry {
-                        mikan_id,
-                        bgmtv_id,
-                        title_chinese: if subject.name_cn.is_empty() {
-                            subject.name.clone()
-                        } else {
-                            subject.name_cn.clone()
-                        },
-                        title_japanese: Some(subject.name).filter(|s| !s.is_empty()),
-                        air_week,
-                        poster_url: final_poster_url,
-                        year: subject_year,
-                        platform,
-                        total_episodes: subject.total_episodes as i32,
-                        air_date: subject.date,
-                    })
+                    }
+                    Err(e) => {
+                        tracing::debug!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
+                        None
+                    }
                 }
-                Err(e) => {
-                    tracing::debug!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
-                    None
-                }
-            }
-        })
+            },
+        )
         .buffer_unordered(10)
         .filter_map(|x| async { x })
         .collect()

@@ -160,6 +160,7 @@ impl AppState {
             db.clone(),
             Arc::clone(&bgmtv),
             Arc::clone(&mikan_arc),
+            Arc::clone(&poster),
         ));
 
         // Create and start scheduler service
