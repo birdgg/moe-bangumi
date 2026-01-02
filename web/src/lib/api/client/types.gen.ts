@@ -410,9 +410,11 @@ export type PrioritySettings = {
    */
   subtitle_groups?: Array<string>;
   /**
-   * Subtitle languages in priority order (first = highest priority)
+   * Subtitle language combinations in priority order (first = highest priority)
+   * Each entry is a set of languages that must exactly match
+   * Example: [[CHS, JPN], [CHS, CHT, JPN], [CHT]]
    */
-  subtitle_languages?: Array<string>;
+  subtitle_language_sets?: Array<SubtitleLanguageSet>;
 };
 
 /**
@@ -558,6 +560,11 @@ export type Settings = {
  */
 export type SourceType = "webrip" | "bdrip";
 
+/**
+ * 字幕类型枚举
+ */
+export type SubType = "CHS" | "CHT" | "JPN" | "ENG" | "UNKNOWN";
+
 export type Subgroup = {
   episodes: Array<Episode>;
   id: string;
@@ -594,6 +601,19 @@ export type SubjectImages = {
  * BGM.tv subject type
  */
 export type SubjectType = "Book" | "Anime" | "Music" | "Game" | "Real";
+
+/**
+ * A normalized set of subtitle languages for exact matching.
+ *
+ * Languages are automatically sorted and deduplicated on creation,
+ * ensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.
+ */
+export type SubtitleLanguageSet = {
+  /**
+   * Sorted and deduplicated language list
+   */
+  languages: Array<SubType>;
+};
 
 /**
  * Unified download task representation.
@@ -892,9 +912,10 @@ export type UpdatePrioritySettings = {
    */
   subtitle_groups?: Array<string> | null;
   /**
-   * Subtitle languages in priority order (replaces entire array if provided)
+   * Subtitle language combinations in priority order (replaces entire array if provided)
+   * Each entry is a set of languages that must exactly match
    */
-  subtitle_languages?: Array<string> | null;
+  subtitle_language_sets?: Array<SubtitleLanguageSet> | null;
 };
 
 /**

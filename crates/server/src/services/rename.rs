@@ -239,14 +239,18 @@ impl RenameService {
         } else {
             Path::new(&task.save_path).to_path_buf()
         };
-        self.write_nfo_file(
-            &nfo_dir.to_string_lossy(),
-            &new_filename_base,
-            bangumi,
-            episode,
-            old_path,
-        )
-        .await?;
+        if let Err(e) = self
+            .write_nfo_file(
+                &nfo_dir.to_string_lossy(),
+                &new_filename_base,
+                bangumi,
+                episode,
+                old_path,
+            )
+            .await
+        {
+            tracing::warn!("Failed to write NFO file for {}: {}", new_path, e);
+        }
 
         Ok(())
     }

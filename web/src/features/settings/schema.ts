@@ -87,11 +87,17 @@ export const notificationSchema = z.object({
 });
 
 /**
+ * Subtitle language set (a combination of languages that must exactly match)
+ */
+export type SubtitleLanguageSet = SubtitleLanguage[];
+
+/**
  * Priority settings schema for torrent selection and washing
  */
 export const prioritySchema = z.object({
   subtitle_groups: z.array(z.string()),
-  subtitle_languages: z.array(z.enum(subtitleLanguages)),
+  /** Each entry is a set of languages that must exactly match */
+  subtitle_language_sets: z.array(z.array(z.enum(subtitleLanguages))),
 });
 
 /**

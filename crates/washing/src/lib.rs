@@ -3,17 +3,20 @@
 //! This crate provides a priority-based system for selecting the best torrent
 //! among multiple options for the same episode. Priority is determined by:
 //! 1. Subtitle group (highest weight)
-//! 2. Subtitle language
+//! 2. Subtitle language combination (exact match)
 //!
 //! # Example
 //!
 //! ```
-//! use washing::{PriorityConfig, PriorityCalculator, ComparableTorrent};
+//! use washing::{PriorityConfig, PriorityCalculator, ComparableTorrent, SubtitleLanguageSet};
 //! use parser::SubType;
 //!
 //! let config = PriorityConfig {
 //!     subtitle_groups: vec!["ANi".to_string(), "LoliHouse".to_string()],
-//!     subtitle_languages: vec![SubType::Chs, SubType::Cht],
+//!     subtitle_language_sets: vec![
+//!         SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Jpn]),
+//!         SubtitleLanguageSet::new(vec![SubType::Cht]),
+//!     ],
 //! };
 //!
 //! let calculator = PriorityCalculator::new(config);
@@ -25,19 +28,102 @@
 //!
 //! let score = calculator.calculate_score(&torrent);
 //! assert_eq!(score.group_rank, 0); // Highest priority
+//! assert_eq!(score.language_rank, 0); // Exact match first combination
 //! ```
 
 use std::cmp::Ordering;
 
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
 pub use parser::SubType;
+
+/// A normalized set of subtitle languages for exact matching.
+///
+/// Languages are automatically sorted and deduplicated on creation,
+/// ensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.
+///
+/// Serializes as a simple array of SubType (e.g., `["CHS", "JPN"]`).
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SubtitleLanguageSet(Vec<SubType>);
+
+impl utoipa::ToSchema for SubtitleLanguageSet {
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("SubtitleLanguageSet")
+    }
+}
+
+impl utoipa::PartialSchema for SubtitleLanguageSet {
+    fn schema() -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+        utoipa::openapi::schema::ArrayBuilder::new()
+            .items(utoipa::openapi::Ref::from_schema_name("SubType"))
+            .build()
+            .into()
+    }
+}
+
+impl SubtitleLanguageSet {
+    /// Create a new language set from a list of languages.
+    /// Automatically sorts and deduplicates the languages.
+    pub fn new(mut languages: Vec<SubType>) -> Self {
+        languages.sort();
+        languages.dedup();
+        Self { languages }
+    }
+
+    /// Check if this set exactly matches the given languages (ignoring order).
+    pub fn exact_match(&self, other: &[SubType]) -> bool {
+        if self.languages.len() != other.len() {
+            return false;
+        }
+
+        let mut other_sorted = other.to_vec();
+        other_sorted.sort();
+        other_sorted.dedup();
+
+        self.languages == other_sorted
+    }
+
+    /// Get the languages in this set.
+    pub fn languages(&self) -> &[SubType] {
+        &self.languages
+    }
+
+    /// Check if this set is empty.
+    pub fn is_empty(&self) -> bool {
+        self.languages.is_empty()
+    }
+}
+
+impl From<Vec<SubType>> for SubtitleLanguageSet {
+    fn from(languages: Vec<SubType>) -> Self {
+        Self::new(languages)
+    }
+}
+
+impl std::fmt::Display for SubtitleLanguageSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "[{}]",
+            self.languages
+                .iter()
+                .map(|l| l.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
+}
 
 /// Priority configuration from settings
 #[derive(Debug, Clone, Default)]
 pub struct PriorityConfig {
     /// Subtitle groups in priority order (first = highest priority)
     pub subtitle_groups: Vec<String>,
-    /// Subtitle languages in priority order (first = highest priority)
-    pub subtitle_languages: Vec<SubType>,
+    /// Subtitle language combinations in priority order (first = highest priority)
+    /// Each entry is a set of languages that must exactly match
+    pub subtitle_language_sets: Vec<SubtitleLanguageSet>,
 }
 
 /// Priority score for comparison (lower rank = higher priority)
@@ -45,7 +131,7 @@ pub struct PriorityConfig {
 pub struct PriorityScore {
     /// Subtitle group rank (0 = highest, usize::MAX = not configured/unknown)
     pub group_rank: usize,
-    /// Subtitle language rank
+    /// Subtitle language combination rank
     pub language_rank: usize,
 }
 
@@ -122,23 +208,18 @@ impl PriorityCalculator {
         }
     }
 
-    /// Get best matching rank for subtitle languages
-    /// Returns the best (lowest) rank among all languages in the torrent
+    /// Get exact match rank for subtitle language combination.
+    /// Returns the index of the first matching language set, or usize::MAX if no match.
     fn get_language_rank(&self, languages: &[SubType]) -> usize {
         if languages.is_empty() {
             return usize::MAX;
         }
 
-        // Find the best (lowest) rank among all languages
-        languages
+        // Find exact match in configured language sets
+        self.config
+            .subtitle_language_sets
             .iter()
-            .filter_map(|lang| {
-                self.config
-                    .subtitle_languages
-                    .iter()
-                    .position(|configured| configured == lang)
-            })
-            .min()
+            .position(|set| set.exact_match(languages))
             .unwrap_or(usize::MAX)
     }
 
@@ -189,8 +270,42 @@ mod tests {
                 "喵萌奶茶屋".to_string(),
                 "桜都字幕组".to_string(),
             ],
-            subtitle_languages: vec![SubType::Chs, SubType::Cht, SubType::Jpn],
+            subtitle_language_sets: vec![
+                SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Jpn]),
+                SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Cht, SubType::Jpn]),
+                SubtitleLanguageSet::new(vec![SubType::Cht]),
+            ],
         }
+    }
+
+    #[test]
+    fn test_subtitle_language_set_normalization() {
+        // Different order should result in same set
+        let set1 = SubtitleLanguageSet::new(vec![SubType::Jpn, SubType::Chs]);
+        let set2 = SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Jpn]);
+        assert_eq!(set1, set2);
+
+        // Duplicates should be removed
+        let set3 = SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Chs, SubType::Jpn]);
+        assert_eq!(set1, set3);
+    }
+
+    #[test]
+    fn test_subtitle_language_set_exact_match() {
+        let set = SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Jpn]);
+
+        // Exact match with different order
+        assert!(set.exact_match(&[SubType::Jpn, SubType::Chs]));
+        assert!(set.exact_match(&[SubType::Chs, SubType::Jpn]));
+
+        // Not a match - missing language
+        assert!(!set.exact_match(&[SubType::Chs]));
+
+        // Not a match - extra language
+        assert!(!set.exact_match(&[SubType::Chs, SubType::Jpn, SubType::Cht]));
+
+        // Not a match - different languages
+        assert!(!set.exact_match(&[SubType::Cht, SubType::Jpn]));
     }
 
     #[test]
@@ -215,18 +330,79 @@ mod tests {
     }
 
     #[test]
-    fn test_calculate_score() {
+    fn test_calculate_score_exact_match() {
         let config = create_test_config();
         let calculator = PriorityCalculator::new(config);
 
+        // Exact match: [Chs, Jpn] matches first language set
+        let torrent = ComparableTorrent {
+            subtitle_group: Some("ANi".to_string()),
+            subtitle_languages: vec![SubType::Chs, SubType::Jpn],
+        };
+
+        let score = calculator.calculate_score(&torrent);
+        assert_eq!(score.group_rank, 0);
+        assert_eq!(score.language_rank, 0);
+    }
+
+    #[test]
+    fn test_calculate_score_reversed_order() {
+        let config = create_test_config();
+        let calculator = PriorityCalculator::new(config);
+
+        // Different order should still match
+        let torrent = ComparableTorrent {
+            subtitle_group: Some("ANi".to_string()),
+            subtitle_languages: vec![SubType::Jpn, SubType::Chs], // Reversed
+        };
+
+        let score = calculator.calculate_score(&torrent);
+        assert_eq!(score.language_rank, 0); // Should still be first match
+    }
+
+    #[test]
+    fn test_calculate_score_no_match() {
+        let config = create_test_config();
+        let calculator = PriorityCalculator::new(config);
+
+        // [Chs] alone is not in the config
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
             subtitle_languages: vec![SubType::Chs],
         };
 
         let score = calculator.calculate_score(&torrent);
-        assert_eq!(score.group_rank, 0);
-        assert_eq!(score.language_rank, 0);
+        assert_eq!(score.language_rank, usize::MAX);
+    }
+
+    #[test]
+    fn test_chs_jpn_better_than_chs_cht_jpn() {
+        let config = create_test_config();
+        let calculator = PriorityCalculator::new(config);
+
+        // 简日 [Chs, Jpn]
+        let torrent_chs_jpn = ComparableTorrent {
+            subtitle_group: Some("ANi".to_string()),
+            subtitle_languages: vec![SubType::Chs, SubType::Jpn],
+        };
+
+        // 简繁日 [Chs, Cht, Jpn]
+        let torrent_chs_cht_jpn = ComparableTorrent {
+            subtitle_group: Some("ANi".to_string()),
+            subtitle_languages: vec![SubType::Chs, SubType::Cht, SubType::Jpn],
+        };
+
+        let score_chs_jpn = calculator.calculate_score(&torrent_chs_jpn);
+        let score_chs_cht_jpn = calculator.calculate_score(&torrent_chs_cht_jpn);
+
+        // 简日 should have lower rank (higher priority)
+        assert_eq!(score_chs_jpn.language_rank, 0);
+        assert_eq!(score_chs_cht_jpn.language_rank, 1);
+        assert!(score_chs_jpn < score_chs_cht_jpn);
+
+        // is_higher_priority should confirm this
+        assert!(calculator.is_higher_priority(&torrent_chs_jpn, &torrent_chs_cht_jpn));
+        assert!(!calculator.is_higher_priority(&torrent_chs_cht_jpn, &torrent_chs_jpn));
     }
 
     #[test]
@@ -251,12 +427,12 @@ mod tests {
 
         let torrent_ani = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
-            subtitle_languages: vec![SubType::Chs],
+            subtitle_languages: vec![SubType::Chs, SubType::Jpn],
         };
 
         let torrent_other = ComparableTorrent {
             subtitle_group: Some("喵萌奶茶屋".to_string()),
-            subtitle_languages: vec![SubType::Chs],
+            subtitle_languages: vec![SubType::Chs, SubType::Jpn],
         };
 
         // ANi has higher priority than 喵萌奶茶屋
@@ -280,7 +456,7 @@ mod tests {
             },
             ComparableTorrent {
                 subtitle_group: Some("喵萌奶茶屋".to_string()),
-                subtitle_languages: vec![SubType::Jpn],
+                subtitle_languages: vec![SubType::Chs, SubType::Cht, SubType::Jpn],
             },
         ];
 
@@ -290,38 +466,14 @@ mod tests {
     }
 
     #[test]
-    fn test_multi_language_best_rank() {
+    fn test_unconfigured_combination_is_lowest() {
         let config = create_test_config();
         let calculator = PriorityCalculator::new(config);
 
-        // Torrent with multiple languages - should match best one
+        // [Chs, Eng] is not configured
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
-            subtitle_languages: vec![SubType::Cht, SubType::Jpn], // Cht is rank 1, Jpn is rank 2
-        };
-
-        let score = calculator.calculate_score(&torrent);
-        // Should get the best (lowest) rank among languages
-        assert_eq!(score.language_rank, 1); // Cht is at position 1
-
-        // Test with Chs included - should be rank 0
-        let torrent2 = ComparableTorrent {
-            subtitle_group: None,
-            subtitle_languages: vec![SubType::Jpn, SubType::Chs], // Chs is rank 0
-        };
-        let score2 = calculator.calculate_score(&torrent2);
-        assert_eq!(score2.language_rank, 0);
-    }
-
-    #[test]
-    fn test_unknown_language_not_in_config() {
-        let config = create_test_config();
-        let calculator = PriorityCalculator::new(config);
-
-        // Torrent with Eng which is not in config
-        let torrent = ComparableTorrent {
-            subtitle_group: Some("ANi".to_string()),
-            subtitle_languages: vec![SubType::Eng],
+            subtitle_languages: vec![SubType::Chs, SubType::Eng],
         };
 
         let score = calculator.calculate_score(&torrent);

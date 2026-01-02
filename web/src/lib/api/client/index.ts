@@ -127,6 +127,8 @@ export type {
   Subject,
   SubjectImages,
   SubjectType,
+  SubtitleLanguageSet,
+  SubType,
   Task,
   TaskStatus,
   TelegramConfig,

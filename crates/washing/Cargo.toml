@@ -6,3 +6,5 @@ description = "Priority-based torrent washing algorithm library"
 
 [dependencies]
 parser = { path = "../parser" }
+serde = { workspace = true, features = ["derive"] }
+utoipa.workspace = true

@@ -564,13 +564,13 @@ export const PrioritySettingsSchema = {
       description:
         "Subtitle groups in priority order (first = highest priority)",
     },
-    subtitle_languages: {
+    subtitle_language_sets: {
       type: "array",
       items: {
-        type: "string",
+        $ref: "#/components/schemas/SubtitleLanguageSet",
       },
       description:
-        "Subtitle languages in priority order (first = highest priority)",
+        "Subtitle language combinations in priority order (first = highest priority)\nEach entry is a set of languages that must exactly match\nExample: [[CHS, JPN], [CHS, CHT, JPN], [CHT]]",
     },
   },
 } as const;
@@ -786,6 +786,12 @@ export const SourceTypeSchema = {
   enum: ["webrip", "bdrip"],
 } as const;
 
+export const SubTypeSchema = {
+  type: "string",
+  description: "字幕类型枚举",
+  enum: ["CHS", "CHT", "JPN", "ENG", "UNKNOWN"],
+} as const;
+
 export const SubgroupSchema = {
   type: "object",
   required: ["id", "name", "rss_url", "episodes"],
@@ -878,6 +884,22 @@ export const SubjectTypeSchema = {
   type: "string",
   description: "BGM.tv subject type",
   enum: ["Book", "Anime", "Music", "Game", "Real"],
+} as const;
+
+export const SubtitleLanguageSetSchema = {
+  type: "object",
+  description:
+    "A normalized set of subtitle languages for exact matching.\n\nLanguages are automatically sorted and deduplicated on creation,\nensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.",
+  required: ["languages"],
+  properties: {
+    languages: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/SubType",
+      },
+      description: "Sorted and deduplicated language list",
+    },
+  },
 } as const;
 
 export const TaskSchema = {
@@ -1338,13 +1360,13 @@ export const UpdatePrioritySettingsSchema = {
       description:
         "Subtitle groups in priority order (replaces entire array if provided)",
     },
-    subtitle_languages: {
+    subtitle_language_sets: {
       type: ["array", "null"],
       items: {
-        type: "string",
+        $ref: "#/components/schemas/SubtitleLanguageSet",
       },
       description:
-        "Subtitle languages in priority order (replaces entire array if provided)",
+        "Subtitle language combinations in priority order (replaces entire array if provided)\nEach entry is a set of languages that must exactly match",
     },
   },
 } as const;

@@ -1,8 +1,8 @@
 use super::DownloaderType;
 use downloader::DownloaderConfig;
-use parser::SubType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use washing::SubtitleLanguageSet;
 
 use super::Clearable;
 
@@ -209,16 +209,18 @@ pub struct PrioritySettings {
     /// Subtitle groups in priority order (first = highest priority)
     #[serde(default = "PrioritySettings::default_subtitle_groups")]
     pub subtitle_groups: Vec<String>,
-    /// Subtitle languages in priority order (first = highest priority)
-    #[serde(default = "PrioritySettings::default_subtitle_languages")]
-    pub subtitle_languages: Vec<SubType>,
+    /// Subtitle language combinations in priority order (first = highest priority)
+    /// Each entry is a set of languages that must exactly match
+    /// Example: [[CHS, JPN], [CHS, CHT, JPN], [CHT]]
+    #[serde(default = "PrioritySettings::default_subtitle_language_sets")]
+    pub subtitle_language_sets: Vec<SubtitleLanguageSet>,
 }
 
 impl Default for PrioritySettings {
     fn default() -> Self {
         Self {
             subtitle_groups: Self::default_subtitle_groups(),
-            subtitle_languages: Self::default_subtitle_languages(),
+            subtitle_language_sets: Self::default_subtitle_language_sets(),
         }
     }
 }
@@ -228,7 +230,7 @@ impl PrioritySettings {
         vec![]
     }
 
-    fn default_subtitle_languages() -> Vec<SubType> {
+    fn default_subtitle_language_sets() -> Vec<SubtitleLanguageSet> {
         vec![]
     }
 
@@ -236,7 +238,7 @@ impl PrioritySettings {
     pub fn to_config(&self) -> washing::PriorityConfig {
         washing::PriorityConfig {
             subtitle_groups: self.subtitle_groups.clone(),
-            subtitle_languages: self.subtitle_languages.clone(),
+            subtitle_language_sets: self.subtitle_language_sets.clone(),
         }
     }
 }
@@ -398,9 +400,9 @@ impl Settings {
                     subtitle_groups: p
                         .subtitle_groups
                         .unwrap_or_else(|| self.priority.subtitle_groups.clone()),
-                    subtitle_languages: p
-                        .subtitle_languages
-                        .unwrap_or_else(|| self.priority.subtitle_languages.clone()),
+                    subtitle_language_sets: p
+                        .subtitle_language_sets
+                        .unwrap_or_else(|| self.priority.subtitle_language_sets.clone()),
                 }
             } else {
                 self.priority.clone()
@@ -540,7 +542,8 @@ pub struct UpdatePrioritySettings {
     /// Subtitle groups in priority order (replaces entire array if provided)
     #[serde(default)]
     pub subtitle_groups: Option<Vec<String>>,
-    /// Subtitle languages in priority order (replaces entire array if provided)
+    /// Subtitle language combinations in priority order (replaces entire array if provided)
+    /// Each entry is a set of languages that must exactly match
     #[serde(default)]
-    pub subtitle_languages: Option<Vec<SubType>>,
+    pub subtitle_language_sets: Option<Vec<SubtitleLanguageSet>>,
 }
