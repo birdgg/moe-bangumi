@@ -4,7 +4,6 @@
 //! among multiple options for the same episode. Priority is determined by:
 //! 1. Subtitle group (highest weight)
 //! 2. Subtitle language
-//! 3. Resolution (lowest weight)
 //!
 //! # Example
 //!
@@ -14,7 +13,6 @@
 //! let config = PriorityConfig {
 //!     subtitle_groups: vec!["ANi".to_string(), "LoliHouse".to_string()],
 //!     subtitle_languages: vec!["简日".to_string(), "简体".to_string()],
-//!     resolutions: vec!["1080P".to_string(), "720P".to_string()],
 //! };
 //!
 //! let calculator = PriorityCalculator::new(config);
@@ -22,7 +20,6 @@
 //! let torrent = ComparableTorrent {
 //!     subtitle_group: Some("ANi".to_string()),
 //!     subtitle_language: Some("简日".to_string()),
-//!     resolution: Some("1080P".to_string()),
 //! };
 //!
 //! let score = calculator.calculate_score(&torrent);
@@ -38,8 +35,6 @@ pub struct PriorityConfig {
     pub subtitle_groups: Vec<String>,
     /// Subtitle languages in priority order (first = highest priority)
     pub subtitle_languages: Vec<String>,
-    /// Resolutions in priority order (first = highest priority)
-    pub resolutions: Vec<String>,
 }
 
 /// Priority score for comparison (lower rank = higher priority)
@@ -49,8 +44,6 @@ pub struct PriorityScore {
     pub group_rank: usize,
     /// Subtitle language rank
     pub language_rank: usize,
-    /// Resolution rank
-    pub resolution_rank: usize,
 }
 
 impl PriorityScore {
@@ -59,27 +52,21 @@ impl PriorityScore {
         Self {
             group_rank: usize::MAX,
             language_rank: usize::MAX,
-            resolution_rank: usize::MAX,
         }
     }
 
     /// Check if this score has any configured priority (not all MAX)
     pub fn has_any_priority(&self) -> bool {
-        self.group_rank != usize::MAX
-            || self.language_rank != usize::MAX
-            || self.resolution_rank != usize::MAX
+        self.group_rank != usize::MAX || self.language_rank != usize::MAX
     }
 }
 
 impl Ord for PriorityScore {
     fn cmp(&self, other: &Self) -> Ordering {
-        // Compare in order: group > language > resolution
+        // Compare in order: group > language
         // Lower rank = higher priority, so we compare in reverse
         match self.group_rank.cmp(&other.group_rank) {
-            Ordering::Equal => match self.language_rank.cmp(&other.language_rank) {
-                Ordering::Equal => self.resolution_rank.cmp(&other.resolution_rank),
-                other => other,
-            },
+            Ordering::Equal => self.language_rank.cmp(&other.language_rank),
             other => other,
         }
     }
@@ -98,8 +85,6 @@ pub struct ComparableTorrent {
     pub subtitle_group: Option<String>,
     /// Subtitle language/type (e.g., "简日", "繁体")
     pub subtitle_language: Option<String>,
-    /// Video resolution (e.g., "1080P", "720P")
-    pub resolution: Option<String>,
 }
 
 /// Priority calculator for comparing torrents
@@ -121,10 +106,6 @@ impl PriorityCalculator {
                 &self.config.subtitle_languages,
                 &torrent.subtitle_language,
             ),
-            resolution_rank: self.get_rank_case_insensitive(
-                &self.config.resolutions,
-                &torrent.resolution,
-            ),
         }
     }
 
@@ -134,21 +115,6 @@ impl PriorityCalculator {
             Some(v) => priority_list
                 .iter()
                 .position(|configured| configured == v)
-                .unwrap_or(usize::MAX),
-            None => usize::MAX,
-        }
-    }
-
-    /// Get case-insensitive rank in the priority list
-    fn get_rank_case_insensitive(
-        &self,
-        priority_list: &[String],
-        value: &Option<String>,
-    ) -> usize {
-        match value {
-            Some(v) => priority_list
-                .iter()
-                .position(|configured| configured.eq_ignore_ascii_case(v))
                 .unwrap_or(usize::MAX),
             None => usize::MAX,
         }
@@ -217,11 +183,6 @@ mod tests {
                 "简体".to_string(),
                 "繁日".to_string(),
             ],
-            resolutions: vec![
-                "2160P".to_string(),
-                "1080P".to_string(),
-                "720P".to_string(),
-            ],
         }
     }
 
@@ -230,17 +191,14 @@ mod tests {
         let score1 = PriorityScore {
             group_rank: 0,
             language_rank: 0,
-            resolution_rank: 0,
         };
         let score2 = PriorityScore {
             group_rank: 1,
             language_rank: 0,
-            resolution_rank: 0,
         };
         let score3 = PriorityScore {
             group_rank: 0,
             language_rank: 1,
-            resolution_rank: 0,
         };
 
         // Lower rank = higher priority = smaller in ordering
@@ -257,13 +215,11 @@ mod tests {
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
             subtitle_language: Some("简日".to_string()),
-            resolution: Some("1080P".to_string()),
         };
 
         let score = calculator.calculate_score(&torrent);
         assert_eq!(score.group_rank, 0);
         assert_eq!(score.language_rank, 0);
-        assert_eq!(score.resolution_rank, 1);
     }
 
     #[test]
@@ -274,13 +230,11 @@ mod tests {
         let torrent = ComparableTorrent {
             subtitle_group: Some("未知字幕组".to_string()),
             subtitle_language: None,
-            resolution: Some("480P".to_string()),
         };
 
         let score = calculator.calculate_score(&torrent);
         assert_eq!(score.group_rank, usize::MAX);
         assert_eq!(score.language_rank, usize::MAX);
-        assert_eq!(score.resolution_rank, usize::MAX);
     }
 
     #[test]
@@ -291,13 +245,11 @@ mod tests {
         let torrent_ani = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
             subtitle_language: Some("简日".to_string()),
-            resolution: Some("1080P".to_string()),
         };
 
         let torrent_other = ComparableTorrent {
             subtitle_group: Some("喵萌奶茶屋".to_string()),
             subtitle_language: Some("简日".to_string()),
-            resolution: Some("1080P".to_string()),
         };
 
         // ANi has higher priority than 喵萌奶茶屋
@@ -314,17 +266,14 @@ mod tests {
             ComparableTorrent {
                 subtitle_group: Some("桜都字幕组".to_string()),
                 subtitle_language: Some("简体".to_string()),
-                resolution: Some("1080P".to_string()),
             },
             ComparableTorrent {
                 subtitle_group: Some("ANi".to_string()),
                 subtitle_language: Some("简日".to_string()),
-                resolution: Some("720P".to_string()),
             },
             ComparableTorrent {
                 subtitle_group: Some("喵萌奶茶屋".to_string()),
                 subtitle_language: Some("繁日".to_string()),
-                resolution: Some("2160P".to_string()),
             },
         ];
 
@@ -342,7 +291,6 @@ mod tests {
         let torrent = ComparableTorrent {
             subtitle_group: Some("ANi".to_string()),
             subtitle_language: Some("简繁日内封字幕".to_string()),
-            resolution: Some("1080P".to_string()),
         };
 
         let score = calculator.calculate_score(&torrent);
@@ -353,25 +301,9 @@ mod tests {
         let torrent2 = ComparableTorrent {
             subtitle_group: None,
             subtitle_language: Some("简日双语".to_string()),
-            resolution: None,
         };
         let score2 = calculator.calculate_score(&torrent2);
         // Should match "简日" at position 0
         assert_eq!(score2.language_rank, 0);
-    }
-
-    #[test]
-    fn test_case_insensitive_resolution() {
-        let config = create_test_config();
-        let calculator = PriorityCalculator::new(config);
-
-        let torrent = ComparableTorrent {
-            subtitle_group: None,
-            subtitle_language: None,
-            resolution: Some("1080p".to_string()), // lowercase
-        };
-
-        let score = calculator.calculate_score(&torrent);
-        assert_eq!(score.resolution_rank, 1); // Should match "1080P"
     }
 }

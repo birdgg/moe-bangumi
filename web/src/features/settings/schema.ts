@@ -78,7 +78,6 @@ export const notificationSchema = z.object({
 export const prioritySchema = z.object({
   subtitle_groups: z.array(z.string()),
   subtitle_languages: z.array(z.string()),
-  resolutions: z.array(z.string()),
 });
 
 /**

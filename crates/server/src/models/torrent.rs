@@ -31,7 +31,7 @@ pub struct Torrent {
     /// Parsed subtitle language/type (for priority comparison)
     pub subtitle_language: Option<String>,
 
-    /// Parsed video resolution (for priority comparison)
+    /// Parsed video resolution (stored for display purposes only)
     pub resolution: Option<String>,
 }
 
@@ -41,7 +41,6 @@ impl Torrent {
         ComparableTorrent {
             subtitle_group: self.subtitle_group.clone(),
             subtitle_language: self.subtitle_language.clone(),
-            resolution: self.resolution.clone(),
         }
     }
 }
@@ -68,7 +67,7 @@ pub struct CreateTorrent {
     /// Parsed subtitle language/type (for priority comparison)
     pub subtitle_language: Option<String>,
 
-    /// Parsed video resolution (for priority comparison)
+    /// Parsed video resolution (stored for display purposes only)
     pub resolution: Option<String>,
 }
 

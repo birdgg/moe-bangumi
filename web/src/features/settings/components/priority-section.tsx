@@ -16,9 +16,8 @@ interface PriorityListProps {
   icon: string;
   items: string[];
   placeholder: string;
-  suggestions?: string[];
   onAdd: (item: string) => void;
-  onRemove: (index: number) => void;
+  onRemove: (item: string) => void;
   onReorder: (items: string[]) => void;
 }
 
@@ -86,7 +85,6 @@ function PriorityList({
   icon,
   items,
   placeholder,
-  suggestions,
   onAdd,
   onRemove,
   onReorder,
@@ -106,7 +104,8 @@ function PriorityList({
 
   const handleAdd = () => {
     const trimmed = newItem.trim();
-    if (!trimmed || items.includes(trimmed)) return;
+    if (!trimmed || localItems.includes(trimmed)) return;
+    setLocalItems([...localItems, trimmed]);
     onAdd(trimmed);
     setNewItem("");
   };
@@ -118,10 +117,9 @@ function PriorityList({
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    if (!items.includes(suggestion)) {
-      onAdd(suggestion);
-    }
+  const handleRemove = (item: string) => {
+    setLocalItems(localItems.filter((i) => i !== item));
+    onRemove(item);
   };
 
   return (
@@ -149,31 +147,13 @@ function PriorityList({
           type="button"
           size="sm"
           onClick={handleAdd}
-          disabled={!newItem.trim() || items.includes(newItem.trim())}
+          disabled={!newItem.trim() || localItems.includes(newItem.trim())}
           className="gap-1"
         >
           <IconPlus className="size-3.5" />
           添加
         </Button>
       </div>
-
-      {/* Suggestions */}
-      {suggestions && suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {suggestions
-            .filter((s) => !items.includes(s))
-            .map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="rounded-full border border-chart-1/30 bg-chart-1/5 px-2.5 py-0.5 text-xs text-chart-1 transition-colors hover:bg-chart-1/15"
-              >
-                + {suggestion}
-              </button>
-            ))}
-        </div>
-      )}
 
       {/* Item List */}
       {localItems.length > 0 && (
@@ -188,7 +168,7 @@ function PriorityList({
               key={item}
               item={item}
               index={index}
-              onRemove={() => onRemove(index)}
+              onRemove={() => handleRemove(item)}
             />
           ))}
         </Reorder.Group>
@@ -200,30 +180,21 @@ function PriorityList({
 export function PrioritySection({ form }: PrioritySectionProps) {
   const subtitleGroups = form.state.values.priority.subtitle_groups;
   const subtitleLanguages = form.state.values.priority.subtitle_languages;
-  const resolutions = form.state.values.priority.resolutions;
 
   // Helper to create handlers for each list
   const createHandlers = (
-    fieldName:
-      | "priority.subtitle_groups"
-      | "priority.subtitle_languages"
-      | "priority.resolutions"
+    fieldName: "priority.subtitle_groups" | "priority.subtitle_languages"
   ) => {
-    const items =
-      fieldName === "priority.subtitle_groups"
-        ? subtitleGroups
-        : fieldName === "priority.subtitle_languages"
-          ? subtitleLanguages
-          : resolutions;
-
     return {
       onAdd: (item: string) => {
-        form.setFieldValue(fieldName, [...items, item]);
+        const currentItems = form.getFieldValue(fieldName) as string[];
+        form.setFieldValue(fieldName, [...currentItems, item]);
       },
-      onRemove: (index: number) => {
+      onRemove: (item: string) => {
+        const currentItems = form.getFieldValue(fieldName) as string[];
         form.setFieldValue(
           fieldName,
-          items.filter((_, i) => i !== index)
+          currentItems.filter((i) => i !== item)
         );
       },
       onReorder: (newItems: string[]) => {
@@ -241,7 +212,7 @@ export function PrioritySection({ form }: PrioritySectionProps) {
           如果发现更高优先级的资源，会自动替换（洗版）已下载的低优先级资源。
         </p>
         <p className="mt-2 text-xs text-muted-foreground/80">
-          优先级固定顺序：字幕组 &gt; 字幕语种 &gt; 分辨率。未配置的属性视为最低优先级。
+          优先级固定顺序：字幕组 &gt; 字幕语种。未配置的属性视为最低优先级。
         </p>
       </div>
 
@@ -252,7 +223,6 @@ export function PrioritySection({ form }: PrioritySectionProps) {
         icon="♡"
         items={subtitleGroups}
         placeholder="输入字幕组名称..."
-        suggestions={["ANi", "喵萌奶茶屋", "桜都字幕组", "LoliHouse", "NC-Raws"]}
         {...createHandlers("priority.subtitle_groups")}
       />
 
@@ -263,19 +233,7 @@ export function PrioritySection({ form }: PrioritySectionProps) {
         icon="✨"
         items={subtitleLanguages}
         placeholder="输入字幕语种..."
-        suggestions={["简日", "简繁日", "简体", "繁日", "繁体"]}
         {...createHandlers("priority.subtitle_languages")}
-      />
-
-      {/* Resolutions */}
-      <PriorityList
-        title="分辨率优先级"
-        description="越靠前优先级越高"
-        icon="★"
-        items={resolutions}
-        placeholder="输入分辨率..."
-        suggestions={["2160P", "1080P", "720P", "480P"]}
-        {...createHandlers("priority.resolutions")}
       />
     </section>
   );

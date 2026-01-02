@@ -79,7 +79,6 @@ impl WashingService {
             } else {
                 Some(new_parse_result.sub_type.join(" "))
             },
-            resolution: new_parse_result.resolution.clone(),
         };
 
         // Convert existing torrents to comparable form

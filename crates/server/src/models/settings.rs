@@ -211,9 +211,6 @@ pub struct PrioritySettings {
     /// Subtitle languages in priority order (first = highest priority)
     #[serde(default = "PrioritySettings::default_subtitle_languages")]
     pub subtitle_languages: Vec<String>,
-    /// Resolutions in priority order (first = highest priority)
-    #[serde(default = "PrioritySettings::default_resolutions")]
-    pub resolutions: Vec<String>,
 }
 
 impl Default for PrioritySettings {
@@ -221,27 +218,17 @@ impl Default for PrioritySettings {
         Self {
             subtitle_groups: Self::default_subtitle_groups(),
             subtitle_languages: Self::default_subtitle_languages(),
-            resolutions: Self::default_resolutions(),
         }
     }
 }
 
 impl PrioritySettings {
     fn default_subtitle_groups() -> Vec<String> {
-        vec!["ANi".to_string(), "喵萌奶茶屋".to_string(), "桜都字幕组".to_string()]
+        vec![]
     }
 
     fn default_subtitle_languages() -> Vec<String> {
-        vec![
-            "简日".to_string(),
-            "简繁日".to_string(),
-            "简体".to_string(),
-            "繁日".to_string(),
-        ]
-    }
-
-    fn default_resolutions() -> Vec<String> {
-        vec!["2160P".to_string(), "1080P".to_string(), "720P".to_string()]
+        vec![]
     }
 
     /// Convert to PriorityConfig for the priority calculator
@@ -249,7 +236,6 @@ impl PrioritySettings {
         washing::PriorityConfig {
             subtitle_groups: self.subtitle_groups.clone(),
             subtitle_languages: self.subtitle_languages.clone(),
-            resolutions: self.resolutions.clone(),
         }
     }
 }
@@ -414,9 +400,6 @@ impl Settings {
                     subtitle_languages: p
                         .subtitle_languages
                         .unwrap_or_else(|| self.priority.subtitle_languages.clone()),
-                    resolutions: p
-                        .resolutions
-                        .unwrap_or_else(|| self.priority.resolutions.clone()),
                 }
             } else {
                 self.priority.clone()
@@ -559,7 +542,4 @@ pub struct UpdatePrioritySettings {
     /// Subtitle languages in priority order (replaces entire array if provided)
     #[serde(default)]
     pub subtitle_languages: Option<Vec<String>>,
-    /// Resolutions in priority order (replaces entire array if provided)
-    #[serde(default)]
-    pub resolutions: Option<Vec<String>>,
 }
