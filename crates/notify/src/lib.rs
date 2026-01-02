@@ -19,4 +19,17 @@ pub trait Notifier: Send + Sync {
         attachment: &[u8],
         file_name: &str,
     ) -> Result<()>;
+
+    /// 发送带图片的消息
+    ///
+    /// `cache_key` is used to cache the file_id for reuse (e.g., poster path).
+    /// If the same cache_key is used again, the cached file_id will be used
+    /// instead of re-uploading the photo.
+    async fn send_photo(
+        &self,
+        caption: &str,
+        photo: &[u8],
+        parse_mode: &str,
+        cache_key: Option<&str>,
+    ) -> Result<()>;
 }

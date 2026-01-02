@@ -6,12 +6,14 @@
 use futures::stream::{self, StreamExt};
 use parser::Parser;
 use sqlx::SqlitePool;
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use crate::config::Config;
 use crate::models::{BangumiWithMetadata, Torrent};
 use crate::repositories::{BangumiRepository, TorrentRepository};
-use crate::services::{DownloaderService, Task, TaskFile, TaskFilter, TaskStatus};
+use crate::services::{DownloaderService, NotificationService, Task, TaskFile, TaskFilter, TaskStatus};
 
 /// Error type for rename operations
 #[derive(Debug, thiserror::Error)]
@@ -34,6 +36,19 @@ pub enum RenameError {
 
 pub type Result<T> = std::result::Result<T, RenameError>;
 
+/// Result of a rename task processing
+#[derive(Debug)]
+pub struct RenameTaskResult {
+    /// Bangumi ID
+    pub bangumi_id: i64,
+    /// Bangumi title (Chinese)
+    pub bangumi_title: String,
+    /// Poster URL (local path like /posters/xxx.jpg)
+    pub poster_url: Option<String>,
+    /// Successfully renamed episode numbers
+    pub renamed_episodes: Vec<i32>,
+}
+
 /// Service for renaming downloaded media files to Plex/Jellyfin compatible names.
 ///
 /// The service:
@@ -46,6 +61,8 @@ pub type Result<T> = std::result::Result<T, RenameError>;
 pub struct RenameService {
     db: SqlitePool,
     downloader: Arc<DownloaderService>,
+    notification: Arc<NotificationService>,
+    config: Arc<Config>,
     parser: Parser,
     /// Maximum number of concurrent rename tasks
     concurrency: usize,
@@ -53,10 +70,17 @@ pub struct RenameService {
 
 impl RenameService {
     /// Create a new RenameService with default concurrency of 4
-    pub fn new(db: SqlitePool, downloader: Arc<DownloaderService>) -> Self {
+    pub fn new(
+        db: SqlitePool,
+        downloader: Arc<DownloaderService>,
+        notification: Arc<NotificationService>,
+        config: Arc<Config>,
+    ) -> Self {
         Self {
             db,
             downloader,
+            notification,
+            config,
             parser: Parser::new(),
             concurrency: 4,
         }
@@ -81,17 +105,139 @@ impl RenameService {
 
         tracing::info!("Found {} tasks to rename", pending.len());
 
-        stream::iter(pending)
+        // Collect results from all tasks
+        let results: Vec<RenameTaskResult> = stream::iter(pending)
             .map(|(task, torrent, bangumi)| async move {
-                if let Err(e) = self.process_task(&task, &torrent, &bangumi).await {
-                    tracing::error!("Failed to rename task '{}' ({}): {}", task.name, task.id, e);
+                match self.process_task(&task, &torrent, &bangumi).await {
+                    Ok(result) => Some(result),
+                    Err(e) => {
+                        tracing::error!(
+                            "Failed to rename task '{}' ({}): {}",
+                            task.name,
+                            task.id,
+                            e
+                        );
+                        None
+                    }
                 }
             })
             .buffer_unordered(self.concurrency)
             .collect::<Vec<_>>()
-            .await;
+            .await
+            .into_iter()
+            .flatten()
+            .collect();
+
+        // Group results by bangumi_id: (title, poster_url, episodes)
+        let mut grouped: HashMap<i64, (String, Option<String>, Vec<i32>)> = HashMap::new();
+        for result in results {
+            if result.renamed_episodes.is_empty() {
+                continue;
+            }
+            let entry = grouped
+                .entry(result.bangumi_id)
+                .or_insert_with(|| (result.bangumi_title.clone(), result.poster_url.clone(), Vec::new()));
+            entry.2.extend(result.renamed_episodes);
+        }
+
+        // Process each bangumi: update current_episode and send notification
+        for (bangumi_id, (title, poster_url, mut episodes)) in grouped {
+            if episodes.is_empty() {
+                continue;
+            }
+
+            // Sort and deduplicate first, then get max from sorted list
+            episodes.sort_unstable();
+            episodes.dedup();
+
+            let Some(&max_episode) = episodes.last() else {
+                continue;
+            };
+
+            // Update current_episode (only if greater than current value)
+            if let Err(e) =
+                BangumiRepository::update_current_episode_if_greater(&self.db, bangumi_id, max_episode).await
+            {
+                tracing::warn!(
+                    "Failed to update current_episode for bangumi {}: {}",
+                    bangumi_id,
+                    e
+                );
+            }
+
+            // Send notification with poster if available
+            let episode_str = Self::format_episode_range(&episodes);
+            let notification_title = format!("{} 第{}话", title, episode_str);
+            let notification_content = "下载完成并已重命名";
+
+            // Try to load poster and send with image
+            let notification_result = if let Some(ref poster_path) = poster_url {
+                self.send_notification_with_poster(
+                    &notification_title,
+                    notification_content,
+                    poster_path,
+                )
+                .await
+            } else {
+                self.notification
+                    .notify_download(&notification_title, notification_content)
+                    .await
+                    .map_err(|e| e.to_string())
+            };
+
+            if let Err(e) = notification_result {
+                tracing::warn!(
+                    "Failed to send notification for bangumi {}: {}",
+                    bangumi_id,
+                    e
+                );
+            }
+        }
 
         Ok(())
+    }
+
+    /// Format episode numbers into a readable range string
+    ///
+    /// Examples:
+    /// - [1] -> "01"
+    /// - [1, 2, 3] -> "01-03"
+    /// - [1, 3, 5] -> "01, 03, 05"
+    /// - [1, 2, 3, 5, 6] -> "01-03, 05-06"
+    fn format_episode_range(episodes: &[i32]) -> String {
+        if episodes.is_empty() {
+            return String::new();
+        }
+        if episodes.len() == 1 {
+            return format!("{:02}", episodes[0]);
+        }
+
+        let mut ranges: Vec<(i32, i32)> = Vec::new();
+        let mut start = episodes[0];
+        let mut end = episodes[0];
+
+        for &ep in &episodes[1..] {
+            if ep == end + 1 {
+                end = ep;
+            } else {
+                ranges.push((start, end));
+                start = ep;
+                end = ep;
+            }
+        }
+        ranges.push((start, end));
+
+        ranges
+            .into_iter()
+            .map(|(s, e)| {
+                if s == e {
+                    format!("{:02}", s)
+                } else {
+                    format!("{:02}-{:02}", s, e)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
     /// Get all completed tasks with "rename" tag
@@ -134,13 +280,22 @@ impl RenameService {
     }
 
     /// Process a single task
-    async fn process_task(&self, task: &Task, torrent: &Torrent, bangumi: &BangumiWithMetadata) -> Result<()> {
+    ///
+    /// Returns the result containing bangumi info and successfully renamed episodes.
+    async fn process_task(
+        &self,
+        task: &Task,
+        torrent: &Torrent,
+        bangumi: &BangumiWithMetadata,
+    ) -> Result<RenameTaskResult> {
         tracing::info!(
             "Processing task: {} ({}) for bangumi: {}",
             task.name,
             task.id,
             bangumi.metadata.title_chinese
         );
+
+        let mut renamed_episodes = Vec::new();
 
         // Get file list from downloader
         let files = self.downloader.get_task_files(&task.id).await?;
@@ -152,7 +307,12 @@ impl RenameService {
             tracing::warn!("No video files found in task: {}", task.name);
             // Still remove the tag since there's nothing to rename
             self.finalize_task(&task.id).await?;
-            return Ok(());
+            return Ok(RenameTaskResult {
+                bangumi_id: bangumi.bangumi.id,
+                bangumi_title: bangumi.metadata.title_chinese.clone(),
+                poster_url: bangumi.metadata.poster_url.clone(),
+                renamed_episodes,
+            });
         }
 
         // Process each video file
@@ -168,8 +328,13 @@ impl RenameService {
             };
 
             if let Some(ep) = episode {
-                self.rename_file(task, video_file, bangumi, ep, &files)
-                    .await?;
+                if self
+                    .rename_file(task, video_file, bangumi, ep, &files)
+                    .await
+                    .is_ok()
+                {
+                    renamed_episodes.push(ep);
+                }
             } else {
                 tracing::warn!("Could not determine episode number for: {}", video_file.path);
             }
@@ -179,7 +344,12 @@ impl RenameService {
         self.finalize_task(&task.id).await?;
 
         tracing::info!("Successfully renamed task: {}", task.name);
-        Ok(())
+        Ok(RenameTaskResult {
+            bangumi_id: bangumi.bangumi.id,
+            bangumi_title: bangumi.metadata.title_chinese.clone(),
+            poster_url: bangumi.metadata.poster_url.clone(),
+            renamed_episodes,
+        })
     }
 
     /// Rename a single video file and associated subtitles
@@ -207,16 +377,7 @@ impl RenameService {
         let new_filename = format!("{}.{}", new_filename_base, ext);
 
         // Preserve directory structure
-        let old_path_obj = Path::new(old_path);
-        let new_path = if let Some(parent) = old_path_obj.parent() {
-            if parent.as_os_str().is_empty() {
-                new_filename.clone()
-            } else {
-                parent.join(&new_filename).to_string_lossy().to_string()
-            }
-        } else {
-            new_filename.clone()
-        };
+        let new_path = Self::join_with_parent(old_path, &new_filename);
 
         // Rename associated subtitle files FIRST (before video rename to avoid path cache issues)
         self.rename_subtitles(task, old_path, &new_filename_base, all_files)
@@ -306,18 +467,7 @@ impl RenameService {
             let new_subtitle_name = format!("{}{}", new_basename, suffix);
 
             // Build the new path preserving directory
-            let new_subtitle_path = if let Some(parent) = file_path.parent() {
-                if parent.as_os_str().is_empty() {
-                    new_subtitle_name.clone()
-                } else {
-                    parent
-                        .join(&new_subtitle_name)
-                        .to_string_lossy()
-                        .to_string()
-                }
-            } else {
-                new_subtitle_name.clone()
-            };
+            let new_subtitle_path = Self::join_with_parent(&file.path, &new_subtitle_name);
 
             if file.path != new_subtitle_path {
                 tracing::info!("Renaming subtitle: {} -> {}", file.path, new_subtitle_path);
@@ -430,6 +580,57 @@ impl RenameService {
         self.downloader.remove_tags(task_id, &["rename"]).await?;
         Ok(())
     }
+
+    /// Send notification with poster image
+    ///
+    /// Reads the poster file from disk and sends it with the notification.
+    /// Falls back to text-only notification if the poster cannot be read.
+    /// Uses poster_path as cache key for Telegram file_id caching.
+    async fn send_notification_with_poster(
+        &self,
+        title: &str,
+        content: &str,
+        poster_path: &str,
+    ) -> std::result::Result<(), String> {
+        // poster_path is like "/posters/xxx.jpg", need to convert to absolute path
+        let poster_file = if poster_path.starts_with("/posters/") {
+            self.config.posters_path().join(&poster_path[9..]) // Skip "/posters/"
+        } else {
+            PathBuf::from(poster_path)
+        };
+
+        // Try to read the poster file
+        match tokio::fs::read(&poster_file).await {
+            Ok(photo_data) => {
+                // Use poster_path as cache_key for Telegram file_id caching
+                self.notification
+                    .notify_download_with_photo(title, content, &photo_data, Some(poster_path))
+                    .await
+                    .map_err(|e| e.to_string())
+            }
+            Err(e) => {
+                tracing::debug!("Could not read poster file {:?}: {}, falling back to text", poster_file, e);
+                self.notification
+                    .notify_download(title, content)
+                    .await
+                    .map_err(|e| e.to_string())
+            }
+        }
+    }
+
+    /// Join filename with parent directory, preserving directory structure
+    fn join_with_parent(original_path: &str, new_filename: &str) -> String {
+        let path = Path::new(original_path);
+        if let Some(parent) = path.parent() {
+            if parent.as_os_str().is_empty() {
+                new_filename.to_string()
+            } else {
+                parent.join(new_filename).to_string_lossy().to_string()
+            }
+        } else {
+            new_filename.to_string()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -488,5 +689,32 @@ mod tests {
         assert!(nfo.contains("<season>1</season>"));
         assert!(nfo.contains("<tmdbid>67890</tmdbid>"));
         assert!(nfo.contains("<showtitle>测试动画</showtitle>"));
+    }
+
+    #[test]
+    fn test_format_episode_range() {
+        // Empty
+        assert_eq!(RenameService::format_episode_range(&[]), "");
+
+        // Single episode
+        assert_eq!(RenameService::format_episode_range(&[1]), "01");
+        assert_eq!(RenameService::format_episode_range(&[12]), "12");
+
+        // Consecutive range
+        assert_eq!(RenameService::format_episode_range(&[1, 2, 3]), "01-03");
+        assert_eq!(RenameService::format_episode_range(&[8, 9, 10, 11, 12]), "08-12");
+
+        // Non-consecutive
+        assert_eq!(RenameService::format_episode_range(&[1, 3, 5]), "01, 03, 05");
+
+        // Mixed ranges
+        assert_eq!(
+            RenameService::format_episode_range(&[1, 2, 3, 5, 6]),
+            "01-03, 05-06"
+        );
+        assert_eq!(
+            RenameService::format_episode_range(&[1, 2, 5, 6, 7, 10]),
+            "01-02, 05-07, 10"
+        );
     }
 }

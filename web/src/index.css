@@ -341,3 +341,12 @@
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
 }
+
+/* Pure transparent liquid glass badge */
+.glass-badge {
+  @apply px-2 py-0.5 rounded-md font-semibold text-white;
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
+}

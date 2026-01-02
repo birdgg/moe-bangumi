@@ -312,4 +312,28 @@ impl Worker {
         }
         Ok(())
     }
+
+    /// Send a photo directly to all notifiers (bypasses message queue and cooldown)
+    ///
+    /// `cache_key` is used to cache the file_id for reuse (e.g., poster path).
+    pub async fn send_photo_direct(
+        &self,
+        caption: &str,
+        photo: &[u8],
+        parse_mode: &str,
+        cache_key: Option<&str>,
+    ) -> Result<()> {
+        let notifiers = self.notifiers.lock().await;
+
+        for notifier in notifiers.iter() {
+            if let Err(e) = notifier.send_photo(caption, photo, parse_mode, cache_key).await {
+                warn!("Failed to send photo: {}", e);
+                // Fallback to text
+                if let Err(e2) = notifier.send_formatted_message(caption, parse_mode).await {
+                    warn!("Failed to send fallback text: {}", e2);
+                }
+            }
+        }
+        Ok(())
+    }
 }

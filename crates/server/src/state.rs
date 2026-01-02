@@ -141,10 +141,15 @@ impl AppState {
             Arc::clone(&http_client_service),
         ));
 
+        // Wrap config in Arc for sharing
+        let config = Arc::new(config);
+
         // Create rename service (for file renaming to Plex/Jellyfin format)
         let rename = Arc::new(RenameService::new(
             db.clone(),
             Arc::clone(&downloader_arc),
+            Arc::clone(&notification),
+            Arc::clone(&config),
         ));
 
         // Create Mikan client Arc (shared by calendar)
@@ -166,7 +171,7 @@ impl AppState {
 
         Self {
             db,
-            config: Arc::new(config),
+            config,
             http_client_service,
             tmdb,
             bgmtv,

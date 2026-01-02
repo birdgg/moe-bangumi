@@ -1,9 +1,6 @@
 import { cn } from "@/lib/utils";
-import { IconDownload } from "@tabler/icons-react";
+import { IconPlayerPlay, IconCheck } from "@tabler/icons-react";
 import type { BangumiWithMetadata } from "@/lib/api";
-import { YearBadge } from "./year-badge";
-import { StatusBadge } from "./status-badge";
-import { PlatformBadge } from "./platform-badge";
 
 interface BangumiCardProps {
   bangumi: BangumiWithMetadata;
@@ -15,10 +12,6 @@ interface BangumiCardProps {
 
 export function BangumiCard({ bangumi, className, style, animate = true, onClick }: BangumiCardProps) {
   const { metadata } = bangumi;
-  const progress =
-    bangumi.current_episode && metadata.total_episodes > 0
-      ? Math.round((bangumi.current_episode / metadata.total_episodes) * 100)
-      : 0;
 
   return (
     <div
@@ -31,84 +24,71 @@ export function BangumiCard({ bangumi, className, style, animate = true, onClick
       style={style}
       onClick={onClick}
     >
-      {/* Soft glow effect on hover */}
+      {/* Hover glow */}
       <div
         className={cn(
-          "absolute -inset-1 rounded-2xl opacity-0 blur-xl transition-all duration-500",
-          "bg-linear-to-br from-chart-1/40 via-chart-3/30 to-chart-5/40",
+          "absolute -inset-2 rounded-2xl opacity-0 blur-xl transition-all duration-500",
+          "bg-chart-1/30",
           "group-hover:opacity-100"
         )}
       />
 
-      {/* Card container with cute rounded corners */}
+      {/* Card */}
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl",
-          "bg-linear-to-br from-white to-chart-1/5 dark:from-zinc-900 dark:to-chart-1/10",
-          "border-2 border-chart-1/20 dark:border-chart-1/15",
-          "shadow-md shadow-chart-1/10 dark:shadow-chart-1/5",
-          "transition-all duration-300 ease-out",
-          "group-hover:shadow-lg group-hover:shadow-chart-1/20 dark:group-hover:shadow-chart-1/15",
-          "group-hover:-translate-y-1 group-hover:scale-[1.02]",
-          "group-hover:border-chart-1/40 dark:group-hover:border-chart-1/30"
+          "relative overflow-hidden rounded-xl",
+          "bg-white dark:bg-zinc-900",
+          "ring-1 ring-zinc-200 dark:ring-zinc-800",
+          "shadow-sm transition-all duration-300",
+          "group-hover:shadow-lg group-hover:-translate-y-0.5",
+          "group-hover:ring-chart-1/50"
         )}
       >
-        {/* Poster section */}
+        {/* Poster */}
         <div className="relative aspect-2/3 overflow-hidden">
           <img
             src={metadata.poster_url || "/placeholder.png"}
             alt={metadata.title_chinese}
-            className={cn(
-              "size-full object-cover transition-all duration-500 ease-out",
-              "group-hover:scale-110 group-hover:brightness-105"
-            )}
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-chart-1/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
-          {/* Decorative top wave */}
-          <div className="absolute inset-x-0 top-0 h-8 bg-linear-to-b from-chart-1/20 to-transparent" />
-
-          {/* Top badges row */}
-          <div className="absolute inset-x-2 top-2 flex items-center justify-between">
-            <StatusBadge finished={metadata.finished} variant="overlay" />
-            <YearBadge season={metadata.season} year={metadata.year} />
+          {/* Status badge - top right */}
+          <div className="absolute top-2 right-2">
+            <span className="glass-badge inline-flex items-center gap-1 text-[10px]">
+              {metadata.finished ? (
+                <>
+                  <IconCheck className="size-3" strokeWidth={3} />
+                  完结
+                </>
+              ) : (
+                <>
+                  <IconPlayerPlay className="size-3" strokeWidth={3} />
+                  放送中
+                </>
+              )}
+            </span>
           </div>
 
-          {/* Bottom info overlay */}
-          <div className="absolute inset-x-0 bottom-0 px-2.5 pb-2.5">
-            {/* Title with kind badge */}
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <h3 className="line-clamp-1 text-sm font-bold text-white min-w-0 flex-1 drop-shadow-md">
-                {metadata.title_chinese}
-              </h3>
-              <PlatformBadge platform={metadata.platform} variant="overlay" className="shrink-0" />
-            </div>
+          {/* Bottom info */}
+          <div className="absolute inset-x-0 bottom-0 p-3 space-y-2">
+            {/* Title */}
+            <h3
+              className="line-clamp-2 text-sm font-bold text-white leading-snug drop-shadow-sm"
+              title={metadata.title_chinese}
+            >
+              {metadata.title_chinese}
+            </h3>
 
-            {/* Episode progress */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-white/90">
-                <IconDownload className="size-3 drop-shadow-sm" strokeWidth={2.5} />
-                <span className="text-xs font-bold tabular-nums drop-shadow-sm">
-                  {bangumi.current_episode}/{metadata.total_episodes || "?"}
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              {metadata.total_episodes > 0 && (
-                <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-white/20 backdrop-blur-sm">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-500",
-                      progress === 100
-                        ? "bg-linear-to-r from-emerald-400 to-teal-400"
-                        : "bg-linear-to-r from-chart-1 via-chart-3 to-chart-5"
-                    )}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+            {/* Season & Episode */}
+            <div className="flex items-center gap-2 text-xs">
+              {metadata.season > 0 && (
+                <span className="glass-badge">第{metadata.season}季</span>
               )}
+              <span className="glass-badge">更新至{bangumi.current_episode}集</span>
             </div>
           </div>
         </div>
@@ -117,7 +97,7 @@ export function BangumiCard({ bangumi, className, style, animate = true, onClick
   );
 }
 
-// Grid container for multiple cards
+// Grid container
 interface BangumiGridProps {
   children: React.ReactNode;
   className?: string;
@@ -137,26 +117,25 @@ export function BangumiGrid({ children, className }: BangumiGridProps) {
   );
 }
 
-// Skeleton card for loading state
+// Skeleton
 export function BangumiCardSkeleton() {
   return (
     <div className="relative">
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl",
-          "bg-linear-to-br from-white to-chart-1/5 dark:from-zinc-900 dark:to-chart-1/10",
-          "border-2 border-chart-1/20 dark:border-chart-1/15",
-          "shadow-md shadow-chart-1/10 dark:shadow-chart-1/5"
+          "relative overflow-hidden rounded-xl",
+          "bg-white dark:bg-zinc-900",
+          "ring-1 ring-zinc-200 dark:ring-zinc-800"
         )}
       >
-        {/* Poster skeleton with shimmer */}
         <div className="relative aspect-2/3 overflow-hidden">
-          <div className="absolute inset-0 bg-linear-to-r from-chart-1/10 via-chart-1/5 to-chart-1/10 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 animate-pulse" />
-
-          {/* Bottom info skeleton overlay */}
-          <div className="absolute inset-x-0 bottom-0 px-2.5 pb-2.5">
-            <div className="h-4 w-3/4 rounded bg-white/20 animate-pulse mb-2" />
-            <div className="h-2 w-1/2 rounded bg-white/10 animate-pulse" />
+          <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          <div className="absolute inset-x-0 bottom-0 p-3 space-y-2">
+            <div className="h-4 w-3/4 rounded bg-white/20 animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-5 w-8 rounded bg-white/10 animate-pulse" />
+              <div className="h-5 w-12 rounded bg-white/10 animate-pulse" />
+            </div>
           </div>
         </div>
       </div>

@@ -189,6 +189,23 @@ impl BangumiRepository {
 
         Ok(result.rows_affected() > 0)
     }
+
+    /// Update current episode for a bangumi only if the new value is greater
+    pub async fn update_current_episode_if_greater(
+        pool: &SqlitePool,
+        id: i64,
+        episode: i32,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query(
+            "UPDATE bangumi SET current_episode = $1 WHERE id = $2 AND current_episode < $1",
+        )
+        .bind(episode)
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
 }
 
 /// Internal row type for mapping SQLite results

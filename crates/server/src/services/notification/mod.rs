@@ -143,4 +143,38 @@ impl NotificationService {
     ) -> Result<(), NotificationError> {
         self.notify(Topic::Download, title, content).await
     }
+
+    /// Send a download notification with an image.
+    ///
+    /// Falls back to text-only notification if image sending fails.
+    /// `cache_key` is used to cache the Telegram file_id for reuse (e.g., poster path).
+    pub async fn notify_download_with_photo(
+        &self,
+        title: impl Into<String>,
+        content: impl Into<String>,
+        photo: &[u8],
+        cache_key: Option<&str>,
+    ) -> Result<(), NotificationError> {
+        let settings = self.settings.get();
+        if !settings.notification.enabled {
+            return Ok(());
+        }
+
+        let title = title.into();
+        let content = content.into();
+
+        // Format the caption similar to normal notifications
+        let caption = format!(
+            "*[下载通知]* {}\n\n{}\n\n_发送时间: {}_",
+            title,
+            content,
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+        );
+
+        let worker = self.worker.read().await;
+        worker
+            .send_photo_direct(&caption, photo, "Markdown", cache_key)
+            .await
+            .map_err(NotificationError::Worker)
+    }
 }
