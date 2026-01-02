@@ -43,9 +43,9 @@ static SUB_ENG_PATTERN: LazyLock<Regex> =
 static PREFIX_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^\w\s\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff-]").unwrap());
 
-// 匹配季度信息的正则表达式
+// 匹配季度信息的正则表达式 (大小写不敏感)
 static SEASON_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"S\d{1,2}|Season \d{1,2}|[第].[季期]").unwrap());
+    LazyLock::new(|| Regex::new(r"(?i)S(?:EASON)?\s*\d{1,2}|[第].[季期]").unwrap());
 
 // 匹配方括号的正则表达式
 static BRACKET_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\[\]]").unwrap());
@@ -143,11 +143,12 @@ impl Parser {
         }
 
         let season_raw = seasons[0].to_string();
+        let season_upper = season_raw.to_uppercase();
 
-        // 解析季度数字
-        let season = if season_raw.contains("Season") || season_raw.contains('S') {
-            season_raw
-                .replace("Season", "")
+        // 解析季度数字 (case-insensitive check for S/SEASON)
+        let season = if season_upper.contains("SEASON") || season_upper.starts_with('S') {
+            season_upper
+                .replace("SEASON", "")
                 .replace('S', "")
                 .trim()
                 .parse()
