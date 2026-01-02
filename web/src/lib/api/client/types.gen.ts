@@ -607,13 +607,10 @@ export type SubjectType = "Book" | "Anime" | "Music" | "Game" | "Real";
  *
  * Languages are automatically sorted and deduplicated on creation,
  * ensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.
+ *
+ * Serializes as a simple array of SubType (e.g., `["CHS", "JPN"]`).
  */
-export type SubtitleLanguageSet = {
-  /**
-   * Sorted and deduplicated language list
-   */
-  languages: Array<SubType>;
-};
+export type SubtitleLanguageSet = Array<SubType>;
 
 /**
  * Unified download task representation.

@@ -231,7 +231,14 @@ impl PrioritySettings {
     }
 
     fn default_subtitle_language_sets() -> Vec<SubtitleLanguageSet> {
-        vec![]
+        use parser::SubType;
+        vec![
+            SubtitleLanguageSet::new(vec![SubType::Chs]),                           // 简体
+            SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Jpn]),              // 简日
+            SubtitleLanguageSet::new(vec![SubType::Cht]),                           // 繁体
+            SubtitleLanguageSet::new(vec![SubType::Cht, SubType::Jpn]),              // 繁日
+            SubtitleLanguageSet::new(vec![SubType::Chs, SubType::Cht, SubType::Jpn]), // 简繁日
+        ]
     }
 
     /// Convert to PriorityConfig for the priority calculator

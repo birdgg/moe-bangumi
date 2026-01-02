@@ -1,6 +1,6 @@
 # MoeBangumi
 MoeBangumi 是一款追番工具
-Core Stack: Rust, React, Claude Code
+Core Stack: Rust, React, Claude Code with Opus 4.5
 
 ## 目标
 - 订阅新番
@@ -11,9 +11,6 @@ Core Stack: Rust, React, Claude Code
 
 ## 相关推荐
 - [Anime4K](https://github.com/bloc97/Anime4K)
-
-## Plan
-- https://bbs.acgrip.com/
 
 ## Thanks
 感谢以下项目

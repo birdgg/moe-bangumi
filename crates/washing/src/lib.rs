@@ -34,7 +34,6 @@
 use std::cmp::Ordering;
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
 pub use parser::SubType;
 
@@ -44,24 +43,10 @@ pub use parser::SubType;
 /// ensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.
 ///
 /// Serializes as a simple array of SubType (e.g., `["CHS", "JPN"]`).
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(transparent)]
+#[schema(value_type = Vec<SubType>)]
 pub struct SubtitleLanguageSet(Vec<SubType>);
-
-impl utoipa::ToSchema for SubtitleLanguageSet {
-    fn name() -> std::borrow::Cow<'static, str> {
-        std::borrow::Cow::Borrowed("SubtitleLanguageSet")
-    }
-}
-
-impl utoipa::PartialSchema for SubtitleLanguageSet {
-    fn schema() -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
-        utoipa::openapi::schema::ArrayBuilder::new()
-            .items(utoipa::openapi::Ref::from_schema_name("SubType"))
-            .build()
-            .into()
-    }
-}
 
 impl SubtitleLanguageSet {
     /// Create a new language set from a list of languages.
@@ -69,12 +54,12 @@ impl SubtitleLanguageSet {
     pub fn new(mut languages: Vec<SubType>) -> Self {
         languages.sort();
         languages.dedup();
-        Self { languages }
+        Self(languages)
     }
 
     /// Check if this set exactly matches the given languages (ignoring order).
     pub fn exact_match(&self, other: &[SubType]) -> bool {
-        if self.languages.len() != other.len() {
+        if self.0.len() != other.len() {
             return false;
         }
 
@@ -82,17 +67,17 @@ impl SubtitleLanguageSet {
         other_sorted.sort();
         other_sorted.dedup();
 
-        self.languages == other_sorted
+        self.0 == other_sorted
     }
 
     /// Get the languages in this set.
     pub fn languages(&self) -> &[SubType] {
-        &self.languages
+        &self.0
     }
 
     /// Check if this set is empty.
     pub fn is_empty(&self) -> bool {
-        self.languages.is_empty()
+        self.0.is_empty()
     }
 }
 
@@ -107,7 +92,7 @@ impl std::fmt::Display for SubtitleLanguageSet {
         write!(
             f,
             "[{}]",
-            self.languages
+            self.0
                 .iter()
                 .map(|l| l.to_string())
                 .collect::<Vec<_>>()

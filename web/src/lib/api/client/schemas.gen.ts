@@ -887,19 +887,12 @@ export const SubjectTypeSchema = {
 } as const;
 
 export const SubtitleLanguageSetSchema = {
-  type: "object",
-  description:
-    "A normalized set of subtitle languages for exact matching.\n\nLanguages are automatically sorted and deduplicated on creation,\nensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.",
-  required: ["languages"],
-  properties: {
-    languages: {
-      type: "array",
-      items: {
-        $ref: "#/components/schemas/SubType",
-      },
-      description: "Sorted and deduplicated language list",
-    },
+  type: "array",
+  items: {
+    $ref: "#/components/schemas/SubType",
   },
+  description:
+    'A normalized set of subtitle languages for exact matching.\n\nLanguages are automatically sorted and deduplicated on creation,\nensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.\n\nSerializes as a simple array of SubType (e.g., `["CHS", "JPN"]`).',
 } as const;
 
 export const TaskSchema = {

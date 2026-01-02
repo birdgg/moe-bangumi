@@ -6,12 +6,10 @@ import {
   IconPlus,
   IconTrash,
   IconGripVertical,
-  IconCheck,
 } from "@tabler/icons-react";
 import { type SettingsFormInstance } from "../hooks";
 import { Reorder, useDragControls } from "framer-motion";
 import {
-  subtitleLanguages,
   subtitleLanguageLabels,
   type SubtitleLanguage,
   type SubtitleLanguageSet,
@@ -181,10 +179,10 @@ function PriorityList({
 interface CombinationItemProps {
   combo: SubtitleLanguageSet;
   index: number;
-  onRemove: () => void;
+  label?: string;
 }
 
-function CombinationItem({ combo, index, onRemove }: CombinationItemProps) {
+function CombinationItem({ combo, index, label }: CombinationItemProps) {
   const controls = useDragControls();
   // Create a stable key from the sorted combo
   const comboKey = [...combo].sort().join(",");
@@ -194,7 +192,7 @@ function CombinationItem({ combo, index, onRemove }: CombinationItemProps) {
       value={comboKey}
       dragListener={false}
       dragControls={controls}
-      className="group flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-2 py-1.5 data-dragging:z-50 data-dragging:border-chart-1/50 data-dragging:bg-muted/80 data-dragging:shadow-lg"
+      className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-2 py-1.5 data-dragging:z-50 data-dragging:border-chart-1/50 data-dragging:bg-muted/80 data-dragging:shadow-lg"
     >
       {/* Rank badge */}
       <span
@@ -221,39 +219,39 @@ function CombinationItem({ combo, index, onRemove }: CombinationItemProps) {
         <IconGripVertical className="size-4 shrink-0" />
       </button>
 
-      {/* Language badges */}
+      {/* Label or language badges */}
       <div className="flex flex-1 flex-wrap gap-1">
-        {combo.map((lang) => (
-          <span
-            key={lang}
-            className="inline-flex items-center rounded-md bg-chart-1/10 px-2 py-0.5 text-xs font-medium text-chart-1 border border-chart-1/20"
-          >
-            {subtitleLanguageLabels[lang]}
-          </span>
-        ))}
+        {label ? (
+          <span className="text-sm font-medium">{label}</span>
+        ) : (
+          combo.map((lang) => (
+            <span
+              key={lang}
+              className="inline-flex items-center rounded-md bg-chart-1/10 px-2 py-0.5 text-xs font-medium text-chart-1 border border-chart-1/20"
+            >
+              {subtitleLanguageLabels[lang]}
+            </span>
+          ))
+        )}
       </div>
-
-      {/* Delete button */}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={onRemove}
-        className="size-6 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-      >
-        <IconTrash className="size-3.5" />
-      </Button>
     </Reorder.Item>
   );
 }
+
+// Preset language combinations
+const LANGUAGE_PRESETS: { key: string; label: string; languages: SubtitleLanguage[] }[] = [
+  { key: "chs", label: "简体", languages: ["CHS"] },
+  { key: "chs_jpn", label: "简日", languages: ["CHS", "JPN"] },
+  { key: "cht", label: "繁体", languages: ["CHT"] },
+  { key: "cht_jpn", label: "繁日", languages: ["CHT", "JPN"] },
+  { key: "chs_cht_jpn", label: "简繁日", languages: ["CHS", "CHT", "JPN"] },
+];
 
 interface LanguageCombinationListProps {
   title: string;
   description: string;
   icon: string;
   items: SubtitleLanguageSet[];
-  onAdd: (combo: SubtitleLanguageSet) => void;
-  onRemove: (index: number) => void;
   onReorder: (items: SubtitleLanguageSet[]) => void;
 }
 
@@ -262,53 +260,12 @@ function LanguageCombinationList({
   description,
   icon,
   items,
-  onAdd,
-  onRemove,
   onReorder,
 }: LanguageCombinationListProps) {
-  const [isAdding, setIsAdding] = React.useState(false);
-  const [selectedLangs, setSelectedLangs] = React.useState<
-    Set<SubtitleLanguage>
-  >(new Set());
-
-  const toggleLanguage = (lang: SubtitleLanguage) => {
-    setSelectedLangs((prev) => {
-      const next = new Set(prev);
-      if (next.has(lang)) {
-        next.delete(lang);
-      } else {
-        next.add(lang);
-      }
-      return next;
-    });
-  };
-
-  const handleAdd = () => {
-    if (selectedLangs.size === 0) return;
-    const combo = Array.from(selectedLangs).sort();
-    // Check if this combination already exists
-    const exists = items.some(
-      (existing) =>
-        existing.length === combo.length &&
-        [...existing].sort().join(",") === combo.join(",")
-    );
-    if (exists) return;
-
-    onAdd(combo);
-    setSelectedLangs(new Set());
-    setIsAdding(false);
-  };
-
-  const handleCancel = () => {
-    setSelectedLangs(new Set());
-    setIsAdding(false);
-  };
-
   // Create stable keys for reordering
   const comboKeys = items.map((combo) => [...combo].sort().join(","));
 
   const handleReorder = (newKeys: string[]) => {
-    // Map keys back to original combos
     const keyToCombo = new Map<string, SubtitleLanguageSet>();
     items.forEach((combo) => {
       keyToCombo.set([...combo].sort().join(","), combo);
@@ -319,6 +276,15 @@ function LanguageCombinationList({
     onReorder(newItems);
   };
 
+  // Get display label for a combination
+  const getComboLabel = (combo: SubtitleLanguageSet) => {
+    const sortedCombo = [...combo].sort().join(",");
+    const preset = LANGUAGE_PRESETS.find(
+      (p) => [...p.languages].sort().join(",") === sortedCombo
+    );
+    return preset?.label;
+  };
+
   return (
     <div className="space-y-3">
       {/* Header */}
@@ -327,18 +293,6 @@ function LanguageCombinationList({
         <div>
           <h4 className="text-sm font-medium text-foreground">{title}</h4>
           <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-
-      {/* Explanation */}
-      <div className="rounded-lg bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-chart-1">●</span>
-          <span>精确匹配：[简中 + 日语] 只会匹配同时包含这两种语言的资源</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-chart-3">●</span>
-          <span>未匹配组合：视为最低优先级</span>
         </div>
       </div>
 
@@ -355,105 +309,10 @@ function LanguageCombinationList({
               key={[...combo].sort().join(",")}
               combo={combo}
               index={index}
-              onRemove={() => onRemove(index)}
+              label={getComboLabel(combo)}
             />
           ))}
         </Reorder.Group>
-      )}
-
-      {/* Add new combination */}
-      {!isAdding ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setIsAdding(true)}
-          className="w-full gap-2 border-dashed"
-        >
-          <IconPlus className="size-4" />
-          添加语言组合
-        </Button>
-      ) : (
-        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
-          <h5 className="text-sm font-medium">选择语言组合</h5>
-
-          {/* Language toggle buttons */}
-          <div className="grid grid-cols-2 gap-2">
-            {subtitleLanguages
-              .filter((lang) => lang !== "UNKNOWN")
-              .map((lang) => {
-                const isSelected = selectedLangs.has(lang);
-                return (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => toggleLanguage(lang)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-colors",
-                      isSelected
-                        ? "border-chart-1/50 bg-chart-1/10 text-chart-1"
-                        : "border-border/50 bg-background hover:bg-muted/50"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-4 shrink-0 items-center justify-center rounded border",
-                        isSelected
-                          ? "border-chart-1 bg-chart-1 text-white"
-                          : "border-muted-foreground/30"
-                      )}
-                    >
-                      {isSelected && <IconCheck className="size-3" />}
-                    </span>
-                    <span className="text-sm flex-1">
-                      {subtitleLanguageLabels[lang]} ({lang})
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-
-          {/* Preview */}
-          {selectedLangs.size > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground">预览：</span>
-              {Array.from(selectedLangs)
-                .sort()
-                .map((lang) => (
-                  <span
-                    key={lang}
-                    className="inline-flex items-center rounded-md bg-chart-1/10 px-2 py-0.5 text-xs font-medium text-chart-1 border border-chart-1/20"
-                  >
-                    {subtitleLanguageLabels[lang]}
-                  </span>
-                ))}
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="ghost" size="sm" onClick={handleCancel}>
-              取消
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleAdd}
-              disabled={selectedLangs.size === 0}
-              className="gap-1"
-            >
-              <IconPlus className="size-3.5" />
-              添加组合
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Empty state hint */}
-      {items.length === 0 && !isAdding && (
-        <p className="text-xs text-muted-foreground/60 italic">
-          未配置任何语言组合优先级
-        </p>
       )}
     </div>
   );
@@ -484,31 +343,9 @@ export function PrioritySection({ form }: PrioritySectionProps) {
     };
   };
 
-  // Helper to create handlers for language combinations
-  const createCombinationHandlers = () => {
-    return {
-      onAdd: (combo: SubtitleLanguageSet) => {
-        const currentItems = form.getFieldValue(
-          "priority.subtitle_language_sets"
-        ) as SubtitleLanguageSet[];
-        form.setFieldValue("priority.subtitle_language_sets", [
-          ...currentItems,
-          combo,
-        ]);
-      },
-      onRemove: (index: number) => {
-        const currentItems = form.getFieldValue(
-          "priority.subtitle_language_sets"
-        ) as SubtitleLanguageSet[];
-        form.setFieldValue(
-          "priority.subtitle_language_sets",
-          currentItems.filter((_, i) => i !== index)
-        );
-      },
-      onReorder: (newItems: SubtitleLanguageSet[]) => {
-        form.setFieldValue("priority.subtitle_language_sets", newItems);
-      },
-    };
+  // Handler for language combination reordering
+  const handleCombinationReorder = (newItems: SubtitleLanguageSet[]) => {
+    form.setFieldValue("priority.subtitle_language_sets", newItems);
   };
 
   return (
@@ -546,10 +383,10 @@ export function PrioritySection({ form }: PrioritySectionProps) {
             {/* Subtitle Language Combinations */}
             <LanguageCombinationList
               title="字幕语言组合优先级"
-              description="精确匹配语言组合，越靠前优先级越高"
+              description="拖拽调整优先级，越靠前优先级越高"
               icon="✨"
               items={languageSets}
-              {...createCombinationHandlers()}
+              onReorder={handleCombinationReorder}
             />
           </>
         )}
