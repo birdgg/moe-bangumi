@@ -4,9 +4,9 @@ use crate::api::handlers::DeleteTorrentsRequest;
 use crate::models::{
     Bangumi, BangumiWithMetadata, BangumiWithRss, CalendarDay, CalendarSubject, CreateBangumi,
     CreateMetadata, DownloaderSettings, FilterSettings, Log, LogLevel, Metadata, Platform,
-    PrioritySettings, Rss, RssEntry, Settings, SourceType, TorrentSearchResult, TorrentSource,
-    UpdateBangumiRequest, UpdateDownloaderSettings, UpdateFilterSettings, UpdatePrioritySettings,
-    UpdateSettings, Weekday,
+    PrioritySettings, Rss, RssEntry, Settings, SourceType, UpdateBangumiRequest,
+    UpdateDownloaderSettings, UpdateFilterSettings, UpdatePrioritySettings, UpdateSettings,
+    Weekday,
 };
 use crate::services::{Task, TaskStatus};
 
@@ -57,9 +57,7 @@ use crate::services::{Task, TaskStatus};
         Platform,
         Task,
         TaskStatus,
-        DeleteTorrentsRequest,
-        TorrentSearchResult,
-        TorrentSource
+        DeleteTorrentsRequest
     ))
 )]
 pub struct ApiDoc;

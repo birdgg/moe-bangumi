@@ -10,7 +10,7 @@ use crate::services::{
     create_downloader_service, BangumiService, CacheService, CalendarService, DownloaderService,
     HttpClientService, LogCleanupJob, LogService, MetadataService, NotificationService,
     PosterService, PosterSyncJob, RenameJob, RenameService, RssFetchJob, RssProcessingService,
-    SchedulerService, SettingsService, TorrentCoordinator, TorrentSearchService, WashingService,
+    SchedulerService, SettingsService, TorrentCoordinator, WashingService,
 };
 
 #[derive(Clone)]
@@ -32,7 +32,6 @@ pub struct AppState {
     pub bangumi: Arc<BangumiService>,
     pub cache: Arc<CacheService>,
     pub calendar: Arc<CalendarService>,
-    pub torrent_search: Arc<TorrentSearchService>,
     pub notification: Arc<NotificationService>,
     pub rename: Arc<RenameService>,
 }
@@ -93,9 +92,6 @@ impl AppState {
         // Create shared Arc references for scheduler jobs
         let rss_arc = Arc::new(rss);
         let downloader_arc = Arc::new(downloader);
-
-        // Create torrent search service
-        let torrent_search = Arc::new(TorrentSearchService::new(Arc::clone(&rss_arc)));
 
         // Create torrent coordinator (high-level service for db + downloader)
         let torrent_coordinator = Arc::new(TorrentCoordinator::new(
@@ -195,7 +191,6 @@ impl AppState {
             bangumi,
             cache,
             calendar,
-            torrent_search,
             notification,
             rename,
         }

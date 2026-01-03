@@ -7,18 +7,14 @@ mod metadata;
 mod mikan;
 mod search;
 mod settings;
-mod torrent_search;
 mod torrents;
 
 use serde::Deserialize;
 use utoipa::IntoParams;
 
-use crate::models::TorrentSource;
-
 // Cache TTL constants (in seconds)
 const MIKAN_SEARCH_CACHE_TTL: i64 = 604800; // 1 week
 const MIKAN_DETAIL_CACHE_TTL: i64 = 2592000; // 30 days
-const TORRENT_SEARCH_CACHE_TTL: i64 = 3600; // 1 hour
 
 /// Query parameters for keyword search
 #[derive(Debug, Deserialize, IntoParams)]
@@ -32,16 +28,6 @@ pub struct SearchQuery {
 pub struct TmdbSearchQuery {
     /// Keyword to search
     pub keyword: String,
-}
-
-/// Query parameters for torrent search
-#[derive(Debug, Deserialize, IntoParams)]
-pub struct TorrentSearchQuery {
-    /// Keyword to search
-    pub keyword: String,
-    /// Source to search from: "nyaa" (default) or "mikan"
-    #[serde(default)]
-    pub source: TorrentSource,
 }
 
 /// Query parameters for ID lookup
@@ -64,7 +50,6 @@ pub use settings::{
     get_settings, reset_settings, test_notification, test_proxy, update_settings,
     TestNotificationRequest, TestProxyRequest,
 };
-pub use torrent_search::search_torrents;
 pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 
 // Re-export utoipa path structs for OpenAPI routing
@@ -91,7 +76,5 @@ pub use settings::{
     __path_get_settings, __path_reset_settings, __path_test_notification, __path_test_proxy,
     __path_update_settings,
 };
-#[doc(hidden)]
-pub use torrent_search::__path_search_torrents;
 #[doc(hidden)]
 pub use torrents::{__path_delete_torrents, __path_list_torrents};

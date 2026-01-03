@@ -184,12 +184,6 @@ impl From<tmdb::TmdbError> for AppError {
     }
 }
 
-impl From<crate::services::TorrentSearchError> for AppError {
-    fn from(e: crate::services::TorrentSearchError) -> Self {
-        AppError::ExternalApi(e.to_string())
-    }
-}
-
 impl From<crate::services::CalendarError> for AppError {
     fn from(e: crate::services::CalendarError) -> Self {
         match e {

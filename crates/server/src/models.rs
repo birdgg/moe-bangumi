@@ -7,7 +7,6 @@ mod rss;
 mod seed;
 mod settings;
 mod torrent;
-mod torrent_search;
 
 pub use bangumi::*;
 pub use calendar::*;
@@ -19,4 +18,3 @@ pub use rss::*;
 pub use seed::*;
 pub use settings::*;
 pub use torrent::*;
-pub use torrent_search::*;
