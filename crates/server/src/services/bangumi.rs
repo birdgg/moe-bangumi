@@ -8,7 +8,7 @@ use crate::models::{
     UpdateBangumi, UpdateBangumiRequest,
 };
 use crate::repositories::{BangumiRepository, CreateBangumiData, RssRepository};
-use crate::services::{MetadataError, MetadataService, PosterService, RssProcessingService, SettingsService};
+use crate::services::{MetadataError, MetadataService, RssProcessingService, SettingsService};
 
 #[derive(Debug, Error)]
 pub enum BangumiError {
@@ -28,7 +28,6 @@ pub enum BangumiError {
 pub struct BangumiService {
     db: SqlitePool,
     metadata: Arc<MetadataService>,
-    poster: Arc<PosterService>,
     rss_processing: Arc<RssProcessingService>,
     settings: Arc<SettingsService>,
 }
@@ -38,14 +37,12 @@ impl BangumiService {
     pub fn new(
         db: SqlitePool,
         metadata: Arc<MetadataService>,
-        poster: Arc<PosterService>,
         rss_processing: Arc<RssProcessingService>,
         settings: Arc<SettingsService>,
     ) -> Self {
         Self {
             db,
             metadata,
-            poster,
             rss_processing,
             settings,
         }
@@ -125,12 +122,6 @@ impl BangumiService {
         // Trigger background RSS fetch for newly created subscriptions
         if !new_rss_ids.is_empty() {
             self.rss_processing.spawn_background(new_rss_ids);
-        }
-
-        // Trigger background poster download (non-blocking)
-        if let Some(ref poster_url) = metadata.poster_url {
-            self.poster
-                .spawn_download_and_update(metadata.id, poster_url.clone(), self.db.clone());
         }
 
         Ok(BangumiWithMetadata { bangumi, metadata })

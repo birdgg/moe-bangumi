@@ -25,12 +25,12 @@ pub use downloader::{
 pub use http_client::{HttpClientError, HttpClientService};
 pub use log::{LogError, LogService};
 pub use notification::{create_notification_service, NotificationError, NotificationService};
-pub use poster::{PosterError, PosterService};
+pub use poster::{create_poster_download_service, PosterDownloadHandle, PosterError, PosterService};
 pub use rename::{RenameError, RenameService};
 pub use rss_processing::RssProcessingService;
 pub use scheduler::{
-    JobResult, LogCleanupJob, MetadataSyncJob, RenameJob, RssFetchJob, SchedulerJob,
-    SchedulerService,
+    JobResult, JobStatus, LogCleanupJob, MetadataSyncJob, RenameJob, RssFetchJob, SchedulerBuilder,
+    SchedulerError, SchedulerHandle, SchedulerJob, SchedulerService,
 };
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
 pub use tracing_layer::{create_log_channel, start_log_writer, DatabaseLayer, LogReceiver};

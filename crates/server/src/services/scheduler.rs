@@ -1,98 +1,75 @@
+mod actor;
 mod log_cleanup_job;
 mod metadata_sync_job;
 mod rename_job;
 mod rss_fetch_job;
 mod traits;
 
+pub use actor::{JobStatus, SchedulerError, SchedulerHandle};
 pub use log_cleanup_job::LogCleanupJob;
 pub use metadata_sync_job::MetadataSyncJob;
 pub use rename_job::RenameJob;
 pub use rss_fetch_job::RssFetchJob;
 pub use traits::{JobResult, SchedulerJob};
 
+use actor::{SchedulerActor, SchedulerMessage};
 use std::sync::Arc;
+use tokio::sync::mpsc;
 
-/// Scheduler service that manages periodic background tasks.
+/// Scheduler service 类型别名，保持 API 兼容性
+pub type SchedulerService = SchedulerHandle;
+
+/// Scheduler 构建器
 ///
-/// The scheduler runs registered jobs at their specified intervals.
-/// Each job runs independently in its own tokio task.
+/// 使用 builder 模式创建 Scheduler Actor。
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// let scheduler = SchedulerService::new()
-///     .with_job(RssFetchJob::new());
+/// let scheduler = SchedulerBuilder::new()
+///     .with_job(RssFetchJob::new(...))
+///     .with_job(LogCleanupJob::new(...))
+///     .build();
 ///
-/// scheduler.start();
+/// // 手动触发 Job
+/// scheduler.trigger_job("RssFetch").await?;
 /// ```
-pub struct SchedulerService {
+pub struct SchedulerBuilder {
     jobs: Vec<Arc<dyn SchedulerJob>>,
 }
 
-impl SchedulerService {
-    /// Creates a new scheduler service with no jobs.
+impl SchedulerBuilder {
+    /// 创建新的 SchedulerBuilder
     pub fn new() -> Self {
         Self { jobs: Vec::new() }
     }
 
-    /// Adds a job to the scheduler.
-    ///
-    /// Jobs are not started until [`start`](Self::start) is called.
+    /// 添加 Job 到调度器
     pub fn with_job<J: SchedulerJob + 'static>(mut self, job: J) -> Self {
         self.jobs.push(Arc::new(job));
         self
     }
 
-    /// Adds an already-wrapped Arc job to the scheduler.
+    /// 构建并启动 Scheduler Actor
     ///
-    /// This is useful when you need to keep a reference to the job for manual triggering.
-    pub fn with_arc_job<J: SchedulerJob + 'static>(mut self, job: Arc<J>) -> Self {
-        self.jobs.push(job);
-        self
-    }
+    /// 返回 SchedulerHandle，可用于手动触发 Job 和查询状态。
+    pub fn build(self) -> SchedulerHandle {
+        let (sender, receiver) = mpsc::channel::<SchedulerMessage>(32);
+        let handle = SchedulerHandle::new(sender);
 
-    /// Starts all registered jobs.
-    ///
-    /// Each job runs in its own tokio task and executes at its specified interval.
-    /// This method returns immediately after spawning all tasks.
-    pub fn start(&self) {
-        for job in &self.jobs {
-            let job = Arc::clone(job);
-            tokio::spawn(async move {
-                Self::run_job_loop(job).await;
-            });
-        }
-    }
+        let actor = SchedulerActor::new(self.jobs, receiver);
 
-    /// Runs a single job in an infinite loop.
-    async fn run_job_loop(job: Arc<dyn SchedulerJob>) {
-        let name = job.name();
-        let interval = job.interval();
+        // 启动各 Job 的定时任务
+        actor.spawn_timers(handle.clone());
 
-        let mut timer = tokio::time::interval(interval);
-        timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        // 启动 Actor 主循环
+        tokio::spawn(actor.run());
 
-        loop {
-            timer.tick().await;
-
-            match job.execute().await {
-                Ok(()) => {
-                    tracing::debug!("Job '{}' completed successfully", name);
-                }
-                Err(e) => {
-                    tracing::error!("Job '{}' failed: {}", name, e);
-                }
-            }
-        }
-    }
-
-    /// Returns the number of registered jobs.
-    pub fn job_count(&self) -> usize {
-        self.jobs.len()
+        handle
     }
 }
 
-impl Default for SchedulerService {
+impl Default for SchedulerBuilder {
     fn default() -> Self {
         Self::new()
     }

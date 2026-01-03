@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use super::traits::{JobResult, SchedulerJob};
 use crate::repositories::{MetadataRepository, MetadataToSync};
-use crate::services::{MetadataService, PosterService};
+use crate::services::{MetadataService, PosterDownloadHandle};
 
 /// Concurrency limit for metadata sync operations
 const METADATA_SYNC_CONCURRENCY: usize = 5;
@@ -14,8 +14,7 @@ const METADATA_SYNC_CONCURRENCY: usize = 5;
 /// Statistics for the sync operation
 #[derive(Default)]
 struct SyncStats {
-    poster_succeeded: usize,
-    poster_failed: usize,
+    poster_queued: usize,
     tmdb_succeeded: usize,
     tmdb_failed: usize,
     tmdb_skipped: usize,
@@ -24,11 +23,11 @@ struct SyncStats {
 /// Metadata sync job that downloads remote poster images and fills missing TMDB IDs.
 ///
 /// This job runs every 24 hours and processes metadata records that need syncing:
-/// - Downloads remote poster URLs to local storage
+/// - Queues remote poster URLs for async download via PosterDownloadActor
 /// - Searches TMDB using Japanese title for records without TMDB ID
 pub struct MetadataSyncJob {
     db: SqlitePool,
-    poster: Arc<PosterService>,
+    poster_download: Arc<PosterDownloadHandle>,
     metadata: Arc<MetadataService>,
 }
 
@@ -36,63 +35,40 @@ impl MetadataSyncJob {
     /// Creates a new metadata sync job.
     pub fn new(
         db: SqlitePool,
-        poster: Arc<PosterService>,
+        poster_download: Arc<PosterDownloadHandle>,
         metadata: Arc<MetadataService>,
     ) -> Self {
-        Self { db, poster, metadata }
+        Self {
+            db,
+            poster_download,
+            metadata,
+        }
     }
 
     /// Process a single metadata record for syncing.
+    ///
+    /// Returns:
+    /// - `Option<bool>`: Whether poster was queued (true = queued)
+    /// - `Option<(bool, bool)>`: TMDB result (succeeded, skipped)
     async fn process_metadata(
         record: MetadataToSync,
         db: SqlitePool,
-        poster: Arc<PosterService>,
+        poster_download: Arc<PosterDownloadHandle>,
         metadata: Arc<MetadataService>,
     ) -> (Option<bool>, Option<(bool, bool)>) {
         let mut poster_result = None;
         let mut tmdb_result = None;
 
-        // Sync poster if needed
+        // Queue poster download if needed (fire-and-forget)
         if record.needs_poster_sync() {
             let poster_url = record.poster_url.as_ref().unwrap();
-            poster_result = Some(match poster.download_from_url(poster_url).await {
-                Ok(local_path) => {
-                    match MetadataRepository::update_poster_url(&db, record.id, &local_path).await {
-                        Ok(true) => {
-                            tracing::info!(
-                                "Synced poster for metadata {}: {} -> {}",
-                                record.id,
-                                poster_url,
-                                local_path
-                            );
-                            true
-                        }
-                        Ok(false) => {
-                            tracing::warn!(
-                                "Metadata {} not found when updating poster",
-                                record.id
-                            );
-                            false
-                        }
-                        Err(e) => {
-                            tracing::error!(
-                                "Failed to update poster URL for metadata {}: {}",
-                                record.id,
-                                e
-                            );
-                            false
-                        }
-                    }
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        "Failed to download poster for metadata {}: {}",
-                        record.id,
-                        e
-                    );
-                    false
-                }
-            });
+            tracing::debug!(
+                "Queuing poster download for metadata {}: {}",
+                record.id,
+                poster_url
+            );
+            poster_download.download(record.id, poster_url.clone());
+            poster_result = Some(true);
         }
 
         // Sync TMDB ID if needed
@@ -128,11 +104,7 @@ impl MetadataSyncJob {
                     }
                 }
                 Ok(None) => {
-                    tracing::debug!(
-                        "No TMDB match found for metadata {} ({})",
-                        record.id,
-                        title
-                    );
+                    tracing::debug!("No TMDB match found for metadata {} ({})", record.id, title);
                     (false, true) // skipped - no match found
                 }
                 Err(e) => {
@@ -158,7 +130,7 @@ impl SchedulerJob for MetadataSyncJob {
     }
 
     fn interval(&self) -> Duration {
-        Duration::from_secs(86400) // Every 24 hours
+        Duration::from_secs(60 * 60) // Every hour
     }
 
     async fn execute(&self) -> JobResult {
@@ -189,9 +161,9 @@ impl SchedulerJob for MetadataSyncJob {
         let results: Vec<(Option<bool>, Option<(bool, bool)>)> = stream::iter(records)
             .map(|record| {
                 let db = self.db.clone();
-                let poster = Arc::clone(&self.poster);
+                let poster_download = Arc::clone(&self.poster_download);
                 let metadata = Arc::clone(&self.metadata);
-                async move { Self::process_metadata(record, db, poster, metadata).await }
+                async move { Self::process_metadata(record, db, poster_download, metadata).await }
             })
             .buffer_unordered(METADATA_SYNC_CONCURRENCY)
             .collect()
@@ -199,11 +171,9 @@ impl SchedulerJob for MetadataSyncJob {
 
         let mut stats = SyncStats::default();
         for (poster_result, tmdb_result) in results {
-            if let Some(succeeded) = poster_result {
-                if succeeded {
-                    stats.poster_succeeded += 1;
-                } else {
-                    stats.poster_failed += 1;
+            if let Some(queued) = poster_result {
+                if queued {
+                    stats.poster_queued += 1;
                 }
             }
             if let Some((succeeded, skipped)) = tmdb_result {
@@ -218,9 +188,8 @@ impl SchedulerJob for MetadataSyncJob {
         }
 
         tracing::info!(
-            "Metadata sync completed: posters ({} succeeded, {} failed), TMDB IDs ({} succeeded, {} failed, {} skipped)",
-            stats.poster_succeeded,
-            stats.poster_failed,
+            "Metadata sync completed: {} posters queued, TMDB IDs ({} succeeded, {} failed, {} skipped)",
+            stats.poster_queued,
             stats.tmdb_succeeded,
             stats.tmdb_failed,
             stats.tmdb_skipped

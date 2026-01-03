@@ -7,10 +7,11 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    create_downloader_service, create_notification_service, BangumiService, CacheService,
-    CalendarService, DownloaderHandle, HttpClientService, LogCleanupJob, LogService,
-    MetadataService, MetadataSyncJob, NotificationService, PosterService, RenameJob, RenameService,
-    RssFetchJob, RssProcessingService, SchedulerService, SettingsService, WashingService,
+    create_downloader_service, create_notification_service, create_poster_download_service,
+    BangumiService, CacheService, CalendarService, DownloaderHandle, HttpClientService,
+    LogCleanupJob, LogService, MetadataService, MetadataSyncJob, NotificationService,
+    PosterDownloadHandle, PosterService, RenameJob, RenameService, RssFetchJob,
+    RssProcessingService, SchedulerBuilder, SchedulerHandle, SettingsService, WashingService,
 };
 
 #[derive(Clone)]
@@ -25,8 +26,8 @@ pub struct AppState {
     pub settings: Arc<SettingsService>,
     pub downloader: Arc<DownloaderHandle>,
     pub poster: Arc<PosterService>,
-    pub scheduler: Arc<SchedulerService>,
-    pub rss_fetch_job: Arc<RssFetchJob>,
+    pub poster_download: Arc<PosterDownloadHandle>,
+    pub scheduler: Arc<SchedulerHandle>,
     pub logs: Arc<LogService>,
     pub metadata: Arc<MetadataService>,
     pub bangumi: Arc<BangumiService>,
@@ -86,6 +87,12 @@ impl AppState {
             config.posters_path(),
         ));
 
+        // Create poster download actor (for async poster downloads)
+        let poster_download = Arc::new(create_poster_download_service(
+            db.clone(),
+            Arc::clone(&poster),
+        ));
+
         // Create cache service
         let cache = Arc::new(CacheService::new(db.clone()));
 
@@ -120,16 +127,10 @@ impl AppState {
         let bangumi = Arc::new(BangumiService::new(
             db.clone(),
             Arc::clone(&metadata),
-            Arc::clone(&poster),
             Arc::clone(&rss_processing),
             Arc::clone(&settings),
         ));
 
-        // Create RSS fetch job (stored separately for manual triggering)
-        let rss_fetch_job = Arc::new(RssFetchJob::new(
-            db.clone(),
-            Arc::clone(&rss_processing),
-        ));
 
         // Create notification service (Actor mode)
         let notification = Arc::new(create_notification_service(
@@ -156,20 +157,19 @@ impl AppState {
             db.clone(),
             Arc::clone(&bgmtv),
             Arc::clone(&mikan_arc),
-            Arc::clone(&poster),
         ));
 
-        // Create and start scheduler service
-        let scheduler = SchedulerService::new()
-            .with_arc_job(Arc::clone(&rss_fetch_job))
+        // Create and start scheduler service (Actor mode)
+        let scheduler = SchedulerBuilder::new()
+            .with_job(RssFetchJob::new(db.clone(), Arc::clone(&rss_processing)))
             .with_job(LogCleanupJob::new(Arc::clone(&logs)))
             .with_job(RenameJob::new(Arc::clone(&rename)))
             .with_job(MetadataSyncJob::new(
                 db.clone(),
-                Arc::clone(&poster),
+                Arc::clone(&poster_download),
                 Arc::clone(&metadata),
-            ));
-        scheduler.start();
+            ))
+            .build();
 
         Self {
             db,
@@ -182,8 +182,8 @@ impl AppState {
             settings,
             downloader: downloader_arc,
             poster,
+            poster_download,
             scheduler: Arc::new(scheduler),
-            rss_fetch_job,
             logs,
             metadata,
             bangumi,

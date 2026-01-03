@@ -8,11 +8,8 @@ use mikan::{MikanClient, Season};
 use sqlx::SqlitePool;
 use thiserror::Error;
 
-use crate::models::{
-    CalendarDay, CalendarSubject, CreateMetadata, Metadata, Platform, SeasonData, Weekday,
-};
+use crate::models::{CalendarDay, CalendarSubject, CreateMetadata, Platform, SeasonData, Weekday};
 use crate::repositories::{CalendarEntry, CalendarRepository, MetadataRepository};
-use crate::services::PosterService;
 use crate::SeasonIterator;
 
 /// Base URL for downloading calendar seed data from jsDelivr CDN
@@ -55,22 +52,11 @@ pub struct CalendarService {
     db: SqlitePool,
     bgmtv: Arc<BgmtvClient>,
     mikan: Arc<MikanClient>,
-    poster: Arc<PosterService>,
 }
 
 impl CalendarService {
-    pub fn new(
-        db: SqlitePool,
-        bgmtv: Arc<BgmtvClient>,
-        mikan: Arc<MikanClient>,
-        poster: Arc<PosterService>,
-    ) -> Self {
-        Self {
-            db,
-            bgmtv,
-            mikan,
-            poster,
-        }
+    pub fn new(db: SqlitePool, bgmtv: Arc<BgmtvClient>, mikan: Arc<MikanClient>) -> Self {
+        Self { db, bgmtv, mikan }
     }
 
     /// Get current year and season
@@ -320,10 +306,6 @@ impl CalendarService {
             let existing = MetadataRepository::get_by_bgmtv_id(&self.db, bgmtv_id).await?;
 
             let metadata_id = if let Some(metadata) = existing {
-                // Trigger background poster update if seed has poster
-                if let Some(ref seed_poster) = entry.poster_url {
-                    self.trigger_poster_update_if_needed(&metadata, seed_poster);
-                }
                 metadata.id
             } else {
                 // Create new metadata from seed entry
@@ -475,10 +457,7 @@ impl CalendarService {
             // Check if metadata already exists
             let existing = MetadataRepository::get_by_bgmtv_id(&self.db, *bgmtv_id).await?;
 
-            let bgm_poster_url = &subject.poster_url;
             let metadata_id = if let Some(metadata) = existing {
-                // Trigger background poster update if needed
-                self.trigger_poster_update_if_needed(&metadata, bgm_poster_url);
                 metadata.id
             } else {
                 // Create new metadata with BGM.tv poster
@@ -499,42 +478,6 @@ impl CalendarService {
         }
 
         Ok(entries)
-    }
-
-    /// Check if metadata poster needs to be refreshed to BGM.tv version
-    ///
-    /// Returns true if:
-    /// - No poster exists
-    /// - Current poster is not a local file (needs to be downloaded)
-    /// - Current poster is a remote URL different from the new BGM.tv URL
-    fn should_refresh_poster(metadata: &Metadata, bgm_poster_url: &str) -> bool {
-        match &metadata.poster_url {
-            None => true, // No poster, needs download
-            Some(current_url) => {
-                // Already a local poster (downloaded), no need to refresh
-                if current_url.starts_with("/posters/") {
-                    return false;
-                }
-                // Remote URL: needs update only if different from new URL
-                current_url != bgm_poster_url
-            }
-        }
-    }
-
-    /// Trigger background poster update for existing metadata if needed
-    fn trigger_poster_update_if_needed(&self, metadata: &Metadata, new_poster_url: &str) {
-        if Self::should_refresh_poster(metadata, new_poster_url) {
-            tracing::debug!(
-                "Scheduling poster update for metadata {} (bgmtv_id: {:?})",
-                metadata.id,
-                metadata.bgmtv_id
-            );
-            self.poster.spawn_download_and_update(
-                metadata.id,
-                new_poster_url.to_string(),
-                self.db.clone(),
-            );
-        }
     }
 
     /// Build CreateMetadata from Mikan data and BGM.tv ParsedSubject

@@ -1,8 +1,8 @@
 use std::collections::HashSet;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use sqlx::SqlitePool;
-use tokio::sync::{mpsc, Mutex, Semaphore};
+use tokio::sync::{mpsc, Semaphore};
 
 use super::messages::{DownloadTask, PosterDownloadMessage};
 use crate::repositories::MetadataRepository;
@@ -19,12 +19,10 @@ struct UrlGuard {
 
 impl Drop for UrlGuard {
     fn drop(&mut self) {
-        let url = std::mem::take(&mut self.url);
-        let in_progress = Arc::clone(&self.in_progress);
-        // spawn 一个任务来清理，因为 drop 不能是 async
-        tokio::spawn(async move {
-            in_progress.lock().await.remove(&url);
-        });
+        // 使用 std::sync::Mutex 可以在 Drop 中同步移除，无需 spawn 任务
+        if let Ok(mut set) = self.in_progress.lock() {
+            set.remove(&self.url);
+        }
     }
 }
 
@@ -80,9 +78,9 @@ impl PosterDownloadActor {
     async fn spawn_download_task(&self, task: DownloadTask) {
         let url = task.url.clone();
 
-        // 去重检查并标记
+        // 去重检查并标记（使用 std::sync::Mutex，临界区很短无需 async）
         {
-            let mut in_progress = self.in_progress.lock().await;
+            let mut in_progress = self.in_progress.lock().unwrap();
             if in_progress.contains(&url) {
                 tracing::debug!(
                     "Skipping download for metadata_id={} (already in progress): {}",
