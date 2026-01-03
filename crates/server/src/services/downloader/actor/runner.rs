@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use downloader::{Downloader, DownloaderError};
+use downloader::{Downloader, DownloaderClient, DownloaderError};
+use futures::future::BoxFuture;
 use tokio::sync::mpsc;
 
 use super::messages::DownloaderMessage;
@@ -88,25 +89,37 @@ impl DownloaderActor {
         }
     }
 
+    /// 通用重试 helper：确保客户端连接，执行操作，认证错误时重试
+    async fn with_retry<T, F>(&mut self, operation: F) -> Result<T, DownloaderError>
+    where
+        F: for<'a> Fn(&'a DownloaderClient) -> BoxFuture<'a, Result<T, DownloaderError>>,
+    {
+        self.state.ensure_client().await?;
+
+        let result = operation(self.state.client().unwrap()).await;
+
+        match result {
+            Ok(v) => Ok(v),
+            Err(e) if e.is_auth_error() => {
+                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
+                self.state.reauthenticate().await?;
+                operation(self.state.client().unwrap()).await
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     /// 添加任务（带重试）
     async fn with_retry_add_task(
         &mut self,
         options: downloader::AddTaskOptions,
     ) -> Result<String, DownloaderError> {
-        self.state.ensure_client().await?;
-
         let opts = options.add_tag("rename");
-        let result = self.state.client().unwrap().add_task(opts.clone()).await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state.client().unwrap().add_task(opts).await
-            }
-            Err(e) => Err(e),
-        }
+        self.with_retry(|client| {
+            let opts = opts.clone();
+            Box::pin(async move { client.add_task(opts).await })
+        })
+        .await
     }
 
     /// 获取任务列表（带重试）
@@ -114,28 +127,11 @@ impl DownloaderActor {
         &mut self,
         filter: Option<downloader::TaskFilter>,
     ) -> Result<Vec<downloader::Task>, DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let result = self
-            .state
-            .client()
-            .unwrap()
-            .get_tasks(filter.as_ref())
-            .await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state
-                    .client()
-                    .unwrap()
-                    .get_tasks(filter.as_ref())
-                    .await
-            }
-            Err(e) => Err(e),
-        }
+        self.with_retry(|client| {
+            let filter = filter.clone();
+            Box::pin(async move { client.get_tasks(filter.as_ref()).await })
+        })
+        .await
     }
 
     /// 获取任务文件（带重试）
@@ -143,19 +139,12 @@ impl DownloaderActor {
         &mut self,
         hash: &str,
     ) -> Result<Vec<downloader::TaskFile>, DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let result = self.state.client().unwrap().get_task_files(hash).await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state.client().unwrap().get_task_files(hash).await
-            }
-            Err(e) => Err(e),
-        }
+        let hash = hash.to_string();
+        self.with_retry(|client| {
+            let hash = hash.clone();
+            Box::pin(async move { client.get_task_files(&hash).await })
+        })
+        .await
     }
 
     /// 删除任务（带重试）
@@ -164,29 +153,15 @@ impl DownloaderActor {
         ids: &[String],
         delete_files: bool,
     ) -> Result<(), DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let id_refs: Vec<&str> = ids.iter().map(|s| s.as_str()).collect();
-        let result = self
-            .state
-            .client()
-            .unwrap()
-            .delete_task(&id_refs, delete_files)
-            .await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state
-                    .client()
-                    .unwrap()
-                    .delete_task(&id_refs, delete_files)
-                    .await
-            }
-            Err(e) => Err(e),
-        }
+        let ids = ids.to_vec();
+        self.with_retry(|client| {
+            let ids = ids.clone();
+            Box::pin(async move {
+                let id_refs: Vec<&str> = ids.iter().map(|s| s.as_str()).collect();
+                client.delete_task(&id_refs, delete_files).await
+            })
+        })
+        .await
     }
 
     /// 添加标签（带重试）
@@ -195,20 +170,17 @@ impl DownloaderActor {
         id: &str,
         tags: &[String],
     ) -> Result<(), DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let tag_refs: Vec<&str> = tags.iter().map(|s| s.as_str()).collect();
-        let result = self.state.client().unwrap().add_tags(id, &tag_refs).await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state.client().unwrap().add_tags(id, &tag_refs).await
-            }
-            Err(e) => Err(e),
-        }
+        let id = id.to_string();
+        let tags = tags.to_vec();
+        self.with_retry(|client| {
+            let id = id.clone();
+            let tags = tags.clone();
+            Box::pin(async move {
+                let tag_refs: Vec<&str> = tags.iter().map(|s| s.as_str()).collect();
+                client.add_tags(&id, &tag_refs).await
+            })
+        })
+        .await
     }
 
     /// 移除标签（带重试）
@@ -217,29 +189,17 @@ impl DownloaderActor {
         id: &str,
         tags: &[String],
     ) -> Result<(), DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let tag_refs: Vec<&str> = tags.iter().map(|s| s.as_str()).collect();
-        let result = self
-            .state
-            .client()
-            .unwrap()
-            .remove_tags(id, &tag_refs)
-            .await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state
-                    .client()
-                    .unwrap()
-                    .remove_tags(id, &tag_refs)
-                    .await
-            }
-            Err(e) => Err(e),
-        }
+        let id = id.to_string();
+        let tags = tags.to_vec();
+        self.with_retry(|client| {
+            let id = id.clone();
+            let tags = tags.clone();
+            Box::pin(async move {
+                let tag_refs: Vec<&str> = tags.iter().map(|s| s.as_str()).collect();
+                client.remove_tags(&id, &tag_refs).await
+            })
+        })
+        .await
     }
 
     /// 重命名文件（带重试）
@@ -249,27 +209,15 @@ impl DownloaderActor {
         old_path: &str,
         new_path: &str,
     ) -> Result<(), DownloaderError> {
-        self.state.ensure_client().await?;
-
-        let result = self
-            .state
-            .client()
-            .unwrap()
-            .rename_file(id, old_path, new_path)
-            .await;
-
-        match result {
-            Ok(v) => Ok(v),
-            Err(e) if DownloaderActorState::is_auth_error(&e) => {
-                tracing::warn!("Auth error detected, attempting re-authentication: {}", e);
-                self.state.reauthenticate().await?;
-                self.state
-                    .client()
-                    .unwrap()
-                    .rename_file(id, old_path, new_path)
-                    .await
-            }
-            Err(e) => Err(e),
-        }
+        let id = id.to_string();
+        let old_path = old_path.to_string();
+        let new_path = new_path.to_string();
+        self.with_retry(|client| {
+            let id = id.clone();
+            let old_path = old_path.clone();
+            let new_path = new_path.clone();
+            Box::pin(async move { client.rename_file(&id, &old_path, &new_path).await })
+        })
+        .await
     }
 }

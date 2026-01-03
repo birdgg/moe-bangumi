@@ -27,7 +27,7 @@ pub struct Settings {
 }
 
 /// Downloader configuration with per-type configs
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct DownloaderSettings {
     /// Currently active downloader type
     #[serde(default = "DownloaderSettings::default_type", rename = "type")]
@@ -41,7 +41,7 @@ pub struct DownloaderSettings {
 }
 
 /// Per-downloader configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, ToSchema)]
 pub struct DownloaderConfigs {
     /// qBittorrent configuration
     #[serde(default)]
@@ -52,7 +52,7 @@ pub struct DownloaderConfigs {
 }
 
 /// qBittorrent-specific configuration
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct QBittorrentConfig {
     /// Web UI URL (e.g., http://localhost:8080)
     #[serde(default = "QBittorrentConfig::default_url")]
@@ -82,7 +82,7 @@ impl QBittorrentConfig {
 }
 
 /// Transmission-specific configuration
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct TransmissionConfig {
     /// RPC URL (e.g., http://localhost:9091/transmission/rpc)
     #[serde(default = "TransmissionConfig::default_url")]

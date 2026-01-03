@@ -24,4 +24,21 @@ pub enum DownloaderError {
     NotSupported(String),
 }
 
+impl DownloaderError {
+    /// 判断是否为认证错误
+    pub fn is_auth_error(&self) -> bool {
+        match self {
+            DownloaderError::Auth(_) => true,
+            DownloaderError::QBittorrent(qb_err) => match qb_err {
+                qbittorrent::QBittorrentError::Auth(_) => true,
+                qbittorrent::QBittorrentError::Api { status_code, .. } => {
+                    *status_code == 401 || *status_code == 403
+                }
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+}
+
 pub type Result<T> = std::result::Result<T, DownloaderError>;

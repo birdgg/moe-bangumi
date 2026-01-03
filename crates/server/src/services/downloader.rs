@@ -60,26 +60,5 @@ fn spawn_settings_watcher(settings: Arc<SettingsService>, handle: DownloaderHand
 
 /// 检查设置是否变化
 fn settings_changed(old: &DownloaderSettings, new: &DownloaderSettings) -> bool {
-    // Type change always triggers rebuild
-    if old.downloader_type != new.downloader_type {
-        return true;
-    }
-
-    // Check if current downloader's config changed
-    match new.downloader_type {
-        DownloaderType::QBittorrent => {
-            let old_cfg = &old.configs.qbittorrent;
-            let new_cfg = &new.configs.qbittorrent;
-            old_cfg.url != new_cfg.url
-                || old_cfg.username != new_cfg.username
-                || old_cfg.password != new_cfg.password
-        }
-        DownloaderType::Transmission => {
-            let old_cfg = &old.configs.transmission;
-            let new_cfg = &new.configs.transmission;
-            old_cfg.url != new_cfg.url
-                || old_cfg.username != new_cfg.username
-                || old_cfg.password != new_cfg.password
-        }
-    }
+    old != new
 }
