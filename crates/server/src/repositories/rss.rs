@@ -181,6 +181,20 @@ impl RssRepository {
         Ok(result.rows_affected())
     }
 
+    /// Disable all RSS subscriptions for a bangumi
+    /// Returns the number of RSS subscriptions that were disabled
+    pub async fn disable_by_bangumi_id(
+        pool: &SqlitePool,
+        bangumi_id: i64,
+    ) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("UPDATE rss SET enabled = 0 WHERE bangumi_id = $1 AND enabled = 1")
+            .bind(bangumi_id)
+            .execute(pool)
+            .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// Update HTTP cache information for an RSS subscription
     /// Used for incremental updates (ETag/Last-Modified/last_pub_date)
     pub async fn update_cache(

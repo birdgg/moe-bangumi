@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use crate::config::Config;
 use crate::models::{BangumiWithMetadata, Torrent};
-use crate::repositories::{BangumiRepository, TorrentRepository};
+use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::{DownloaderHandle, NotificationService, Task, TaskFile};
 
 /// Error type for rename operations
@@ -45,6 +45,8 @@ pub struct RenameTaskResult {
     pub bangumi_title: String,
     /// Poster URL (local path like /posters/xxx.jpg)
     pub poster_url: Option<String>,
+    /// Total episodes for this bangumi (0 = unknown)
+    pub total_episodes: i32,
     /// Successfully renamed episode numbers
     pub renamed_episodes: Vec<i32>,
 }
@@ -128,8 +130,8 @@ impl RenameService {
             .flatten()
             .collect();
 
-        // Group results by bangumi_id: (title, poster_url, episodes)
-        let mut grouped: HashMap<i64, (String, Option<String>, Vec<i32>)> = HashMap::new();
+        // Group results by bangumi_id: (title, poster_url, total_episodes, episodes)
+        let mut grouped: HashMap<i64, (String, Option<String>, i32, Vec<i32>)> = HashMap::new();
         for result in results {
             if result.renamed_episodes.is_empty() {
                 continue;
@@ -138,14 +140,15 @@ impl RenameService {
                 (
                     result.bangumi_title.clone(),
                     result.poster_url.clone(),
+                    result.total_episodes,
                     Vec::new(),
                 )
             });
-            entry.2.extend(result.renamed_episodes);
+            entry.3.extend(result.renamed_episodes);
         }
 
         // Process each bangumi: update current_episode and send notification
-        for (bangumi_id, (title, poster_url, mut episodes)) in grouped {
+        for (bangumi_id, (title, poster_url, total_episodes, mut episodes)) in grouped {
             if episodes.is_empty() {
                 continue;
             }
@@ -171,6 +174,30 @@ impl RenameService {
                     bangumi_id,
                     e
                 );
+            }
+
+            // Auto-disable RSS when all episodes are downloaded
+            // Only check if total_episodes is known (> 0)
+            if total_episodes > 0 && max_episode >= total_episodes {
+                match RssRepository::disable_by_bangumi_id(&self.db, bangumi_id).await {
+                    Ok(count) if count > 0 => {
+                        tracing::info!(
+                            "Auto-disabled {} RSS subscription(s) for completed bangumi '{}' (episode {}/{})",
+                            count,
+                            title,
+                            max_episode,
+                            total_episodes
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to auto-disable RSS for bangumi {}: {}",
+                            bangumi_id,
+                            e
+                        );
+                    }
+                    _ => {}
+                }
             }
 
             // Send notification with poster if available
@@ -305,6 +332,7 @@ impl RenameService {
                 bangumi_id: bangumi.bangumi.id,
                 bangumi_title: bangumi.metadata.title_chinese.clone(),
                 poster_url: bangumi.metadata.poster_url.clone(),
+                total_episodes: bangumi.metadata.total_episodes,
                 renamed_episodes,
             });
         }
@@ -345,6 +373,7 @@ impl RenameService {
             bangumi_id: bangumi.bangumi.id,
             bangumi_title: bangumi.metadata.title_chinese.clone(),
             poster_url: bangumi.metadata.poster_url.clone(),
+            total_episodes: bangumi.metadata.total_episodes,
             renamed_episodes,
         })
     }
