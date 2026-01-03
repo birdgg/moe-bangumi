@@ -11,7 +11,7 @@ use washing::{ComparableTorrent, PriorityCalculator};
 
 use crate::models::{CreateTorrent, Torrent};
 use crate::repositories::TorrentRepository;
-use crate::services::{DownloaderService, SettingsService};
+use crate::services::{AddTaskOptions, DownloaderService, SettingsService};
 
 /// Error types for washing operations
 #[derive(Debug, thiserror::Error)]
@@ -30,6 +30,10 @@ pub struct WashParams<'a> {
     pub torrent_url: &'a str,
     pub episode: i32,
     pub parse_result: &'a ParseResult,
+    /// Download save path
+    pub save_path: &'a str,
+    /// Renamed filename for download
+    pub rename: &'a str,
 }
 
 /// Service for torrent washing (洗版) operations.
@@ -93,14 +97,15 @@ impl WashingService {
         calculator.is_higher_priority(&new_comparable, best_existing)
     }
 
-    /// Execute washing: atomically delete old torrents and create new one.
+    /// Execute washing: atomically delete old torrents, create new one, and add download.
     ///
     /// This method:
     /// 1. Deletes all existing torrents for the episode from database (in a transaction)
     /// 2. Creates the new torrent record
     /// 3. Removes old torrents from downloader (best-effort)
+    /// 4. Adds new download task
     ///
-    /// Returns the info_hashes of deleted torrents for caller to handle download cleanup.
+    /// Returns the info_hashes of deleted torrents.
     pub async fn wash_episode(&self, params: WashParams<'_>) -> Result<Vec<String>, WashingError> {
         tracing::info!(
             "[{}] Washing E{}: replacing {} existing torrent(s) with higher priority resource (group={:?}, lang={:?}, res={:?})",
@@ -156,35 +161,33 @@ impl WashingService {
 
         // Transaction committed successfully, now handle downloader operations (best-effort)
         for hash in &old_hashes {
-            self.delete_from_downloader(hash, params.rss_title).await;
+            self.delete_from_downloader(hash, params.rss_title);
         }
+
+        // Add new download task
+        self.add_download_task(params.torrent_url, params.save_path, params.rename);
 
         Ok(old_hashes)
     }
 
-    /// Delete a torrent from the downloader by info_hash.
-    ///
-    /// Used during washing when replacing torrents. Errors are logged but not
-    /// propagated since:
-    /// - Task might not exist (already deleted/completed manually)
-    /// - Downloader connection issues shouldn't block database cleanup
-    async fn delete_from_downloader(&self, info_hash: &str, rss_title: &str) {
-        match self.downloader.delete_task(&[info_hash], true).await {
-            Ok(_) => {
-                tracing::info!(
-                    "[{}] Deleted old torrent from downloader: {}",
-                    rss_title,
-                    info_hash
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "[{}] Could not delete torrent from downloader (hash={}): {}",
-                    rss_title,
-                    info_hash,
-                    e
-                );
-            }
-        }
+    /// Add a download task (fire-and-forget).
+    fn add_download_task(&self, torrent_url: &str, save_path: &str, rename: &str) {
+        let options = AddTaskOptions::new(torrent_url)
+            .save_path(save_path)
+            .rename(rename)
+            .add_tag("moe")
+            .add_tag("rename");
+
+        self.downloader.add_task(options);
+    }
+
+    /// Delete a torrent from the downloader by info_hash (fire-and-forget).
+    fn delete_from_downloader(&self, info_hash: &str, rss_title: &str) {
+        self.downloader.delete_task(&[info_hash], true);
+        tracing::info!(
+            "[{}] Queued deletion of old torrent: {}",
+            rss_title,
+            info_hash
+        );
     }
 }

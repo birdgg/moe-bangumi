@@ -11,18 +11,15 @@ This project uses [just](https://github.com/casey/just) as a command runner. Run
 ```bash
 just              # Start backend dev server (default)
 just dev-all      # Start both backend and frontend dev servers
-just --list       # Show all available commands
 ```
 
 ### Backend (Rust)
 
 ```bash
-just build          # Build (debug)
 just build-release  # Build (release)
 just dev            # Run the server (defaults: port 3000, data path ./data)
 just check          # Check compilation without building
 just test           # Run tests
-just watch          # Watch mode (requires cargo-watch)
 ```
 
 ### Frontend (Web)
@@ -30,26 +27,8 @@ just watch          # Watch mode (requires cargo-watch)
 ```bash
 just web-install    # Install dependencies
 just web-dev        # Development server
-just web-build      # Production build
 just web-lint       # Lint
 just web-gen-api    # Generate API client
-just web-preview    # Preview production build
-```
-
-### Combined Commands
-
-```bash
-just dev-all        # Run both backend and frontend dev servers
-just build-all      # Build both backend and frontend
-```
-
-## Configuration
-
-Configuration is read from environment variables. Create a `.env` file in the project root:
-
-```env
-APP_ENV=dev       # Environment: dev or prod (default: dev)
-PORT=3000         # Server port (default: 3000)
 ```
 
 ## Architecture
@@ -75,13 +54,9 @@ This is a Rust workspace for a Bangumi (anime) tracking and download management 
 ```
 server/src/
 ├── api/              # API route handlers (grouped by resource)
-├── api.rs            # API module aggregation
 ├── models/           # Data models (Bangumi, RSS, Settings, etc.)
-├── models.rs         # Models module aggregation
 ├── repositories/     # Database access layer
-├── repositories.rs   # Repositories module aggregation
 ├── services/         # Business logic and external service integrations
-├── services.rs       # Services module aggregation
 ├── config.rs         # Configuration struct
 ├── db.rs             # Database connection and migrations
 ├── lib.rs            # Library entry point

@@ -7,18 +7,6 @@ default: dev
 
 # === Rust Commands ===
 
-# Build the project (debug)
-build:
-    cargo build
-
-# Build the project (release)
-build-release:
-    cargo build --release
-
-# Run the server
-run:
-    cargo run -p cli --bin moe
-
 # Check compilation without building
 check:
     cargo check
@@ -27,12 +15,9 @@ check:
 test:
     cargo test
 
-# Watch mode (requires cargo-watch: cargo install cargo-watch)
-watch:
-    cargo watch -x 'run -p cli --bin moe'
-
-# Alias for run
-dev: run
+# Run the server (dev mode)
+dev:
+    cargo run -p cli --bin moe
 
 # Generate calendar seed data (all seasons from 2013)
 seed:
@@ -52,10 +37,6 @@ web-install:
 web-dev:
     cd web && bun run dev
 
-# Build frontend for production
-web-build:
-    cd web && bun run build
-
 # Run frontend linter
 web-lint:
     cd web && bun run lint
@@ -63,10 +44,6 @@ web-lint:
 # Generate API client from OpenAPI spec
 web-gen-api:
     cd web && bun run gen:api
-
-# Preview production build
-web-preview:
-    cd web && bun run preview
 
 # === Combined Commands ===
 
@@ -78,9 +55,6 @@ dev-all:
     cd web && bun run dev &
     wait
 
-# Build both backend and frontend
-build-all: build web-build
-
 # === Docker Commands ===
 
 # Start Transmission in Docker
@@ -89,13 +63,14 @@ transmission:
 
 # === Release Commands ===
 
-# Generate changelog for unreleased changes
-changelog:
-    git-cliff --unreleased
-
-# Generate full changelog
-changelog-full:
-    git-cliff -o CHANGELOG.md
+# Generate changelog (default: unreleased, use "full" to generate all)
+changelog mode="unreleased":
+    #!/usr/bin/env bash
+    if [ "{{mode}}" = "full" ]; then
+        git-cliff -o CHANGELOG.md
+    else
+        git-cliff --unreleased
+    fi
 
 # Bump version in all Cargo.toml files
 bump-version version:
@@ -131,27 +106,3 @@ release version:
     gh workflow run release.yml -f version="$VERSION"
     echo "Release workflow triggered! Check GitHub Actions for progress."
 
-# Dry-run release (builds but doesn't publish)
-release-dry version:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    VERSION="{{version}}"
-
-    echo "Triggering dry-run release workflow for version $VERSION..."
-    gh workflow run release.yml -f version="$VERSION" -f dry_run=true
-    echo "Dry-run release workflow triggered! Check GitHub Actions for progress."
-
-# Local release build (for testing)
-release-local:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    echo "Building release binary..."
-    cargo build --release -p cli
-
-    echo "Building frontend..."
-    cd web && bun install && bun run build
-
-    echo "Release build complete!"
-    echo "Binary: target/release/moe"
-    echo "Frontend: web/dist/"

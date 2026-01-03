@@ -37,3 +37,5 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 tracing-subscriber.workspace = true
 parking_lot = "0.12"
 urlencoding = "2"
+sha2 = "0.10"
+hex = "0.4"

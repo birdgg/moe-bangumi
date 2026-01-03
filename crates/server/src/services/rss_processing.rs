@@ -1,4 +1,3 @@
-use downloader::AddTaskOptions;
 use parser::{ParseResult, Parser};
 use regex::Regex;
 use rss::{FetchContext, FetchResult, RssClient, RssItem, RssSource};
@@ -9,7 +8,7 @@ use std::sync::Arc;
 use crate::models::{BangumiWithMetadata, CreateTorrent, Rss, Torrent};
 use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::washing::{WashParams, WashingService};
-use crate::services::{DownloaderService, SettingsService};
+use crate::services::{QueueDownloadParams, SettingsService, TorrentCoordinator};
 use washing::{ComparableTorrent, PriorityCalculator};
 
 /// Context for RSS processing, avoiding repeated parameter passing
@@ -31,7 +30,7 @@ struct TorrentLookup {
 pub struct RssProcessingService {
     db: SqlitePool,
     rss_client: Arc<RssClient>,
-    downloader: Arc<DownloaderService>,
+    torrent_coordinator: Arc<TorrentCoordinator>,
     settings: Arc<SettingsService>,
     washing: Arc<WashingService>,
     parser: Parser,
@@ -42,14 +41,14 @@ impl RssProcessingService {
     pub fn new(
         db: SqlitePool,
         rss_client: Arc<RssClient>,
-        downloader: Arc<DownloaderService>,
+        torrent_coordinator: Arc<TorrentCoordinator>,
         settings: Arc<SettingsService>,
         washing: Arc<WashingService>,
     ) -> Self {
         Self {
             db,
             rss_client,
-            downloader,
+            torrent_coordinator,
             settings,
             washing,
             parser: Parser::new(),
@@ -355,6 +354,14 @@ impl RssProcessingService {
             }
 
             // Wash ("洗版"): replace existing torrents with higher priority resource
+            let adjusted_episode = ctx.bangumi.bangumi.adjust_episode(episode);
+            let filename = pathgen::generate_filename(
+                &ctx.bangumi.metadata.title_chinese,
+                ctx.bangumi.metadata.season,
+                adjusted_episode,
+                Some(ctx.bangumi.metadata.platform.as_str()),
+            );
+
             let params = WashParams {
                 bangumi_id: rss.bangumi_id,
                 rss_id: Some(rss.id),
@@ -364,16 +371,14 @@ impl RssProcessingService {
                 torrent_url,
                 episode,
                 parse_result,
+                save_path: &ctx.bangumi.bangumi.save_path,
+                rename: &filename,
             };
 
             if let Err(e) = self.washing.wash_episode(params).await {
                 tracing::error!("[{}] Failed to wash E{}: {}", rss.title, episode, e);
                 return;
             }
-
-            // Add new download task after successful washing
-            self.add_download_task(rss, ctx, info_hash, torrent_url, episode)
-                .await;
         } else {
             // No existing torrents, just create and add
             self.create_and_add_task(rss, ctx, info_hash, torrent_url, episode, parse_result)
@@ -381,7 +386,7 @@ impl RssProcessingService {
         }
     }
 
-    /// Create torrent record in database and add download task to downloader
+    /// Create torrent record and queue download task via TorrentCoordinator
     async fn create_and_add_task(
         &self,
         rss: &Rss,
@@ -390,39 +395,6 @@ impl RssProcessingService {
         torrent_url: &str,
         episode: i32,
         parse_result: &ParseResult,
-    ) {
-        // Create torrent record with parsed episode number and metadata
-        if let Err(e) = TorrentRepository::create(
-            &self.db,
-            CreateTorrent {
-                bangumi_id: rss.bangumi_id,
-                rss_id: Some(rss.id),
-                info_hash: info_hash.to_string(),
-                torrent_url: torrent_url.to_string(),
-                episode_number: Some(episode),
-                subtitle_group: parse_result.subtitle_group.clone(),
-                subtitle_languages: parse_result.subtitle_language.clone(),
-                resolution: parse_result.resolution.clone(),
-            },
-        )
-        .await
-        {
-            tracing::error!("[{}] Database error: {}", rss.title, e);
-            return;
-        }
-
-        self.add_download_task(rss, ctx, info_hash, torrent_url, episode)
-            .await;
-    }
-
-    /// Add download task to downloader (without creating database record)
-    async fn add_download_task(
-        &self,
-        rss: &Rss,
-        ctx: &ProcessingContext,
-        info_hash: &str,
-        torrent_url: &str,
-        episode: i32,
     ) {
         // Apply episode offset to convert RSS episode number to season-relative episode
         let adjusted_episode = ctx.bangumi.bangumi.adjust_episode(episode);
@@ -435,21 +407,23 @@ impl RssProcessingService {
             Some(ctx.bangumi.metadata.platform.as_str()),
         );
 
-        // Add to downloader with "moe" tag to identify moe-managed tasks
-        // Add "rename" tag so RenameService will process it after download completes
-        let options = AddTaskOptions::new(torrent_url)
-            .save_path(&ctx.bangumi.bangumi.save_path)
-            .rename(&filename)
-            .add_tag("moe")
-            .add_tag("rename");
+        let params = QueueDownloadParams {
+            torrent: CreateTorrent {
+                bangumi_id: rss.bangumi_id,
+                rss_id: Some(rss.id),
+                info_hash: info_hash.to_string(),
+                torrent_url: torrent_url.to_string(),
+                episode_number: Some(episode),
+                subtitle_group: parse_result.subtitle_group.clone(),
+                subtitle_languages: parse_result.subtitle_language.clone(),
+                resolution: parse_result.resolution.clone(),
+            },
+            save_path: ctx.bangumi.bangumi.save_path.clone(),
+            rename: filename,
+        };
 
-        match self.downloader.add_task(options).await {
-            Ok(_) => {
-                tracing::debug!("Added to downloader: {}", info_hash);
-            }
-            Err(e) => {
-                tracing::error!("[{}] Failed to add download task: {}", rss.title, e);
-            }
+        if let Err(e) = self.torrent_coordinator.queue_download(params).await {
+            tracing::error!("[{}] Failed to queue download: {}", rss.title, e);
         }
     }
 
@@ -486,7 +460,7 @@ impl RssProcessingService {
 
         let db = self.db.clone();
         let rss_client = Arc::clone(&self.rss_client);
-        let downloader = Arc::clone(&self.downloader);
+        let torrent_coordinator = Arc::clone(&self.torrent_coordinator);
         let settings = Arc::clone(&self.settings);
         let washing = Arc::clone(&self.washing);
 
@@ -498,7 +472,7 @@ impl RssProcessingService {
 
             // Create a temporary service instance for background processing
             let service =
-                RssProcessingService::new(db.clone(), rss_client, downloader, settings.clone(), washing);
+                RssProcessingService::new(db.clone(), rss_client, torrent_coordinator, settings.clone(), washing);
 
             // Get global exclude filters from settings
             let settings_data = settings.get();

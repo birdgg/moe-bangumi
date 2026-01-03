@@ -257,6 +257,24 @@ impl MetadataRepository {
         Ok(count.0)
     }
 
+    /// Get metadata records with remote poster URLs (not starting with /posters/)
+    pub async fn get_remote_poster_metadata(
+        pool: &SqlitePool,
+    ) -> Result<Vec<(i64, String)>, sqlx::Error> {
+        let rows: Vec<(i64, String)> = sqlx::query_as(
+            r#"
+            SELECT id, poster_url
+            FROM metadata
+            WHERE poster_url IS NOT NULL
+              AND poster_url != ''
+              AND poster_url NOT LIKE '/posters/%'
+            "#,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rows)
+    }
 }
 
 /// Internal row type for mapping SQLite results

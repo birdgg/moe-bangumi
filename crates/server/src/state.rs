@@ -7,10 +7,10 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    BangumiService, CacheService, CalendarService, DownloaderService, HttpClientService,
-    LogCleanupJob, LogService, MetadataService, NotificationService,
-    PosterService, RenameJob, RenameService, RssFetchJob, RssProcessingService, SchedulerService,
-    SettingsService, TorrentSearchService, WashingService,
+    create_downloader_service, BangumiService, CacheService, CalendarService, DownloaderService,
+    HttpClientService, LogCleanupJob, LogService, MetadataService, NotificationService,
+    PosterService, PosterSyncJob, RenameJob, RenameService, RssFetchJob, RssProcessingService,
+    SchedulerService, SettingsService, TorrentCoordinator, TorrentSearchService, WashingService,
 };
 
 #[derive(Clone)]
@@ -78,8 +78,8 @@ impl AppState {
         // Create log service for logging and notifications
         let logs = Arc::new(LogService::new(db.clone()));
 
-        // Create downloader service with settings reference
-        let downloader = DownloaderService::new(Arc::clone(&settings));
+        // Create downloader service with settings reference (Actor mode)
+        let downloader = create_downloader_service(Arc::clone(&settings));
 
         // Create poster service with dynamic client provider
         let poster = Arc::new(PosterService::with_client_provider(
@@ -97,6 +97,12 @@ impl AppState {
         // Create torrent search service
         let torrent_search = Arc::new(TorrentSearchService::new(Arc::clone(&rss_arc)));
 
+        // Create torrent coordinator (high-level service for db + downloader)
+        let torrent_coordinator = Arc::new(TorrentCoordinator::new(
+            db.clone(),
+            Arc::clone(&downloader_arc),
+        ));
+
         // Create washing service (for priority-based torrent replacement)
         let washing = Arc::new(WashingService::new(
             db.clone(),
@@ -108,7 +114,7 @@ impl AppState {
         let rss_processing = Arc::new(RssProcessingService::new(
             db.clone(),
             Arc::clone(&rss_arc),
-            Arc::clone(&downloader_arc),
+            Arc::clone(&torrent_coordinator),
             Arc::clone(&settings),
             Arc::clone(&washing),
         ));
@@ -167,7 +173,8 @@ impl AppState {
         let scheduler = SchedulerService::new()
             .with_arc_job(Arc::clone(&rss_fetch_job))
             .with_job(LogCleanupJob::new(Arc::clone(&logs)))
-            .with_job(RenameJob::new(Arc::clone(&rename)));
+            .with_job(RenameJob::new(Arc::clone(&rename)))
+            .with_job(PosterSyncJob::new(db.clone(), Arc::clone(&poster)));
         scheduler.start();
 
         Self {

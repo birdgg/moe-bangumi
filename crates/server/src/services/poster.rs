@@ -4,6 +4,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use reqwest::Client;
+use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use thiserror::Error;
 
@@ -188,7 +189,11 @@ impl PosterService {
             .unwrap_or(0);
         let tmp_path = local_path.with_extension(format!("tmp.{}", temp_suffix));
 
-        tokio::fs::write(&tmp_path, &bytes).await?;
+        if let Err(e) = tokio::fs::write(&tmp_path, &bytes).await {
+            // Clean up temp file on failure
+            let _ = tokio::fs::remove_file(&tmp_path).await;
+            return Err(e.into());
+        }
 
         // Rename to final path (atomic on most filesystems)
         if let Err(e) = tokio::fs::rename(&tmp_path, &local_path).await {
@@ -293,6 +298,61 @@ impl PosterService {
             tracing::debug!("Background poster download for metadata {} completed", metadata_id);
         });
     }
+
+    /// Generate a filename from URL using SHA256 hash.
+    ///
+    /// Extracts the extension from the URL and appends it to the hash.
+    /// Falls back to .jpg if no valid extension found.
+    fn hash_url_to_filename(url: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(url.as_bytes());
+        let hash = hex::encode(hasher.finalize());
+        let short_hash = &hash[..16]; // Use first 16 chars for shorter filename
+
+        // Extract extension from URL, handling query params and fragments
+        let extension = url
+            .rsplit('/')
+            .next()
+            .and_then(|filename| {
+                // Remove query params and fragment before extracting extension
+                let clean_filename = filename.split('?').next().unwrap_or(filename);
+                let clean_filename = clean_filename.split('#').next().unwrap_or(clean_filename);
+                clean_filename.rsplit('.').next()
+            })
+            .filter(|ext| {
+                let ext_lower = ext.to_lowercase();
+                matches!(ext_lower.as_str(), "jpg" | "jpeg" | "png" | "gif" | "webp")
+            })
+            .unwrap_or("jpg");
+
+        format!("{}.{}", short_hash, extension)
+    }
+
+    /// Download poster from any URL (not just BGM.tv).
+    ///
+    /// Uses URL hash as filename for deduplication.
+    ///
+    /// # Returns
+    /// * `Ok(local_path)` - Local path like "/posters/abc123.jpg"
+    /// * `Err` - Download failed
+    pub async fn download_from_url(&self, url: &str) -> Result<String, PosterError> {
+        // Already a local path
+        if url.starts_with("/posters/") {
+            return Ok(url.to_string());
+        }
+
+        // For BGM.tv URLs, normalize first then use original filename
+        if url.contains("bgm.tv") {
+            let normalized_url = Self::normalize_bgm_url(url);
+            if let Some(filename) = Self::extract_bgm_filename(&normalized_url) {
+                return self.download_poster(&normalized_url, filename).await;
+            }
+        }
+
+        // For other URLs, use hash-based filename
+        let filename = Self::hash_url_to_filename(url);
+        self.download_poster(url, &filename).await
+    }
 }
 
 #[cfg(test)]
@@ -327,5 +387,56 @@ mod tests {
     fn test_normalize_bgm_url_non_bgm() {
         let url = "https://mikanani.me/images/Bangumi/202501/b95edb86.jpg";
         assert_eq!(PosterService::normalize_bgm_url(url), url);
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_with_jpg() {
+        let url = "https://mikanani.me/images/Bangumi/202501/b95edb86.jpg";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".jpg"));
+        assert_eq!(filename.len(), 20); // 16 hash chars + 4 for ".jpg"
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_with_png() {
+        let url = "https://example.com/poster.png";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".png"));
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_no_extension() {
+        let url = "https://example.com/poster";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".jpg")); // Falls back to jpg
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_invalid_extension() {
+        let url = "https://example.com/poster.exe";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".jpg")); // Falls back to jpg
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_deterministic() {
+        let url = "https://example.com/test.jpg";
+        let filename1 = PosterService::hash_url_to_filename(url);
+        let filename2 = PosterService::hash_url_to_filename(url);
+        assert_eq!(filename1, filename2); // Same URL produces same filename
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_with_query_params() {
+        let url = "https://example.com/poster.jpg?v=123&size=large";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".jpg"));
+    }
+
+    #[test]
+    fn test_hash_url_to_filename_with_fragment() {
+        let url = "https://example.com/poster.png#section";
+        let filename = PosterService::hash_url_to_filename(url);
+        assert!(filename.ends_with(".png"));
     }
 }
