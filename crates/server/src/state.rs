@@ -7,10 +7,11 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    create_downloader_service, BangumiService, CacheService, CalendarService, DownloaderService,
-    HttpClientService, LogCleanupJob, LogService, MetadataService, NotificationService,
-    PosterService, PosterSyncJob, RenameJob, RenameService, RssFetchJob, RssProcessingService,
-    SchedulerService, SettingsService, TorrentCoordinator, WashingService,
+    create_downloader_service, create_notification_service, BangumiService, CacheService,
+    CalendarService, DownloaderService, HttpClientService, LogCleanupJob, LogService,
+    MetadataService, NotificationService, PosterService, PosterSyncJob, RenameJob, RenameService,
+    RssFetchJob, RssProcessingService, SchedulerService, SettingsService, TorrentCoordinator,
+    TorrentSyncJob, WashingService,
 };
 
 #[derive(Clone)]
@@ -137,8 +138,8 @@ impl AppState {
             Arc::clone(&rss_processing),
         ));
 
-        // Create notification service
-        let notification = Arc::new(NotificationService::new(
+        // Create notification service (Actor mode)
+        let notification = Arc::new(create_notification_service(
             Arc::clone(&settings),
             Arc::clone(&http_client_service),
         ));
@@ -170,7 +171,8 @@ impl AppState {
             .with_arc_job(Arc::clone(&rss_fetch_job))
             .with_job(LogCleanupJob::new(Arc::clone(&logs)))
             .with_job(RenameJob::new(Arc::clone(&rename)))
-            .with_job(PosterSyncJob::new(db.clone(), Arc::clone(&poster)));
+            .with_job(PosterSyncJob::new(db.clone(), Arc::clone(&poster)))
+            .with_job(TorrentSyncJob::new(db.clone(), Arc::clone(&downloader_arc)));
         scheduler.start();
 
         Self {

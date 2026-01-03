@@ -12,4 +12,4 @@ pub use calendar::{CalendarEntry, CalendarRepository, CalendarWithMetadata};
 pub use log::LogRepository;
 pub use metadata::MetadataRepository;
 pub use rss::RssRepository;
-pub use torrent::TorrentRepository;
+pub use torrent::{TorrentRepository, TorrentSyncInfo};

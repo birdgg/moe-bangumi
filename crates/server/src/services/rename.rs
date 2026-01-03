@@ -180,27 +180,17 @@ impl RenameService {
             let notification_title = format!("{} 第{}话", title, episode_str);
             let notification_content = "已更新";
 
-            // Try to load poster and send with image
-            let notification_result = if let Some(ref poster_path) = poster_url {
+            // Send notification (fire-and-forget)
+            if let Some(ref poster_path) = poster_url {
                 self.send_notification_with_poster(
                     &notification_title,
                     notification_content,
                     poster_path,
                 )
-                .await
+                .await;
             } else {
                 self.notification
-                    .notify_download(&notification_title, notification_content)
-                    .await
-                    .map_err(|e| e.to_string())
-            };
-
-            if let Err(e) = notification_result {
-                tracing::warn!(
-                    "Failed to send notification for bangumi {}: {}",
-                    bangumi_id,
-                    e
-                );
+                    .notify_download(&notification_title, notification_content);
             }
         }
 
@@ -606,12 +596,7 @@ impl RenameService {
     /// Reads the poster file from disk and sends it with the notification.
     /// Falls back to text-only notification if the poster cannot be read.
     /// Uses poster_path as cache key for Telegram file_id caching.
-    async fn send_notification_with_poster(
-        &self,
-        title: &str,
-        content: &str,
-        poster_path: &str,
-    ) -> std::result::Result<(), String> {
+    async fn send_notification_with_poster(&self, title: &str, content: &str, poster_path: &str) {
         // poster_path is like "/posters/xxx.jpg", need to convert to absolute path
         let poster_file = if poster_path.starts_with("/posters/") {
             self.config.posters_path().join(&poster_path[9..]) // Skip "/posters/"
@@ -623,10 +608,12 @@ impl RenameService {
         match tokio::fs::read(&poster_file).await {
             Ok(photo_data) => {
                 // Use poster_path as cache_key for Telegram file_id caching
-                self.notification
-                    .notify_download_with_photo(title, content, &photo_data, Some(poster_path))
-                    .await
-                    .map_err(|e| e.to_string())
+                self.notification.notify_download_with_photo(
+                    title,
+                    content,
+                    photo_data,
+                    Some(poster_path.to_string()),
+                );
             }
             Err(e) => {
                 tracing::debug!(
@@ -634,10 +621,7 @@ impl RenameService {
                     poster_file,
                     e
                 );
-                self.notification
-                    .notify_download(title, content)
-                    .await
-                    .map_err(|e| e.to_string())
+                self.notification.notify_download(title, content);
             }
         }
     }

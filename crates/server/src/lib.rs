@@ -57,10 +57,7 @@ pub async fn run_server(
         }
     }
 
-    // Start notification worker
-    if let Err(e) = state.notification.start().await {
-        tracing::warn!("Failed to start notification service: {}", e);
-    }
+    // Note: Notification service is now Actor-based and starts automatically
 
     // Start log writer if receiver is provided
     if let Some(receiver) = log_receiver {

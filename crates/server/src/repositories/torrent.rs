@@ -314,6 +314,24 @@ impl TorrentRepository {
         Ok(result)
     }
 
+    /// Get all torrent info_hashes with their torrent_url for sync purposes
+    /// Returns tuples of (info_hash, torrent_url, save_path from bangumi)
+    pub async fn get_all_for_sync(
+        pool: &SqlitePool,
+    ) -> Result<Vec<TorrentSyncInfo>, sqlx::Error> {
+        let rows = sqlx::query_as::<_, TorrentSyncInfo>(
+            r#"
+            SELECT t.info_hash, t.torrent_url, b.save_path
+            FROM torrent t
+            JOIN bangumi b ON t.bangumi_id = b.id
+            "#,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rows)
+    }
+
     /// Get the best torrent for each episode of a bangumi
     /// "Best" means the first torrent found for each episode (by created_at DESC)
     pub async fn get_best_by_bangumi(
@@ -341,6 +359,14 @@ impl TorrentRepository {
 
         Ok(result)
     }
+}
+
+/// Info needed for torrent sync job
+#[derive(Debug, sqlx::FromRow)]
+pub struct TorrentSyncInfo {
+    pub info_hash: String,
+    pub torrent_url: String,
+    pub save_path: String,
 }
 
 /// Internal row type for mapping SQLite results

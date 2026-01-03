@@ -25,13 +25,13 @@ pub use downloader::{
 };
 pub use http_client::{HttpClientError, HttpClientService};
 pub use log::{LogError, LogService};
-pub use notification::{NotificationError, NotificationService};
+pub use notification::{create_notification_service, NotificationError, NotificationService};
 pub use poster::{PosterError, PosterService};
 pub use rename::{RenameError, RenameService};
 pub use rss_processing::RssProcessingService;
 pub use scheduler::{
     JobResult, LogCleanupJob, PosterSyncJob, RenameJob, RssFetchJob, SchedulerJob,
-    SchedulerService,
+    SchedulerService, TorrentSyncJob,
 };
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
 pub use torrent_coordinator::{QueueDownloadParams, TorrentCoordinator};
