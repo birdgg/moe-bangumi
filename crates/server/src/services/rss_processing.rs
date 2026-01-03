@@ -1,9 +1,13 @@
+use futures::stream::{self, StreamExt};
 use parser::{ParseResult, Parser};
 use regex::Regex;
 use rss::{FetchContext, FetchResult, RssClient, RssItem, RssSource};
 use sqlx::SqlitePool;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+/// Maximum number of RSS feeds to fetch concurrently
+const RSS_FETCH_CONCURRENCY: usize = 5;
 
 use crate::models::{BangumiWithMetadata, CreateTorrent, Rss, Torrent};
 use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
@@ -452,10 +456,11 @@ impl RssProcessingService {
         tracing::debug!("[{}] Queued download for E{}: {}", rss.title, episode, info_hash);
     }
 
-    /// Process multiple RSS subscriptions in batch (concurrently).
+    /// Process multiple RSS subscriptions in batch (concurrently with limit).
     ///
     /// Used by the scheduled RSS fetch job to process all enabled subscriptions.
-    /// RSS feeds are fetched and processed concurrently for better performance.
+    /// RSS feeds are fetched and processed concurrently for better performance,
+    /// with a maximum of `RSS_FETCH_CONCURRENCY` concurrent requests.
     ///
     /// With the priority-based washing system, all RSS feeds are processed equally.
     /// Higher priority resources will automatically replace lower priority ones
@@ -465,12 +470,17 @@ impl RssProcessingService {
             return;
         }
 
-        tracing::debug!("Processing {} RSS feeds concurrently", rss_list.len());
-        let futures: Vec<_> = rss_list
-            .iter()
-            .map(|rss| self.process_single(rss, global_exclude_filters))
-            .collect();
-        futures::future::join_all(futures).await;
+        tracing::debug!(
+            "Processing {} RSS feeds with concurrency limit {}",
+            rss_list.len(),
+            RSS_FETCH_CONCURRENCY
+        );
+
+        stream::iter(rss_list)
+            .map(|rss| async move { self.process_single(&rss, global_exclude_filters).await })
+            .buffer_unordered(RSS_FETCH_CONCURRENCY)
+            .collect::<Vec<_>>()
+            .await;
     }
 
     /// Spawn background tasks to process RSS subscriptions by their IDs.
