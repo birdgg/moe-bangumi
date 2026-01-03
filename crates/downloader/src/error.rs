@@ -20,6 +20,9 @@ pub enum DownloaderError {
     #[error("Downloader not configured")]
     NotConfigured,
 
+    #[error("Downloader service unavailable (actor stopped)")]
+    ServiceUnavailable,
+
     #[error("Operation not supported: {0}")]
     NotSupported(String),
 }

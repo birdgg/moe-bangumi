@@ -37,8 +37,8 @@ impl DownloaderHandle {
         self.sender
             .send(DownloaderMessage::AddTask { options, reply })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 获取任务文件
@@ -50,8 +50,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 获取任务列表
@@ -66,8 +66,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 删除任务
@@ -81,8 +81,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 添加标签
@@ -95,8 +95,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 移除标签
@@ -109,8 +109,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 重命名文件
@@ -129,8 +129,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 获取待重命名任务
@@ -141,8 +141,8 @@ impl DownloaderHandle {
         self.sender
             .send(DownloaderMessage::GetRenamePendingTasks { reply })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 标记任务重命名完成
@@ -156,8 +156,8 @@ impl DownloaderHandle {
                 reply,
             })
             .await
-            .map_err(|_| DownloaderError::NotConfigured)?;
-        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+            .map_err(|_| DownloaderError::ServiceUnavailable)?;
+        rx.await.map_err(|_| DownloaderError::ServiceUnavailable)?
     }
 
     /// 发送失效通知（内部使用）
