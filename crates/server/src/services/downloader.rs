@@ -15,6 +15,14 @@ pub use downloader::{
     DownloaderType, Task, TaskFile, TaskFilter, TaskStatus,
 };
 
+/// Task tags used internally
+mod tags {
+    /// Tag identifying tasks added by this application
+    pub const MOE: &str = "moe";
+    /// Tag identifying tasks pending rename processing
+    pub const RENAME: &str = "rename";
+}
+
 /// DownloaderService 类型别名，保持 API 兼容
 pub type DownloaderService = DownloaderHandle;
 

@@ -13,9 +13,7 @@ use std::sync::Arc;
 use crate::config::Config;
 use crate::models::{BangumiWithMetadata, Torrent};
 use crate::repositories::{BangumiRepository, TorrentRepository};
-use crate::services::{
-    DownloaderService, NotificationService, Task, TaskFile, TaskFilter, TaskStatus,
-};
+use crate::services::{DownloaderService, NotificationService, Task, TaskFile};
 
 /// Error type for rename operations
 #[derive(Debug, thiserror::Error)]
@@ -54,12 +52,12 @@ pub struct RenameTaskResult {
 /// Service for renaming downloaded media files to Plex/Jellyfin compatible names.
 ///
 /// The service:
-/// 1. Queries tasks with "rename" tag that are completed
+/// 1. Queries completed tasks pending rename from downloader
 /// 2. Matches them with Torrent records in the database
 /// 3. Gets Bangumi metadata for proper naming
 /// 4. Renames video files and associated subtitles
 /// 5. Generates .nfo metadata files
-/// 6. Removes the "rename" tag when done
+/// 6. Marks tasks as rename complete
 pub struct RenameService {
     db: SqlitePool,
     downloader: Arc<DownloaderService>,
@@ -240,14 +238,10 @@ impl RenameService {
             .join(", ")
     }
 
-    /// Get all completed tasks with "rename" tag
+    /// Get all completed tasks pending rename
     async fn get_pending_tasks(&self) -> Result<Vec<(Task, Torrent, BangumiWithMetadata)>> {
-        // Query downloader for completed/seeding tasks with "rename" tag
-        let filter = TaskFilter::new()
-            .statuses([TaskStatus::Completed, TaskStatus::Seeding])
-            .tag("rename");
-
-        let all_tasks = self.downloader.get_tasks(Some(&filter)).await?;
+        // Query downloader for completed/seeding tasks with rename tag
+        let all_tasks = self.downloader.get_rename_pending_tasks().await?;
 
         let mut result = Vec::new();
 
@@ -585,9 +579,9 @@ impl RenameService {
         }
     }
 
-    /// Remove the "rename" tag from a task
+    /// Mark task rename as complete
     async fn finalize_task(&self, task_id: &str) -> Result<()> {
-        self.downloader.remove_tags(task_id, &["rename"]).await?;
+        self.downloader.complete_rename(task_id).await?;
         Ok(())
     }
 

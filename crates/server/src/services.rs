@@ -11,7 +11,6 @@ mod rename;
 mod rss_processing;
 mod scheduler;
 mod settings;
-mod torrent_coordinator;
 mod tracing_layer;
 mod washing;
 
@@ -31,9 +30,8 @@ pub use rename::{RenameError, RenameService};
 pub use rss_processing::RssProcessingService;
 pub use scheduler::{
     JobResult, LogCleanupJob, PosterSyncJob, RenameJob, RssFetchJob, SchedulerJob,
-    SchedulerService, TorrentSyncJob,
+    SchedulerService,
 };
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
-pub use torrent_coordinator::{QueueDownloadParams, TorrentCoordinator};
 pub use tracing_layer::{create_log_channel, start_log_writer, DatabaseLayer, LogReceiver};
 pub use washing::{WashParams, WashingError, WashingService};

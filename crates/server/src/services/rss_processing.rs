@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::models::{BangumiWithMetadata, CreateTorrent, Rss, Torrent};
 use crate::repositories::{BangumiRepository, RssRepository, TorrentRepository};
 use crate::services::washing::{WashParams, WashingService};
-use crate::services::{QueueDownloadParams, SettingsService, TorrentCoordinator};
+use crate::services::{AddTaskOptions, DownloaderService, SettingsService};
 use washing::{ComparableTorrent, PriorityCalculator};
 
 /// Context for RSS processing, avoiding repeated parameter passing
@@ -30,7 +30,7 @@ struct TorrentLookup {
 pub struct RssProcessingService {
     db: SqlitePool,
     rss_client: Arc<RssClient>,
-    torrent_coordinator: Arc<TorrentCoordinator>,
+    downloader: Arc<DownloaderService>,
     settings: Arc<SettingsService>,
     washing: Arc<WashingService>,
     parser: Parser,
@@ -41,14 +41,14 @@ impl RssProcessingService {
     pub fn new(
         db: SqlitePool,
         rss_client: Arc<RssClient>,
-        torrent_coordinator: Arc<TorrentCoordinator>,
+        downloader: Arc<DownloaderService>,
         settings: Arc<SettingsService>,
         washing: Arc<WashingService>,
     ) -> Self {
         Self {
             db,
             rss_client,
-            torrent_coordinator,
+            downloader,
             settings,
             washing,
             parser: Parser::new(),
@@ -386,7 +386,7 @@ impl RssProcessingService {
         }
     }
 
-    /// Create torrent record and queue download task via TorrentCoordinator
+    /// Create torrent record and queue download task
     async fn create_and_add_task(
         &self,
         rss: &Rss,
@@ -407,24 +407,49 @@ impl RssProcessingService {
             Some(ctx.bangumi.metadata.platform.as_str()),
         );
 
-        let params = QueueDownloadParams {
-            torrent: CreateTorrent {
-                bangumi_id: rss.bangumi_id,
-                rss_id: Some(rss.id),
-                info_hash: info_hash.to_string(),
-                torrent_url: torrent_url.to_string(),
-                episode_number: Some(episode),
-                subtitle_group: parse_result.subtitle_group.clone(),
-                subtitle_languages: parse_result.subtitle_language.clone(),
-                resolution: parse_result.resolution.clone(),
-            },
-            save_path: ctx.bangumi.bangumi.save_path.clone(),
-            rename: filename,
+        // Start transaction
+        let mut tx = match self.db.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("[{}] Failed to start transaction: {}", rss.title, e);
+                return;
+            }
         };
 
-        if let Err(e) = self.torrent_coordinator.queue_download(params).await {
-            tracing::error!("[{}] Failed to queue download: {}", rss.title, e);
+        // 1. Create torrent record in database
+        let torrent = CreateTorrent {
+            bangumi_id: rss.bangumi_id,
+            rss_id: Some(rss.id),
+            info_hash: info_hash.to_string(),
+            torrent_url: torrent_url.to_string(),
+            episode_number: Some(episode),
+            subtitle_group: parse_result.subtitle_group.clone(),
+            subtitle_languages: parse_result.subtitle_language.clone(),
+            resolution: parse_result.resolution.clone(),
+        };
+
+        if let Err(e) = TorrentRepository::create_with_executor(&mut *tx, torrent).await {
+            tracing::error!("[{}] Failed to create torrent record: {}", rss.title, e);
+            return;
         }
+
+        // 2. Add download task
+        let options = AddTaskOptions::new(torrent_url)
+            .save_path(&ctx.bangumi.bangumi.save_path)
+            .rename(&filename);
+
+        if let Err(e) = self.downloader.add_task(options).await {
+            tracing::error!("[{}] Failed to add download task: {}", rss.title, e);
+            return;
+        }
+
+        // 3. Commit transaction
+        if let Err(e) = tx.commit().await {
+            tracing::error!("[{}] Failed to commit transaction: {}", rss.title, e);
+            return;
+        }
+
+        tracing::debug!("[{}] Queued download for E{}: {}", rss.title, episode, info_hash);
     }
 
     /// Process multiple RSS subscriptions in batch (concurrently).
@@ -460,7 +485,7 @@ impl RssProcessingService {
 
         let db = self.db.clone();
         let rss_client = Arc::clone(&self.rss_client);
-        let torrent_coordinator = Arc::clone(&self.torrent_coordinator);
+        let downloader = Arc::clone(&self.downloader);
         let settings = Arc::clone(&self.settings);
         let washing = Arc::clone(&self.washing);
 
@@ -472,7 +497,7 @@ impl RssProcessingService {
 
             // Create a temporary service instance for background processing
             let service =
-                RssProcessingService::new(db.clone(), rss_client, torrent_coordinator, settings.clone(), washing);
+                RssProcessingService::new(db.clone(), rss_client, downloader, settings.clone(), washing);
 
             // Get global exclude filters from settings
             let settings_data = settings.get();

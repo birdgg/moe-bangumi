@@ -3,6 +3,7 @@
 //! This module handles the logic for replacing existing torrents with higher priority ones
 //! based on subtitle group, language, and resolution settings.
 
+use downloader::DownloaderError;
 use parser::ParseResult;
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -18,6 +19,8 @@ use crate::services::{AddTaskOptions, DownloaderService, SettingsService};
 pub enum WashingError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
+    #[error("Downloader error: {0}")]
+    Downloader(#[from] DownloaderError),
 }
 
 /// Parameters for washing an episode
@@ -65,7 +68,11 @@ impl WashingService {
     ///
     /// Returns true only if the new torrent has higher priority than
     /// the best existing torrent (comparing subtitle group, language, resolution).
-    pub fn should_wash(&self, existing_torrents: &[Torrent], new_parse_result: &ParseResult) -> bool {
+    pub fn should_wash(
+        &self,
+        existing_torrents: &[Torrent],
+        new_parse_result: &ParseResult,
+    ) -> bool {
         if existing_torrents.is_empty() {
             return false; // Nothing to wash, caller should use normal add
         }
@@ -99,11 +106,13 @@ impl WashingService {
 
     /// Execute washing: atomically delete old torrents, create new one, and add download.
     ///
-    /// This method:
-    /// 1. Deletes all existing torrents for the episode from database (in a transaction)
-    /// 2. Creates the new torrent record
-    /// 3. Removes old torrents from downloader (best-effort)
-    /// 4. Adds new download task
+    /// 使用事务确保数据库和下载器操作的一致性：
+    /// 1. 开始事务
+    /// 2. 删除所有旧 torrent 记录
+    /// 3. 创建新 torrent 记录
+    /// 4. 从下载器删除旧任务
+    /// 5. 添加新下载任务
+    /// 6. 全部成功则提交事务，任一失败则回滚
     ///
     /// Returns the info_hashes of deleted torrents.
     pub async fn wash_episode(&self, params: WashParams<'_>) -> Result<Vec<String>, WashingError> {
@@ -117,29 +126,22 @@ impl WashingService {
             params.parse_result.resolution,
         );
 
-        // Collect info_hashes for downloader cleanup (done after transaction)
+        // Collect info_hashes for downloader cleanup
         let old_hashes: Vec<String> = params
             .existing_torrents
             .iter()
             .map(|t| t.info_hash.clone())
             .collect();
 
-        // Use transaction to ensure atomicity: delete old + create new
+        // Use transaction to ensure atomicity
         let mut tx = self.db.begin().await?;
 
-        // Delete all existing torrents in transaction
+        // 1. Delete all existing torrents in transaction
         for existing in params.existing_torrents {
-            if let Err(e) = TorrentRepository::delete_with_executor(&mut *tx, existing.id).await {
-                tracing::error!(
-                    "[{}] Failed to delete old torrent from database: {}",
-                    params.rss_title,
-                    e
-                );
-                return Err(WashingError::Database(e));
-            }
+            TorrentRepository::delete_with_executor(&mut *tx, existing.id).await?;
         }
 
-        // Create new torrent in transaction (with parsed metadata)
+        // 2. Create new torrent in transaction (with parsed metadata)
         let new_torrent = CreateTorrent {
             bangumi_id: params.bangumi_id,
             rss_id: params.rss_id,
@@ -151,43 +153,28 @@ impl WashingService {
             resolution: params.parse_result.resolution.clone(),
         };
 
-        if let Err(e) = TorrentRepository::create_with_executor(&mut *tx, new_torrent).await {
-            tracing::error!("[{}] Failed to create new torrent: {}", params.rss_title, e);
-            return Err(WashingError::Database(e));
+        TorrentRepository::create_with_executor(&mut *tx, new_torrent).await?;
+
+        // 3. Delete old torrents from downloader
+        for hash in &old_hashes {
+            self.downloader.delete_task(&[hash], true).await?;
+            tracing::info!(
+                "[{}] Deleted old torrent from downloader: {}",
+                params.rss_title,
+                hash
+            );
         }
 
-        // Commit transaction
+        // 4. Add new download task
+        let options = AddTaskOptions::new(params.torrent_url)
+            .save_path(params.save_path)
+            .rename(params.rename);
+
+        self.downloader.add_task(options).await?;
+
+        // 5. All successful, commit transaction
         tx.commit().await?;
 
-        // Transaction committed successfully, now handle downloader operations (best-effort)
-        for hash in &old_hashes {
-            self.delete_from_downloader(hash, params.rss_title);
-        }
-
-        // Add new download task
-        self.add_download_task(params.torrent_url, params.save_path, params.rename);
-
         Ok(old_hashes)
-    }
-
-    /// Add a download task (fire-and-forget).
-    fn add_download_task(&self, torrent_url: &str, save_path: &str, rename: &str) {
-        let options = AddTaskOptions::new(torrent_url)
-            .save_path(save_path)
-            .rename(rename)
-            .add_tag("moe")
-            .add_tag("rename");
-
-        self.downloader.add_task(options);
-    }
-
-    /// Delete a torrent from the downloader by info_hash (fire-and-forget).
-    fn delete_from_downloader(&self, info_hash: &str, rss_title: &str) {
-        self.downloader.delete_task(&[info_hash], true);
-        tracing::info!(
-            "[{}] Queued deletion of old torrent: {}",
-            rss_title,
-            info_hash
-        );
     }
 }

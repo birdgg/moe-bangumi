@@ -7,7 +7,7 @@ use crate::services::RenameService;
 
 /// File rename job that runs every 10 minutes.
 ///
-/// This job scans for completed downloads with the "rename" tag
+/// This job scans for completed downloads pending rename
 /// and renames them to Plex/Jellyfin compatible names.
 pub struct RenameJob {
     rename_service: Arc<RenameService>,

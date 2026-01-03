@@ -10,8 +10,7 @@ use crate::services::{
     create_downloader_service, create_notification_service, BangumiService, CacheService,
     CalendarService, DownloaderService, HttpClientService, LogCleanupJob, LogService,
     MetadataService, NotificationService, PosterService, PosterSyncJob, RenameJob, RenameService,
-    RssFetchJob, RssProcessingService, SchedulerService, SettingsService, TorrentCoordinator,
-    TorrentSyncJob, WashingService,
+    RssFetchJob, RssProcessingService, SchedulerService, SettingsService, WashingService,
 };
 
 #[derive(Clone)]
@@ -94,12 +93,6 @@ impl AppState {
         let rss_arc = Arc::new(rss);
         let downloader_arc = Arc::new(downloader);
 
-        // Create torrent coordinator (high-level service for db + downloader)
-        let torrent_coordinator = Arc::new(TorrentCoordinator::new(
-            db.clone(),
-            Arc::clone(&downloader_arc),
-        ));
-
         // Create washing service (for priority-based torrent replacement)
         let washing = Arc::new(WashingService::new(
             db.clone(),
@@ -111,7 +104,7 @@ impl AppState {
         let rss_processing = Arc::new(RssProcessingService::new(
             db.clone(),
             Arc::clone(&rss_arc),
-            Arc::clone(&torrent_coordinator),
+            Arc::clone(&downloader_arc),
             Arc::clone(&settings),
             Arc::clone(&washing),
         ));
@@ -171,8 +164,7 @@ impl AppState {
             .with_arc_job(Arc::clone(&rss_fetch_job))
             .with_job(LogCleanupJob::new(Arc::clone(&logs)))
             .with_job(RenameJob::new(Arc::clone(&rename)))
-            .with_job(PosterSyncJob::new(db.clone(), Arc::clone(&poster)))
-            .with_job(TorrentSyncJob::new(db.clone(), Arc::clone(&downloader_arc)));
+            .with_job(PosterSyncJob::new(db.clone(), Arc::clone(&poster)));
         scheduler.start();
 
         Self {

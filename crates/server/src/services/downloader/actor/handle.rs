@@ -31,12 +31,14 @@ impl DownloaderHandle {
         rx.await.unwrap_or(false)
     }
 
-    /// 添加下载任务 (fire-and-forget)
-    pub fn add_task(&self, options: AddTaskOptions) {
-        let sender = self.sender.clone();
-        tokio::spawn(async move {
-            let _ = sender.send(DownloaderMessage::AddTask { options }).await;
-        });
+    /// 添加下载任务
+    pub async fn add_task(&self, options: AddTaskOptions) -> Result<String, DownloaderError> {
+        let (reply, rx) = oneshot::channel();
+        self.sender
+            .send(DownloaderMessage::AddTask { options, reply })
+            .await
+            .map_err(|_| DownloaderError::NotConfigured)?;
+        rx.await.map_err(|_| DownloaderError::NotConfigured)?
     }
 
     /// 获取任务文件
@@ -68,15 +70,19 @@ impl DownloaderHandle {
         rx.await.map_err(|_| DownloaderError::NotConfigured)?
     }
 
-    /// 删除任务 (fire-and-forget)
-    pub fn delete_task(&self, ids: &[&str], delete_files: bool) {
-        let sender = self.sender.clone();
+    /// 删除任务
+    pub async fn delete_task(&self, ids: &[&str], delete_files: bool) -> Result<(), DownloaderError> {
+        let (reply, rx) = oneshot::channel();
         let ids: Vec<String> = ids.iter().map(|s| s.to_string()).collect();
-        tokio::spawn(async move {
-            let _ = sender
-                .send(DownloaderMessage::DeleteTask { ids, delete_files })
-                .await;
-        });
+        self.sender
+            .send(DownloaderMessage::DeleteTask {
+                ids,
+                delete_files,
+                reply,
+            })
+            .await
+            .map_err(|_| DownloaderError::NotConfigured)?;
+        rx.await.map_err(|_| DownloaderError::NotConfigured)?
     }
 
     /// 添加标签
@@ -120,6 +126,33 @@ impl DownloaderHandle {
                 id: id.to_string(),
                 old_path: old_path.to_string(),
                 new_path: new_path.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| DownloaderError::NotConfigured)?;
+        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+    }
+
+    /// 获取待重命名任务
+    ///
+    /// 返回已完成/做种中且有 rename 标签的任务。
+    pub async fn get_rename_pending_tasks(&self) -> Result<Vec<Task>, DownloaderError> {
+        let (reply, rx) = oneshot::channel();
+        self.sender
+            .send(DownloaderMessage::GetRenamePendingTasks { reply })
+            .await
+            .map_err(|_| DownloaderError::NotConfigured)?;
+        rx.await.map_err(|_| DownloaderError::NotConfigured)?
+    }
+
+    /// 标记任务重命名完成
+    ///
+    /// 移除 rename 标签，表示该任务已完成重命名处理。
+    pub async fn complete_rename(&self, id: &str) -> Result<(), DownloaderError> {
+        let (reply, rx) = oneshot::channel();
+        self.sender
+            .send(DownloaderMessage::CompleteRename {
+                id: id.to_string(),
                 reply,
             })
             .await

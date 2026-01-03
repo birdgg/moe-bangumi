@@ -57,6 +57,9 @@ pub async fn delete_torrents(
     }
 
     let hashes: Vec<&str> = payload.hashes.iter().map(|s| s.as_str()).collect();
-    state.downloader.delete_task(&hashes, payload.delete_files);
+    state
+        .downloader
+        .delete_task(&hashes, payload.delete_files)
+        .await?;
     Ok(StatusCode::OK)
 }

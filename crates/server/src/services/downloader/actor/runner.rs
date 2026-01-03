@@ -4,6 +4,7 @@ use downloader::{Downloader, DownloaderClient, DownloaderError};
 use futures::future::BoxFuture;
 use tokio::sync::mpsc;
 
+use super::super::tags;
 use super::messages::DownloaderMessage;
 use super::state::DownloaderActorState;
 use crate::services::SettingsService;
@@ -45,10 +46,9 @@ impl DownloaderActor {
                 let _ = reply.send(result);
             }
 
-            DownloaderMessage::AddTask { options } => {
-                if let Err(e) = self.with_retry_add_task(options).await {
-                    tracing::error!("Failed to add task: {}", e);
-                }
+            DownloaderMessage::AddTask { options, reply } => {
+                let result = self.with_retry_add_task(options).await;
+                let _ = reply.send(result);
             }
 
             DownloaderMessage::GetTasks { filter, reply } => {
@@ -61,10 +61,13 @@ impl DownloaderActor {
                 let _ = reply.send(result);
             }
 
-            DownloaderMessage::DeleteTask { ids, delete_files } => {
-                if let Err(e) = self.with_retry_delete_task(&ids, delete_files).await {
-                    tracing::error!("Failed to delete task: {}", e);
-                }
+            DownloaderMessage::DeleteTask {
+                ids,
+                delete_files,
+                reply,
+            } => {
+                let result = self.with_retry_delete_task(&ids, delete_files).await;
+                let _ = reply.send(result);
             }
 
             DownloaderMessage::AddTags { id, tags, reply } => {
@@ -84,6 +87,16 @@ impl DownloaderActor {
                 reply,
             } => {
                 let result = self.with_retry_rename_file(&id, &old_path, &new_path).await;
+                let _ = reply.send(result);
+            }
+
+            DownloaderMessage::GetRenamePendingTasks { reply } => {
+                let result = self.with_retry_get_rename_pending_tasks().await;
+                let _ = reply.send(result);
+            }
+
+            DownloaderMessage::CompleteRename { id, reply } => {
+                let result = self.with_retry_complete_rename(&id).await;
                 let _ = reply.send(result);
             }
         }
@@ -110,11 +123,15 @@ impl DownloaderActor {
     }
 
     /// 添加任务（带重试）
+    ///
+    /// 自动添加以下 tag：
+    /// - `tags::MOE`: 标识由本应用添加的任务
+    /// - `tags::RENAME`: 确保 RenameJob 能识别需要重命名的任务
     async fn with_retry_add_task(
         &mut self,
         options: downloader::AddTaskOptions,
     ) -> Result<String, DownloaderError> {
-        let opts = options.add_tag("rename");
+        let opts = options.add_tag(tags::MOE).add_tag(tags::RENAME);
         self.with_retry(|client| {
             let opts = opts.clone();
             Box::pin(async move { client.add_task(opts).await })
@@ -217,6 +234,37 @@ impl DownloaderActor {
             let old_path = old_path.clone();
             let new_path = new_path.clone();
             Box::pin(async move { client.rename_file(&id, &old_path, &new_path).await })
+        })
+        .await
+    }
+
+    /// 获取待重命名任务（带重试）
+    ///
+    /// 返回已完成/做种中且有 `tags::RENAME` 标签的任务。
+    async fn with_retry_get_rename_pending_tasks(
+        &mut self,
+    ) -> Result<Vec<downloader::Task>, DownloaderError> {
+        use downloader::{TaskFilter, TaskStatus};
+
+        let filter = TaskFilter::new()
+            .statuses([TaskStatus::Completed, TaskStatus::Seeding])
+            .tag(tags::RENAME);
+
+        self.with_retry(|client| {
+            let filter = filter.clone();
+            Box::pin(async move { client.get_tasks(Some(&filter)).await })
+        })
+        .await
+    }
+
+    /// 标记任务重命名完成（带重试）
+    ///
+    /// 移除 `tags::RENAME` 标签。
+    async fn with_retry_complete_rename(&mut self, id: &str) -> Result<(), DownloaderError> {
+        let id = id.to_string();
+        self.with_retry(|client| {
+            let id = id.clone();
+            Box::pin(async move { client.remove_tags(&id, &[tags::RENAME]).await })
         })
         .await
     }

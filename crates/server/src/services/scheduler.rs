@@ -2,14 +2,12 @@ mod log_cleanup_job;
 mod poster_sync_job;
 mod rename_job;
 mod rss_fetch_job;
-mod torrent_sync_job;
 mod traits;
 
 pub use log_cleanup_job::LogCleanupJob;
 pub use poster_sync_job::PosterSyncJob;
 pub use rename_job::RenameJob;
 pub use rss_fetch_job::RssFetchJob;
-pub use torrent_sync_job::TorrentSyncJob;
 pub use traits::{JobResult, SchedulerJob};
 
 use std::sync::Arc;
