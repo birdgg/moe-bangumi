@@ -13,7 +13,7 @@ use std::time::Duration;
 use bgmtv::BgmtvClient;
 use futures::stream::{self, StreamExt};
 use mikan::{MikanClient, Season};
-use server::models::{CalendarSeedEntry, SeasonData};
+use server::models::{CreateMetadata, Platform, SeasonData};
 use server::SeasonIterator;
 use tracing_subscriber::EnvFilter;
 
@@ -215,7 +215,7 @@ async fn fetch_season_data(
         })
         .collect();
 
-    let entries: Vec<CalendarSeedEntry> = stream::iter(tasks)
+    let entries: Vec<CreateMetadata> = stream::iter(tasks)
         .map(
             |(mikan_id, bgmtv_id, air_week, _poster_url, _name, bgmtv)| async move {
                 match bgmtv.get_subject(bgmtv_id).await {
@@ -225,27 +225,29 @@ async fn fetch_season_data(
 
                         // Parse platform
                         let platform = match parsed.platform.to_lowercase().as_str() {
-                            "movie" | "劇場版" => "movie",
-                            "ova" => "ova",
-                            _ => "tv",
-                        }
-                        .to_string();
+                            "movie" | "劇場版" => Platform::Movie,
+                            "ova" => Platform::Ova,
+                            _ => Platform::Tv,
+                        };
 
-                        Some(CalendarSeedEntry {
-                            mikan_id,
-                            bgmtv_id,
+                        Some(CreateMetadata {
+                            mikan_id: Some(mikan_id),
+                            bgmtv_id: Some(bgmtv_id),
+                            tmdb_id: None,
                             title_chinese: parsed
                                 .title_chinese
                                 .clone()
                                 .or_else(|| parsed.title_japanese.clone())
                                 .unwrap_or_default(),
                             title_japanese: parsed.title_japanese,
-                            air_week,
-                            poster_url: Some(parsed.poster_url),
+                            season: parsed.season,
                             year: subject_year,
                             platform,
                             total_episodes: parsed.total_episodes as i32,
+                            poster_url: Some(parsed.poster_url),
                             air_date: parsed.air_date,
+                            air_week,
+                            finished: false,
                         })
                     }
                     Err(e) => {

@@ -9,8 +9,7 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 
 use crate::models::{
-    CalendarDay, CalendarSeedEntry, CalendarSubject, CreateMetadata, Metadata, Platform,
-    SeasonData, Weekday,
+    CalendarDay, CalendarSubject, CreateMetadata, Metadata, Platform, SeasonData, Weekday,
 };
 use crate::repositories::{CalendarEntry, CalendarRepository, MetadataRepository};
 use crate::services::PosterService;
@@ -312,9 +311,13 @@ impl CalendarService {
 
         let mut calendar_entries = Vec::new();
 
-        for entry in &season_data.entries {
+        for entry in season_data.entries {
             // Check if metadata already exists by bgmtv_id
-            let existing = MetadataRepository::get_by_bgmtv_id(&self.db, entry.bgmtv_id).await?;
+            let bgmtv_id = match entry.bgmtv_id {
+                Some(id) => id,
+                None => continue, // Skip entries without bgmtv_id
+            };
+            let existing = MetadataRepository::get_by_bgmtv_id(&self.db, bgmtv_id).await?;
 
             let metadata_id = if let Some(metadata) = existing {
                 // Trigger background poster update if seed has poster
@@ -324,8 +327,7 @@ impl CalendarService {
                 metadata.id
             } else {
                 // Create new metadata from seed entry
-                let create_data = Self::build_create_metadata_from_seed(entry);
-                let metadata = MetadataRepository::create(&self.db, create_data).await?;
+                let metadata = MetadataRepository::create(&self.db, entry).await?;
                 metadata.id
             };
 
@@ -376,34 +378,6 @@ impl CalendarService {
             result = Self::prev_season(result.0, result.1);
         }
         result
-    }
-
-    /// Build CreateMetadata from seed entry
-    fn build_create_metadata_from_seed(entry: &CalendarSeedEntry) -> CreateMetadata {
-        let platform = match entry.platform.as_str() {
-            "movie" => Platform::Movie,
-            "ova" => Platform::Ova,
-            _ => Platform::Tv,
-        };
-
-        // Parse Chinese title to extract season info
-        let parsed = bgmtv::parse_name(&entry.title_chinese);
-
-        CreateMetadata {
-            mikan_id: Some(entry.mikan_id.clone()),
-            bgmtv_id: Some(entry.bgmtv_id),
-            tmdb_id: None,
-            title_chinese: entry.title_chinese.clone(),
-            title_japanese: entry.title_japanese.clone(),
-            season: parsed.season,
-            year: entry.year,
-            platform,
-            total_episodes: entry.total_episodes,
-            poster_url: entry.poster_url.clone(),
-            air_date: entry.air_date.clone(),
-            air_week: entry.air_week,
-            finished: false,
-        }
     }
 
     /// Concurrently fetch BGM.tv IDs for bangumi list
