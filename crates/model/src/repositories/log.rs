@@ -49,24 +49,22 @@ impl LogRepository {
         let limit = params.limit.unwrap_or(50).min(500);
         let offset = params.offset.unwrap_or(0);
 
-        // Build dynamic query
+        // Build dynamic query with parameter bindings
         let mut query = SELECT_LOG.to_string();
 
-        if params.level.is_some() {
-            query.push_str(" WHERE level = $1");
-        }
-
-        query.push_str(" ORDER BY created_at DESC");
-        query.push_str(&format!(" LIMIT {} OFFSET {}", limit, offset));
-
-        // Execute with appropriate bindings
         let rows = if let Some(level) = &params.level {
+            query.push_str(" WHERE level = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3");
             sqlx::query_as::<_, LogRow>(&query)
                 .bind(level)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(pool)
                 .await?
         } else {
+            query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
             sqlx::query_as::<_, LogRow>(&query)
+                .bind(limit)
+                .bind(offset)
                 .fetch_all(pool)
                 .await?
         };

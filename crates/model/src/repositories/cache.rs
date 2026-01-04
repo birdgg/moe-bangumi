@@ -28,8 +28,14 @@ impl CacheRepository {
 
         match result {
             Some((data,)) => {
-                let parsed: T = serde_json::from_str(&data)
-                    .map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
+                let parsed: T = serde_json::from_str(&data).map_err(|e| {
+                    tracing::error!(
+                        cache_key = key,
+                        error = %e,
+                        "Failed to deserialize cached data"
+                    );
+                    sqlx::Error::Decode(Box::new(e))
+                })?;
                 Ok(Some(parsed))
             }
             None => Ok(None),
@@ -47,8 +53,14 @@ impl CacheRepository {
             .unwrap()
             .as_secs() as i64;
 
-        let json = serde_json::to_string(data)
-            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
+        let json = serde_json::to_string(data).map_err(|e| {
+            tracing::error!(
+                cache_key = key,
+                error = %e,
+                "Failed to serialize data for cache"
+            );
+            sqlx::Error::Protocol(format!("Cache serialization error: {}", e))
+        })?;
 
         sqlx::query(
             "INSERT OR REPLACE INTO cache (cache_key, data, fetched_at) VALUES (?, ?, ?)",

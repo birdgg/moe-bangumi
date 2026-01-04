@@ -152,35 +152,37 @@ impl TorrentRepository {
     }
 
     /// Update a torrent
+    /// Uses CASE/COALESCE for atomic update to avoid read-modify-write race conditions
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
         data: UpdateTorrent,
     ) -> Result<Option<Torrent>, sqlx::Error> {
-        let existing = Self::get_by_id(pool, id).await?;
-        let Some(existing) = existing else {
-            return Ok(None);
-        };
+        // Extract should_update flags for Clearable fields
+        let rss_id_update = data.rss_id.should_update();
+        let episode_number_update = data.episode_number.should_update();
 
-        let rss_id = data.rss_id.resolve(existing.rss_id);
-        let torrent_url = data.torrent_url.unwrap_or(existing.torrent_url);
-        let episode_number = data.episode_number.resolve(existing.episode_number);
-
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE torrent SET
-                rss_id = $1,
-                torrent_url = $2,
-                episode_number = $3
-            WHERE id = $4
+                rss_id = CASE WHEN $1 THEN $2 ELSE rss_id END,
+                torrent_url = COALESCE($3, torrent_url),
+                episode_number = CASE WHEN $4 THEN $5 ELSE episode_number END
+            WHERE id = $6
             "#,
         )
-        .bind(rss_id)
-        .bind(torrent_url)
-        .bind(episode_number)
+        .bind(rss_id_update)
+        .bind(data.rss_id.into_value())
+        .bind(&data.torrent_url)
+        .bind(episode_number_update)
+        .bind(data.episode_number.into_value())
         .bind(id)
         .execute(pool)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(None);
+        }
 
         Self::get_by_id(pool, id).await
     }
@@ -258,20 +260,28 @@ impl TorrentRepository {
             return Ok(HashSet::new());
         }
 
-        // Build query with IN clause
-        let placeholders: Vec<String> = (1..=info_hashes.len()).map(|i| format!("${}", i)).collect();
-        let query = format!(
-            "SELECT info_hash FROM torrent WHERE info_hash IN ({})",
-            placeholders.join(", ")
-        );
+        // SQLite has a limit on bind parameters (default 999), so we chunk the input
+        const CHUNK_SIZE: usize = 500;
+        let mut result = HashSet::new();
 
-        let mut query_builder = sqlx::query_scalar::<_, String>(&query);
-        for hash in info_hashes {
-            query_builder = query_builder.bind(hash);
+        for chunk in info_hashes.chunks(CHUNK_SIZE) {
+            let placeholders: Vec<String> =
+                (1..=chunk.len()).map(|i| format!("${}", i)).collect();
+            let query = format!(
+                "SELECT info_hash FROM torrent WHERE info_hash IN ({})",
+                placeholders.join(", ")
+            );
+
+            let mut query_builder = sqlx::query_scalar::<_, String>(&query);
+            for hash in chunk {
+                query_builder = query_builder.bind(hash);
+            }
+
+            let existing: Vec<String> = query_builder.fetch_all(pool).await?;
+            result.extend(existing);
         }
 
-        let existing: Vec<String> = query_builder.fetch_all(pool).await?;
-        Ok(existing.into_iter().collect())
+        Ok(result)
     }
 
     /// Batch get torrents by episode numbers for a specific bangumi
@@ -285,29 +295,34 @@ impl TorrentRepository {
             return Ok(HashMap::new());
         }
 
-        // Build query with IN clause
-        let placeholders: Vec<String> = (2..=episode_numbers.len() + 1)
-            .map(|i| format!("${}", i))
-            .collect();
-        let query = format!(
-            "{} WHERE bangumi_id = $1 AND episode_number IN ({}) ORDER BY episode_number ASC",
-            SELECT_TORRENT,
-            placeholders.join(", ")
-        );
-
-        let mut query_builder = sqlx::query_as::<_, TorrentRow>(&query).bind(bangumi_id);
-        for ep in episode_numbers {
-            query_builder = query_builder.bind(ep);
-        }
-
-        let rows: Vec<TorrentRow> = query_builder.fetch_all(pool).await?;
-
-        // Group by episode number
+        // SQLite has a limit on bind parameters (default 999), so we chunk the input
+        // Reserve 1 parameter for bangumi_id, use up to 499 for episode numbers
+        const CHUNK_SIZE: usize = 499;
         let mut result: HashMap<i32, Vec<Torrent>> = HashMap::new();
-        for row in rows {
-            let torrent: Torrent = row.into();
-            if let Some(ep) = torrent.episode_number {
-                result.entry(ep).or_default().push(torrent);
+
+        for chunk in episode_numbers.chunks(CHUNK_SIZE) {
+            let placeholders: Vec<String> = (2..=chunk.len() + 1)
+                .map(|i| format!("${}", i))
+                .collect();
+            let query = format!(
+                "{} WHERE bangumi_id = $1 AND episode_number IN ({}) ORDER BY episode_number ASC",
+                SELECT_TORRENT,
+                placeholders.join(", ")
+            );
+
+            let mut query_builder = sqlx::query_as::<_, TorrentRow>(&query).bind(bangumi_id);
+            for ep in chunk {
+                query_builder = query_builder.bind(ep);
+            }
+
+            let rows: Vec<TorrentRow> = query_builder.fetch_all(pool).await?;
+
+            // Group by episode number
+            for row in rows {
+                let torrent: Torrent = row.into();
+                if let Some(ep) = torrent.episode_number {
+                    result.entry(ep).or_default().push(torrent);
+                }
             }
         }
 

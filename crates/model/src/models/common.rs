@@ -22,6 +22,19 @@ impl<T> Clearable<T> {
             Clearable::Set(v) => Some(v),
         }
     }
+
+    /// Returns true if this field should be updated (Clear or Set)
+    pub fn should_update(&self) -> bool {
+        !matches!(self, Clearable::Unchanged)
+    }
+
+    /// Returns the value to set, or None for Clear/Unchanged
+    pub fn into_value(self) -> Option<T> {
+        match self {
+            Clearable::Set(v) => Some(v),
+            _ => None,
+        }
+    }
 }
 
 impl Clearable<String> {

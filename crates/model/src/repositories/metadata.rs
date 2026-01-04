@@ -116,62 +116,66 @@ impl MetadataRepository {
     }
 
     /// Update metadata
+    /// Uses CASE/COALESCE for atomic update to avoid read-modify-write race conditions
+    ///
+    /// For Clearable fields: CASE WHEN $should_update THEN $value ELSE field END
+    /// For Option fields: COALESCE($value, field)
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
         data: UpdateMetadata,
     ) -> Result<Option<Metadata>, sqlx::Error> {
-        let existing = Self::get_by_id(pool, id).await?;
-        let Some(existing) = existing else {
-            return Ok(None);
-        };
+        // Extract should_update flags for Clearable fields
+        let mikan_id_update = data.mikan_id.should_update();
+        let bgmtv_id_update = data.bgmtv_id.should_update();
+        let tmdb_id_update = data.tmdb_id.should_update();
+        let title_japanese_update = data.title_japanese.should_update();
+        let poster_url_update = data.poster_url.should_update();
+        let air_date_update = data.air_date.should_update();
 
-        let mikan_id = data.mikan_id.resolve(existing.mikan_id);
-        let bgmtv_id = data.bgmtv_id.resolve(existing.bgmtv_id);
-        let tmdb_id = data.tmdb_id.resolve(existing.tmdb_id);
-        let title_chinese = data.title_chinese.unwrap_or(existing.title_chinese);
-        let title_japanese = data.title_japanese.resolve(existing.title_japanese);
-        let season = data.season.unwrap_or(existing.season);
-        let year = data.year.unwrap_or(existing.year);
-        let platform = data.platform.unwrap_or(existing.platform);
-        let total_episodes = data.total_episodes.unwrap_or(existing.total_episodes);
-        let poster_url = data.poster_url.resolve(existing.poster_url);
-        let air_date = data.air_date.resolve(existing.air_date);
-        let air_week = data.air_week.unwrap_or(existing.air_week);
-
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE metadata SET
-                mikan_id = $1,
-                bgmtv_id = $2,
-                tmdb_id = $3,
-                title_chinese = $4,
-                title_japanese = $5,
-                season = $6,
-                year = $7,
-                platform = $8,
-                total_episodes = $9,
-                poster_url = $10,
-                air_date = $11,
-                air_week = $12
-            WHERE id = $13
+                mikan_id = CASE WHEN $1 THEN $2 ELSE mikan_id END,
+                bgmtv_id = CASE WHEN $3 THEN $4 ELSE bgmtv_id END,
+                tmdb_id = CASE WHEN $5 THEN $6 ELSE tmdb_id END,
+                title_chinese = COALESCE($7, title_chinese),
+                title_japanese = CASE WHEN $8 THEN $9 ELSE title_japanese END,
+                season = COALESCE($10, season),
+                year = COALESCE($11, year),
+                platform = COALESCE($12, platform),
+                total_episodes = COALESCE($13, total_episodes),
+                poster_url = CASE WHEN $14 THEN $15 ELSE poster_url END,
+                air_date = CASE WHEN $16 THEN $17 ELSE air_date END,
+                air_week = COALESCE($18, air_week)
+            WHERE id = $19
             "#,
         )
-        .bind(&mikan_id)
-        .bind(bgmtv_id)
-        .bind(tmdb_id)
-        .bind(&title_chinese)
-        .bind(&title_japanese)
-        .bind(season)
-        .bind(year)
-        .bind(platform.as_str())
-        .bind(total_episodes)
-        .bind(&poster_url)
-        .bind(&air_date)
-        .bind(air_week)
+        .bind(mikan_id_update)
+        .bind(data.mikan_id.into_value())
+        .bind(bgmtv_id_update)
+        .bind(data.bgmtv_id.into_value())
+        .bind(tmdb_id_update)
+        .bind(data.tmdb_id.into_value())
+        .bind(&data.title_chinese)
+        .bind(title_japanese_update)
+        .bind(data.title_japanese.into_value())
+        .bind(data.season)
+        .bind(data.year)
+        .bind(data.platform.map(|p| p.as_str().to_string()))
+        .bind(data.total_episodes)
+        .bind(poster_url_update)
+        .bind(data.poster_url.into_value())
+        .bind(air_date_update)
+        .bind(data.air_date.into_value())
+        .bind(data.air_week)
         .bind(id)
         .execute(pool)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(None);
+        }
 
         Self::get_by_id(pool, id).await
     }

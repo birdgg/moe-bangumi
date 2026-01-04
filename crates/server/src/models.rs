@@ -1,20 +1,8 @@
-mod bangumi;
-mod calendar;
-mod common;
-mod log;
-mod metadata;
-mod rss;
-mod seed;
 mod settings;
-mod torrent;
 
-pub use bangumi::*;
-pub use calendar::*;
-pub use common::*;
+// Re-export all models from model crate
+pub use model::models::*;
+
+// Local models
 pub use downloader::DownloaderType;
-pub use log::*;
-pub use metadata::*;
-pub use rss::*;
-pub use seed::*;
 pub use settings::*;
-pub use torrent::*;

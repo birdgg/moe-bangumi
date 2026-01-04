@@ -129,38 +129,33 @@ impl BangumiRepository {
     }
 
     /// Update a bangumi
+    /// Uses COALESCE for atomic update to avoid read-modify-write race conditions
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
         data: UpdateBangumi,
     ) -> Result<Option<Bangumi>, sqlx::Error> {
-        let existing = Self::get_by_id(pool, id).await?;
-        let Some(existing) = existing else {
-            return Ok(None);
-        };
-
-        let episode_offset = data.episode_offset.unwrap_or(existing.episode_offset);
-        let current_episode = data.current_episode.unwrap_or(existing.current_episode);
-        let auto_complete = data.auto_complete.unwrap_or(existing.auto_complete);
-        let source_type = data.source_type.unwrap_or(existing.source_type);
-
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE bangumi SET
-                episode_offset = $1,
-                current_episode = $2,
-                auto_complete = $3,
-                source_type = $4
+                episode_offset = COALESCE($1, episode_offset),
+                current_episode = COALESCE($2, current_episode),
+                auto_complete = COALESCE($3, auto_complete),
+                source_type = COALESCE($4, source_type)
             WHERE id = $5
             "#,
         )
-        .bind(episode_offset)
-        .bind(current_episode)
-        .bind(auto_complete)
-        .bind(source_type.as_str())
+        .bind(data.episode_offset)
+        .bind(data.current_episode)
+        .bind(data.auto_complete)
+        .bind(data.source_type.map(|s| s.as_str().to_string()))
         .bind(id)
         .execute(pool)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(None);
+        }
 
         Self::get_by_id(pool, id).await
     }

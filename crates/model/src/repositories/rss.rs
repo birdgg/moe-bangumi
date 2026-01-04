@@ -62,21 +62,29 @@ impl RssRepository {
             return Ok(Vec::new());
         }
 
-        // Build placeholders: $1, $2, $3, ...
-        let placeholders: Vec<String> = (1..=ids.len()).map(|i| format!("${}", i)).collect();
-        let query = format!(
-            "{} WHERE id IN ({})",
-            SELECT_RSS,
-            placeholders.join(", ")
-        );
+        // SQLite has a limit on bind parameters (default 999), so we chunk the input
+        const CHUNK_SIZE: usize = 500;
+        let mut result = Vec::new();
 
-        let mut query_builder = sqlx::query_as::<_, RssRow>(&query);
-        for id in ids {
-            query_builder = query_builder.bind(id);
+        for chunk in ids.chunks(CHUNK_SIZE) {
+            let placeholders: Vec<String> =
+                (1..=chunk.len()).map(|i| format!("${}", i)).collect();
+            let query = format!(
+                "{} WHERE id IN ({})",
+                SELECT_RSS,
+                placeholders.join(", ")
+            );
+
+            let mut query_builder = sqlx::query_as::<_, RssRow>(&query);
+            for id in chunk {
+                query_builder = query_builder.bind(id);
+            }
+
+            let rows = query_builder.fetch_all(pool).await?;
+            result.extend(rows.into_iter().map(Into::into));
         }
 
-        let rows = query_builder.fetch_all(pool).await?;
-        Ok(rows.into_iter().map(Into::into).collect())
+        Ok(result)
     }
 
     /// Get all RSS subscriptions for a bangumi
@@ -118,45 +126,45 @@ impl RssRepository {
     }
 
     /// Update an RSS subscription
+    /// Uses COALESCE for atomic update to avoid read-modify-write race conditions
     pub async fn update(
         pool: &SqlitePool,
         id: i64,
         data: UpdateRss,
     ) -> Result<Option<Rss>, sqlx::Error> {
-        let existing = Self::get_by_id(pool, id).await?;
-        let Some(existing) = existing else {
-            return Ok(None);
-        };
+        // Serialize filters to JSON if provided
+        let exclude_filters_json = data
+            .exclude_filters
+            .as_ref()
+            .map(|f| serde_json::to_string(f).unwrap_or_else(|_| "[]".to_string()));
+        let include_filters_json = data
+            .include_filters
+            .as_ref()
+            .map(|f| serde_json::to_string(f).unwrap_or_else(|_| "[]".to_string()));
 
-        let url = data.url.unwrap_or(existing.url);
-        let enabled = data.enabled.unwrap_or(existing.enabled);
-        let exclude_filters = data.exclude_filters.unwrap_or(existing.exclude_filters);
-        let exclude_filters_json = serde_json::to_string(&exclude_filters)
-            .unwrap_or_else(|_| "[]".to_string());
-        let include_filters = data.include_filters.unwrap_or(existing.include_filters);
-        let include_filters_json = serde_json::to_string(&include_filters)
-            .unwrap_or_else(|_| "[]".to_string());
-        let subtitle_group = data.subtitle_group.or(existing.subtitle_group);
-
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             UPDATE rss SET
-                url = $1,
-                enabled = $2,
-                exclude_filters = $3,
-                include_filters = $4,
-                "subtitle_group" = $5
+                url = COALESCE($1, url),
+                enabled = COALESCE($2, enabled),
+                exclude_filters = COALESCE($3, exclude_filters),
+                include_filters = COALESCE($4, include_filters),
+                "subtitle_group" = COALESCE($5, "subtitle_group")
             WHERE id = $6
             "#,
         )
-        .bind(&url)
-        .bind(enabled)
+        .bind(&data.url)
+        .bind(data.enabled)
         .bind(&exclude_filters_json)
         .bind(&include_filters_json)
-        .bind(&subtitle_group)
+        .bind(&data.subtitle_group)
         .bind(id)
         .execute(pool)
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Ok(None);
+        }
 
         Self::get_by_id(pool, id).await
     }

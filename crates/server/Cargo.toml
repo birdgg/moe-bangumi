@@ -10,6 +10,7 @@ openapi = [
     "dep:utoipa",
     "dep:utoipa-axum",
     "dep:utoipa-scalar",
+    "model/openapi",
     "tmdb/openapi",
     "bgmtv/openapi",
     "mikan/openapi",
@@ -33,6 +34,7 @@ utoipa = { workspace = true, optional = true }
 utoipa-axum = { workspace = true, optional = true }
 utoipa-scalar = { workspace = true, optional = true }
 reqwest.workspace = true
+model = { path = "../model" }
 tmdb = { path = "../tmdb" }
 bgmtv = { path = "../bgmtv" }
 mikan = { path = "../mikan" }

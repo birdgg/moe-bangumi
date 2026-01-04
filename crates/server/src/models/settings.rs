@@ -1,11 +1,11 @@
-use super::DownloaderType;
 use downloader::DownloaderConfig;
+use model::Clearable;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 use washing::SubtitleLanguageSet;
 
-use super::Clearable;
+use super::DownloaderType;
 
 /// Application settings stored in TOML file
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
