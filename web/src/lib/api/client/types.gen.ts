@@ -595,6 +595,10 @@ export type Settings = {
    * Proxy configuration for HTTP client
    */
   proxy?: ProxySettings;
+  /**
+   * TMDB API configuration
+   */
+  tmdb?: TmdbSettings;
 };
 
 /**
@@ -791,14 +795,15 @@ export type TestProxyRequest = {
   username?: string | null;
 };
 
-export type TorrentSearchResult = {
-  info_hash: string;
-  source: TorrentSource;
-  title: string;
-  torrent_url: string;
+/**
+ * TMDB API configuration
+ */
+export type TmdbSettings = {
+  /**
+   * TMDB API key
+   */
+  api_key?: string;
 };
-
-export type TorrentSource = "mikan" | "nyaa";
 
 /**
  * Transmission-specific configuration
@@ -999,6 +1004,7 @@ export type UpdateSettings = {
   notification?: null | UpdateNotificationSettings;
   priority?: null | UpdatePrioritySettings;
   proxy?: null | UpdateProxySettings;
+  tmdb?: null | UpdateTmdbSettings;
 };
 
 /**
@@ -1017,6 +1023,16 @@ export type UpdateTelegramConfig = {
    * Enable Telegram notifications
    */
   enabled?: boolean | null;
+};
+
+/**
+ * Request body for updating TMDB settings
+ */
+export type UpdateTmdbSettings = {
+  /**
+   * TMDB API key (send null to clear)
+   */
+  api_key?: string | null;
 };
 
 /**
@@ -1604,29 +1620,3 @@ export type DeleteTorrentsResponses = {
    */
   200: unknown;
 };
-
-export type SearchTorrentsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Keyword to search
-     */
-    keyword: string;
-    /**
-     * Source to search from: "nyaa" (default) or "mikan"
-     */
-    source?: TorrentSource;
-  };
-  url: "/api/torrents/search";
-};
-
-export type SearchTorrentsResponses = {
-  /**
-   * Search results from the specified source
-   */
-  200: Array<TorrentSearchResult>;
-};
-
-export type SearchTorrentsResponse =
-  SearchTorrentsResponses[keyof SearchTorrentsResponses];

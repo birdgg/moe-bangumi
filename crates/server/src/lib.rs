@@ -33,10 +33,9 @@ pub async fn run_server(
     addr: SocketAddr,
     env: Environment,
     data_path: &str,
-    tmdb_api_key: &str,
     log_receiver: Option<LogReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new(env, data_path, tmdb_api_key.to_string());
+    let config = Config::new(env, data_path);
 
     // Ensure data directories exist
     std::fs::create_dir_all(&config.data_path)?;

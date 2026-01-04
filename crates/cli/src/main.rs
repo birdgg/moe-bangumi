@@ -29,9 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse()?;
     let data_path = env::var("DATA_PATH")
         .unwrap_or_else(|_| app_env.default_data_path().to_string_lossy().to_string());
-    let tmdb_api_key = env::var("TMDB_API_KEY").expect("TMDB_API_KEY must be set");
 
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse()?;
 
-    server::run_server(addr, app_env, &data_path, &tmdb_api_key, Some(log_receiver)).await
+    server::run_server(addr, app_env, &data_path, Some(log_receiver)).await
 }

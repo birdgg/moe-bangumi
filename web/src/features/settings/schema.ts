@@ -101,6 +101,13 @@ export const prioritySchema = z.object({
 });
 
 /**
+ * TMDB configuration schema
+ */
+export const tmdbSchema = z.object({
+  api_key: z.string(),
+});
+
+/**
  * Complete settings form schema
  */
 export const settingsFormSchema = z.object({
@@ -109,6 +116,7 @@ export const settingsFormSchema = z.object({
   proxy: proxySchema,
   notification: notificationSchema,
   priority: prioritySchema,
+  tmdb: tmdbSchema,
 });
 
 /**
@@ -123,4 +131,5 @@ export type ProxyFormData = z.infer<typeof proxySchema>;
 export type TelegramConfigFormData = z.infer<typeof telegramConfigSchema>;
 export type NotificationFormData = z.infer<typeof notificationSchema>;
 export type PriorityFormData = z.infer<typeof prioritySchema>;
+export type TmdbFormData = z.infer<typeof tmdbSchema>;
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;

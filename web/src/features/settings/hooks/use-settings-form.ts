@@ -43,6 +43,9 @@ export function settingsToFormData(settings?: Settings): SettingsFormData {
       // Cast from API type to SubtitleLanguageSet[]
       subtitle_language_sets: (settings?.priority?.subtitle_language_sets ?? []) as SubtitleLanguageSet[],
     },
+    tmdb: {
+      api_key: settings?.tmdb?.api_key ?? "",
+    },
   };
 }
 
@@ -94,6 +97,9 @@ export function formDataToUpdateSettings(data: SettingsFormData): UpdateSettings
     priority: {
       subtitle_groups: data.priority.subtitle_groups,
       subtitle_language_sets: data.priority.subtitle_language_sets,
+    },
+    tmdb: {
+      api_key: data.tmdb.api_key.trim() || null,
     },
   };
 }

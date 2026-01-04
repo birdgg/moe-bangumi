@@ -29,7 +29,6 @@ import {
   searchBgmtv,
   searchMikan,
   searchTmdb,
-  searchTorrents,
   testDownloaderConnection,
   testNotification,
   testProxy,
@@ -73,8 +72,6 @@ import type {
   SearchMikanResponse,
   SearchTmdbData,
   SearchTmdbResponse,
-  SearchTorrentsData,
-  SearchTorrentsResponse,
   TestDownloaderConnectionData,
   TestNotificationData,
   TestProxyData,
@@ -826,28 +823,3 @@ export const deleteTorrentsMutation = (
   };
   return mutationOptions;
 };
-
-export const searchTorrentsQueryKey = (options: Options<SearchTorrentsData>) =>
-  createQueryKey("searchTorrents", options);
-
-/**
- * Search for torrents from a specific source (Nyaa or Mikan)
- */
-export const searchTorrentsOptions = (options: Options<SearchTorrentsData>) =>
-  queryOptions<
-    SearchTorrentsResponse,
-    DefaultError,
-    SearchTorrentsResponse,
-    ReturnType<typeof searchTorrentsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchTorrents({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchTorrentsQueryKey(options),
-  });

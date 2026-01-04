@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use parking_lot::RwLock;
 use reqwest::Client;
 
 use crate::error::TmdbError;
@@ -16,34 +17,42 @@ pub type ClientProvider = Arc<
         + Sync,
 >;
 
+/// Shared API key that can be updated at runtime.
+pub type ApiKey = Arc<RwLock<String>>;
+
 pub struct TmdbClient {
     client_provider: Option<ClientProvider>,
     static_client: Option<Client>,
-    pub(crate) api_key: String,
+    api_key: ApiKey,
     pub(crate) lang: String,
 }
 
 impl TmdbClient {
     /// Create a TmdbClient with a static reqwest Client.
     /// The client will not be updated if proxy settings change.
-    pub fn with_client(client: Client, api_key: impl Into<String>) -> Self {
+    pub fn with_client(client: Client, api_key: ApiKey) -> Self {
         Self {
             client_provider: None,
             static_client: Some(client),
-            api_key: api_key.into(),
+            api_key,
             lang: "zh-CN".to_string(),
         }
     }
 
     /// Create a TmdbClient with a dynamic client provider.
     /// The provider will be called for each request, allowing for dynamic proxy updates.
-    pub fn with_client_provider(provider: ClientProvider, api_key: impl Into<String>) -> Self {
+    pub fn with_client_provider(provider: ClientProvider, api_key: ApiKey) -> Self {
         Self {
             client_provider: Some(provider),
             static_client: None,
-            api_key: api_key.into(),
+            api_key,
             lang: "zh-CN".to_string(),
         }
+    }
+
+    /// Get the current API key
+    pub(crate) fn api_key(&self) -> String {
+        self.api_key.read().clone()
     }
 
     /// Get the HTTP client for making requests.

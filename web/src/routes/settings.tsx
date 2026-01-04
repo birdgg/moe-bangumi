@@ -3,6 +3,7 @@ import { SettingsPage } from "@/features/settings/page";
 import type { SettingsSection } from "@/features/settings/components";
 
 const validSections: SettingsSection[] = [
+  "general",
   "downloader",
   "priority",
   "filter",
@@ -17,6 +18,6 @@ export const Route = createFileRoute("/settings")({
     if (validSections.includes(section as SettingsSection)) {
       return { section: section as SettingsSection };
     }
-    return { section: "downloader" };
+    return { section: "general" };
   },
 });

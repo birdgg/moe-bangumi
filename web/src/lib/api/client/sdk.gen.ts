@@ -43,8 +43,6 @@ import type {
   SearchMikanResponses,
   SearchTmdbData,
   SearchTmdbResponses,
-  SearchTorrentsData,
-  SearchTorrentsResponses,
   StreamLogsData,
   StreamLogsResponses,
   TestDownloaderConnectionData,
@@ -436,15 +434,3 @@ export const deleteTorrents = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
-
-/**
- * Search for torrents from a specific source (Nyaa or Mikan)
- */
-export const searchTorrents = <ThrowOnError extends boolean = false>(
-  options: Options<SearchTorrentsData, ThrowOnError>,
-) =>
-  (options.client ?? client).get<
-    SearchTorrentsResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/api/torrents/search", ...options });

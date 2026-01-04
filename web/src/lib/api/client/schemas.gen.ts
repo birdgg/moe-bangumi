@@ -832,6 +832,10 @@ export const SettingsSchema = {
       $ref: "#/components/schemas/ProxySettings",
       description: "Proxy configuration for HTTP client",
     },
+    tmdb: {
+      $ref: "#/components/schemas/TmdbSettings",
+      description: "TMDB API configuration",
+    },
   },
 } as const;
 
@@ -1109,28 +1113,15 @@ export const TestProxyRequestSchema = {
   },
 } as const;
 
-export const TorrentSearchResultSchema = {
+export const TmdbSettingsSchema = {
   type: "object",
-  required: ["title", "torrent_url", "info_hash", "source"],
+  description: "TMDB API configuration",
   properties: {
-    info_hash: {
+    api_key: {
       type: "string",
-    },
-    source: {
-      $ref: "#/components/schemas/TorrentSource",
-    },
-    title: {
-      type: "string",
-    },
-    torrent_url: {
-      type: "string",
+      description: "TMDB API key",
     },
   },
-} as const;
-
-export const TorrentSourceSchema = {
-  type: "string",
-  enum: ["mikan", "nyaa"],
 } as const;
 
 export const TransmissionConfigSchema = {
@@ -1513,6 +1504,17 @@ export const UpdateSettingsSchema = {
         },
       ],
     },
+    tmdb: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/UpdateTmdbSettings",
+          description: "TMDB configuration updates",
+        },
+      ],
+    },
   },
 } as const;
 
@@ -1531,6 +1533,17 @@ export const UpdateTelegramConfigSchema = {
     enabled: {
       type: ["boolean", "null"],
       description: "Enable Telegram notifications",
+    },
+  },
+} as const;
+
+export const UpdateTmdbSettingsSchema = {
+  type: "object",
+  description: "Request body for updating TMDB settings",
+  properties: {
+    api_key: {
+      type: ["string", "null"],
+      description: "TMDB API key (send null to clear)",
     },
   },
 } as const;

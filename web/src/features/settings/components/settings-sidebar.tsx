@@ -5,9 +5,10 @@ import {
   IconWorld,
   IconBrandTelegram,
   IconSortDescending,
+  IconSettings,
 } from "@tabler/icons-react";
 
-export type SettingsSection = "downloader" | "filter" | "proxy" | "notification" | "priority";
+export type SettingsSection = "general" | "downloader" | "filter" | "proxy" | "notification" | "priority";
 
 interface SettingsSidebarItem {
   id: SettingsSection;
@@ -17,6 +18,11 @@ interface SettingsSidebarItem {
 }
 
 const sidebarItems: SettingsSidebarItem[] = [
+  {
+    id: "general",
+    label: "常规",
+    icon: <IconSettings className="size-4" />,
+  },
   {
     id: "downloader",
     label: "下载器",

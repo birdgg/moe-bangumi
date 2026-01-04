@@ -16,8 +16,9 @@ impl TmdbClient {
         let url = self.url("/discover/tv");
         let client = self.client().await?;
 
+        let api_key = self.api_key();
         let mut request = client.get(&url).query(&[
-            ("api_key", self.api_key.as_str()),
+            ("api_key", api_key.as_str()),
             ("language", self.lang.as_str()),
             ("with_genres", "16"),
         ]);

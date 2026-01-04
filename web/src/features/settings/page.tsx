@@ -9,6 +9,7 @@ import {
   getSettingsQueryKey,
 } from "@/lib/api";
 import {
+  GeneralSection,
   DownloaderSection,
   FilterSection,
   ProxySection,
@@ -62,6 +63,8 @@ export function SettingsPage() {
 
   const renderContent = () => {
     switch (activeSection) {
+      case "general":
+        return <GeneralSection form={form} />;
       case "downloader":
         return <DownloaderSection form={form} />;
       case "priority":
@@ -73,7 +76,7 @@ export function SettingsPage() {
       case "notification":
         return <NotificationSection form={form} />;
       default:
-        return null;
+        return <GeneralSection form={form} />;
     }
   };
 

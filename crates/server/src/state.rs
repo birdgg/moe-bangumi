@@ -1,5 +1,6 @@
 use bgmtv::BgmtvClient;
 use mikan::MikanClient;
+use parking_lot::RwLock;
 use rss::RssClient;
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -70,7 +71,32 @@ impl AppState {
         let client_provider = create_client_provider(Arc::clone(&http_client_service));
 
         // Create API clients with dynamic client provider
-        let tmdb = Arc::new(TmdbClient::with_client_provider(Arc::clone(&client_provider), &config.tmdb_api_key));
+        let tmdb_api_key: tmdb::ApiKey = Arc::new(RwLock::new(settings.get().tmdb.api_key.clone()));
+        let tmdb = Arc::new(TmdbClient::with_client_provider(Arc::clone(&client_provider), Arc::clone(&tmdb_api_key)));
+
+        // Spawn background task to watch for TMDB API key changes
+        let tmdb_api_key_clone = Arc::clone(&tmdb_api_key);
+        let mut tmdb_watcher = settings.subscribe();
+        tokio::spawn(async move {
+            loop {
+                if tmdb_watcher.changed().await.is_err() {
+                    break;
+                }
+                let new_settings = tmdb_watcher.borrow().clone();
+                let new_api_key = new_settings.tmdb.api_key;
+
+                let should_update = {
+                    let current = tmdb_api_key_clone.read();
+                    *current != new_api_key
+                };
+
+                if should_update {
+                    *tmdb_api_key_clone.write() = new_api_key;
+                    tracing::info!("TMDB API key updated");
+                }
+            }
+        });
+
         let bgmtv = Arc::new(BgmtvClient::with_client_provider(Arc::clone(&client_provider)));
         let mikan = MikanClient::with_client_provider(Arc::clone(&client_provider));
         let rss = RssClient::with_client_provider(Arc::clone(&client_provider));

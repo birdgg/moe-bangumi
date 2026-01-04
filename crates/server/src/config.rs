@@ -40,11 +40,10 @@ pub struct Config {
     pub data_path: PathBuf,
     pub database_url: String,
     pub max_connections: u32,
-    pub tmdb_api_key: String,
 }
 
 impl Config {
-    pub fn new(env: Environment, data_path: impl AsRef<Path>, tmdb_api_key: String) -> Self {
+    pub fn new(env: Environment, data_path: impl AsRef<Path>) -> Self {
         let data_path = data_path.as_ref().to_path_buf();
         let database_url = format!(
             "sqlite:{}?mode=rwc",
@@ -55,7 +54,6 @@ impl Config {
             data_path,
             database_url,
             max_connections: 5,
-            tmdb_api_key,
         }
     }
 

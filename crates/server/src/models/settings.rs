@@ -24,6 +24,9 @@ pub struct Settings {
     /// Priority configuration for torrent selection and washing
     #[serde(default)]
     pub priority: PrioritySettings,
+    /// TMDB API configuration
+    #[serde(default)]
+    pub tmdb: TmdbSettings,
 }
 
 /// Downloader configuration with per-type configs
@@ -274,6 +277,21 @@ impl Default for ProxySettings {
     }
 }
 
+/// TMDB API configuration
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct TmdbSettings {
+    /// TMDB API key
+    #[serde(default)]
+    pub api_key: String,
+}
+
+impl TmdbSettings {
+    /// Check if TMDB API key is configured
+    pub fn is_configured(&self) -> bool {
+        !self.api_key.is_empty()
+    }
+}
+
 /// Notification configuration
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct NotificationSettings {
@@ -414,6 +432,13 @@ impl Settings {
             } else {
                 self.priority.clone()
             },
+            tmdb: if let Some(t) = update.tmdb {
+                TmdbSettings {
+                    api_key: t.api_key.resolve_or_empty(self.tmdb.api_key.clone()),
+                }
+            } else {
+                self.tmdb.clone()
+            },
         }
     }
 }
@@ -437,6 +462,9 @@ pub struct UpdateSettings {
     /// Priority configuration updates
     #[serde(default)]
     pub priority: Option<UpdatePrioritySettings>,
+    /// TMDB configuration updates
+    #[serde(default)]
+    pub tmdb: Option<UpdateTmdbSettings>,
 }
 
 /// Request body for updating downloader settings
@@ -553,4 +581,13 @@ pub struct UpdatePrioritySettings {
     /// Each entry is a set of languages that must exactly match
     #[serde(default)]
     pub subtitle_language_sets: Option<Vec<SubtitleLanguageSet>>,
+}
+
+/// Request body for updating TMDB settings
+#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+pub struct UpdateTmdbSettings {
+    /// TMDB API key (send null to clear)
+    #[serde(default)]
+    #[schema(value_type = Option<String>)]
+    pub api_key: Clearable<String>,
 }
