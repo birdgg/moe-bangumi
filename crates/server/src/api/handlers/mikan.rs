@@ -10,7 +10,7 @@ use crate::state::AppState;
 use super::{IdQuery, MIKAN_DETAIL_CACHE_TTL};
 
 /// Get bangumi detail with RSS URLs from Mikan
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/mikan/rss",
     tag = "mikan",
@@ -18,7 +18,7 @@ use super::{IdQuery, MIKAN_DETAIL_CACHE_TTL};
     responses(
         (status = 200, description = "Bangumi detail with subgroups and RSS URLs", body = mikan::BangumiDetail)
     )
-)]
+))]
 pub async fn get_mikan_rss(
     State(state): State<AppState>,
     Query(query): Query<IdQuery>,

@@ -9,7 +9,7 @@ use crate::models::{BangumiWithMetadata, BangumiWithRss, CreateBangumi, UpdateBa
 use crate::state::AppState;
 
 /// Create a new bangumi
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     post,
     path = "/api/bangumi",
     tag = "bangumi",
@@ -17,7 +17,7 @@ use crate::state::AppState;
     responses(
         (status = 201, description = "Bangumi created successfully", body = BangumiWithMetadata)
     )
-)]
+))]
 pub async fn create_bangumi(
     State(state): State<AppState>,
     Json(payload): Json<CreateBangumi>,
@@ -27,21 +27,21 @@ pub async fn create_bangumi(
 }
 
 /// Get all bangumi
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/bangumi",
     tag = "bangumi",
     responses(
         (status = 200, description = "List of all bangumi", body = Vec<BangumiWithMetadata>)
     )
-)]
+))]
 pub async fn get_bangumi(State(state): State<AppState>) -> AppResult<Json<Vec<BangumiWithMetadata>>> {
     let bangumi_list = state.bangumi.get_all().await?;
     Ok(Json(bangumi_list))
 }
 
 /// Get a bangumi by ID with its RSS subscriptions
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/bangumi/{id}",
     tag = "bangumi",
@@ -52,7 +52,7 @@ pub async fn get_bangumi(State(state): State<AppState>) -> AppResult<Json<Vec<Ba
         (status = 200, description = "Bangumi with RSS subscriptions", body = BangumiWithRss),
         (status = 404, description = "Bangumi not found")
     )
-)]
+))]
 pub async fn get_bangumi_by_id(
     State(state): State<AppState>,
     Path(id): Path<i64>,
@@ -62,7 +62,7 @@ pub async fn get_bangumi_by_id(
 }
 
 /// Update a bangumi
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     patch,
     path = "/api/bangumi/{id}",
     tag = "bangumi",
@@ -74,7 +74,7 @@ pub async fn get_bangumi_by_id(
         (status = 200, description = "Bangumi updated successfully", body = BangumiWithRss),
         (status = 404, description = "Bangumi not found")
     )
-)]
+))]
 pub async fn update_bangumi(
     State(state): State<AppState>,
     Path(id): Path<i64>,

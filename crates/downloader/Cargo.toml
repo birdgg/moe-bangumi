@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+openapi = ["dep:utoipa", "qbittorrent/openapi"]
+
 [dependencies]
 async-trait.workspace = true
 reqwest.workspace = true
@@ -12,6 +15,6 @@ thiserror.workspace = true
 tracing.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 url = "2"
-utoipa.workspace = true
+utoipa = { workspace = true, optional = true }
 qbittorrent = { path = "../qbittorrent" }
 transmission-rpc = "0.5"

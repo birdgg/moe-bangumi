@@ -1,12 +1,18 @@
-use axum::{routing::get, Json, Router};
-use utoipa::OpenApi;
-use utoipa_axum::{router::OpenApiRouter, routes};
+use axum::Router;
 
-use crate::{openapi::ApiDoc, state::AppState};
+use crate::state::AppState;
 
 use super::handlers;
 
+// OpenAPI mode: use OpenApiRouter with utoipa macros
+#[cfg(feature = "openapi")]
 pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
+    use axum::{routing::get, Json};
+    use utoipa::OpenApi;
+    use utoipa_axum::{router::OpenApiRouter, routes};
+
+    use crate::openapi::ApiDoc;
+
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(handlers::search_bgmtv))
         .routes(routes!(handlers::search_tmdb))
@@ -44,4 +50,64 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
     );
 
     (router, api)
+}
+
+// Non-OpenAPI mode: use standard axum Router
+#[cfg(not(feature = "openapi"))]
+pub fn create_router(state: AppState) -> Router {
+    use axum::routing::{get, post};
+
+    Router::new()
+        // Search endpoints
+        .route("/api/search/bgmtv", get(handlers::search_bgmtv))
+        .route("/api/search/tmdb", get(handlers::search_tmdb))
+        .route("/api/search/mikan", get(handlers::search_mikan))
+        // Mikan endpoints
+        .route("/api/mikan/rss", get(handlers::get_mikan_rss))
+        // Calendar endpoints
+        .route("/api/calendar", get(handlers::get_calendar))
+        .route("/api/calendar/refresh", post(handlers::refresh_calendar))
+        // Bangumi endpoints
+        .route(
+            "/api/bangumi",
+            post(handlers::create_bangumi).get(handlers::get_bangumi),
+        )
+        .route(
+            "/api/bangumi/:id",
+            get(handlers::get_bangumi_by_id).patch(handlers::update_bangumi),
+        )
+        // Metadata endpoints
+        .route("/api/metadata", get(handlers::get_metadata))
+        .route(
+            "/api/metadata/:id",
+            get(handlers::get_metadata_by_id).patch(handlers::update_metadata),
+        )
+        // Episodes endpoint
+        .route("/api/episodes", get(handlers::get_episodes))
+        // Settings endpoints
+        .route(
+            "/api/settings",
+            get(handlers::get_settings).patch(handlers::update_settings),
+        )
+        .route("/api/settings/reset", post(handlers::reset_settings))
+        // Test endpoints
+        .route("/api/test/proxy", post(handlers::test_proxy))
+        .route("/api/test/notification", post(handlers::test_notification))
+        .route(
+            "/api/test/downloader",
+            post(handlers::test_downloader_connection),
+        )
+        // Logs endpoints
+        .route(
+            "/api/logs",
+            get(handlers::get_logs).delete(handlers::cleanup_logs),
+        )
+        .route("/api/logs/clear", post(handlers::clear_all_logs))
+        .route("/api/logs/stream", get(handlers::stream_logs))
+        // Torrents endpoints
+        .route(
+            "/api/torrents",
+            get(handlers::list_torrents).delete(handlers::delete_torrents),
+        )
+        .with_state(state)
 }

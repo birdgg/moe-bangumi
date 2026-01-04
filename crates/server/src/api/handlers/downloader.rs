@@ -5,7 +5,8 @@ use crate::error::AppResult;
 use crate::services::{Downloader, DownloaderClient, DownloaderConfig, DownloaderType};
 
 /// Request body for testing downloader connection
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct TestDownloaderRequest {
     /// Downloader type (e.g., "qbittorrent")
     #[serde(rename = "type")]
@@ -19,7 +20,7 @@ pub struct TestDownloaderRequest {
 }
 
 /// Test downloader connection with provided credentials
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     post,
     path = "/api/downloader/test",
     tag = "downloader",
@@ -28,7 +29,7 @@ pub struct TestDownloaderRequest {
         (status = 200, description = "Connection successful"),
         (status = 401, description = "Authentication failed")
     )
-)]
+))]
 pub async fn test_downloader_connection(
     Json(payload): Json<TestDownloaderRequest>,
 ) -> AppResult<&'static str> {

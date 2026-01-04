@@ -11,9 +11,17 @@ default: dev
 check:
     cargo check
 
+# Check compilation without OpenAPI (release mode)
+check-release:
+    cargo check -p cli --release --no-default-features
+
 # Run tests
 test:
     cargo test
+
+# Build release binary (without OpenAPI, optimized for production)
+build-release:
+    cargo build -p cli --release --no-default-features
 
 # Run the server (dev mode)
 dev:

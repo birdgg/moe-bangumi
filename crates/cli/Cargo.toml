@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = ["openapi"]
+openapi = ["server/openapi"]
+
 [[bin]]
 name = "moe"
 path = "src/main.rs"
@@ -13,7 +17,7 @@ name = "calendar_seed"
 path = "src/bin/calendar_seed.rs"
 
 [dependencies]
-server = { path = "../server" }
+server = { path = "../server", default-features = false }
 mikan = { path = "../mikan" }
 bgmtv = { path = "../bgmtv" }
 tokio.workspace = true

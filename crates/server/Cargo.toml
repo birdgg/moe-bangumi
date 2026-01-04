@@ -4,6 +4,21 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = ["openapi"]
+openapi = [
+    "dep:utoipa",
+    "dep:utoipa-axum",
+    "dep:utoipa-scalar",
+    "tmdb/openapi",
+    "bgmtv/openapi",
+    "mikan/openapi",
+    "downloader/openapi",
+    "qbittorrent/openapi",
+    "parser/openapi",
+    "washing/openapi",
+]
+
 [dependencies]
 axum.workspace = true
 sqlx.workspace = true
@@ -14,9 +29,9 @@ tracing.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
-utoipa.workspace = true
-utoipa-axum.workspace = true
-utoipa-scalar.workspace = true
+utoipa = { workspace = true, optional = true }
+utoipa-axum = { workspace = true, optional = true }
+utoipa-scalar = { workspace = true, optional = true }
 reqwest.workspace = true
 tmdb = { path = "../tmdb" }
 bgmtv = { path = "../bgmtv" }

@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 
 use super::Clearable;
 
 /// Platform type for bangumi (TV, Movie, OVA)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum Platform {
     #[default]
@@ -43,7 +45,8 @@ impl FromStr for Platform {
 
 /// Metadata entity for anime information
 /// Unified metadata center caching data from BGM.tv, TMDB, and Mikan
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct Metadata {
     pub id: i64,
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -79,7 +82,8 @@ pub struct Metadata {
 }
 
 /// Request body for creating new metadata
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct CreateMetadata {
     /// Mikan bangumi ID
     pub mikan_id: Option<String>,
@@ -171,19 +175,20 @@ impl CreateMetadata {
 
 /// Request body for updating metadata
 /// For Clearable fields: null means clear the value, value means set new value, absent means unchanged
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateMetadata {
     /// Mikan bangumi ID (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub mikan_id: Clearable<String>,
     /// BGM.tv subject ID (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<i64>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<i64>))]
     pub bgmtv_id: Clearable<i64>,
     /// TMDB ID (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<i64>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<i64>))]
     pub tmdb_id: Clearable<i64>,
 
     /// Chinese title
@@ -191,7 +196,7 @@ pub struct UpdateMetadata {
     pub title_chinese: Option<String>,
     /// Japanese original name (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub title_japanese: Clearable<String>,
 
     /// Season number
@@ -209,11 +214,11 @@ pub struct UpdateMetadata {
     pub total_episodes: Option<i32>,
     /// Poster image URL (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub poster_url: Clearable<String>,
     /// First air date in YYYY-MM-DD format (null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub air_date: Clearable<String>,
     /// Day of week when new episodes air (0=Sunday ~ 6=Saturday)
     #[serde(default)]

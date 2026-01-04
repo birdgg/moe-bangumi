@@ -4,6 +4,7 @@ pub mod config;
 pub mod db;
 pub mod error;
 pub mod models;
+#[cfg(feature = "openapi")]
 pub mod openapi;
 pub mod repositories;
 pub mod services;
@@ -14,6 +15,7 @@ use std::net::SocketAddr;
 use std::path::Path;
 
 use tower_http::services::{ServeDir, ServeFile};
+#[cfg(feature = "openapi")]
 use utoipa_scalar::{Scalar, Servable};
 
 pub use api::create_router;
@@ -63,12 +65,20 @@ pub async fn run_server(
         start_log_writer(receiver, state.logs.clone());
     }
 
-    let (router, api) = create_router(state);
-
     // Serve poster images from data directory
-    let app = router
-        .nest_service("/posters", ServeDir::new(&posters_path))
-        .merge(Scalar::with_url("/docs", api));
+    #[cfg(feature = "openapi")]
+    let app = {
+        let (router, api) = create_router(state);
+        router
+            .nest_service("/posters", ServeDir::new(&posters_path))
+            .merge(Scalar::with_url("/docs", api))
+    };
+
+    #[cfg(not(feature = "openapi"))]
+    let app = {
+        let router = create_router(state);
+        router.nest_service("/posters", ServeDir::new(&posters_path))
+    };
 
     // Serve static files if the dist directory exists (in Docker)
     let app = if Path::new(STATIC_DIR).exists() {

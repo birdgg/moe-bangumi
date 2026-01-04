@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 
 use super::Platform;
 
 /// Subject item in calendar results
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct CalendarSubject {
     /// BGM.tv subject ID
     pub bgmtv_id: Option<i64>,
@@ -31,7 +33,8 @@ pub struct CalendarSubject {
 }
 
 /// Weekday info
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct Weekday {
     /// Weekday ID (1=Mon, 7=Sun)
     pub id: i32,
@@ -44,7 +47,8 @@ pub struct Weekday {
 }
 
 /// Calendar day with weekday info and items
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct CalendarDay {
     pub weekday: Weekday,
     pub items: Vec<CalendarSubject>,

@@ -1,13 +1,15 @@
 use super::DownloaderType;
 use downloader::DownloaderConfig;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 use washing::SubtitleLanguageSet;
 
 use super::Clearable;
 
 /// Application settings stored in TOML file
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct Settings {
     /// Downloader configuration
     #[serde(default)]
@@ -30,7 +32,8 @@ pub struct Settings {
 }
 
 /// Downloader configuration with per-type configs
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct DownloaderSettings {
     /// Currently active downloader type
     #[serde(default = "DownloaderSettings::default_type", rename = "type")]
@@ -44,7 +47,8 @@ pub struct DownloaderSettings {
 }
 
 /// Per-downloader configurations
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct DownloaderConfigs {
     /// qBittorrent configuration
     #[serde(default)]
@@ -55,7 +59,8 @@ pub struct DownloaderConfigs {
 }
 
 /// qBittorrent-specific configuration
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct QBittorrentConfig {
     /// Web UI URL (e.g., http://localhost:8080)
     #[serde(default = "QBittorrentConfig::default_url")]
@@ -85,7 +90,8 @@ impl QBittorrentConfig {
 }
 
 /// Transmission-specific configuration
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct TransmissionConfig {
     /// RPC URL (e.g., http://localhost:9091/transmission/rpc)
     #[serde(default = "TransmissionConfig::default_url")]
@@ -181,7 +187,8 @@ impl DownloaderSettings {
 }
 
 /// Filter configuration
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct FilterSettings {
     /// Global RSS filters (regex patterns to exclude)
     #[serde(default = "FilterSettings::default_global_rss_filters")]
@@ -207,7 +214,8 @@ impl FilterSettings {
 }
 
 /// Priority configuration for torrent selection and washing
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct PrioritySettings {
     /// Subtitle groups in priority order (first = highest priority)
     #[serde(default = "PrioritySettings::default_subtitle_groups")]
@@ -254,7 +262,8 @@ impl PrioritySettings {
 }
 
 /// Proxy configuration for HTTP client
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct ProxySettings {
     /// Proxy server URL (e.g., http://127.0.0.1:7890 or socks5://127.0.0.1:1080)
     #[serde(default)]
@@ -278,7 +287,8 @@ impl Default for ProxySettings {
 }
 
 /// TMDB API configuration
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct TmdbSettings {
     /// TMDB API key
     #[serde(default)]
@@ -293,7 +303,8 @@ impl TmdbSettings {
 }
 
 /// Notification configuration
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct NotificationSettings {
     /// Global enable/disable for notifications
     #[serde(default)]
@@ -313,7 +324,8 @@ impl Default for NotificationSettings {
 }
 
 /// Telegram notification configuration
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct TelegramConfig {
     /// Enable Telegram notifications
     #[serde(default)]
@@ -445,7 +457,8 @@ impl Settings {
 
 /// Request body for updating settings.
 /// All fields are optional - only provided fields will be updated.
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateSettings {
     /// Downloader configuration updates
     #[serde(default)]
@@ -468,14 +481,15 @@ pub struct UpdateSettings {
 }
 
 /// Request body for updating downloader settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateDownloaderSettings {
     /// Switch active downloader type
     #[serde(default, rename = "type")]
     pub downloader_type: Option<DownloaderType>,
     /// Update shared save path (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub save_path: Clearable<String>,
     /// Update qBittorrent config
     #[serde(default)]
@@ -486,41 +500,44 @@ pub struct UpdateDownloaderSettings {
 }
 
 /// Request body for updating qBittorrent settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateQBittorrentConfig {
     /// Web UI URL (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub url: Clearable<String>,
     /// Username (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub username: Clearable<String>,
     /// Password (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub password: Clearable<String>,
 }
 
 /// Request body for updating Transmission settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateTransmissionConfig {
     /// RPC URL (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub url: Clearable<String>,
     /// Username (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub username: Clearable<String>,
     /// Password (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub password: Clearable<String>,
 }
 
 /// Request body for updating filter settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateFilterSettings {
     /// Global RSS filters (replaces entire array if provided)
     #[serde(default)]
@@ -528,24 +545,26 @@ pub struct UpdateFilterSettings {
 }
 
 /// Request body for updating proxy settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateProxySettings {
     /// Proxy server URL (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub url: Clearable<String>,
     /// Username (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub username: Clearable<String>,
     /// Password (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub password: Clearable<String>,
 }
 
 /// Request body for updating notification settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateNotificationSettings {
     /// Enable/disable notifications globally
     #[serde(default)]
@@ -556,23 +575,25 @@ pub struct UpdateNotificationSettings {
 }
 
 /// Request body for updating Telegram settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateTelegramConfig {
     /// Enable Telegram notifications
     #[serde(default)]
     pub enabled: Option<bool>,
     /// Bot token (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub bot_token: Clearable<String>,
     /// Chat ID (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub chat_id: Clearable<String>,
 }
 
 /// Request body for updating priority settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdatePrioritySettings {
     /// Subtitle groups in priority order (replaces entire array if provided)
     #[serde(default)]
@@ -584,10 +605,11 @@ pub struct UpdatePrioritySettings {
 }
 
 /// Request body for updating TMDB settings
-#[derive(Debug, Clone, Default, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct UpdateTmdbSettings {
     /// TMDB API key (send null to clear)
     #[serde(default)]
-    #[schema(value_type = Option<String>)]
+    #[cfg_attr(feature = "openapi", schema(value_type = Option<String>))]
     pub api_key: Clearable<String>,
 }

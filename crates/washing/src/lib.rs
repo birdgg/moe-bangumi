@@ -43,9 +43,10 @@ pub use parser::SubType;
 /// ensuring that `[Chs, Jpn]` and `[Jpn, Chs]` are treated as equal.
 ///
 /// Serializes as a simple array of SubType (e.g., `["CHS", "JPN"]`).
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(transparent)]
-#[schema(value_type = Vec<SubType>)]
+#[cfg_attr(feature = "openapi", schema(value_type = Vec<SubType>))]
 pub struct SubtitleLanguageSet(Vec<SubType>);
 
 impl SubtitleLanguageSet {

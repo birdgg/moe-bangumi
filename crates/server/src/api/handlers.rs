@@ -10,6 +10,7 @@ mod settings;
 mod torrents;
 
 use serde::Deserialize;
+#[cfg(feature = "openapi")]
 use utoipa::IntoParams;
 
 // Cache TTL constants (in seconds)
@@ -17,21 +18,24 @@ const MIKAN_SEARCH_CACHE_TTL: i64 = 604800; // 1 week
 const MIKAN_DETAIL_CACHE_TTL: i64 = 2592000; // 30 days
 
 /// Query parameters for keyword search
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(IntoParams))]
 pub struct SearchQuery {
     /// Keyword to search
     pub keyword: String,
 }
 
 /// Query parameters for TMDB search with filters
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(IntoParams))]
 pub struct TmdbSearchQuery {
     /// Keyword to search
     pub keyword: String,
 }
 
 /// Query parameters for ID lookup
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(IntoParams))]
 pub struct IdQuery {
     /// ID to lookup
     pub id: String,
@@ -53,28 +57,37 @@ pub use settings::{
 pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 
 // Re-export utoipa path structs for OpenAPI routing
-#[doc(hidden)]
-pub use bangumi::{
-    __path_create_bangumi, __path_get_bangumi, __path_get_bangumi_by_id, __path_update_bangumi,
-};
-#[doc(hidden)]
-pub use calendar::{__path_get_calendar, __path_refresh_calendar};
-#[doc(hidden)]
-pub use downloader::__path_test_downloader_connection;
-#[doc(hidden)]
-pub use episodes::__path_get_episodes;
-#[doc(hidden)]
-pub use logs::{__path_cleanup_logs, __path_clear_all_logs, __path_get_logs, __path_stream_logs};
-#[doc(hidden)]
-pub use metadata::{__path_get_metadata, __path_get_metadata_by_id, __path_update_metadata};
-#[doc(hidden)]
-pub use mikan::__path_get_mikan_rss;
-#[doc(hidden)]
-pub use search::{__path_search_bgmtv, __path_search_mikan, __path_search_tmdb};
-#[doc(hidden)]
-pub use settings::{
-    __path_get_settings, __path_reset_settings, __path_test_notification, __path_test_proxy,
-    __path_update_settings,
-};
-#[doc(hidden)]
-pub use torrents::{__path_delete_torrents, __path_list_torrents};
+#[cfg(feature = "openapi")]
+mod openapi_paths {
+    #[doc(hidden)]
+    pub use super::bangumi::{
+        __path_create_bangumi, __path_get_bangumi, __path_get_bangumi_by_id, __path_update_bangumi,
+    };
+    #[doc(hidden)]
+    pub use super::calendar::{__path_get_calendar, __path_refresh_calendar};
+    #[doc(hidden)]
+    pub use super::downloader::__path_test_downloader_connection;
+    #[doc(hidden)]
+    pub use super::episodes::__path_get_episodes;
+    #[doc(hidden)]
+    pub use super::logs::{
+        __path_cleanup_logs, __path_clear_all_logs, __path_get_logs, __path_stream_logs,
+    };
+    #[doc(hidden)]
+    pub use super::metadata::{
+        __path_get_metadata, __path_get_metadata_by_id, __path_update_metadata,
+    };
+    #[doc(hidden)]
+    pub use super::mikan::__path_get_mikan_rss;
+    #[doc(hidden)]
+    pub use super::search::{__path_search_bgmtv, __path_search_mikan, __path_search_tmdb};
+    #[doc(hidden)]
+    pub use super::settings::{
+        __path_get_settings, __path_reset_settings, __path_test_notification, __path_test_proxy,
+        __path_update_settings,
+    };
+    #[doc(hidden)]
+    pub use super::torrents::{__path_delete_torrents, __path_list_torrents};
+}
+#[cfg(feature = "openapi")]
+pub use openapi_paths::*;

@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct TvShow {
     pub id: i64,
     pub name: String,
@@ -18,7 +20,8 @@ pub struct TvShow {
     pub original_language: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct PaginatedResponse<T> {
     pub page: i64,
     pub results: Vec<T>,

@@ -1,6 +1,7 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 
 use crate::models::{Subject, SubjectDetail};
@@ -29,7 +30,8 @@ static SEASON_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
 
 
 /// 解析后的 BGM.tv Subject
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct ParsedSubject {
     /// BGM.tv ID
     pub bgmtv_id: i64,

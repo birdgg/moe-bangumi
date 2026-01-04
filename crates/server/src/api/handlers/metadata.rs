@@ -8,21 +8,21 @@ use crate::models::{Metadata, UpdateMetadata};
 use crate::state::AppState;
 
 /// Get all metadata
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/metadata",
     tag = "metadata",
     responses(
         (status = 200, description = "List of all metadata", body = Vec<Metadata>)
     )
-)]
+))]
 pub async fn get_metadata(State(state): State<AppState>) -> AppResult<Json<Vec<Metadata>>> {
     let metadata_list = state.metadata.get_all().await?;
     Ok(Json(metadata_list))
 }
 
 /// Get a metadata by ID
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/metadata/{id}",
     tag = "metadata",
@@ -33,7 +33,7 @@ pub async fn get_metadata(State(state): State<AppState>) -> AppResult<Json<Vec<M
         (status = 200, description = "Metadata details", body = Metadata),
         (status = 404, description = "Metadata not found")
     )
-)]
+))]
 pub async fn get_metadata_by_id(
     State(state): State<AppState>,
     Path(id): Path<i64>,
@@ -43,7 +43,7 @@ pub async fn get_metadata_by_id(
 }
 
 /// Update a metadata
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     patch,
     path = "/api/metadata/{id}",
     tag = "metadata",
@@ -55,7 +55,7 @@ pub async fn get_metadata_by_id(
         (status = 200, description = "Metadata updated successfully", body = Metadata),
         (status = 404, description = "Metadata not found")
     )
-)]
+))]
 pub async fn update_metadata(
     State(state): State<AppState>,
     Path(id): Path<i64>,

@@ -1,5 +1,6 @@
 use axum::{extract::State, http::StatusCode, Json};
 use serde::Deserialize;
+#[cfg(feature = "openapi")]
 use utoipa::ToSchema;
 
 use crate::error::AppResult;
@@ -7,7 +8,7 @@ use crate::services::Task;
 use crate::state::AppState;
 
 /// List all torrents
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/torrents",
     tag = "torrents",
@@ -15,14 +16,15 @@ use crate::state::AppState;
         (status = 200, description = "List of all torrents", body = Vec<Task>),
         (status = 400, description = "Downloader not configured")
     )
-)]
+))]
 pub async fn list_torrents(State(state): State<AppState>) -> AppResult<Json<Vec<Task>>> {
     let torrents = state.downloader.get_tasks(None).await?;
     Ok(Json(torrents))
 }
 
 /// Request to delete torrents
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
 pub struct DeleteTorrentsRequest {
     /// List of torrent hashes
     pub hashes: Vec<String>,
@@ -36,7 +38,7 @@ fn default_delete_files() -> bool {
 }
 
 /// Delete torrents
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     post,
     path = "/api/torrents/delete",
     tag = "torrents",
@@ -45,7 +47,7 @@ fn default_delete_files() -> bool {
         (status = 200, description = "Torrents deleted successfully"),
         (status = 400, description = "Invalid request (empty hashes) or downloader not configured")
     )
-)]
+))]
 pub async fn delete_torrents(
     State(state): State<AppState>,
     Json(payload): Json<DeleteTorrentsRequest>,

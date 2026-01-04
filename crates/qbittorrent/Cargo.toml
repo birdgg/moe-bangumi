@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+openapi = ["dep:utoipa"]
+
 [dependencies]
 reqwest = { workspace = true, features = ["cookies", "multipart"] }
 tokio = { workspace = true, features = ["sync"] }
@@ -11,4 +14,4 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-utoipa.workspace = true
+utoipa = { workspace = true, optional = true }

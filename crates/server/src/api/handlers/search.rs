@@ -10,7 +10,7 @@ use tmdb::DiscoverBangumiParams;
 use super::{SearchQuery, TmdbSearchQuery, MIKAN_SEARCH_CACHE_TTL};
 
 /// Search for bangumi (Japanese anime) on BGM.tv
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/search/bgmtv",
     tag = "search",
@@ -18,7 +18,7 @@ use super::{SearchQuery, TmdbSearchQuery, MIKAN_SEARCH_CACHE_TTL};
     responses(
         (status = 200, description = "Search results", body = Vec<bgmtv::ParsedSubject>)
     )
-)]
+))]
 pub async fn search_bgmtv(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
@@ -28,7 +28,7 @@ pub async fn search_bgmtv(
 }
 
 /// Search for anime on TMDB using discover API
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/search/tmdb",
     tag = "search",
@@ -36,7 +36,7 @@ pub async fn search_bgmtv(
     responses(
         (status = 200, description = "Search results from TMDB", body = Vec<tmdb::models::TvShow>)
     )
-)]
+))]
 pub async fn search_tmdb(
     State(state): State<AppState>,
     Query(query): Query<TmdbSearchQuery>,
@@ -49,7 +49,7 @@ pub async fn search_tmdb(
 }
 
 /// Search for bangumi on Mikan
-#[utoipa::path(
+#[cfg_attr(feature = "openapi", utoipa::path(
     get,
     path = "/api/search/mikan",
     tag = "search",
@@ -57,7 +57,7 @@ pub async fn search_tmdb(
     responses(
         (status = 200, description = "Search results from Mikan", body = Vec<mikan::SearchResult>)
     )
-)]
+))]
 pub async fn search_mikan(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
