@@ -22,10 +22,11 @@ RUN cargo chef cook --release --recipe-path recipe.json
 
 # Stage 4: Build application
 FROM chef AS builder
+ARG APP_VERSION
 COPY --from=deps /app/target target
 COPY --from=deps /usr/local/cargo /usr/local/cargo
 COPY . .
-RUN cargo build --release -p cli
+RUN APP_VERSION=${APP_VERSION} cargo build --release -p cli
 
 # Stage 5: Runtime image
 FROM alpine:3.21 AS runtime

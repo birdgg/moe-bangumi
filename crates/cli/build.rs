@@ -1,12 +1,17 @@
 use std::process::Command;
 
 fn main() {
-    // Try to get version from git tag
-    let version = get_git_version().unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
+    // Priority: APP_VERSION env > git tag > Cargo.toml version
+    let version = std::env::var("APP_VERSION")
+        .ok()
+        .map(|v| v.strip_prefix('v').unwrap_or(&v).to_string())
+        .or_else(get_git_version)
+        .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
 
     println!("cargo:rustc-env=APP_VERSION={}", version);
 
-    // Rerun if git HEAD changes
+    // Rerun if these change
+    println!("cargo:rerun-if-env-changed=APP_VERSION");
     println!("cargo:rerun-if-changed=.git/HEAD");
     println!("cargo:rerun-if-changed=.git/refs/tags");
 }
