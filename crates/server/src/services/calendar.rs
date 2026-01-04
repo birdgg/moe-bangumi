@@ -207,25 +207,10 @@ impl CalendarService {
 
         for (idx, (year, season)) in seasons.into_iter().enumerate() {
             let season_str = season.to_db_string();
-            tracing::info!(
-                "[{}/{}] Importing {} {}...",
-                idx + 1,
-                total,
-                year,
-                season_str
-            );
 
             match self.import_season(year, &season_str).await {
                 Ok(count) => {
                     total_imported += count;
-                    tracing::info!(
-                        "[{}/{}] Imported {} entries for {} {}",
-                        idx + 1,
-                        total,
-                        count,
-                        year,
-                        season_str
-                    );
                 }
                 Err(e) => {
                     tracing::warn!(
@@ -255,11 +240,9 @@ impl CalendarService {
         let mut total_imported = 0;
 
         // Import current season
-        tracing::info!("Importing current season: {} {}...", current_year, current_season_str);
         match self.import_season(current_year, &current_season_str).await {
             Ok(count) => {
                 total_imported += count;
-                tracing::info!("Imported {} entries for {} {}", count, current_year, current_season_str);
             }
             Err(e) => {
                 tracing::warn!("Failed to import {} {}: {}", current_year, current_season_str, e);
@@ -267,11 +250,9 @@ impl CalendarService {
         }
 
         // Import previous season
-        tracing::info!("Importing previous season: {} {}...", prev_year, prev_season_str);
         match self.import_season(prev_year, &prev_season_str).await {
             Ok(count) => {
                 total_imported += count;
-                tracing::info!("Imported {} entries for {} {}", count, prev_year, prev_season_str);
             }
             Err(e) => {
                 tracing::warn!("Failed to import {} {}: {}", prev_year, prev_season_str, e);
