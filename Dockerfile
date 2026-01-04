@@ -1,5 +1,5 @@
-# Stage 1: Build frontend
-FROM oven/bun:1 AS frontend
+# Stage 1: Build frontend (platform-independent, build once)
+FROM --platform=linux/amd64 oven/bun:1 AS frontend
 WORKDIR /app/web
 COPY web/package.json web/bun.lock* ./
 RUN bun install --frozen-lockfile
