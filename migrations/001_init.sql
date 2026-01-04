@@ -36,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_metadata_air_week ON metadata(air_week);
 -- Unique indexes for external IDs (ensure uniqueness for non-null values)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_mikan_id ON metadata(mikan_id) WHERE mikan_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_bgmtv_id ON metadata(bgmtv_id) WHERE bgmtv_id IS NOT NULL AND bgmtv_id != 0;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_tmdb_id ON metadata(tmdb_id) WHERE tmdb_id IS NOT NULL AND tmdb_id != 0;
+CREATE INDEX IF NOT EXISTS idx_metadata_tmdb_id ON metadata(tmdb_id) WHERE tmdb_id IS NOT NULL AND tmdb_id != 0;
 
 -- Trigger to update updated_at on row modification
 CREATE TRIGGER IF NOT EXISTS update_metadata_timestamp
