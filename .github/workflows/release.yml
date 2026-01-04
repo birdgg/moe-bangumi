@@ -12,6 +12,10 @@ on:
         required: false
         type: boolean
         default: false
+      notes:
+        description: 'Custom release notes (optional, added before changelog)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -206,31 +210,49 @@ jobs:
           git tag -a "${{ needs.validate.outputs.tag }}" -m "Release ${{ needs.validate.outputs.tag }}"
           git push origin "${{ needs.validate.outputs.tag }}"
 
+      - name: Generate release body
+        id: body
+        run: |
+          {
+            echo 'content<<EOF'
+
+            # Add custom notes if provided
+            if [ -n "${{ inputs.notes }}" ]; then
+              echo "## Highlights"
+              echo ""
+              echo "${{ inputs.notes }}"
+              echo ""
+            fi
+
+            echo "## What's Changed"
+            echo ""
+            echo "${{ needs.changelog.outputs.changelog }}"
+            echo ""
+            echo "## Docker Images"
+            echo ""
+            echo "Docker images will be available shortly after this release:"
+            echo ""
+            echo '```bash'
+            echo "# GitHub Container Registry"
+            echo "docker pull ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.version }}"
+            echo ""
+            echo "# Docker Hub"
+            echo "docker pull birdgg/moe-bangumi:${{ needs.validate.outputs.version }}"
+            echo '```'
+            echo ""
+            echo "## Checksums"
+            echo ""
+            echo "See \`checksums.txt\` for SHA256 checksums of all binaries."
+
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: ${{ needs.validate.outputs.tag }}
-          body: |
-            ## What's Changed
-
-            ${{ needs.changelog.outputs.changelog }}
-
-            ## Docker Images
-
-            Docker images will be available shortly after this release:
-
-            ```bash
-            # GitHub Container Registry
-            docker pull ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.version }}
-
-            # Docker Hub
-            docker pull birdgg/moe-bangumi:${{ needs.validate.outputs.version }}
-            ```
-
-            ## Checksums
-
-            See `checksums.txt` for SHA256 checksums of all binaries.
+          body: ${{ steps.body.outputs.content }}
           files: |
             release/*
           draft: false

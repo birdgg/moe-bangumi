@@ -91,10 +91,12 @@ bump-version version:
     echo "Run 'cargo check' to verify the changes"
 
 # Trigger release workflow on GitHub (requires gh CLI)
-release version:
+# Usage: just release 0.1.0 "First release with core features"
+release version notes="":
     #!/usr/bin/env bash
     set -euo pipefail
     VERSION="{{version}}"
+    NOTES="{{notes}}"
 
     # Validate version format
     if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
@@ -103,6 +105,10 @@ release version:
     fi
 
     echo "Triggering release workflow for version $VERSION..."
-    gh workflow run release.yml -f version="$VERSION"
+    if [ -n "$NOTES" ]; then
+        gh workflow run release.yml -f version="$VERSION" -f notes="$NOTES"
+    else
+        gh workflow run release.yml -f version="$VERSION"
+    fi
     echo "Release workflow triggered! Check GitHub Actions for progress."
 
