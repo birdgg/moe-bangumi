@@ -1,7 +1,32 @@
+mod actor;
+mod config;
+mod handle;
+pub mod telegram;
+
 use anyhow::Result;
 use async_trait::async_trait;
-pub mod telegram;
-pub mod worker;
+use tokio::sync::mpsc;
+
+pub use config::{NotificationConfig, TelegramConfig};
+pub use handle::NotificationHandle;
+
+/// 通知主题
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+pub enum Topic {
+    Download,
+    System,
+    Error,
+}
+
+impl std::fmt::Display for Topic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Topic::Download => write!(f, "下载"),
+            Topic::System => write!(f, "系统"),
+            Topic::Error => write!(f, "错误"),
+        }
+    }
+}
 
 /// 通知系统核心 trait
 #[async_trait]
@@ -32,4 +57,17 @@ pub trait Notifier: Send + Sync {
         parse_mode: &str,
         cache_key: Option<&str>,
     ) -> Result<()>;
+}
+
+/// 创建通知服务
+pub fn create_notification_service(
+    config: NotificationConfig,
+    http_client: reqwest::Client,
+) -> NotificationHandle {
+    let (sender, receiver) = mpsc::channel(32);
+
+    let actor = actor::NotificationActor::new(config, http_client, receiver);
+    tokio::spawn(actor.run());
+
+    NotificationHandle::new(sender)
 }

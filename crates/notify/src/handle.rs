@@ -1,30 +1,27 @@
-use notify::worker::Topic;
 use tokio::sync::mpsc;
 
-use super::messages::NotificationMessage;
+use crate::actor::Message;
+use crate::{NotificationConfig, Topic};
 
-/// NotificationService 的对外接口（Handle）
-///
-/// 这个结构体提供与原 NotificationService 兼容的 API，
-/// 内部通过 channel 与 Actor 通信。
+/// 通知服务句柄（对外接口）
 #[derive(Clone)]
 pub struct NotificationHandle {
-    sender: mpsc::Sender<NotificationMessage>,
+    sender: mpsc::Sender<Message>,
 }
 
 impl NotificationHandle {
-    pub fn new(sender: mpsc::Sender<NotificationMessage>) -> Self {
+    pub(crate) fn new(sender: mpsc::Sender<Message>) -> Self {
         Self { sender }
     }
 
-    /// 发送通知 (fire-and-forget)
+    /// 发送通知（fire-and-forget）
     pub fn notify(&self, topic: Topic, title: impl Into<String>, content: impl Into<String>) {
         let sender = self.sender.clone();
         let title = title.into();
         let content = content.into();
         tokio::spawn(async move {
             let _ = sender
-                .send(NotificationMessage::Notify {
+                .send(Message::Notify {
                     topic,
                     title,
                     content,
@@ -33,18 +30,31 @@ impl NotificationHandle {
         });
     }
 
-    /// 发送错误通知 (fire-and-forget)
+    /// 发送错误通知（fire-and-forget）
     pub fn notify_error(&self, title: impl Into<String>, error: impl std::fmt::Display) {
         self.notify(Topic::Error, title, format!("错误信息: {}", error));
     }
 
-    /// 发送下载通知 (fire-and-forget)
+    /// 发送下载通知（fire-and-forget）
     pub fn notify_download(&self, title: impl Into<String>, content: impl Into<String>) {
         self.notify(Topic::Download, title, content);
     }
 
-    /// 发送带图片的下载通知 (fire-and-forget)
+    /// 发送带图片的下载通知（fire-and-forget）
+    ///
+    /// 这是 `notify_with_photo` 的便捷方法，用于下载完成通知。
     pub fn notify_download_with_photo(
+        &self,
+        title: impl Into<String>,
+        content: impl Into<String>,
+        photo: Vec<u8>,
+        cache_key: Option<String>,
+    ) {
+        self.notify_with_photo(title, content, photo, cache_key);
+    }
+
+    /// 发送带图片的通知（fire-and-forget）
+    pub fn notify_with_photo(
         &self,
         title: impl Into<String>,
         content: impl Into<String>,
@@ -56,7 +66,7 @@ impl NotificationHandle {
         let content = content.into();
         tokio::spawn(async move {
             let _ = sender
-                .send(NotificationMessage::NotifyWithPhoto {
+                .send(Message::NotifyWithPhoto {
                     title,
                     content,
                     photo,
@@ -66,8 +76,11 @@ impl NotificationHandle {
         });
     }
 
-    /// 发送失效通知（内部使用）
-    pub(crate) async fn invalidate(&self) {
-        let _ = self.sender.send(NotificationMessage::InvalidateConfig).await;
+    /// 更新配置（触发 notifier 重建）
+    pub async fn update_config(&self, config: NotificationConfig, client: reqwest::Client) {
+        let _ = self
+            .sender
+            .send(Message::UpdateConfig { config, client })
+            .await;
     }
 }

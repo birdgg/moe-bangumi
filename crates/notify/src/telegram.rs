@@ -44,9 +44,13 @@ impl Notifier for TelegramNotifier {
     }
 
     async fn send_formatted_message(&self, text: &str, parse_mode: &str) -> Result<()> {
+        let mode = parse_mode
+            .parse()
+            .map_err(|_| anyhow::anyhow!("Invalid parse_mode: {}", parse_mode))?;
+
         self.bot
             .send_message(self.chat_id, text)
-            .parse_mode(parse_mode.parse().unwrap()) // 支持 Markdown/HTML
+            .parse_mode(mode)
             .await
             .map(|_| ())
             .map_err(|e| anyhow::anyhow!("Telegram send failed: {}", e))
@@ -75,6 +79,10 @@ impl Notifier for TelegramNotifier {
         parse_mode: &str,
         cache_key: Option<&str>,
     ) -> Result<()> {
+        let mode = parse_mode
+            .parse()
+            .map_err(|_| anyhow::anyhow!("Invalid parse_mode: {}", parse_mode))?;
+
         // Check if we have a cached file_id for this cache_key
         if let Some(key) = cache_key {
             let mut cache = self.file_id_cache.lock().await;
@@ -85,7 +93,7 @@ impl Notifier for TelegramNotifier {
                     .bot
                     .send_photo(self.chat_id, photo_file)
                     .caption(caption)
-                    .parse_mode(parse_mode.parse().unwrap())
+                    .parse_mode(mode)
                     .await
                     .map(|_| ())
                     .map_err(|e| anyhow::anyhow!("Telegram send photo (cached) failed: {}", e));
@@ -98,7 +106,7 @@ impl Notifier for TelegramNotifier {
             .bot
             .send_photo(self.chat_id, photo_file)
             .caption(caption)
-            .parse_mode(parse_mode.parse().unwrap())
+            .parse_mode(mode)
             .await
             .map_err(|e| anyhow::anyhow!("Telegram send photo failed: {}", e))?;
 
