@@ -190,6 +190,7 @@ impl AppState {
             db.clone(),
             Arc::clone(&bgmtv),
             Arc::clone(&mikan_arc),
+            Arc::clone(&metadata_actor),
         ));
 
         // Start background actors

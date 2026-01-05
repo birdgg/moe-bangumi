@@ -8,6 +8,7 @@ use mikan::{MikanClient, Season};
 use sqlx::SqlitePool;
 use thiserror::Error;
 
+use crate::metadata_service::MetadataHandle;
 use crate::models::{CalendarDay, CalendarSubject, CreateMetadata, Platform, SeasonData, Weekday};
 use crate::repositories::{CalendarEntry, CalendarRepository, MetadataRepository};
 use crate::SeasonIterator;
@@ -52,11 +53,22 @@ pub struct CalendarService {
     db: SqlitePool,
     bgmtv: Arc<BgmtvClient>,
     mikan: Arc<MikanClient>,
+    metadata_actor: Arc<MetadataHandle>,
 }
 
 impl CalendarService {
-    pub fn new(db: SqlitePool, bgmtv: Arc<BgmtvClient>, mikan: Arc<MikanClient>) -> Self {
-        Self { db, bgmtv, mikan }
+    pub fn new(
+        db: SqlitePool,
+        bgmtv: Arc<BgmtvClient>,
+        mikan: Arc<MikanClient>,
+        metadata_actor: Arc<MetadataHandle>,
+    ) -> Self {
+        Self {
+            db,
+            bgmtv,
+            mikan,
+            metadata_actor,
+        }
     }
 
     /// Get current year and season
@@ -74,11 +86,7 @@ impl CalendarService {
     /// 4. Upsert to metadata and calendar tables
     pub async fn refresh_calendar(&self, year: i32, season: Season) -> Result<usize> {
         let season_str = season.to_db_string();
-        tracing::info!(
-            "Refreshing calendar for {} {}",
-            year,
-            season_str
-        );
+        tracing::info!("Refreshing calendar for {} {}", year, season_str);
 
         // Step 1: Get seasonal bangumi list from Mikan
         let seasonal_list = self.mikan.get_seasonal_bangumi_list(year, season).await?;
@@ -114,7 +122,9 @@ impl CalendarService {
         }
 
         // Step 4: Ensure metadata exists and get calendar entries
-        let calendar_entries = self.ensure_metadata_and_build_entries(&subjects, year, &season_str).await?;
+        let calendar_entries = self
+            .ensure_metadata_and_build_entries(&subjects, year, &season_str)
+            .await?;
         tracing::info!("Built {} calendar entries", calendar_entries.len());
 
         // Step 5: Batch upsert to calendar table
@@ -122,7 +132,9 @@ impl CalendarService {
 
         // Step 6: Clean up stale entries
         let keep_metadata_ids: Vec<i64> = calendar_entries.iter().map(|e| e.metadata_id).collect();
-        let deleted = CalendarRepository::delete_except(&self.db, year, &season_str, &keep_metadata_ids).await?;
+        let deleted =
+            CalendarRepository::delete_except(&self.db, year, &season_str, &keep_metadata_ids)
+                .await?;
         if deleted > 0 {
             tracing::info!("Removed {} stale calendar entries", deleted);
         }
@@ -181,22 +193,31 @@ impl CalendarService {
     pub async fn import_seed_data(&self) -> Result<usize> {
         let is_empty = CalendarRepository::is_empty(&self.db).await?;
 
-        if is_empty {
+        let count = if is_empty {
             // Full import: download all seasons
             tracing::info!("Calendar is empty, performing full seed import...");
-            self.import_all_seasons().await
+            self.import_all_seasons().await?
         } else {
             // Incremental update: only current and previous season
             tracing::info!("Calendar has data, performing incremental update...");
-            self.import_recent_seasons().await
+            self.import_recent_seasons().await?
+        };
+
+        // Trigger metadata sync after import (downloads posters and fetches TMDB IDs)
+        if count > 0 {
+            tracing::info!("Triggering metadata sync after seed import...");
+            self.metadata_actor.trigger_sync();
         }
+
+        Ok(count)
     }
 
     /// Import all seasons from seed data (full import)
     /// Only imports the most recent SEED_SEASONS_COUNT seasons (default: 12 = 3 years)
     async fn import_all_seasons(&self) -> Result<usize> {
         let (current_year, current_season) = Self::current_season();
-        let (end_year, end_season) = Self::season_n_ago(current_year, current_season, SEED_SEASONS_COUNT);
+        let (end_year, end_season) =
+            Self::season_n_ago(current_year, current_season, SEED_SEASONS_COUNT);
         let iterator = SeasonIterator::new(current_year, current_season, end_year, end_season);
         let seasons: Vec<_> = iterator.collect();
         let total = seasons.len();
@@ -225,7 +246,6 @@ impl CalendarService {
             }
         }
 
-        tracing::info!("Full seed import complete: {} total entries", total_imported);
         Ok(total_imported)
     }
 
@@ -245,7 +265,12 @@ impl CalendarService {
                 total_imported += count;
             }
             Err(e) => {
-                tracing::warn!("Failed to import {} {}: {}", current_year, current_season_str, e);
+                tracing::warn!(
+                    "Failed to import {} {}: {}",
+                    current_year,
+                    current_season_str,
+                    e
+                );
             }
         }
 
@@ -259,7 +284,10 @@ impl CalendarService {
             }
         }
 
-        tracing::info!("Incremental update complete: {} total entries", total_imported);
+        tracing::info!(
+            "Incremental update complete: {} total entries",
+            total_imported
+        );
         Ok(total_imported)
     }
 
@@ -407,11 +435,7 @@ impl CalendarService {
             match bgmtv.get_subject(bgmtv_id).await {
                 Ok(subject) => Some((data, bgmtv_id, subject)),
                 Err(e) => {
-                    tracing::warn!(
-                        "Failed to fetch BGM.tv subject {}: {}",
-                        bgmtv_id,
-                        e
-                    );
+                    tracing::warn!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
                     None
                 }
             }
@@ -469,9 +493,7 @@ impl CalendarService {
         subject: &bgmtv::ParsedSubject,
     ) -> CreateMetadata {
         // Use year from parsed subject or fallback to current year
-        let year = subject
-            .year
-            .unwrap_or_else(|| chrono::Utc::now().year());
+        let year = subject.year.unwrap_or_else(|| chrono::Utc::now().year());
 
         // Parse platform
         let platform = match subject.platform.to_lowercase().as_str() {
