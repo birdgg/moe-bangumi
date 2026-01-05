@@ -25,8 +25,6 @@ impl DownloaderActor {
 
     /// 运行 Actor 主循环
     pub async fn run(mut self) {
-        tracing::info!("Downloader actor started");
-
         while let Some(msg) = self.receiver.recv().await {
             self.handle_message(msg).await;
         }

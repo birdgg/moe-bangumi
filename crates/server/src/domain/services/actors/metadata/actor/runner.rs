@@ -171,8 +171,6 @@ impl MetadataActor {
 
     /// 运行 Actor 主循环
     pub async fn run(mut self) {
-        tracing::info!("Metadata actor started");
-
         // 启动定时同步任务
         let sync_task = self.spawn_sync_interval();
 

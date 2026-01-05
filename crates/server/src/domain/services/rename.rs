@@ -698,6 +698,7 @@ mod tests {
             air_date: Some("2024-01-01".to_string()),
             air_week: 1,
             tmdb_lookup_at: None,
+            episode_offset: 0,
         };
 
         let bangumi = Bangumi {
@@ -705,7 +706,6 @@ mod tests {
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
             metadata_id: 1,
-            episode_offset: 0,
             current_episode: 0,
             auto_complete: true,
             save_path: "/downloads".to_string(),

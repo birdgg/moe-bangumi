@@ -99,8 +99,6 @@ impl NotificationActor {
     }
 
     pub async fn run(mut self) {
-        info!("Notification actor started");
-
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 Message::Notify {

@@ -9,10 +9,11 @@ use tmdb::TmdbClient;
 
 use crate::config::Config;
 use crate::services::{
-    create_downloader_service, create_notification_service, BangumiService, CacheService,
-    CalendarService, DownloaderHandle, HttpClientService, LogCleanupJob, LogService,
-    NotificationService, RenameJob, RenameService, RssFetchJob, RssProcessingService,
-    SchedulerBuilder, SchedulerHandle, SettingsService, WashingService,
+    create_downloader_service, create_log_cleanup_actor, create_notification_service,
+    create_rename_actor, create_rss_fetch_actor, BangumiService, CacheService, CalendarService,
+    DownloaderHandle, HttpClientService, LogCleanupHandle, LogService, NotificationService,
+    RenameHandle, RenameService, RssFetchHandle, RssProcessingService, SettingsService,
+    WashingService,
 };
 
 #[derive(Clone)]
@@ -28,7 +29,6 @@ pub struct AppState {
     pub downloader: Arc<DownloaderHandle>,
     pub poster: Arc<PosterService>,
     pub metadata_actor: Arc<MetadataHandle>,
-    pub scheduler: Arc<SchedulerHandle>,
     pub logs: Arc<LogService>,
     pub metadata: Arc<MetadataService>,
     pub bangumi: Arc<BangumiService>,
@@ -36,6 +36,13 @@ pub struct AppState {
     pub calendar: Arc<CalendarService>,
     pub notification: Arc<NotificationService>,
     pub rename: Arc<RenameService>,
+    // Background actors (keep handles alive to prevent actors from stopping)
+    #[allow(dead_code)]
+    rss_fetch_actor: RssFetchHandle,
+    #[allow(dead_code)]
+    rename_actor: RenameHandle,
+    #[allow(dead_code)]
+    log_cleanup_actor: LogCleanupHandle,
 }
 
 /// Create a client provider closure from HttpClientService
@@ -185,13 +192,11 @@ impl AppState {
             Arc::clone(&mikan_arc),
         ));
 
-        // Create and start scheduler service (Actor mode)
-        // Note: MetadataSyncJob is no longer needed - metadata actor has internal scheduling
-        let scheduler = SchedulerBuilder::new()
-            .with_job(RssFetchJob::new(db.clone(), Arc::clone(&rss_processing)))
-            .with_job(LogCleanupJob::new(Arc::clone(&logs)))
-            .with_job(RenameJob::new(Arc::clone(&rename)))
-            .build();
+        // Start background actors
+        // Note: These actors have internal timers and run independently
+        let rss_fetch_actor = create_rss_fetch_actor(db.clone(), Arc::clone(&rss_processing));
+        let log_cleanup_actor = create_log_cleanup_actor(Arc::clone(&logs));
+        let rename_actor = create_rename_actor(Arc::clone(&rename));
 
         Self {
             db,
@@ -205,7 +210,6 @@ impl AppState {
             downloader: downloader_arc,
             poster,
             metadata_actor,
-            scheduler: Arc::new(scheduler),
             logs,
             metadata,
             bangumi,
@@ -213,6 +217,9 @@ impl AppState {
             calendar,
             notification,
             rename,
+            rss_fetch_actor,
+            rename_actor,
+            log_cleanup_actor,
         }
     }
 }
