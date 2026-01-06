@@ -19,6 +19,13 @@ impl BgmtvProvider {
     pub fn new(client: Arc<BgmtvClient>) -> Self {
         Self { client }
     }
+
+    /// Create a new BgmtvProvider with a reqwest Client
+    pub fn with_http_client(http_client: reqwest::Client) -> Self {
+        Self {
+            client: Arc::new(BgmtvClient::new(http_client)),
+        }
+    }
 }
 
 #[async_trait]

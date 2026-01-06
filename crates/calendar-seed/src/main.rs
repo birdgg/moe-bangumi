@@ -4,23 +4,47 @@
 //! then saves it as individual JSON files per season for incremental updates.
 //!
 //! Usage:
-//!   cargo run --bin calendar_seed           # Fetch all seasons (2013 to current)
-//!   cargo run --bin calendar_seed -- --recent 2   # Fetch only recent 2 seasons
+//!   cargo run -p calendar-seed           # Fetch all seasons (2013 to current)
+//!   cargo run -p calendar-seed -- --recent 2   # Fetch only recent 2 seasons
 
 use std::sync::Arc;
 use std::time::Duration;
 
-use bgmtv::BgmtvClient;
 use futures::stream::{self, StreamExt};
-use metadata::parse_subject_detail;
-use mikan::{MikanClient, Season};
-use server::models::{CreateMetadata, Platform, SeasonData};
-use server::SeasonIterator;
+use metadata::{BgmtvProvider, MetadataProvider, Platform};
+use mikan::{MikanClient, Season, SeasonIterator};
+use serde::{Deserialize, Serialize};
 use tracing_subscriber::EnvFilter;
 
 const OUTPUT_DIR: &str = "assets/seed";
 const REQUEST_DELAY_SECS: u64 = 30;
 const END_YEAR: i32 = 2013;
+
+/// Seed entry for a single anime
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SeedEntry {
+    pub mikan_id: Option<String>,
+    pub bgmtv_id: Option<i64>,
+    pub tmdb_id: Option<i64>,
+    pub title_chinese: String,
+    pub title_japanese: Option<String>,
+    pub season: i32,
+    pub year: i32,
+    pub platform: Platform,
+    pub total_episodes: i32,
+    pub poster_url: Option<String>,
+    pub air_date: Option<String>,
+    pub air_week: i32,
+    pub episode_offset: i32,
+}
+
+/// Data for a single season
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SeasonData {
+    pub year: i32,
+    pub season: String,
+    pub entries: Vec<SeedEntry>,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -55,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create API clients
     let mikan = Arc::new(MikanClient::new(http_client.clone()));
-    let bgmtv = Arc::new(BgmtvClient::new(http_client));
+    let bgmtv_provider = Arc::new(BgmtvProvider::with_http_client(http_client));
 
     // Create output directory if needed
     std::fs::create_dir_all(OUTPUT_DIR)?;
@@ -86,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             season_str
         );
 
-        match fetch_season_data(&mikan, &bgmtv, year, season).await {
+        match fetch_season_data(&mikan, &bgmtv_provider, year, season).await {
             Ok(data) => {
                 let entry_count = data.entries.len();
                 tracing::info!(
@@ -141,7 +165,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Fetch calendar data for a single season
 async fn fetch_season_data(
     mikan: &Arc<MikanClient>,
-    bgmtv: &Arc<BgmtvClient>,
+    bgmtv_provider: &Arc<BgmtvProvider>,
     year: i32,
     season: Season,
 ) -> Result<SeasonData, Box<dyn std::error::Error>> {
@@ -166,17 +190,16 @@ async fn fetch_season_data(
         .map(|b| {
             let mikan_id = b.mikan_id.clone();
             let air_week = b.air_week;
-            let poster_url = b.poster_url.clone();
             let name = b.name.clone();
             let mikan = Arc::clone(&mikan_clone);
-            (mikan_id, air_week, poster_url, name, mikan)
+            (mikan_id, air_week, name, mikan)
         })
         .collect();
 
     let bgmtv_mappings: Vec<_> = stream::iter(items)
-        .map(|(mikan_id, air_week, poster_url, name, mikan)| async move {
+        .map(|(mikan_id, air_week, name, mikan)| async move {
             match mikan.get_bangumi_bgmtv_id(&mikan_id).await {
-                Ok(Some(bgmtv_id)) => Some((mikan_id, bgmtv_id, air_week, poster_url, name)),
+                Ok(Some(bgmtv_id)) => Some((mikan_id, bgmtv_id, air_week, name)),
                 Ok(None) => {
                     tracing::debug!("No BGM.tv ID for mikan_id: {}", mikan_id);
                     None
@@ -206,57 +229,54 @@ async fn fetch_season_data(
         });
     }
 
-    // Step 3: Fetch BGM.tv subject details
-    let bgmtv_clone = Arc::clone(bgmtv);
+    // Step 3: Fetch BGM.tv subject details via metadata provider
+    let provider_clone = Arc::clone(bgmtv_provider);
     let tasks: Vec<_> = bgmtv_mappings
         .into_iter()
-        .map(|(mikan_id, bgmtv_id, air_week, poster_url, name)| {
-            let bgmtv = Arc::clone(&bgmtv_clone);
-            (mikan_id, bgmtv_id, air_week, poster_url, name, bgmtv)
+        .map(|(mikan_id, bgmtv_id, air_week, _name)| {
+            let provider = Arc::clone(&provider_clone);
+            (mikan_id, bgmtv_id, air_week, provider)
         })
         .collect();
 
-    let entries: Vec<CreateMetadata> = stream::iter(tasks)
-        .map(
-            |(mikan_id, bgmtv_id, air_week, _poster_url, _name, bgmtv)| async move {
-                match bgmtv.get_subject(bgmtv_id).await {
-                    Ok(detail) => {
-                        // Parse the subject detail
-                        let parsed = parse_subject_detail(&detail);
+    let entries: Vec<SeedEntry> = stream::iter(tasks)
+        .map(|(mikan_id, bgmtv_id, air_week, provider)| async move {
+            let external_id = bgmtv_id.to_string();
+            match provider.get_detail(&external_id).await {
+                Ok(Some(metadata)) => {
+                    let subject_year = metadata.year.unwrap_or(year);
+                    let platform = metadata.platform.unwrap_or(Platform::Tv);
 
-                        // Use year from parsed subject or fallback
-                        let subject_year = parsed.year.unwrap_or(year);
-
-                        // Parse platform using FromStr implementation
-                        let platform = parsed.platform.parse().unwrap_or(Platform::Tv);
-
-                        Some(CreateMetadata {
-                            mikan_id: Some(mikan_id),
-                            bgmtv_id: Some(bgmtv_id),
-                            tmdb_id: None,
-                            title_chinese: parsed
-                                .title_chinese
-                                .clone()
-                                .or_else(|| parsed.title_japanese.clone())
-                                .unwrap_or_default(),
-                            title_japanese: parsed.title_japanese,
-                            season: parsed.season,
-                            year: subject_year,
-                            platform,
-                            total_episodes: parsed.total_episodes as i32,
-                            poster_url: Some(parsed.poster_url),
-                            air_date: parsed.air_date,
-                            air_week,
-                            episode_offset: 0,
-                        })
-                    }
-                    Err(e) => {
-                        tracing::debug!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
-                        None
-                    }
+                    Some(SeedEntry {
+                        mikan_id: Some(mikan_id),
+                        bgmtv_id: Some(bgmtv_id),
+                        tmdb_id: None,
+                        title_chinese: metadata
+                            .title_chinese
+                            .clone()
+                            .or_else(|| metadata.title_original.clone())
+                            .unwrap_or_default(),
+                        title_japanese: metadata.title_original,
+                        season: metadata.season.unwrap_or(1),
+                        year: subject_year,
+                        platform,
+                        total_episodes: metadata.total_episodes,
+                        poster_url: metadata.poster_url,
+                        air_date: metadata.air_date,
+                        air_week,
+                        episode_offset: 0,
+                    })
                 }
-            },
-        )
+                Ok(None) => {
+                    tracing::debug!("No detail found for BGM.tv subject {}", bgmtv_id);
+                    None
+                }
+                Err(e) => {
+                    tracing::debug!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
+                    None
+                }
+            }
+        })
         .buffer_unordered(10)
         .filter_map(|x| async { x })
         .collect()
