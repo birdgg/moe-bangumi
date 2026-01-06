@@ -999,16 +999,6 @@ export type UpdateQBittorrentConfig = {
 };
 
 /**
- * Request body for update operation
- */
-export type UpdateRequest = {
-  /**
-   * Whether to automatically restart after update (default: true)
-   */
-  auto_restart?: boolean;
-};
-
-/**
  * Response for update operation
  */
 export type UpdateResponse = {
@@ -1833,20 +1823,3 @@ export type CheckUpdateResponses = {
 
 export type CheckUpdateResponse =
   CheckUpdateResponses[keyof CheckUpdateResponses];
-
-export type PerformUpdateData = {
-  body: UpdateRequest;
-  path?: never;
-  query?: never;
-  url: "/api/version/update";
-};
-
-export type PerformUpdateResponses = {
-  /**
-   * Update triggered
-   */
-  200: UpdateResponse;
-};
-
-export type PerformUpdateResponse =
-  PerformUpdateResponses[keyof PerformUpdateResponses];

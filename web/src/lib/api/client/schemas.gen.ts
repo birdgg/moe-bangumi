@@ -1406,18 +1406,6 @@ export const UpdateQBittorrentConfigSchema = {
   },
 } as const;
 
-export const UpdateRequestSchema = {
-  type: "object",
-  description: "Request body for update operation",
-  properties: {
-    auto_restart: {
-      type: "boolean",
-      description:
-        "Whether to automatically restart after update (default: true)",
-    },
-  },
-} as const;
-
 export const UpdateResponseSchema = {
   type: "object",
   description: "Response for update operation",

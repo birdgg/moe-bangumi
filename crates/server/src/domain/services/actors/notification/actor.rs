@@ -156,12 +156,7 @@ impl NotificationActor {
             return;
         }
 
-        let caption = format!(
-            "*[下载通知]* {}\n\n{}\n\n_发送时间: {}_",
-            title,
-            content,
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
-        );
+        let caption = format!("{}{}", title, content);
 
         if let Some(notifier) = &self.notifier {
             if let Err(e) = notifier
@@ -223,13 +218,7 @@ impl NotificationActor {
         }
     }
 
-    fn format_message(topic: &Topic, title: &str, content: &str) -> String {
-        format!(
-            "*[{}通知]* {}\n\n{}\n\n_发送时间: {}_",
-            topic,
-            title,
-            content,
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
-        )
+    fn format_message(_topic: &Topic, title: &str, content: &str) -> String {
+        format!("{}{}", title, content)
     }
 }
