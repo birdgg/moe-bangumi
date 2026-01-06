@@ -16,7 +16,6 @@ just dev-all      # Start both backend and frontend dev servers
 ### Backend (Rust)
 
 ```bash
-just build-release  # Build (release)
 just dev            # Run the server (defaults: port 3000, data path ./data)
 just check          # Check compilation without building
 just test           # Run tests
@@ -25,7 +24,6 @@ just test           # Run tests
 ### Frontend (Web)
 
 ```bash
-just web-install    # Install dependencies
 just web-dev        # Development server
 just web-lint       # Lint
 just web-gen-api    # Generate API client
@@ -126,10 +124,6 @@ Each feature's route is defined in `src/routes/` with a simple import of the pag
   - Theme colors are defined in `index.css` and can be changed dynamically via `ThemeColorSelector`
   - Color mapping: `chart-1` (primary), `chart-2`, `chart-3` (secondary), `chart-4`, `chart-5` (accent)
 
-## Database Migrations
-
-Since the project is not yet released, database schema changes should be added directly to `migrations/001_init.sql` instead of creating new migration files. After modifying the init file, delete `data/moe.db` to recreate the database on next server start.
-
 ## Coding Conventions
 
 ### Rust Module Style
@@ -140,3 +134,4 @@ Since the project is not yet released, database schema changes should be added d
 ## Specific
 
 - start dev server after change
+- do not add stats for log

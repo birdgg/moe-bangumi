@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use tracing_subscriber::EnvFilter;
 
 const OUTPUT_DIR: &str = "assets/seed";
-const REQUEST_DELAY_SECS: u64 = 30;
+const REQUEST_DELAY_SECS: u64 = 10;
 const END_YEAR: i32 = 2013;
 
 /// Seed entry for a single anime
