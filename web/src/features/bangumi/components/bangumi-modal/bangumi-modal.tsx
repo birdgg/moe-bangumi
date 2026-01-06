@@ -161,7 +161,7 @@ export function BangumiModal({
     if (isEdit) {
       // Edit mode: wait for API data
       if (bangumiWithRss && bangumiWithRss.id === data.id) {
-        form.setFieldValue("episode_offset", bangumiWithRss.episode_offset);
+        form.setFieldValue("episode_offset", bangumiWithRss.metadata.episode_offset);
         form.setFieldValue("auto_complete", bangumiWithRss.auto_complete);
         form.setFieldValue(
           "rss_entries",

@@ -98,6 +98,9 @@ pub struct CreateBangumi {
     /// Only download first matching episode per RSS check
     #[serde(default = "default_auto_complete")]
     pub auto_complete: bool,
+    /// Episode offset for season-relative numbering (overrides metadata.episode_offset if provided)
+    #[serde(default)]
+    pub episode_offset: Option<i32>,
     /// Source type
     #[serde(default)]
     pub source_type: SourceType,
@@ -134,6 +137,8 @@ pub struct BangumiWithRss {
 pub struct UpdateBangumiRequest {
     /// Only download first matching episode per RSS check
     pub auto_complete: Option<bool>,
+    /// Episode offset for season-relative numbering (updates metadata)
+    pub episode_offset: Option<i32>,
     /// RSS entries to sync (replaces all existing entries)
     pub rss_entries: Option<Vec<RssEntry>>,
 }

@@ -125,6 +125,10 @@ export type CreateBangumi = {
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean;
+  /**
+   * Episode offset for season-relative numbering (overrides metadata.episode_offset if provided)
+   */
+  episode_offset?: number | null;
   metadata?: null | CreateMetadata;
   /**
    * Metadata ID (if using existing metadata)
@@ -843,6 +847,10 @@ export type UpdateBangumiRequest = {
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean | null;
+  /**
+   * Episode offset for season-relative numbering (updates metadata)
+   */
+  episode_offset?: number | null;
   /**
    * RSS entries to sync (replaces all existing entries)
    */

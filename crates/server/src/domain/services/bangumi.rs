@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::models::{
     format_rss_title, BangumiWithMetadata, BangumiWithRss, CreateBangumi, CreateRss, RssEntry,
-    UpdateBangumi, UpdateBangumiRequest,
+    UpdateBangumi, UpdateBangumiRequest, UpdateMetadata,
 };
 use crate::repositories::{BangumiRepository, CreateBangumiData, RssRepository};
 use crate::services::{RssProcessingService, SettingsService};
@@ -55,7 +55,7 @@ impl BangumiService {
         let rss_entries = data.rss_entries.clone();
 
         // Get or create/update metadata
-        let metadata = if let Some(metadata_id) = data.metadata_id {
+        let mut metadata = if let Some(metadata_id) = data.metadata_id {
             // Use existing metadata
             self.metadata.get_by_id(metadata_id).await?
         } else if let Some(create_metadata) = data.metadata {
@@ -64,6 +64,15 @@ impl BangumiService {
         } else {
             return Err(BangumiError::MissingMetadata);
         };
+
+        // Update episode_offset if provided at top level (overrides metadata value)
+        if let Some(episode_offset) = data.episode_offset {
+            let metadata_update = UpdateMetadata {
+                episode_offset: Some(episode_offset),
+                ..Default::default()
+            };
+            metadata = self.metadata.update(metadata.id, metadata_update).await?;
+        }
 
         // Generate save_path using pathgen with metadata
         let settings = self.settings.get();
@@ -160,8 +169,8 @@ impl BangumiService {
         id: i64,
         request: UpdateBangumiRequest,
     ) -> Result<BangumiWithRss, BangumiError> {
-        // Check if bangumi exists
-        BangumiRepository::get_by_id(&self.db, id)
+        // Check if bangumi exists and get metadata_id
+        let bangumi = BangumiRepository::get_by_id(&self.db, id)
             .await?
             .ok_or(BangumiError::NotFound)?;
 
@@ -173,6 +182,15 @@ impl BangumiService {
 
         // Update bangumi
         BangumiRepository::update(&self.db, id, update_data).await?;
+
+        // Update episode_offset in metadata if provided
+        if let Some(episode_offset) = request.episode_offset {
+            let metadata_update = UpdateMetadata {
+                episode_offset: Some(episode_offset),
+                ..Default::default()
+            };
+            self.metadata.update(bangumi.metadata_id, metadata_update).await?;
+        }
 
         // Sync RSS entries if provided
         if let Some(rss_entries) = request.rss_entries {

@@ -28,7 +28,7 @@ function bangumiToModalData(bangumi: BangumiWithMetadata): BangumiModalData {
     airDate: metadata.air_date,
     airWeek: metadata.air_week,
     sourceType: bangumi.source_type,
-    episodeOffset: bangumi.episode_offset,
+    episodeOffset: bangumi.metadata.episode_offset,
     autoComplete: bangumi.auto_complete,
   };
 }

@@ -197,6 +197,12 @@ export const CreateBangumiSchema = {
       type: "boolean",
       description: "Only download first matching episode per RSS check",
     },
+    episode_offset: {
+      type: ["integer", "null"],
+      format: "int32",
+      description:
+        "Episode offset for season-relative numbering (overrides metadata.episode_offset if provided)",
+    },
     metadata: {
       oneOf: [
         {
@@ -1168,6 +1174,12 @@ export const UpdateBangumiRequestSchema = {
     auto_complete: {
       type: ["boolean", "null"],
       description: "Only download first matching episode per RSS check",
+    },
+    episode_offset: {
+      type: ["integer", "null"],
+      format: "int32",
+      description:
+        "Episode offset for season-relative numbering (updates metadata)",
     },
     rss_entries: {
       type: ["array", "null"],
