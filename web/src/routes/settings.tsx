@@ -9,7 +9,6 @@ const validSections: SettingsSection[] = [
   "filter",
   "proxy",
   "notification",
-  "update",
 ];
 
 export const Route = createFileRoute("/settings")({
