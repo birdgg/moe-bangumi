@@ -25,7 +25,7 @@ build-release:
 
 # Run the server (dev mode)
 dev:
-    cargo run -p cli --bin moe
+    cargo run -p cli --bin moe --features openapi
 
 # Generate calendar seed data (all seasons from 2013)
 seed:
@@ -98,13 +98,13 @@ bump-version version:
     echo "Version bumped to $VERSION"
     echo "Run 'cargo check' to verify the changes"
 
-# Trigger release workflow on GitHub (requires gh CLI)
-# Usage: just release 0.1.0 "First release with core features"
-release version notes="":
+# Create and push a release tag (triggers Docker build, then GitHub Release)
+# Usage: just release 0.1.0
+release version:
     #!/usr/bin/env bash
     set -euo pipefail
     VERSION="{{version}}"
-    NOTES="{{notes}}"
+    TAG="v$VERSION"
 
     # Validate version format
     if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
@@ -112,11 +112,18 @@ release version notes="":
         exit 1
     fi
 
-    echo "Triggering release workflow for version $VERSION..."
-    if [ -n "$NOTES" ]; then
-        gh workflow run release.yml -f version="$VERSION" -f notes="$NOTES"
-    else
-        gh workflow run release.yml -f version="$VERSION"
+    # Check if tag already exists
+    if git rev-parse "$TAG" >/dev/null 2>&1; then
+        echo "Error: Tag $TAG already exists"
+        exit 1
     fi
-    echo "Release workflow triggered! Check GitHub Actions for progress."
+
+    echo "Creating tag $TAG..."
+    git tag -a "$TAG" -m "Release $TAG"
+
+    echo "Pushing tag $TAG..."
+    git push origin "$TAG"
+
+    echo "Tag $TAG pushed! Docker build will start, then GitHub Release will be created."
+    echo "Check GitHub Actions for progress: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/actions"
 
