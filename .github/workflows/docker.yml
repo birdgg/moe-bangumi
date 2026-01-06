@@ -222,9 +222,24 @@ jobs:
           cat checksums.txt
 
       - name: Wait for release to be created
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Wait a bit for the release workflow to create the release
-          sleep 30
+          TAG="${{ github.ref_name }}"
+          echo "Waiting for release $TAG to be created..."
+
+          # Poll for up to 5 minutes (30 attempts, 10 seconds apart)
+          for i in {1..30}; do
+            if gh release view "$TAG" &>/dev/null; then
+              echo "Release $TAG found!"
+              exit 0
+            fi
+            echo "Attempt $i/30: Release not found yet, waiting 10 seconds..."
+            sleep 10
+          done
+
+          echo "Error: Release $TAG was not created within 5 minutes"
+          exit 1
 
       - name: Upload binaries to release
         uses: softprops/action-gh-release@v2
