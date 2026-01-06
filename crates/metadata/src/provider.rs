@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 
-use crate::{ProviderError, SearchQuery, SearchedMetadata};
+use crate::{Episode, ProviderError, SearchQuery, SearchedMetadata};
 
 /// Unified metadata provider trait
 ///
@@ -44,6 +44,21 @@ pub trait MetadataProvider: Send + Sync {
         }
 
         Ok(results.into_iter().next())
+    }
+
+    /// Get detailed metadata by external ID
+    ///
+    /// Returns full metadata for a specific subject/show.
+    async fn get_detail(&self, _external_id: &str) -> Result<Option<SearchedMetadata>, ProviderError> {
+        Ok(None)
+    }
+
+    /// Get episodes for a subject by external ID
+    ///
+    /// Returns list of episodes for a specific subject/show.
+    /// Default implementation returns empty list (not all providers support this).
+    async fn get_episodes(&self, _external_id: &str) -> Result<Vec<Episode>, ProviderError> {
+        Ok(vec![])
     }
 
     /// Calculate episode offset for a subject.

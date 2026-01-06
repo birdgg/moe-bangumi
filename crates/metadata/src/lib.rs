@@ -38,5 +38,5 @@ mod provider;
 
 pub use adapters::{BgmtvProvider, TmdbProvider};
 pub use error::ProviderError;
-pub use models::{MetadataSource, Platform, SearchQuery, SearchedMetadata};
+pub use models::{Episode, EpisodeType, MetadataSource, Platform, SearchQuery, SearchedMetadata};
 pub use provider::MetadataProvider;

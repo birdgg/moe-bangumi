@@ -14,40 +14,45 @@
 ### 与其他模块的关系
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       server crate                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              API Handlers (search.rs)                │   │
-│  │   /api/search/metadata, /api/search/metadata/find   │   │
-│  └──────────────────────────┬──────────────────────────┘   │
-│                             │                               │
-│  ┌──────────────────────────▼──────────────────────────┐   │
-│  │                    AppState                          │   │
-│  │   bgmtv_provider: Arc<BgmtvProvider>                │   │
-│  │   tmdb_provider: Arc<TmdbProvider>                  │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     metadata crate                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              MetadataProvider trait                  │   │
-│  │   search(&SearchQuery) -> Vec<SearchedMetadata>      │   │
-│  │   find(&SearchQuery) -> Option<SearchedMetadata>     │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                    △                △                       │
-│        ┌───────────┘                └───────────┐           │
-│  ┌─────┴─────────┐                    ┌─────────┴─────┐    │
-│  │ BgmtvProvider │                    │ TmdbProvider  │    │
-│  └───────────────┘                    └───────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-                    │                           │
-                    ▼                           ▼
-           ┌──────────────┐             ┌─────────────┐
-           │ bgmtv crate  │             │ tmdb crate  │
-           │ BgmtvClient  │             │ TmdbClient  │
-           └──────────────┘             └─────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         server crate                             │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  API Handlers          Services                            │  │
+│  │  - search.rs           - MetadataService                   │  │
+│  │  - episodes.rs         - CalendarService                   │  │
+│  └─────────────────────────────┬─────────────────────────────┘  │
+│                                │                                 │
+│  ┌─────────────────────────────▼─────────────────────────────┐  │
+│  │                      AppState                              │  │
+│  │   bgmtv_provider: Arc<BgmtvProvider>                       │  │
+│  │   tmdb_provider: Arc<TmdbProvider>                         │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       metadata crate                             │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                 MetadataProvider trait                     │  │
+│  │   search(&SearchQuery) -> Vec<SearchedMetadata>            │  │
+│  │   find(&SearchQuery) -> Option<SearchedMetadata>           │  │
+│  │   get_detail(&str) -> Option<SearchedMetadata>             │  │
+│  │   get_episodes(&str) -> Vec<Episode>                       │  │
+│  │   get_episode_offset(&str) -> i32                          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                      △                △                          │
+│          ┌───────────┘                └───────────┐              │
+│  ┌───────┴─────────┐                    ┌─────────┴───────┐     │
+│  │  BgmtvProvider  │                    │  TmdbProvider   │     │
+│  │  (全部实现)      │                    │  (search/find)  │     │
+│  └─────────────────┘                    └─────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                      │                           │
+                      ▼                           ▼
+             ┌──────────────┐             ┌─────────────┐
+             │ bgmtv crate  │             │ tmdb crate  │
+             │ BgmtvClient  │             │ TmdbClient  │
+             └──────────────┘             └─────────────┘
 ```
 
 ## 2. 核心类型
@@ -64,6 +69,12 @@ pub trait MetadataProvider: Send + Sync {
     /// 当 query.year 有值时，优先返回年份匹配（±1年容差）的结果
     async fn find(&self, query: &SearchQuery) -> Result<Option<SearchedMetadata>, ProviderError>;
 
+    /// 获取详细元数据（通过外部 ID）
+    async fn get_detail(&self, external_id: &str) -> Result<Option<SearchedMetadata>, ProviderError>;
+
+    /// 获取剧集列表（通过外部 ID）
+    async fn get_episodes(&self, external_id: &str) -> Result<Vec<Episode>, ProviderError>;
+
     /// 获取剧集偏移量
     /// 用于将 RSS 绝对集数转换为季度相对集数
     async fn get_episode_offset(&self, external_id: &str) -> Result<i32, ProviderError>;
@@ -76,6 +87,8 @@ pub trait MetadataProvider: Send + Sync {
 **关键设计**：
 - `find()` 方法有默认实现，基于 `search()` 结果进行年份过滤
 - 年份容差为 ±1 年，处理跨年播出的动画
+- `get_detail()` 默认返回 None，BgmtvProvider 实现此方法
+- `get_episodes()` 默认返回空列表，BgmtvProvider 实现此方法
 - `get_episode_offset()` 默认返回 0，BgmtvProvider 重写此方法
 
 ### 2.2 SearchQuery
@@ -174,7 +187,44 @@ pub enum Platform {
 }
 ```
 
-### 2.6 ProviderError
+### 2.6 Episode
+
+剧集信息结构：
+
+```rust
+pub struct Episode {
+    /// 剧集 ID（来自数据源）
+    pub id: i64,
+    /// 剧集类型
+    pub episode_type: EpisodeType,
+    /// 原始名称
+    pub name: String,
+    /// 中文名称
+    pub name_cn: String,
+    /// 排序值（绝对集数）
+    pub sort: f64,
+    /// 集数（季度相对）
+    pub ep: Option<f64>,
+    /// 播出日期（YYYY-MM-DD 格式）
+    pub air_date: String,
+}
+```
+
+### 2.7 EpisodeType
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EpisodeType {
+    #[default]
+    Main,    // 本篇
+    Special, // SP
+    Opening, // OP
+    Ending,  // ED
+}
+```
+
+### 2.8 ProviderError
 
 ```rust
 #[derive(Debug, thiserror::Error)]
@@ -208,13 +258,21 @@ let results = provider.search(&query).await?;
 let query = SearchQuery::new("葬送のフリーレン").with_year(2023);
 let best_match = provider.find(&query).await?;
 
-// 获取剧集偏移量（通过 trait 方法）
+// 获取详细元数据
+let detail = provider.get_detail("425651").await?;
+
+// 获取剧集列表
+let episodes = provider.get_episodes("425651").await?;
+
+// 获取剧集偏移量
 let offset = provider.get_episode_offset("425651").await?;
 ```
 
 **特点**：
-- 直接调用 `BgmtvClient::search_bangumi()`
+- 直接调用 `BgmtvClient` 方法
 - 通过 `From<ParsedSubject>` trait 转换结果
+- 实现 `get_detail()` 获取详细元数据
+- 实现 `get_episodes()` 获取剧集列表
 - 实现 `get_episode_offset()` 从 BGM.tv 获取剧集偏移量
 
 #### Episode Offset 计算
@@ -257,13 +315,23 @@ use std::sync::Arc;
 
 let provider = TmdbProvider::new(Arc::clone(&tmdb_client));
 
+// 搜索
 let query = SearchQuery::new("SPY×FAMILY 第2クール");
 let results = provider.search(&query).await?;
+
+// 查找最佳匹配
+let query = SearchQuery::new("SPY×FAMILY").with_year(2022);
+let best_match = provider.find(&query).await?;
 ```
 
 **特点**：
 - 搜索前自动清理标题（移除季度/分割放送标记）
 - 海报 URL 自动拼接 TMDB 基础 URL
+
+**注意**：TmdbProvider 仅实现 `search()` 和 `find()` 方法。以下方法使用默认实现：
+- `get_detail()` 返回 None
+- `get_episodes()` 返回空列表
+- `get_episode_offset()` 返回 0
 
 **标题清理规则**：
 

@@ -3,7 +3,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
 import { SearchBangumiModal, BangumiModal } from "@/features/bangumi/components";
-import { type ParsedSubject } from "@/lib/api";
+import { type SearchedMetadata } from "@/lib/api";
 import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -33,9 +33,9 @@ function AddBangumiButton({ onClick }: AddBangumiButtonProps) {
 export function AppLayout({ children }: AppLayoutProps) {
   const [searchModalOpen, setSearchModalOpen] = React.useState(false);
   const [addModalOpen, setAddModalOpen] = React.useState(false);
-  const [selectedSubject, setSelectedSubject] = React.useState<ParsedSubject | null>(null);
+  const [selectedSubject, setSelectedSubject] = React.useState<SearchedMetadata | null>(null);
 
-  const handleSelectBangumi = (subject: ParsedSubject) => {
+  const handleSelectBangumi = (subject: SearchedMetadata) => {
     setSelectedSubject(subject);
     setAddModalOpen(true);
   };

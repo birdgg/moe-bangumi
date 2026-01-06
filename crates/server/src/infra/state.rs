@@ -22,8 +22,6 @@ pub struct AppState {
     pub db: SqlitePool,
     pub config: Arc<Config>,
     pub http_client_service: Arc<HttpClientService>,
-    pub tmdb: Arc<TmdbClient>,
-    pub bgmtv: Arc<BgmtvClient>,
     pub mikan: Arc<MikanClient>,
     pub rss: Arc<RssClient>,
     pub settings: Arc<SettingsService>,
@@ -37,7 +35,7 @@ pub struct AppState {
     pub calendar: Arc<CalendarService>,
     pub notification: Arc<NotificationService>,
     pub rename: Arc<RenameService>,
-    // Unified metadata providers
+    // Unified metadata providers (replaces direct bgmtv/tmdb clients)
     pub bgmtv_provider: Arc<BgmtvProvider>,
     pub tmdb_provider: Arc<TmdbProvider>,
     // Background actors (keep handles alive to prevent actors from stopping)
@@ -124,11 +122,15 @@ impl AppState {
             config.posters_path(),
         ));
 
-        // Create metadata service
+        // Create unified metadata providers
+        let bgmtv_provider = Arc::new(BgmtvProvider::new(Arc::clone(&bgmtv)));
+        let tmdb_provider = Arc::new(TmdbProvider::new(Arc::clone(&tmdb)));
+
+        // Create metadata service (using providers instead of clients)
         let metadata = Arc::new(MetadataService::new(
             db.clone(),
-            Arc::clone(&bgmtv),
-            Arc::clone(&tmdb),
+            Arc::clone(&bgmtv_provider),
+            Arc::clone(&tmdb_provider),
         ));
 
         // Create metadata actor (handles poster downloads + TMDB sync with internal scheduling)
@@ -192,7 +194,7 @@ impl AppState {
         // Create calendar service (fetches from Mikan -> BGM.tv)
         let calendar = Arc::new(CalendarService::new(
             db.clone(),
-            Arc::clone(&bgmtv),
+            Arc::clone(&bgmtv_provider),
             Arc::clone(&mikan_arc),
             Arc::clone(&metadata_actor),
         ));
@@ -203,16 +205,10 @@ impl AppState {
         let log_cleanup_actor = create_log_cleanup_actor(Arc::clone(&logs));
         let rename_actor = create_rename_actor(Arc::clone(&rename));
 
-        // Create unified metadata providers
-        let bgmtv_provider = Arc::new(BgmtvProvider::new(Arc::clone(&bgmtv)));
-        let tmdb_provider = Arc::new(TmdbProvider::new(Arc::clone(&tmdb)));
-
         Self {
             db,
             config,
             http_client_service,
-            tmdb,
-            bgmtv,
             mikan: mikan_arc,
             rss: rss_arc,
             settings,

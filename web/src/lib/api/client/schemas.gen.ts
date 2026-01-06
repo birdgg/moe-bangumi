@@ -9,7 +9,6 @@ export const BangumiSchema = {
     "created_at",
     "updated_at",
     "metadata_id",
-    "episode_offset",
     "current_episode",
     "auto_complete",
     "save_path",
@@ -28,11 +27,6 @@ export const BangumiSchema = {
       type: "integer",
       format: "int32",
       description: "Current downloaded episode",
-    },
-    episode_offset: {
-      type: "integer",
-      format: "int32",
-      description: "Episode offset",
     },
     id: {
       type: "integer",
@@ -208,11 +202,6 @@ export const CreateBangumiSchema = {
       type: "boolean",
       description: "Only download first matching episode per RSS check",
     },
-    episode_offset: {
-      type: "integer",
-      format: "int32",
-      description: "Episode offset",
-    },
     metadata: {
       oneOf: [
         {
@@ -261,6 +250,11 @@ export const CreateMetadataSchema = {
       type: ["integer", "null"],
       format: "int64",
       description: "BGM.tv subject ID",
+    },
+    episode_offset: {
+      type: "integer",
+      format: "int32",
+      description: "Episode offset for season-relative numbering",
     },
     mikan_id: {
       type: ["string", "null"],
@@ -367,21 +361,26 @@ export const DownloaderTypeSchema = {
 
 export const EpisodeSchema = {
   type: "object",
-  description: "Episode item",
-  required: ["id", "type", "name", "name_cn", "sort", "airdate"],
+  description: "Episode information from metadata provider",
+  required: ["id", "episode_type", "name", "name_cn", "sort", "air_date"],
   properties: {
-    airdate: {
+    air_date: {
       type: "string",
-      description: "Air date",
+      description: "Air date (YYYY-MM-DD format)",
     },
     ep: {
       type: ["number", "null"],
       format: "double",
-      description: "Episode number",
+      description: "Episode number (season-relative)",
+    },
+    episode_type: {
+      $ref: "#/components/schemas/EpisodeType",
+      description: "Episode type",
     },
     id: {
       type: "integer",
       format: "int64",
+      description: "Episode ID from the source",
     },
     name: {
       type: "string",
@@ -394,11 +393,7 @@ export const EpisodeSchema = {
     sort: {
       type: "number",
       format: "double",
-      description: "Sort order",
-    },
-    type: {
-      $ref: "#/components/schemas/EpisodeType",
-      description: "Episode type: 0=本篇, 1=SP, 2=OP, 3=ED",
+      description: "Sort order (absolute episode number)",
     },
   },
 } as const;
@@ -406,7 +401,7 @@ export const EpisodeSchema = {
 export const EpisodeTypeSchema = {
   type: "string",
   description: "Episode type",
-  enum: ["Main", "Special", "Opening", "Ending"],
+  enum: ["main", "special", "opening", "ending"],
 } as const;
 
 export const FilterSettingsSchema = {
@@ -467,6 +462,7 @@ export const MetadataSchema = {
     "platform",
     "total_episodes",
     "air_week",
+    "episode_offset",
   ],
   properties: {
     air_date: {
@@ -486,6 +482,11 @@ export const MetadataSchema = {
     created_at: {
       type: "string",
       format: "date-time",
+    },
+    episode_offset: {
+      type: "integer",
+      format: "int32",
+      description: "Episode offset for season-relative numbering",
     },
     id: {
       type: "integer",
@@ -521,6 +522,11 @@ export const MetadataSchema = {
       format: "int64",
       description: "TMDB ID",
     },
+    tmdb_lookup_at: {
+      type: ["string", "null"],
+      format: "date-time",
+      description: "Last TMDB lookup attempt timestamp",
+    },
     total_episodes: {
       type: "integer",
       format: "int32",
@@ -538,6 +544,12 @@ export const MetadataSchema = {
   },
 } as const;
 
+export const MetadataSourceSchema = {
+  type: "string",
+  description: "Metadata data source identifier",
+  enum: ["bgmtv", "tmdb"],
+} as const;
+
 export const NotificationSettingsSchema = {
   type: "object",
   description: "Notification configuration",
@@ -549,54 +561,6 @@ export const NotificationSettingsSchema = {
     telegram: {
       $ref: "#/components/schemas/TelegramConfig",
       description: "Telegram configuration",
-    },
-  },
-} as const;
-
-export const ParsedSubjectSchema = {
-  type: "object",
-  description: "解析后的 BGM.tv Subject",
-  required: ["bgmtv_id", "season", "platform", "total_episodes", "poster_url"],
-  properties: {
-    air_date: {
-      type: ["string", "null"],
-      description: "放送日期",
-    },
-    bgmtv_id: {
-      type: "integer",
-      format: "int64",
-      description: "BGM.tv ID",
-    },
-    platform: {
-      type: "string",
-      description: "平台 (TV, Movie, OVA)",
-    },
-    poster_url: {
-      type: "string",
-      description: "海报 URL",
-    },
-    season: {
-      type: "integer",
-      format: "int32",
-      description: "季度 (默认为 1)",
-    },
-    title_chinese: {
-      type: ["string", "null"],
-      description: "中文标题 (清理后，不含季度信息)",
-    },
-    title_japanese: {
-      type: ["string", "null"],
-      description: "日文标题 (清理后，不含季度信息)",
-    },
-    total_episodes: {
-      type: "integer",
-      format: "int64",
-      description: "总集数",
-    },
-    year: {
-      type: ["integer", "null"],
-      format: "int32",
-      description: "年份 (从 air_date 解析)",
     },
   },
 } as const;
@@ -799,6 +763,65 @@ export const SearchSubjectsResponseSchema = {
     total: {
       type: "integer",
       format: "int64",
+    },
+  },
+} as const;
+
+export const SearchedMetadataSchema = {
+  type: "object",
+  description:
+    "Standardized metadata search result\n\nThis represents metadata fetched from external sources (BGM.tv, TMDB, Mikan)\nbefore it is persisted to the database.",
+  required: ["source", "external_id", "total_episodes"],
+  properties: {
+    air_date: {
+      type: ["string", "null"],
+      description: "First air date (YYYY-MM-DD format)",
+    },
+    external_id: {
+      type: "string",
+      description: "External ID (string form to unify i64 and String IDs)",
+    },
+    platform: {
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "#/components/schemas/Platform",
+          description: "Platform type (TV, Movie, OVA)",
+        },
+      ],
+    },
+    poster_url: {
+      type: ["string", "null"],
+      description: "Poster image URL",
+    },
+    season: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Season number",
+    },
+    source: {
+      $ref: "#/components/schemas/MetadataSource",
+      description: "Data source identifier",
+    },
+    title_chinese: {
+      type: ["string", "null"],
+      description: "Chinese title",
+    },
+    title_original: {
+      type: ["string", "null"],
+      description: "Japanese/original title",
+    },
+    total_episodes: {
+      type: "integer",
+      format: "int32",
+      description: "Total episodes (0 = unknown)",
+    },
+    year: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Year",
     },
   },
 } as const;
@@ -1143,74 +1166,6 @@ export const TransmissionConfigSchema = {
   },
 } as const;
 
-export const TvShowSchema = {
-  type: "object",
-  required: [
-    "id",
-    "name",
-    "original_name",
-    "overview",
-    "vote_average",
-    "vote_count",
-    "popularity",
-    "genre_ids",
-    "origin_country",
-    "original_language",
-  ],
-  properties: {
-    backdrop_path: {
-      type: ["string", "null"],
-    },
-    first_air_date: {
-      type: ["string", "null"],
-    },
-    genre_ids: {
-      type: "array",
-      items: {
-        type: "integer",
-        format: "int64",
-      },
-    },
-    id: {
-      type: "integer",
-      format: "int64",
-    },
-    name: {
-      type: "string",
-    },
-    origin_country: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-    },
-    original_language: {
-      type: "string",
-    },
-    original_name: {
-      type: "string",
-    },
-    overview: {
-      type: "string",
-    },
-    popularity: {
-      type: "number",
-      format: "double",
-    },
-    poster_path: {
-      type: ["string", "null"],
-    },
-    vote_average: {
-      type: "number",
-      format: "double",
-    },
-    vote_count: {
-      type: "integer",
-      format: "int64",
-    },
-  },
-} as const;
-
 export const UpdateBangumiRequestSchema = {
   type: "object",
   description: "Request body for updating a bangumi with RSS entries",
@@ -1218,11 +1173,6 @@ export const UpdateBangumiRequestSchema = {
     auto_complete: {
       type: ["boolean", "null"],
       description: "Only download first matching episode per RSS check",
-    },
-    episode_offset: {
-      type: ["integer", "null"],
-      format: "int32",
-      description: "Episode offset",
     },
     rss_entries: {
       type: ["array", "null"],
@@ -1310,6 +1260,11 @@ export const UpdateMetadataSchema = {
       type: ["integer", "null"],
       format: "int64",
       description: "BGM.tv subject ID (null to clear)",
+    },
+    episode_offset: {
+      type: ["integer", "null"],
+      format: "int32",
+      description: "Episode offset for season-relative numbering",
     },
     mikan_id: {
       type: ["string", "null"],

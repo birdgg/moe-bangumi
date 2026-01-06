@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useSearchTmdb } from "../../hooks/use-bangumi";
-import { type TvShow } from "@/lib/api";
+import { type SearchedMetadata } from "@/lib/api";
 import {
   IconLoader2,
   IconCheck,
@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/tooltip";
 
 interface TmdbMatcherProps {
-  onChange: (show: TvShow | null) => void;
+  onChange: (show: SearchedMetadata | null) => void;
   /** Search keyword (controlled from outside, e.g., from title_chinese input) */
   keyword: string;
   className?: string;
   /** Pre-filled TMDB ID (disables initial auto-search until dropdown is opened) */
-  initialTmdbId?: number;
+  initialTmdbId?: string;
 }
 
 export function TmdbMatcher({
@@ -31,7 +31,7 @@ export function TmdbMatcher({
   initialTmdbId,
 }: TmdbMatcherProps) {
   const [open, setOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState<TvShow | null>(null);
+  const [selected, setSelected] = React.useState<SearchedMetadata | null>(null);
   const [hasOpened, setHasOpened] = React.useState(false);
   const [debouncedKeyword] = useDebouncedValue(keyword, { wait: 400 });
   const hasSearchedRef = React.useRef(false);
@@ -48,7 +48,7 @@ export function TmdbMatcher({
   const displayValue =
     selected ??
     (initialTmdbId
-      ? ({ id: initialTmdbId, name: keyword || "TMDB" } as TvShow)
+      ? ({ external_id: initialTmdbId, title_chinese: keyword || "TMDB", source: "tmdb", total_episodes: 0 } as SearchedMetadata)
       : null);
 
   // Auto-select first result when search completes (only once per search term)
@@ -72,7 +72,7 @@ export function TmdbMatcher({
     hasSearchedRef.current = false;
   }, [debouncedKeyword]);
 
-  const handleSelect = (show: TvShow) => {
+  const handleSelect = (show: SearchedMetadata) => {
     setSelected(show);
     onChange(show);
     setOpen(false);
@@ -108,9 +108,9 @@ export function TmdbMatcher({
           >
             {displayValue ? (
               <>
-                <span className="truncate">{displayValue.name}</span>
+                <span className="truncate">{displayValue.title_chinese || displayValue.title_original}</span>
                 <span className="font-mono text-xs text-chart-3 dark:text-chart-1 shrink-0">
-                  #{displayValue.id}
+                  #{displayValue.external_id}
                 </span>
               </>
             ) : (
@@ -131,7 +131,7 @@ export function TmdbMatcher({
             <TooltipTrigger
               render={
                 <a
-                  href={`https://www.themoviedb.org/tv/${displayValue.id}`}
+                  href={`https://www.themoviedb.org/tv/${displayValue.external_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
@@ -173,22 +173,22 @@ export function TmdbMatcher({
                   )}
                 </div>
               ) : (
-                results.map((show: TvShow) => (
+                results.map((show: SearchedMetadata) => (
                   <button
-                    key={show.id}
+                    key={show.external_id}
                     type="button"
                     onClick={() => handleSelect(show)}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
                       "hover:bg-accent hover:text-accent-foreground",
-                      selected?.id === show.id && "bg-accent"
+                      selected?.external_id === show.external_id && "bg-accent"
                     )}
                   >
-                    <span className="truncate flex-1">{show.name}</span>
+                    <span className="truncate flex-1">{show.title_chinese || show.title_original}</span>
                     <span className="font-mono text-xs text-chart-3 dark:text-chart-1 shrink-0">
-                      #{show.id}
+                      #{show.external_id}
                     </span>
-                    {selected?.id === show.id && (
+                    {selected?.external_id === show.external_id && (
                       <IconCheck className="size-4 shrink-0 text-chart-3 dark:text-chart-1" />
                     )}
                   </button>

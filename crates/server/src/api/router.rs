@@ -19,6 +19,7 @@ pub fn create_router(state: AppState) -> (Router, utoipa::openapi::OpenApi) {
         .routes(routes!(handlers::search_mikan))
         .routes(routes!(handlers::search_metadata))
         .routes(routes!(handlers::find_metadata))
+        .routes(routes!(handlers::get_metadata_detail))
         .routes(routes!(handlers::get_mikan_rss))
         .routes(routes!(handlers::get_calendar))
         .routes(routes!(handlers::refresh_calendar))
@@ -66,6 +67,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/search/mikan", get(handlers::search_mikan))
         .route("/api/search/metadata", get(handlers::search_metadata))
         .route("/api/search/metadata/find", get(handlers::find_metadata))
+        .route("/api/search/metadata/detail", get(handlers::get_metadata_detail))
         // Mikan endpoints
         .route("/api/mikan/rss", get(handlers::get_mikan_rss))
         // Calendar endpoints

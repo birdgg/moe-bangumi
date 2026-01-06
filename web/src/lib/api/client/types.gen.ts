@@ -18,10 +18,6 @@ export type Bangumi = {
    * Current downloaded episode
    */
   current_episode: number;
-  /**
-   * Episode offset
-   */
-  episode_offset: number;
   id: number;
   /**
    * Reference to metadata (foreign key)
@@ -133,10 +129,6 @@ export type CreateBangumi = {
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean;
-  /**
-   * Episode offset
-   */
-  episode_offset?: number;
   metadata?: null | CreateMetadata;
   /**
    * Metadata ID (if using existing metadata)
@@ -168,6 +160,10 @@ export type CreateMetadata = {
    * BGM.tv subject ID
    */
   bgmtv_id?: number | null;
+  /**
+   * Episode offset for season-relative numbering
+   */
+  episode_offset?: number;
   /**
    * Mikan bangumi ID
    */
@@ -258,17 +254,24 @@ export type DownloaderSettings = {
 export type DownloaderType = "qBittorrent" | "Transmission";
 
 /**
- * Episode item
+ * Episode information from metadata provider
  */
 export type Episode = {
   /**
-   * Air date
+   * Air date (YYYY-MM-DD format)
    */
-  airdate: string;
+  air_date: string;
   /**
-   * Episode number
+   * Episode number (season-relative)
    */
   ep?: number | null;
+  /**
+   * Episode type
+   */
+  episode_type: EpisodeType;
+  /**
+   * Episode ID from the source
+   */
   id: number;
   /**
    * Original name
@@ -279,19 +282,15 @@ export type Episode = {
    */
   name_cn: string;
   /**
-   * Sort order
+   * Sort order (absolute episode number)
    */
   sort: number;
-  /**
-   * Episode type: 0=本篇, 1=SP, 2=OP, 3=ED
-   */
-  type: EpisodeType;
 };
 
 /**
  * Episode type
  */
-export type EpisodeType = "Main" | "Special" | "Opening" | "Ending";
+export type EpisodeType = "main" | "special" | "opening" | "ending";
 
 /**
  * Filter configuration
@@ -342,6 +341,10 @@ export type Metadata = {
    */
   bgmtv_id?: number | null;
   created_at: string;
+  /**
+   * Episode offset for season-relative numbering
+   */
+  episode_offset: number;
   id: number;
   /**
    * Mikan bangumi ID
@@ -372,6 +375,10 @@ export type Metadata = {
    */
   tmdb_id?: number | null;
   /**
+   * Last TMDB lookup attempt timestamp
+   */
+  tmdb_lookup_at?: string | null;
+  /**
    * Total episodes (0=unknown)
    */
   total_episodes: number;
@@ -381,6 +388,11 @@ export type Metadata = {
    */
   year: number;
 };
+
+/**
+ * Metadata data source identifier
+ */
+export type MetadataSource = "bgmtv" | "tmdb";
 
 /**
  * Notification configuration
@@ -394,48 +406,6 @@ export type NotificationSettings = {
    * Telegram configuration
    */
   telegram?: TelegramConfig;
-};
-
-/**
- * 解析后的 BGM.tv Subject
- */
-export type ParsedSubject = {
-  /**
-   * 放送日期
-   */
-  air_date?: string | null;
-  /**
-   * BGM.tv ID
-   */
-  bgmtv_id: number;
-  /**
-   * 平台 (TV, Movie, OVA)
-   */
-  platform: string;
-  /**
-   * 海报 URL
-   */
-  poster_url: string;
-  /**
-   * 季度 (默认为 1)
-   */
-  season: number;
-  /**
-   * 中文标题 (清理后，不含季度信息)
-   */
-  title_chinese?: string | null;
-  /**
-   * 日文标题 (清理后，不含季度信息)
-   */
-  title_japanese?: string | null;
-  /**
-   * 总集数
-   */
-  total_episodes: number;
-  /**
-   * 年份 (从 air_date 解析)
-   */
-  year?: number | null;
 };
 
 /**
@@ -567,6 +537,52 @@ export type SearchSubjectsResponse = {
   limit: number;
   offset: number;
   total: number;
+};
+
+/**
+ * Standardized metadata search result
+ *
+ * This represents metadata fetched from external sources (BGM.tv, TMDB, Mikan)
+ * before it is persisted to the database.
+ */
+export type SearchedMetadata = {
+  /**
+   * First air date (YYYY-MM-DD format)
+   */
+  air_date?: string | null;
+  /**
+   * External ID (string form to unify i64 and String IDs)
+   */
+  external_id: string;
+  platform?: null | Platform;
+  /**
+   * Poster image URL
+   */
+  poster_url?: string | null;
+  /**
+   * Season number
+   */
+  season?: number | null;
+  /**
+   * Data source identifier
+   */
+  source: MetadataSource;
+  /**
+   * Chinese title
+   */
+  title_chinese?: string | null;
+  /**
+   * Japanese/original title
+   */
+  title_original?: string | null;
+  /**
+   * Total episodes (0 = unknown)
+   */
+  total_episodes: number;
+  /**
+   * Year
+   */
+  year?: number | null;
 };
 
 export type Season = "winter" | "spring" | "summer" | "fall";
@@ -823,22 +839,6 @@ export type TransmissionConfig = {
   username?: string;
 };
 
-export type TvShow = {
-  backdrop_path?: string | null;
-  first_air_date?: string | null;
-  genre_ids: Array<number>;
-  id: number;
-  name: string;
-  origin_country: Array<string>;
-  original_language: string;
-  original_name: string;
-  overview: string;
-  popularity: number;
-  poster_path?: string | null;
-  vote_average: number;
-  vote_count: number;
-};
-
 /**
  * Request body for updating a bangumi with RSS entries
  */
@@ -847,10 +847,6 @@ export type UpdateBangumiRequest = {
    * Only download first matching episode per RSS check
    */
   auto_complete?: boolean | null;
-  /**
-   * Episode offset
-   */
-  episode_offset?: number | null;
   /**
    * RSS entries to sync (replaces all existing entries)
    */
@@ -897,6 +893,10 @@ export type UpdateMetadata = {
    * BGM.tv subject ID (null to clear)
    */
   bgmtv_id?: number | null;
+  /**
+   * Episode offset for season-relative numbering
+   */
+  episode_offset?: number | null;
   /**
    * Mikan bangumi ID (null to clear)
    */
@@ -1493,11 +1493,97 @@ export type SearchBgmtvResponses = {
   /**
    * Search results
    */
-  200: Array<ParsedSubject>;
+  200: Array<SearchedMetadata>;
 };
 
 export type SearchBgmtvResponse =
   SearchBgmtvResponses[keyof SearchBgmtvResponses];
+
+export type SearchMetadataData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Data source to search (bgmtv, tmdb)
+     */
+    source: MetadataSource;
+    /**
+     * Search keyword
+     */
+    keyword: string;
+    /**
+     * Optional year filter
+     */
+    year?: number | null;
+  };
+  url: "/api/search/metadata";
+};
+
+export type SearchMetadataResponses = {
+  /**
+   * Search results in unified format
+   */
+  200: Array<SearchedMetadata>;
+};
+
+export type SearchMetadataResponse =
+  SearchMetadataResponses[keyof SearchMetadataResponses];
+
+export type GetMetadataDetailData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Data source (bgmtv, tmdb)
+     */
+    source: MetadataSource;
+    /**
+     * External ID from the data source
+     */
+    external_id: string;
+  };
+  url: "/api/search/metadata/detail";
+};
+
+export type GetMetadataDetailResponses = {
+  /**
+   * Metadata detail
+   */
+  200: null | SearchedMetadata;
+};
+
+export type GetMetadataDetailResponse =
+  GetMetadataDetailResponses[keyof GetMetadataDetailResponses];
+
+export type FindMetadataData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Data source to search (bgmtv, tmdb)
+     */
+    source: MetadataSource;
+    /**
+     * Search keyword
+     */
+    keyword: string;
+    /**
+     * Optional year filter
+     */
+    year?: number | null;
+  };
+  url: "/api/search/metadata/find";
+};
+
+export type FindMetadataResponses = {
+  /**
+   * Best matching metadata
+   */
+  200: null | SearchedMetadata;
+};
+
+export type FindMetadataResponse =
+  FindMetadataResponses[keyof FindMetadataResponses];
 
 export type SearchMikanData = {
   body?: never;
@@ -1537,7 +1623,7 @@ export type SearchTmdbResponses = {
   /**
    * Search results from TMDB
    */
-  200: Array<TvShow>;
+  200: Array<SearchedMetadata>;
 };
 
 export type SearchTmdbResponse = SearchTmdbResponses[keyof SearchTmdbResponses];

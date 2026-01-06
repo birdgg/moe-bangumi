@@ -16,12 +16,22 @@ use super::{SearchQuery, TmdbSearchQuery, MIKAN_SEARCH_CACHE_TTL};
 #[derive(Debug, Deserialize)]
 #[cfg_attr(feature = "openapi", derive(IntoParams, ToSchema))]
 pub struct UnifiedSearchQuery {
-    /// Data source to search (bgmtv, tmdb, mikan)
+    /// Data source to search (bgmtv, tmdb)
     pub source: MetadataSource,
     /// Search keyword
     pub keyword: String,
     /// Optional year filter
     pub year: Option<i32>,
+}
+
+/// Query parameters for metadata detail lookup
+#[derive(Debug, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(IntoParams, ToSchema))]
+pub struct DetailQuery {
+    /// Data source (bgmtv, tmdb)
+    pub source: MetadataSource,
+    /// External ID from the data source
+    pub external_id: String,
 }
 
 /// Search for bangumi (Japanese anime) on BGM.tv
@@ -31,14 +41,15 @@ pub struct UnifiedSearchQuery {
     tag = "search",
     params(SearchQuery),
     responses(
-        (status = 200, description = "Search results", body = Vec<bgmtv::ParsedSubject>)
+        (status = 200, description = "Search results", body = Vec<SearchedMetadata>)
     )
 ))]
 pub async fn search_bgmtv(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
-) -> AppResult<Json<Vec<bgmtv::ParsedSubject>>> {
-    let results = state.bgmtv.search_bangumi(&query.keyword).await?;
+) -> AppResult<Json<Vec<SearchedMetadata>>> {
+    let search_query = MetadataSearchQuery::new(&query.keyword);
+    let results = state.bgmtv_provider.search(&search_query).await?;
     Ok(Json(results))
 }
 
@@ -49,14 +60,15 @@ pub async fn search_bgmtv(
     tag = "search",
     params(TmdbSearchQuery),
     responses(
-        (status = 200, description = "Search results from TMDB", body = Vec<tmdb::models::TvShow>)
+        (status = 200, description = "Search results from TMDB", body = Vec<SearchedMetadata>)
     )
 ))]
 pub async fn search_tmdb(
     State(state): State<AppState>,
     Query(query): Query<TmdbSearchQuery>,
-) -> AppResult<Json<Vec<tmdb::models::TvShow>>> {
-    let results = state.metadata.search_tmdb(&query.keyword).await?;
+) -> AppResult<Json<Vec<SearchedMetadata>>> {
+    let search_query = MetadataSearchQuery::new(&query.keyword);
+    let results = state.tmdb_provider.search(&search_query).await?;
     Ok(Json(results))
 }
 
@@ -138,6 +150,30 @@ pub async fn find_metadata(
     let result = match query.source {
         MetadataSource::Bgmtv => state.bgmtv_provider.find(&search_query).await?,
         MetadataSource::Tmdb => state.tmdb_provider.find(&search_query).await?,
+    };
+
+    Ok(Json(result))
+}
+
+/// Get metadata detail by external ID from a specific data source
+///
+/// Returns full metadata for a specific subject/show.
+#[cfg_attr(feature = "openapi", utoipa::path(
+    get,
+    path = "/api/search/metadata/detail",
+    tag = "search",
+    params(DetailQuery),
+    responses(
+        (status = 200, description = "Metadata detail", body = Option<SearchedMetadata>)
+    )
+))]
+pub async fn get_metadata_detail(
+    State(state): State<AppState>,
+    Query(query): Query<DetailQuery>,
+) -> AppResult<Json<Option<SearchedMetadata>>> {
+    let result = match query.source {
+        MetadataSource::Bgmtv => state.bgmtv_provider.get_detail(&query.external_id).await?,
+        MetadataSource::Tmdb => state.tmdb_provider.get_detail(&query.external_id).await?,
     };
 
     Ok(Json(result))

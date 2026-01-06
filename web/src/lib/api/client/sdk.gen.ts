@@ -12,6 +12,8 @@ import type {
   DeleteTorrentsData,
   DeleteTorrentsErrors,
   DeleteTorrentsResponses,
+  FindMetadataData,
+  FindMetadataResponses,
   GetBangumiByIdData,
   GetBangumiByIdErrors,
   GetBangumiByIdResponses,
@@ -27,6 +29,8 @@ import type {
   GetMetadataByIdErrors,
   GetMetadataByIdResponses,
   GetMetadataData,
+  GetMetadataDetailData,
+  GetMetadataDetailResponses,
   GetMetadataResponses,
   GetMikanRssData,
   GetMikanRssResponses,
@@ -41,6 +45,8 @@ import type {
   ResetSettingsResponses,
   SearchBgmtvData,
   SearchBgmtvResponses,
+  SearchMetadataData,
+  SearchMetadataResponses,
   SearchMikanData,
   SearchMikanResponses,
   SearchTmdbData,
@@ -351,6 +357,47 @@ export const searchBgmtv = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).get<SearchBgmtvResponses, unknown, ThrowOnError>({
     url: "/api/search/bgmtv",
+    ...options,
+  });
+
+/**
+ * Unified metadata search across all data sources
+ *
+ * Returns standardized SearchedMetadata format regardless of data source.
+ */
+export const searchMetadata = <ThrowOnError extends boolean = false>(
+  options: Options<SearchMetadataData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    SearchMetadataResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/search/metadata", ...options });
+
+/**
+ * Get metadata detail by external ID from a specific data source
+ *
+ * Returns full metadata for a specific subject/show.
+ */
+export const getMetadataDetail = <ThrowOnError extends boolean = false>(
+  options: Options<GetMetadataDetailData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetMetadataDetailResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/search/metadata/detail", ...options });
+
+/**
+ * Find best matching metadata from a specific data source
+ *
+ * Returns a single best matching result based on keyword and optional year filter.
+ */
+export const findMetadata = <ThrowOnError extends boolean = false>(
+  options: Options<FindMetadataData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<FindMetadataResponses, unknown, ThrowOnError>({
+    url: "/api/search/metadata/find",
     ...options,
   });
 

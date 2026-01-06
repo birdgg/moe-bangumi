@@ -3,9 +3,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use bgmtv::{BgmtvClient, EpisodeType, ParsedSubject};
+use bgmtv::{BgmtvClient, ParsedSubject};
 
-use crate::{MetadataProvider, MetadataSource, ProviderError, SearchQuery, SearchedMetadata};
+use crate::{
+    Episode, EpisodeType, MetadataProvider, MetadataSource, ProviderError, SearchQuery,
+    SearchedMetadata,
+};
 
 /// BGM.tv metadata provider
 pub struct BgmtvProvider {
@@ -25,17 +28,31 @@ impl MetadataProvider for BgmtvProvider {
         Ok(results.into_iter().map(SearchedMetadata::from).collect())
     }
 
-    async fn get_episode_offset(&self, external_id: &str) -> Result<i32, ProviderError> {
+    async fn get_detail(&self, external_id: &str) -> Result<Option<SearchedMetadata>, ProviderError> {
         let subject_id: i64 = external_id.parse().unwrap_or(0);
         if subject_id == 0 {
-            return Ok(0);
+            return Ok(None);
+        }
+
+        let subject = self.client.get_subject(subject_id).await?;
+        Ok(Some(SearchedMetadata::from(subject)))
+    }
+
+    async fn get_episodes(&self, external_id: &str) -> Result<Vec<Episode>, ProviderError> {
+        let subject_id: i64 = external_id.parse().unwrap_or(0);
+        if subject_id == 0 {
+            return Ok(vec![]);
         }
 
         let response = self.client.get_episodes(subject_id).await?;
+        Ok(response.data.into_iter().map(Episode::from).collect())
+    }
 
-        // Find the first main episode (type = 0)
-        let first_main = response
-            .data
+    async fn get_episode_offset(&self, external_id: &str) -> Result<i32, ProviderError> {
+        let episodes = self.get_episodes(external_id).await?;
+
+        // Find the first main episode
+        let first_main = episodes
             .iter()
             .find(|ep| ep.episode_type == EpisodeType::Main);
 
@@ -68,6 +85,25 @@ impl From<ParsedSubject> for SearchedMetadata {
             total_episodes: subject.total_episodes as i32,
             poster_url: Some(subject.poster_url),
             air_date: subject.air_date,
+        }
+    }
+}
+
+impl From<bgmtv::Episode> for Episode {
+    fn from(ep: bgmtv::Episode) -> Self {
+        Self {
+            id: ep.id,
+            episode_type: match ep.episode_type {
+                bgmtv::EpisodeType::Main => EpisodeType::Main,
+                bgmtv::EpisodeType::Special => EpisodeType::Special,
+                bgmtv::EpisodeType::Opening => EpisodeType::Opening,
+                bgmtv::EpisodeType::Ending => EpisodeType::Ending,
+            },
+            name: ep.name,
+            name_cn: ep.name_cn,
+            sort: ep.sort,
+            ep: ep.ep,
+            air_date: ep.airdate,
         }
     }
 }

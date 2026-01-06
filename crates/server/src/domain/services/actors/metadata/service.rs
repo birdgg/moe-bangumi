@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
-use bgmtv::BgmtvClient;
+use metadata::{BgmtvProvider, MetadataProvider, SearchQuery, TmdbProvider};
 use sqlx::SqlitePool;
-use tmdb::{DiscoverBangumiParams, TmdbClient};
-
-use crate::infra::utils::clean_title_for_search;
 
 use super::error::MetadataError;
 use crate::models::{CreateMetadata, Metadata, Platform, UpdateMetadata};
@@ -27,129 +24,64 @@ pub struct FetchedMetadata {
 /// Service for managing Metadata entities
 pub struct MetadataService {
     db: SqlitePool,
-    bgmtv: Arc<BgmtvClient>,
-    tmdb: Arc<TmdbClient>,
+    bgmtv_provider: Arc<BgmtvProvider>,
+    tmdb_provider: Arc<TmdbProvider>,
 }
 
 impl MetadataService {
     /// Create a new MetadataService
-    pub fn new(db: SqlitePool, bgmtv: Arc<BgmtvClient>, tmdb: Arc<TmdbClient>) -> Self {
-        Self { db, bgmtv, tmdb }
+    pub fn new(
+        db: SqlitePool,
+        bgmtv_provider: Arc<BgmtvProvider>,
+        tmdb_provider: Arc<TmdbProvider>,
+    ) -> Self {
+        Self {
+            db,
+            bgmtv_provider,
+            tmdb_provider,
+        }
     }
 
     /// Fetch metadata from BGM.tv by ID (does not persist)
     pub async fn fetch_from_bgmtv(&self, id: i64) -> Result<FetchedMetadata, MetadataError> {
-        // get_subject now returns ParsedSubject directly
-        let parsed = self.bgmtv.get_subject(id).await?;
+        let result = self
+            .bgmtv_provider
+            .get_detail(&id.to_string())
+            .await?
+            .ok_or_else(|| MetadataError::NotFound(id))?;
 
         Ok(FetchedMetadata {
-            bgmtv_id: parsed.bgmtv_id,
-            title_chinese: parsed.title_chinese,
-            title_japanese: parsed.title_japanese,
-            year: parsed.year,
-            season: Some(parsed.season),
-            total_episodes: parsed.total_episodes as i32,
-            poster_url: Some(parsed.poster_url),
-            air_date: parsed.air_date,
-            platform: parse_platform(&parsed.platform),
+            bgmtv_id: result.external_id.parse().unwrap_or(0),
+            title_chinese: result.title_chinese,
+            title_japanese: result.title_original,
+            year: result.year,
+            season: result.season,
+            total_episodes: result.total_episodes,
+            poster_url: result.poster_url,
+            air_date: result.air_date,
+            platform: result.platform.map(|p| match p {
+                metadata::Platform::Tv => Platform::Tv,
+                metadata::Platform::Movie => Platform::Movie,
+                metadata::Platform::Ova => Platform::Ova,
+            }),
         })
-    }
-
-    /// Search TMDB for anime by title
-    ///
-    /// The title is cleaned before searching to remove season and split-cour markers
-    /// (e.g., "SPY×FAMILY 第2クール" becomes "SPY×FAMILY").
-    pub async fn search_tmdb(
-        &self,
-        title: &str,
-    ) -> Result<Vec<tmdb::models::TvShow>, MetadataError> {
-        let cleaned_title = clean_title_for_search(title);
-        let params = DiscoverBangumiParams {
-            with_text_query: Some(cleaned_title),
-        };
-        let response = self.tmdb.discover_bangumi(params).await?;
-        Ok(response.results)
     }
 
     /// Search for TMDB ID by title with optional year filtering
     ///
-    /// The title is cleaned before searching to remove season and split-cour markers
-    /// (e.g., "SPY×FAMILY 第2クール" becomes "SPY×FAMILY").
-    ///
-    /// When `year` is provided, filters results to match shows that aired in:
-    /// - The exact year
-    /// - One year before (for shows that started late in the previous year)
-    /// - One year after (for delayed releases)
-    ///
-    /// This helps avoid matching remakes, movies, or similarly-named shows.
-    ///
-    /// # Matching Strategy
-    /// 1. First pass: Find results with valid dates matching the expected year (±1)
-    /// 2. Fallback: If no date-matched results found and we have results with
-    ///    unparseable/missing dates, return the first result as a best-effort match
+    /// Uses TmdbProvider to find the best matching TMDB ID.
     pub async fn find_tmdb_id(
         &self,
         title: &str,
         year: Option<i32>,
     ) -> Result<Option<i64>, MetadataError> {
-        let results = self.search_tmdb(title).await?;
-
-        if results.is_empty() {
-            return Ok(None);
+        let mut query = SearchQuery::new(title);
+        if let Some(y) = year {
+            query = query.with_year(y);
         }
 
-        // If year is provided, filter results by year (±1 year tolerance)
-        if let Some(expected_year) = year {
-            let mut first_with_unparseable_date: Option<i64> = None;
-
-            for show in &results {
-                let parsed_year = show
-                    .first_air_date
-                    .as_ref()
-                    .and_then(|date| date.split('-').next())
-                    .and_then(|y| y.parse::<i32>().ok());
-
-                match parsed_year {
-                    Some(show_year) if (show_year - expected_year).abs() <= 1 => {
-                        // Found a year-matching result
-                        return Ok(Some(show.id));
-                    }
-                    None => {
-                        // Track first result with unparseable date as fallback
-                        if first_with_unparseable_date.is_none() {
-                            tracing::debug!(
-                                "TMDB show {} ({:?}) has unparseable first_air_date: {:?}",
-                                show.id,
-                                show.name,
-                                show.first_air_date
-                            );
-                            first_with_unparseable_date = Some(show.id);
-                        }
-                    }
-                    Some(_) => {
-                        // Year doesn't match, skip
-                    }
-                }
-            }
-
-            // No year-matched result found
-            // If we have results with unparseable dates, use the first one as fallback
-            if let Some(fallback_id) = first_with_unparseable_date {
-                tracing::info!(
-                    "No year-matched TMDB result for '{}' (expected {}), using fallback id={}",
-                    title,
-                    expected_year,
-                    fallback_id
-                );
-                return Ok(Some(fallback_id));
-            }
-
-            // All results have valid dates but none match
-            return Ok(None);
-        }
-
-        // No year filter, return first result
-        Ok(results.into_iter().next().map(|show| show.id))
+        let result = self.tmdb_provider.find(&query).await?;
+        Ok(result.and_then(|r| r.external_id.parse().ok()))
     }
 
     /// Create new metadata
@@ -269,14 +201,5 @@ impl MetadataService {
     /// Get database pool reference (for repositories that need direct access)
     pub fn pool(&self) -> &SqlitePool {
         &self.db
-    }
-}
-
-fn parse_platform(platform: &str) -> Option<Platform> {
-    match platform.to_lowercase().as_str() {
-        "tv" => Some(Platform::Tv),
-        "movie" | "劇場版" => Some(Platform::Movie),
-        "ova" => Some(Platform::Ova),
-        _ => None,
     }
 }

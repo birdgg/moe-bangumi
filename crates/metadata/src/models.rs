@@ -111,3 +111,39 @@ impl SearchedMetadata {
             .unwrap_or(false)
     }
 }
+
+/// Episode type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[serde(rename_all = "lowercase")]
+pub enum EpisodeType {
+    /// Main episode (本篇)
+    #[default]
+    Main,
+    /// Special episode (SP)
+    Special,
+    /// Opening
+    Opening,
+    /// Ending
+    Ending,
+}
+
+/// Episode information from metadata provider
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(ToSchema))]
+pub struct Episode {
+    /// Episode ID from the source
+    pub id: i64,
+    /// Episode type
+    pub episode_type: EpisodeType,
+    /// Original name
+    pub name: String,
+    /// Chinese name
+    pub name_cn: String,
+    /// Sort order (absolute episode number)
+    pub sort: f64,
+    /// Episode number (season-relative)
+    pub ep: Option<f64>,
+    /// Air date (YYYY-MM-DD format)
+    pub air_date: String,
+}

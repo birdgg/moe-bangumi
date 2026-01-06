@@ -9,11 +9,8 @@ pub enum MetadataError {
     #[error("Metadata not found: id={0}")]
     NotFound(i64),
 
-    #[error("BGM.tv API error: {0}")]
-    Bgmtv(#[from] bgmtv::BgmtvError),
-
-    #[error("TMDB API error: {0}")]
-    Tmdb(#[from] tmdb::TmdbError),
+    #[error("Metadata provider error: {0}")]
+    Provider(#[from] metadata::ProviderError),
 }
 
 /// Errors that can occur when downloading or managing posters.

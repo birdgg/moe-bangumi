@@ -188,7 +188,7 @@ impl From<crate::services::CalendarError> for AppError {
     fn from(e: crate::services::CalendarError) -> Self {
         match e {
             crate::services::CalendarError::Database(e) => AppError::Database(e),
-            crate::services::CalendarError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
+            crate::services::CalendarError::Provider(e) => AppError::ExternalApi(e.to_string()),
             crate::services::CalendarError::Mikan(e) => AppError::ExternalApi(e.to_string()),
             crate::services::CalendarError::JsonParse(e) => {
                 AppError::internal(format!("JSON parse error: {}", e))
@@ -206,8 +206,7 @@ impl From<crate::metadata_service::MetadataError> for AppError {
             MetadataError::NotFound(id) => {
                 AppError::NotFound(format!("Metadata not found: id={}", id))
             }
-            MetadataError::Bgmtv(e) => AppError::ExternalApi(e.to_string()),
-            MetadataError::Tmdb(e) => AppError::ExternalApi(e.to_string()),
+            MetadataError::Provider(e) => AppError::ExternalApi(e.to_string()),
         }
     }
 }

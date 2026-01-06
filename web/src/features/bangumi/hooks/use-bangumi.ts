@@ -4,13 +4,13 @@ import {
   getBangumiQueryKey,
   getBangumiByIdOptions,
   getBangumiByIdQueryKey,
-  searchBgmtvOptions,
-  searchTmdbOptions,
+  searchMetadataOptions,
   searchMikanOptions,
   getMikanRssOptions,
   getEpisodesOptions,
   createBangumiMutation,
   updateBangumiMutation,
+  type MetadataSource,
 } from "@/lib/api";
 
 // Get all bangumi
@@ -20,20 +20,22 @@ export function useGetAllBangumi() {
   });
 }
 
-// Search bangumi from BGM.tv
-export function useSearchBangumi(keyword: string) {
+// Unified metadata search hook
+export function useSearchMetadata(keyword: string, source: MetadataSource) {
   return useQuery({
-    ...searchBgmtvOptions({ query: { keyword } }),
+    ...searchMetadataOptions({ query: { keyword, source } }),
     enabled: keyword.length > 0,
   });
 }
 
-// Search anime from TMDB
+// Search bangumi from BGM.tv (convenience wrapper)
+export function useSearchBangumi(keyword: string) {
+  return useSearchMetadata(keyword, "bgmtv");
+}
+
+// Search anime from TMDB (convenience wrapper)
 export function useSearchTmdb(keyword: string) {
-  return useQuery({
-    ...searchTmdbOptions({ query: { keyword } }),
-    enabled: keyword.length > 0,
-  });
+  return useSearchMetadata(keyword, "tmdb");
 }
 
 // Get episodes by subject ID

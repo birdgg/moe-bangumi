@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use bgmtv::BgmtvClient;
 use chrono::Datelike;
 use futures::stream::{self, StreamExt};
+use metadata::{BgmtvProvider, MetadataProvider, SearchedMetadata};
 use mikan::{MikanClient, Season};
 use sqlx::SqlitePool;
 use thiserror::Error;
@@ -32,8 +32,8 @@ pub enum CalendarError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
 
-    #[error("BGM.tv API error: {0}")]
-    Bgmtv(#[from] bgmtv::BgmtvError),
+    #[error("Metadata provider error: {0}")]
+    Provider(#[from] metadata::ProviderError),
 
     #[error("Mikan API error: {0}")]
     Mikan(#[from] mikan::MikanError),
@@ -51,7 +51,7 @@ pub type Result<T> = std::result::Result<T, CalendarError>;
 /// Data flow: Mikan Season API → BGM.tv Subject API → Metadata + Calendar tables
 pub struct CalendarService {
     db: SqlitePool,
-    bgmtv: Arc<BgmtvClient>,
+    bgmtv_provider: Arc<BgmtvProvider>,
     mikan: Arc<MikanClient>,
     metadata_actor: Arc<MetadataHandle>,
 }
@@ -59,13 +59,13 @@ pub struct CalendarService {
 impl CalendarService {
     pub fn new(
         db: SqlitePool,
-        bgmtv: Arc<BgmtvClient>,
+        bgmtv_provider: Arc<BgmtvProvider>,
         mikan: Arc<MikanClient>,
         metadata_actor: Arc<MetadataHandle>,
     ) -> Self {
         Self {
             db,
-            bgmtv,
+            bgmtv_provider,
             mikan,
             metadata_actor,
         }
@@ -413,11 +413,11 @@ impl CalendarService {
     }
 
     /// Concurrently fetch BGM.tv subject details
-    /// Returns (MikanData, bgmtv_id, ParsedSubject) tuples, skipping failures
+    /// Returns (MikanData, bgmtv_id, SearchedMetadata) tuples, skipping failures
     async fn fetch_subjects(
         &self,
         mappings: &[(MikanData, i64)],
-    ) -> Vec<(MikanData, i64, bgmtv::ParsedSubject)> {
+    ) -> Vec<(MikanData, i64, SearchedMetadata)> {
         // Clone data upfront to avoid lifetime issues
         let items: Vec<_> = mappings
             .iter()
@@ -427,13 +427,17 @@ impl CalendarService {
                     air_week: data.air_week,
                     poster_url: data.poster_url.clone(),
                 };
-                (data, *bgmtv_id, Arc::clone(&self.bgmtv))
+                (data, *bgmtv_id, Arc::clone(&self.bgmtv_provider))
             })
             .collect();
 
-        let tasks = items.into_iter().map(|(data, bgmtv_id, bgmtv)| async move {
-            match bgmtv.get_subject(bgmtv_id).await {
-                Ok(subject) => Some((data, bgmtv_id, subject)),
+        let tasks = items.into_iter().map(|(data, bgmtv_id, provider)| async move {
+            match provider.get_detail(&bgmtv_id.to_string()).await {
+                Ok(Some(subject)) => Some((data, bgmtv_id, subject)),
+                Ok(None) => {
+                    tracing::warn!("BGM.tv subject {} not found", bgmtv_id);
+                    None
+                }
                 Err(e) => {
                     tracing::warn!("Failed to fetch BGM.tv subject {}: {}", bgmtv_id, e);
                     None
@@ -452,7 +456,7 @@ impl CalendarService {
     /// Ensure metadata exists for each subject and build calendar entries
     async fn ensure_metadata_and_build_entries(
         &self,
-        subjects: &[(MikanData, i64, bgmtv::ParsedSubject)],
+        subjects: &[(MikanData, i64, SearchedMetadata)],
         year: i32,
         season_str: &str,
     ) -> Result<Vec<CalendarEntry>> {
@@ -471,7 +475,7 @@ impl CalendarService {
                 metadata.id
             };
 
-            // Priority defaults to 0 (ParsedSubject doesn't have collection info)
+            // Priority defaults to 0 (SearchedMetadata doesn't have collection info)
             let priority = 0;
 
             entries.push(CalendarEntry {
@@ -485,22 +489,25 @@ impl CalendarService {
         Ok(entries)
     }
 
-    /// Build CreateMetadata from Mikan data and BGM.tv ParsedSubject
+    /// Build CreateMetadata from Mikan data and BGM.tv SearchedMetadata
     fn build_create_metadata(
         &self,
         mikan_data: &MikanData,
         bgmtv_id: i64,
-        subject: &bgmtv::ParsedSubject,
+        subject: &SearchedMetadata,
     ) -> CreateMetadata {
-        // Use year from parsed subject or fallback to current year
+        // Use year from metadata or fallback to current year
         let year = subject.year.unwrap_or_else(|| chrono::Utc::now().year());
 
-        // Parse platform
-        let platform = match subject.platform.to_lowercase().as_str() {
-            "movie" | "劇場版" => Platform::Movie,
-            "ova" => Platform::Ova,
-            _ => Platform::Tv,
-        };
+        // Convert platform from metadata crate to server model
+        let platform = subject
+            .platform
+            .map(|p| match p {
+                metadata::Platform::Tv => Platform::Tv,
+                metadata::Platform::Movie => Platform::Movie,
+                metadata::Platform::Ova => Platform::Ova,
+            })
+            .unwrap_or(Platform::Tv);
 
         CreateMetadata {
             mikan_id: Some(mikan_data.mikan_id.clone()),
@@ -509,14 +516,14 @@ impl CalendarService {
             title_chinese: subject
                 .title_chinese
                 .clone()
-                .or_else(|| subject.title_japanese.clone())
+                .or_else(|| subject.title_original.clone())
                 .unwrap_or_default(),
-            title_japanese: subject.title_japanese.clone(),
-            season: subject.season,
+            title_japanese: subject.title_original.clone(),
+            season: subject.season.unwrap_or(1),
             year,
             platform,
-            total_episodes: subject.total_episodes as i32,
-            poster_url: Some(subject.poster_url.clone()),
+            total_episodes: subject.total_episodes,
+            poster_url: subject.poster_url.clone(),
             air_date: subject.air_date.clone(),
             air_week: mikan_data.air_week,
             episode_offset: 0,

@@ -14,6 +14,7 @@ import {
   clearAllLogs,
   createBangumi,
   deleteTorrents,
+  findMetadata,
   getBangumi,
   getBangumiById,
   getCalendar,
@@ -21,6 +22,7 @@ import {
   getLogs,
   getMetadata,
   getMetadataById,
+  getMetadataDetail,
   getMikanRss,
   getSettings,
   listTorrents,
@@ -28,6 +30,7 @@ import {
   refreshCalendar,
   resetSettings,
   searchBgmtv,
+  searchMetadata,
   searchMikan,
   searchTmdb,
   testDownloaderConnection,
@@ -45,6 +48,8 @@ import type {
   CreateBangumiData,
   CreateBangumiResponse,
   DeleteTorrentsData,
+  FindMetadataData,
+  FindMetadataResponse,
   GetBangumiByIdData,
   GetBangumiByIdResponse,
   GetBangumiData,
@@ -58,6 +63,8 @@ import type {
   GetMetadataByIdData,
   GetMetadataByIdResponse,
   GetMetadataData,
+  GetMetadataDetailData,
+  GetMetadataDetailResponse,
   GetMetadataResponse,
   GetMikanRssData,
   GetMikanRssResponse,
@@ -71,6 +78,8 @@ import type {
   ResetSettingsResponse,
   SearchBgmtvData,
   SearchBgmtvResponse,
+  SearchMetadataData,
+  SearchMetadataResponse,
   SearchMikanData,
   SearchMikanResponse,
   SearchTmdbData,
@@ -675,6 +684,90 @@ export const searchBgmtvOptions = (options: Options<SearchBgmtvData>) =>
       return data;
     },
     queryKey: searchBgmtvQueryKey(options),
+  });
+
+export const searchMetadataQueryKey = (options: Options<SearchMetadataData>) =>
+  createQueryKey("searchMetadata", options);
+
+/**
+ * Unified metadata search across all data sources
+ *
+ * Returns standardized SearchedMetadata format regardless of data source.
+ */
+export const searchMetadataOptions = (options: Options<SearchMetadataData>) =>
+  queryOptions<
+    SearchMetadataResponse,
+    DefaultError,
+    SearchMetadataResponse,
+    ReturnType<typeof searchMetadataQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchMetadata({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchMetadataQueryKey(options),
+  });
+
+export const getMetadataDetailQueryKey = (
+  options: Options<GetMetadataDetailData>,
+) => createQueryKey("getMetadataDetail", options);
+
+/**
+ * Get metadata detail by external ID from a specific data source
+ *
+ * Returns full metadata for a specific subject/show.
+ */
+export const getMetadataDetailOptions = (
+  options: Options<GetMetadataDetailData>,
+) =>
+  queryOptions<
+    GetMetadataDetailResponse,
+    DefaultError,
+    GetMetadataDetailResponse,
+    ReturnType<typeof getMetadataDetailQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMetadataDetail({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMetadataDetailQueryKey(options),
+  });
+
+export const findMetadataQueryKey = (options: Options<FindMetadataData>) =>
+  createQueryKey("findMetadata", options);
+
+/**
+ * Find best matching metadata from a specific data source
+ *
+ * Returns a single best matching result based on keyword and optional year filter.
+ */
+export const findMetadataOptions = (options: Options<FindMetadataData>) =>
+  queryOptions<
+    FindMetadataResponse,
+    DefaultError,
+    FindMetadataResponse,
+    ReturnType<typeof findMetadataQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await findMetadata({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: findMetadataQueryKey(options),
   });
 
 export const searchMikanQueryKey = (options: Options<SearchMikanData>) =>

@@ -67,7 +67,7 @@ export function BangumiModal({
     return Math.floor(first.sort - ep);
   }, [isEdit, episodes, data.episodeOffset]);
 
-  const [selectedTmdbId, setSelectedTmdbId] = React.useState<number | null>(null);
+  const [selectedTmdbId, setSelectedTmdbId] = React.useState<string | null>(null);
   const [mikanModalOpen, setMikanModalOpen] = React.useState(false);
 
   const form = useForm({
@@ -108,7 +108,7 @@ export function BangumiModal({
                 title_japanese: data.titleJapanese || null,
                 year: data.year || new Date().getFullYear(),
                 bgmtv_id: data.bgmtvId,
-                tmdb_id: selectedTmdbId ?? data.tmdbId ?? null,
+                tmdb_id: selectedTmdbId ? parseInt(selectedTmdbId, 10) : data.tmdbId ?? null,
                 poster_url: data.posterUrl || null,
                 air_date: data.airDate,
                 air_week: data.airWeek,
@@ -290,9 +290,9 @@ export function BangumiModal({
                     TMDB 匹配
                   </FieldLabel>
                   <TmdbMatcher
-                    onChange={(show) => setSelectedTmdbId(show?.id ?? null)}
+                    onChange={(show) => setSelectedTmdbId(show?.external_id ?? null)}
                     keyword={data.titleJapanese || data.titleChinese}
-                    initialTmdbId={data.tmdbId ?? undefined}
+                    initialTmdbId={data.tmdbId?.toString()}
                   />
                 </Field>
 

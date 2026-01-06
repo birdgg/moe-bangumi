@@ -3,7 +3,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { cn } from "@/lib/utils";
 import { useSearchBangumi } from "../hooks/use-bangumi";
-import { type ParsedSubject } from "@/lib/api";
+import { type SearchedMetadata } from "@/lib/api";
 import {
   IconSearch,
   IconX,
@@ -17,7 +17,7 @@ import { PlatformBadge } from "./platform-badge";
 interface SearchBangumiModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect?: (subject: ParsedSubject) => void;
+  onSelect?: (subject: SearchedMetadata) => void;
 }
 
 export function SearchBangumiModal({
@@ -27,7 +27,7 @@ export function SearchBangumiModal({
 }: SearchBangumiModalProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedQuery] = useDebouncedValue(searchQuery, { wait: 800 });
-  const [selectedId, setSelectedId] = React.useState<number | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   // Reset state when modal opens
@@ -42,8 +42,8 @@ export function SearchBangumiModal({
 
   const { data: results, isLoading, isError } = useSearchBangumi(debouncedQuery);
 
-  const handleSelect = (subject: ParsedSubject) => {
-    setSelectedId(subject.bgmtv_id);
+  const handleSelect = (subject: SearchedMetadata) => {
+    setSelectedId(subject.external_id);
     onSelect?.(subject);
     // Close after brief delay to show selection
     setTimeout(() => {
@@ -190,7 +190,7 @@ export function SearchBangumiModal({
               <div className="grid gap-3">
                 {results.map((subject, index) => (
                   <button
-                    key={subject.bgmtv_id}
+                    key={subject.external_id}
                     onClick={() => handleSelect(subject)}
                     className={cn(
                       "group relative flex gap-4 p-3 rounded-xl text-left",
@@ -202,20 +202,20 @@ export function SearchBangumiModal({
                       "transition-all duration-200",
                       "outline-none focus-visible:ring-2 focus-visible:ring-chart-1 dark:focus-visible:ring-chart-3",
                       "animate-in fade-in slide-in-from-bottom-2",
-                      selectedId === subject.bgmtv_id && "ring-2 ring-chart-1 dark:ring-chart-3 bg-chart-1/10 dark:bg-chart-3/20"
+                      selectedId === subject.external_id && "ring-2 ring-chart-1 dark:ring-chart-3 bg-chart-1/10 dark:bg-chart-3/20"
                     )}
                     style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
                   >
                     {/* Poster */}
                     <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-linear-to-br from-chart-1/20 to-chart-3/20 dark:from-chart-1/30 dark:to-chart-3/30">
                       <img
-                        src={subject.poster_url}
-                        alt={subject.title_chinese || subject.title_japanese || ""}
+                        src={subject.poster_url ?? undefined}
+                        alt={subject.title_chinese || subject.title_original || ""}
                         className="size-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
 
                       {/* Selection indicator */}
-                      {selectedId === subject.bgmtv_id && (
+                      {selectedId === subject.external_id && (
                         <div className="absolute inset-0 flex items-center justify-center bg-chart-1/80 dark:bg-chart-3/80">
                           <IconCheck className="size-6 text-white" />
                         </div>
@@ -225,11 +225,11 @@ export function SearchBangumiModal({
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-chart-1 dark:group-hover:text-chart-1 transition-colors">
-                        {subject.title_chinese || subject.title_japanese}
+                        {subject.title_chinese || subject.title_original}
                       </h4>
-                      {subject.title_chinese && subject.title_japanese && (
+                      {subject.title_chinese && subject.title_original && (
                         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                          {subject.title_japanese}
+                          {subject.title_original}
                         </p>
                       )}
                       <div className="flex flex-wrap items-center gap-2 mt-2">
