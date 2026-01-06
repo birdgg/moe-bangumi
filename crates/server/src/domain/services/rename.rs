@@ -393,7 +393,7 @@ impl RenameService {
         let ext = file.extension().unwrap_or("mkv");
 
         // Apply episode offset to convert RSS episode number to season-relative episode
-        let adjusted_episode = episode - bangumi.metadata.episode_offset;
+        let adjusted_episode = bangumi.metadata.adjust_episode(episode);
 
         // Generate new filename using pathgen
         let new_filename_base = crate::pathgen::generate_filename(
