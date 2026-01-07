@@ -11,7 +11,7 @@ moe-bangumi/
 │   └── jobs/               # Background job actors (RSS fetch, rename, log cleanup)
 │
 ├── cli/                    # Binary crates (entry points)
-│   ├── cli/                # Main CLI binary (moe)
+│   ├── moe/                # Main CLI binary (moe)
 │   └── calendar-seed/      # Calendar seed data generator tool
 │
 ├── core/                   # Core library crates (reusable business logic)
@@ -37,7 +37,7 @@ moe-bangumi/
 
 ```
                     ┌─────────────┐
-                    │   cli/cli   │
+                    │   cli/moe   │
                     └──────┬──────┘
                            │
                     ┌──────▼──────┐
@@ -79,7 +79,7 @@ moe-bangumi/
 
 | Crate | Description |
 |-------|-------------|
-| `cli` | Main entry point. Reads config from `.env`, initializes logging, starts server. |
+| `moe` | Main entry point. Reads config from `.env`, initializes logging, starts server. |
 | `calendar-seed` | Tool to generate calendar seed data from Mikan. |
 
 ### Core Layer (`core/`)

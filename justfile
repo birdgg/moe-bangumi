@@ -17,15 +17,15 @@ test:
 
 # Run the server (dev mode)
 dev:
-    cargo run -p cli --bin moe --features openapi
+    cargo run -p moe --features openapi
 
 # Generate calendar seed data (all seasons from 2013)
 seed:
-    cargo run -p cli --bin calendar_seed
+    cargo run -p calendar-seed
 
 # Generate calendar seed data (recent N seasons)
 seed-recent count:
-    cargo run -p cli --bin calendar_seed -- --recent {{count}}
+    cargo run -p calendar-seed -- --recent {{count}}
 
 # === Frontend Commands ===
 
@@ -51,7 +51,7 @@ web-gen-api:
 dev-all:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
-    cargo run -p cli --bin moe --features openapi &
+    cargo run -p moe --features openapi &
     cd web && bun run dev &
     wait
 

@@ -39,7 +39,7 @@ This is a Rust workspace for a Bangumi (anime) tracking and download management 
   - **app/server** - Web server (API routes, state management)
   - **app/jobs** - Background job actors (RSS fetch, rename, log cleanup)
 - **cli/** - Binary crates (entry points)
-  - **cli/cli** - Main CLI entry point, reads config from .env and starts server
+  - **cli/moe** - Main CLI entry point, reads config from .env and starts server
   - **cli/calendar-seed** - Calendar seed data generator tool
 - **core/** - Core library crates
   - **core/domain** - Domain layer with models, repositories, services, and core actors

@@ -26,7 +26,7 @@ ARG APP_VERSION
 COPY --from=deps /app/target target
 COPY --from=deps /usr/local/cargo /usr/local/cargo
 COPY . .
-RUN APP_VERSION=${APP_VERSION} cargo build --release -p cli
+RUN APP_VERSION=${APP_VERSION} cargo build --release -p moe
 
 # Stage 5: Runtime image
 FROM alpine:3.21 AS runtime
@@ -40,7 +40,7 @@ RUN apk add --no-cache ca-certificates curl tzdata
 COPY --from=builder /app/target/release/moe /app/moe
 
 # Copy entrypoint script
-COPY cli/cli/entrypoint.sh /app/entrypoint.sh
+COPY cli/moe/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Copy pre-built frontend dist
