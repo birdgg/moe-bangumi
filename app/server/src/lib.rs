@@ -31,7 +31,7 @@ use utoipa_scalar::{Scalar, Servable};
 // Re-export commonly used types for backwards compatibility
 pub use api::create_router;
 pub use infra::{
-    print_banner, default_data_path, Config, Environment,
+    print_banner, default_data_path, Config,
     create_pool, DatabaseError,
     AppError, AppResult,
     AppState,
@@ -46,12 +46,11 @@ const STATIC_DIR: &str = "/app/dist";
 
 pub async fn run_server(
     addr: SocketAddr,
-    env: Environment,
     data_path: &str,
     current_version: &str,
     log_receiver: Option<LogReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new(env, data_path);
+    let config = Config::new(data_path);
 
     // Ensure data directories exist
     std::fs::create_dir_all(&config.data_path).map_err(|e| {

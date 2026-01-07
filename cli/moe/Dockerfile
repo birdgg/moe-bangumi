@@ -50,7 +50,6 @@ COPY ${FRONTEND_DIST} /app/dist
 RUN mkdir -p /data /data/bin
 
 # Set environment variables
-ENV APP_ENV=prod
 ENV PORT=3000
 
 EXPOSE 3000

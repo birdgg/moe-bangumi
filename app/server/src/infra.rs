@@ -11,7 +11,7 @@ pub mod error;
 pub mod state;
 
 pub use banner::print_banner;
-pub use domain::{default_data_path, Config, Environment};
+pub use domain::{default_data_path, Config};
 pub use db::{create_pool, DatabaseError};
 pub use error::{AppError, AppResult};
 pub use state::AppState;
