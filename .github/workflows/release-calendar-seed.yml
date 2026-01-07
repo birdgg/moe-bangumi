@@ -16,12 +16,12 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build calendar_seed
-        run: cargo build --release --bin calendar_seed
+      - name: Build calendar-seed
+        run: cargo build --release --bin calendar-seed
 
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload calendar-seed-bin ./target/release/calendar_seed --clobber 2>/dev/null || \
-          gh release create calendar-seed-bin ./target/release/calendar_seed --title "Calendar Seed Binary" --notes "Pre-compiled binary for CI"
+          gh release upload calendar-seed-bin ./target/release/calendar-seed --clobber 2>/dev/null || \
+          gh release create calendar-seed-bin ./target/release/calendar-seed --title "Calendar Seed Binary" --notes "Pre-compiled binary for CI"
