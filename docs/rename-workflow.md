@@ -278,15 +278,15 @@ RenameTaskResult
 
 | 功能 | 位置 |
 |------|------|
-| 调度器主服务 | `crates/server/src/services/scheduler.rs` |
-| 重命名定时任务 | `crates/server/src/services/scheduler/rename_job.rs` |
-| SchedulerJob trait | `crates/server/src/services/scheduler/traits.rs` |
-| 重命名服务核心 | `crates/server/src/services/rename.rs` |
-| 标签定义 | `crates/server/src/services/downloader.rs` |
-| DownloaderHandle | `crates/server/src/services/downloader/actor/handle.rs` |
-| Actor 消息处理 | `crates/server/src/services/downloader/actor/runner.rs` |
-| 文件名生成 | `crates/pathgen/src/lib.rs` |
-| 应用初始化 | `crates/server/src/state.rs` |
+| 调度器主服务 | `core/server/src/services/scheduler.rs` |
+| 重命名定时任务 | `core/server/src/services/scheduler/rename_job.rs` |
+| SchedulerJob trait | `core/server/src/services/scheduler/traits.rs` |
+| 重命名服务核心 | `core/server/src/services/rename.rs` |
+| 标签定义 | `core/server/src/services/downloader.rs` |
+| DownloaderHandle | `core/server/src/services/downloader/actor/handle.rs` |
+| Actor 消息处理 | `core/server/src/services/downloader/actor/runner.rs` |
+| 文件名生成 | `core/server/src/infra/utils/pathgen.rs` |
+| 应用初始化 | `core/server/src/state.rs` |
 
 ## 自动完结机制
 

@@ -122,7 +122,7 @@ pub struct Metadata {
 ### Rust 数据模型
 
 ```rust
-// crates/server/src/models/metadata.rs
+// core/server/src/models/metadata.rs
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Metadata {
@@ -163,7 +163,7 @@ pub struct Metadata {
 为此设计了 `Clearable<T>` 枚举：
 
 ```rust
-// crates/server/src/models/clearable.rs
+// core/server/src/models/clearable.rs
 
 #[derive(Debug, Clone, Default)]
 pub enum Clearable<T> {
@@ -204,12 +204,12 @@ pub struct UpdateMetadata {
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      API Layer (handlers)                    │
-│                    crates/server/src/api/                    │
+│                    core/server/src/api/                    │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
 │                     Service Layer                            │
-│                 crates/server/src/services/                  │
+│                 core/server/src/services/                  │
 │  ┌──────────────────┐  ┌──────────────────┐                 │
 │  │ MetadataService  │  │  BangumiService  │                 │
 │  └────────┬─────────┘  └────────┬─────────┘                 │
@@ -222,7 +222,7 @@ pub struct UpdateMetadata {
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
 │                    Repository Layer                          │
-│               crates/server/src/repositories/                │
+│               core/server/src/repositories/                │
 │  ┌────────────────────┐  ┌────────────────────┐             │
 │  │ MetadataRepository │  │ BangumiRepository  │             │
 │  └────────────────────┘  └────────────────────┘             │
@@ -243,7 +243,7 @@ pub struct UpdateMetadata {
 4. **完结状态检查** - 通过 BGM.tv Episodes API 判断番剧是否完结
 
 ```rust
-// crates/server/src/services/metadata.rs
+// core/server/src/services/metadata.rs
 
 pub struct MetadataService {
     db: SqlitePool,
@@ -274,7 +274,7 @@ impl MetadataService {
 Repository 层负责数据库操作，不包含业务逻辑：
 
 ```rust
-// crates/server/src/repositories/metadata.rs
+// core/server/src/repositories/metadata.rs
 
 pub struct MetadataRepository;
 
@@ -297,7 +297,7 @@ impl MetadataRepository {
 服务通过 `AppState` 注入依赖：
 
 ```rust
-// crates/server/src/state.rs
+// core/server/src/state.rs
 
 pub struct AppState {
     pub metadata: Arc<MetadataService>,
@@ -447,7 +447,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_anilist_id
 #### 2. 更新数据模型
 
 ```rust
-// crates/server/src/models/metadata.rs
+// core/server/src/models/metadata.rs
 
 pub struct Metadata {
     // ... 现有字段
@@ -468,7 +468,7 @@ pub struct UpdateMetadata {
 #### 3. 添加 Repository 方法
 
 ```rust
-// crates/server/src/repositories/metadata.rs
+// core/server/src/repositories/metadata.rs
 
 impl MetadataRepository {
     pub async fn get_by_anilist_id(
@@ -488,7 +488,7 @@ impl MetadataRepository {
 #### 4. 更新 Service 查找逻辑
 
 ```rust
-// crates/server/src/services/metadata.rs
+// core/server/src/services/metadata.rs
 
 impl MetadataService {
     pub async fn get_by_external_id(
@@ -519,7 +519,7 @@ impl MetadataService {
 #### 1. 创建 Job 文件
 
 ```rust
-// crates/server/src/services/scheduler/my_new_job.rs
+// core/server/src/services/scheduler/my_new_job.rs
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -557,19 +557,19 @@ impl SchedulerJob for MyNewJob {
 #### 2. 注册模块
 
 ```rust
-// crates/server/src/services/scheduler.rs
+// core/server/src/services/scheduler.rs
 
 mod my_new_job;
 pub use my_new_job::MyNewJob;
 
-// crates/server/src/services.rs
+// core/server/src/services.rs
 pub use scheduler::{JobResult, MyNewJob, SchedulerJob, SchedulerService};
 ```
 
 #### 3. 注册到 Scheduler
 
 ```rust
-// crates/server/src/state.rs
+// core/server/src/state.rs
 
 let scheduler = SchedulerService::new()
     .with_job(MyNewJob::new(Arc::clone(&my_service)))  // 添加新任务
@@ -590,7 +590,7 @@ scheduler.start();
 #### 2. 更新 SQL 常量
 
 ```rust
-// crates/server/src/repositories/metadata.rs
+// core/server/src/repositories/metadata.rs
 
 const SELECT_METADATA: &str = r#"
     SELECT
@@ -629,7 +629,7 @@ impl From<MetadataRow> for Metadata {
 ### 文件位置参考
 
 ```
-crates/server/src/
+core/server/src/
 ├── models/
 │   ├── metadata.rs         # Metadata 数据模型
 │   └── clearable.rs        # Clearable<T> 枚举

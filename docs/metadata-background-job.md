@@ -459,7 +459,7 @@ pub enum MetadataError {
 ## 文件位置
 
 ```
-crates/server/src/
+core/server/src/
 ├── domain/
 │   ├── models/
 │   │   └── metadata.rs              # Metadata 数据模型

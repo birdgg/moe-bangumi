@@ -35,16 +35,21 @@ This is a Rust workspace for a Bangumi (anime) tracking and download management 
 
 ### Workspace Structure
 
-- **crates/cli** - CLI entry point, reads config from .env and starts server
-- **crates/server** - Core library with web server, API routes, and business logic
-- **crates/bgmtv** - BGM.tv (Bangumi) API client for anime metadata
-- **crates/qbittorrent** - qBittorrent Web API client
-- **crates/downloader** - Downloader abstraction layer (supports qBittorrent, extensible)
-- **crates/mikan** - Mikan (蜜柑计划) client for anime resource discovery
-- **crates/parser** - Anime filename parser (extracts episode, season, subtitle group, resolution, etc.)
-- **crates/pathgen** - Episode download path generator (Plex/Jellyfin compatible naming)
-- **crates/rss** - RSS feed client for anime resources (Mikan, Nyaa support)
-- **crates/tmdb** - TMDB API client for movie/TV metadata
+- **cli/** - Binary crates (entry points)
+  - **cli/cli** - Main CLI entry point, reads config from .env and starts server
+  - **cli/calendar-seed** - Calendar seed data generator tool
+- **core/** - Core library crates
+  - **core/server** - Core library with web server, API routes, and business logic
+  - **core/downloader** - Downloader abstraction layer (supports qBittorrent, extensible)
+  - **core/metadata** - Unified metadata abstraction (BGM.tv, TMDB adapters)
+  - **core/parser** - Anime filename parser (extracts episode, season, subtitle group, resolution, etc.)
+  - **core/washing** - Torrent priority/washing algorithm
+  - **core/updater** - Self-update service
+- **libs/** - External API clients
+  - **libs/bgmtv** - BGM.tv (Bangumi) API client for anime metadata
+  - **libs/mikan** - Mikan (蜜柑计划) client for anime resource discovery
+  - **libs/qbittorrent** - qBittorrent Web API client
+  - **libs/tmdb** - TMDB API client for movie/TV metadata
 - **web/** - Frontend application (React + Vite)
 
 ### Server Module Organization

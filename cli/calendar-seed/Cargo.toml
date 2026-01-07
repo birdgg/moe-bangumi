@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-metadata = { path = "../metadata" }
+metadata = { path = "../../core/metadata" }
 mikan = { path = "../../libs/mikan" }
 tokio.workspace = true
 tracing.workspace = true

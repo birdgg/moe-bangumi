@@ -224,10 +224,10 @@ pub async fn wash_episode(&self, params: WashParams) -> Result<Vec<String>> {
 
 | 文件 | 职责 |
 |------|------|
-| `crates/washing/src/lib.rs` | 优先级算法核心（评分计算、比较逻辑） |
-| `crates/server/src/services/washing.rs` | 洗版服务（事务管理、下载器协调） |
-| `crates/server/src/services/rss_processing.rs` | RSS 处理编排（预过滤、触发洗版） |
-| `crates/server/src/services/scheduler/torrent_sync_job.rs` | 状态同步任务（检测并修复缺失的下载任务） |
+| `core/washing/src/lib.rs` | 优先级算法核心（评分计算、比较逻辑） |
+| `core/server/src/services/washing.rs` | 洗版服务（事务管理、下载器协调） |
+| `core/server/src/services/rss_processing.rs` | RSS 处理编排（预过滤、触发洗版） |
+| `core/server/src/services/scheduler/torrent_sync_job.rs` | 状态同步任务（检测并修复缺失的下载任务） |
 
 ### 关键数据结构
 

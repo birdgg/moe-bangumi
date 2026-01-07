@@ -40,7 +40,7 @@ RUN apk add --no-cache ca-certificates curl tzdata
 COPY --from=builder /app/target/release/moe /app/moe
 
 # Copy entrypoint script
-COPY crates/cli/entrypoint.sh /app/entrypoint.sh
+COPY cli/cli/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Copy pre-built frontend dist

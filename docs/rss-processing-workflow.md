@@ -183,10 +183,10 @@ RSS_FETCH_CONCURRENCY = 5
 
 | 功能 | 位置 |
 |------|------|
-| RSS客户端 | `crates/rss/src/client.rs` |
-| RSS解析器 | `crates/rss/src/parsers/` |
-| 核心处理 | `crates/server/src/services/rss_processing.rs` |
-| 洗版服务 | `crates/server/src/services/washing.rs` |
-| 定时任务 | `crates/server/src/services/scheduler/rss_fetch_job.rs` |
-| 数据模型 | `crates/server/src/models/rss.rs` |
-| 数据库操作 | `crates/server/src/repositories/rss.rs` |
+| RSS客户端 | `core/server/src/infra/utils/rss/client.rs` |
+| RSS解析器 | `core/server/src/infra/utils/rss/parsers/` |
+| 核心处理 | `core/server/src/services/rss_processing.rs` |
+| 洗版服务 | `core/server/src/services/washing.rs` |
+| 定时任务 | `core/server/src/services/scheduler/rss_fetch_job.rs` |
+| 数据模型 | `core/server/src/models/rss.rs` |
+| 数据库操作 | `core/server/src/repositories/rss.rs` |

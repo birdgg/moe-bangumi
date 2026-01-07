@@ -98,7 +98,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./crates/cli/Dockerfile
+          file: ./cli/cli/Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
