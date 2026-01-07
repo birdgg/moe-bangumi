@@ -10,6 +10,7 @@ import {
   getEpisodesOptions,
   createBangumiMutation,
   updateBangumiMutation,
+  updateMetadataMutation,
   type MetadataSource,
 } from "@/lib/api";
 
@@ -93,6 +94,18 @@ export function useUpdateBangumi() {
       queryClient.invalidateQueries({
         queryKey: getBangumiByIdQueryKey({ path: { id: variables.path.id } }),
       });
+    },
+  });
+}
+
+// Update metadata (for updating mikan_id, etc.)
+export function useUpdateMetadata() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...updateMetadataMutation(),
+    onSuccess: () => {
+      // Invalidate bangumi queries since metadata changed
+      queryClient.invalidateQueries({ queryKey: getBangumiQueryKey() });
     },
   });
 }

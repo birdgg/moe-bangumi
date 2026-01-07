@@ -27,7 +27,7 @@ interface RssSelectionEntry {
 interface MikanRssModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (entries: RssSelectionEntry[]) => void;
+  onSelect: (entries: RssSelectionEntry[], selectedMikanId: string | null) => void;
   initialKeyword?: string;
   mikanId?: string;
 }
@@ -96,7 +96,9 @@ export function MikanRssModal({
         filters: [],
         include_filters: [],
       }));
-    onSelect(selectedEntries);
+    // Return the mikan_id: use selectedBangumi.id if user searched and selected, otherwise use the provided mikanId
+    const selectedMikanId = selectedBangumi?.id ?? mikanId ?? null;
+    onSelect(selectedEntries, selectedMikanId);
     onOpenChange(false);
   };
 

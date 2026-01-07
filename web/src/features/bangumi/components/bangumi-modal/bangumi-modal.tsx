@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   useCreateBangumi,
   useUpdateBangumi,
+  useUpdateMetadata,
   useGetBangumiById,
   useEpisodes,
 } from "../../hooks/use-bangumi";
@@ -47,6 +48,7 @@ export function BangumiModal({
   const isEdit = mode === "edit";
   const createBangumi = useCreateBangumi();
   const updateBangumi = useUpdateBangumi();
+  const updateMetadata = useUpdateMetadata();
 
   // For edit mode, fetch the full bangumi data including RSS entries
   const { data: bangumiWithRss, isLoading } = useGetBangumiById(
@@ -68,6 +70,7 @@ export function BangumiModal({
   }, [isEdit, episodes, data.episodeOffset]);
 
   const [selectedTmdbId, setSelectedTmdbId] = React.useState<string | null>(null);
+  const [selectedMikanId, setSelectedMikanId] = React.useState<string | null>(null);
   const [mikanModalOpen, setMikanModalOpen] = React.useState(false);
 
   const form = useForm({
@@ -79,6 +82,7 @@ export function BangumiModal({
     onSubmit: async ({ value }) => {
       try {
         if (isEdit && data.id) {
+          // Update bangumi
           await updateBangumi.mutateAsync({
             path: { id: data.id },
             body: {
@@ -87,6 +91,13 @@ export function BangumiModal({
               rss_entries: value.rss_entries.map(formEntryToApiEntry),
             },
           });
+          // Update mikan_id if user selected a new one from Mikan search
+          if (selectedMikanId !== null && bangumiWithRss) {
+            await updateMetadata.mutateAsync({
+              path: { id: bangumiWithRss.metadata_id },
+              body: { mikan_id: selectedMikanId },
+            });
+          }
           toast.success("保存成功", {
             description: `「${data.titleChinese}」已更新`,
           });
@@ -109,6 +120,7 @@ export function BangumiModal({
                 year: data.year || new Date().getFullYear(),
                 bgmtv_id: data.bgmtvId,
                 tmdb_id: selectedTmdbId ? parseInt(selectedTmdbId, 10) : data.tmdbId ?? null,
+                mikan_id: selectedMikanId ?? data.mikanId ?? null,
                 poster_url: data.posterUrl || null,
                 air_date: data.airDate,
                 air_week: data.airWeek,
@@ -141,6 +153,7 @@ export function BangumiModal({
   const resetForm = React.useCallback(() => {
     form.reset();
     setSelectedTmdbId(null);
+    setSelectedMikanId(null);
     setMikanModalOpen(false);
   }, [form]);
 
@@ -376,7 +389,7 @@ export function BangumiModal({
                       <MikanRssModal
                         open={mikanModalOpen}
                         onOpenChange={setMikanModalOpen}
-                        onSelect={(selectedEntries) => {
+                        onSelect={(selectedEntries, newMikanId) => {
                           const existingEntries = Array.isArray(field.state.value) ? field.state.value : [];
                           const existingUrls = new Set(
                             existingEntries.map((e) => e.url)
@@ -394,6 +407,10 @@ export function BangumiModal({
                               ...existingEntries,
                               ...newEntries,
                             ]);
+                          }
+                          // Save the selected mikan_id for later use
+                          if (newMikanId) {
+                            setSelectedMikanId(newMikanId);
                           }
                         }}
                         initialKeyword={searchKeyword}

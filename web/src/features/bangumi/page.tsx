@@ -18,6 +18,7 @@ function bangumiToModalData(bangumi: BangumiWithMetadata): BangumiModalData {
     id: bangumi.id,
     bgmtvId: metadata.bgmtv_id ?? 0,
     tmdbId: metadata.tmdb_id,
+    mikanId: metadata.mikan_id,
     titleChinese: metadata.title_chinese,
     titleJapanese: metadata.title_japanese,
     posterUrl: metadata.poster_url,
