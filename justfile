@@ -15,9 +15,9 @@ check:
 test:
     cargo test
 
-# Run the server (dev mode)
+# Run the server (dev mode with debug logging)
 dev:
-    cargo run -p moe --features openapi
+    RUST_LOG=debug,sqlx=warn cargo run -p moe --features openapi
 
 # Generate calendar seed data (all seasons from 2013)
 seed:
@@ -51,7 +51,7 @@ web-gen-api:
 dev-all:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
-    cargo run -p moe --features openapi &
+    RUST_LOG=debug,sqlx=warn cargo run -p moe --features openapi &
     cd web && bun run dev &
     wait
 

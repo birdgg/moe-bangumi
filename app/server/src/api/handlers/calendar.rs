@@ -60,7 +60,11 @@ pub async fn get_calendar(
             year,
             season
         );
-        state.services.calendar.import_season_if_missing(year, season).await?;
+        state
+            .services
+            .calendar
+            .import_season_if_missing(year, season)
+            .await?;
         let calendar = state.services.calendar.get_calendar(year, season).await?;
         return Ok(Json(calendar));
     }
@@ -70,7 +74,7 @@ pub async fn get_calendar(
 
 /// Refresh calendar data
 ///
-/// Re-imports calendar data from GitHub seed file.
+/// Imports calendar data from GitHub seed file for the specified season.
 /// Returns the updated calendar data.
 /// Defaults to current season if year/season not specified.
 #[cfg_attr(feature = "openapi", utoipa::path(
@@ -87,8 +91,12 @@ pub async fn refresh_calendar(
     Query(query): Query<CalendarQuery>,
 ) -> AppResult<Json<Vec<CalendarDay>>> {
     let (year, season) = query.resolve();
-    tracing::info!("Manual calendar refresh requested for {} {:?}", year, season);
-    state.services.calendar.import_seed_data().await?;
+    tracing::info!(
+        "Manual calendar refresh requested for {} {:?}",
+        year,
+        season
+    );
+    state.services.calendar.import_season(year, season).await?;
     let calendar = state.services.calendar.get_calendar(year, season).await?;
     Ok(Json(calendar))
 }

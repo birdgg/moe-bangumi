@@ -83,8 +83,7 @@ pub fn spawn_tmdb_api_key_watcher(settings: &Arc<SettingsService>, tmdb_api_key:
 /// Build HTTP client service with dynamic proxy support
 pub fn build_http_client(settings: &Arc<SettingsService>) -> Arc<HttpClientService> {
     Arc::new(
-        HttpClientService::new(Arc::clone(settings))
-            .expect("Failed to create HTTP client service"),
+        HttpClientService::new(Arc::clone(settings)).expect("Failed to create HTTP client service"),
     )
 }
 
@@ -104,7 +103,9 @@ pub fn build_api_clients(
 
     // Other API clients
     let bgmtv = Arc::new(BgmtvClient::new(http_client.get_client()));
-    let mikan = Arc::new(MikanClient::with_client_provider(Arc::clone(client_provider)));
+    let mikan = Arc::new(MikanClient::with_client_provider(Arc::clone(
+        client_provider,
+    )));
     let rss = Arc::new(RssClient::with_client_provider(Arc::clone(client_provider)));
 
     ApiClients {
@@ -181,8 +182,6 @@ pub fn build_services(
     ));
     let calendar = Arc::new(CalendarService::new(
         db.clone(),
-        Arc::clone(&metadata),
-        Arc::clone(&api_clients.mikan),
         Arc::clone(&metadata_actor),
     ));
 

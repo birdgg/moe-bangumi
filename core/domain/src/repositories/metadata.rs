@@ -54,6 +54,61 @@ impl MetadataRepository {
             .ok_or(sqlx::Error::RowNotFound)
     }
 
+    /// Batch create metadata records
+    /// Returns a map of bgmtv_id -> metadata_id for created records
+    pub async fn batch_create(
+        pool: &SqlitePool,
+        entries: Vec<CreateMetadata>,
+    ) -> Result<std::collections::HashMap<i64, i64>, sqlx::Error> {
+        if entries.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let mut tx = pool.begin().await?;
+        let mut result_map = std::collections::HashMap::new();
+
+        for data in entries {
+            let bgmtv_id = match data.bgmtv_id {
+                Some(id) => id,
+                None => continue,
+            };
+
+            let result = sqlx::query(
+                r#"
+                INSERT INTO metadata (
+                    mikan_id, bgmtv_id, tmdb_id,
+                    title_chinese, title_japanese,
+                    season, year, platform,
+                    total_episodes, poster_url, air_date, air_week, episode_offset
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING id
+                "#,
+            )
+            .bind(&data.mikan_id)
+            .bind(data.bgmtv_id)
+            .bind(data.tmdb_id)
+            .bind(&data.title_chinese)
+            .bind(&data.title_japanese)
+            .bind(data.season)
+            .bind(data.year)
+            .bind(data.platform.as_str())
+            .bind(data.total_episodes)
+            .bind(&data.poster_url)
+            .bind(&data.air_date)
+            .bind(data.air_week)
+            .bind(data.episode_offset)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            let id: i64 = sqlx::Row::get(&result, "id");
+            result_map.insert(bgmtv_id, id);
+        }
+
+        tx.commit().await?;
+        Ok(result_map)
+    }
+
     /// Get metadata by ID
     pub async fn get_by_id(pool: &SqlitePool, id: i64) -> Result<Option<Metadata>, sqlx::Error> {
         let query = format!("{} WHERE id = $1", SELECT_METADATA);
@@ -91,6 +146,40 @@ impl MetadataRepository {
             .await?;
 
         Ok(row.map(Into::into))
+    }
+
+    /// Batch get metadata by BGM.tv IDs
+    /// Returns a map of bgmtv_id -> metadata_id for existing records
+    pub async fn get_ids_by_bgmtv_ids(
+        pool: &SqlitePool,
+        bgmtv_ids: &[i64],
+    ) -> Result<std::collections::HashMap<i64, i64>, sqlx::Error> {
+        if bgmtv_ids.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let placeholders: String = bgmtv_ids
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("${}", i + 1))
+            .collect::<Vec<_>>()
+            .join(",");
+
+        let query = format!(
+            "SELECT id, bgmtv_id FROM metadata WHERE bgmtv_id IN ({})",
+            placeholders
+        );
+
+        let mut q = sqlx::query_as::<_, (i64, i64)>(&query);
+        for id in bgmtv_ids {
+            q = q.bind(id);
+        }
+
+        let rows: Vec<(i64, i64)> = q.fetch_all(pool).await?;
+        Ok(rows
+            .into_iter()
+            .map(|(id, bgmtv_id)| (bgmtv_id, id))
+            .collect())
     }
 
     /// Get metadata by TMDB ID
@@ -248,7 +337,11 @@ impl MetadataRepository {
 
         for (mikan_id, bgmtv_id, title_chinese, air_week) in rows {
             // Use current year as default
-            let year = chrono::Utc::now().format("%Y").to_string().parse::<i32>().unwrap_or(2024);
+            let year = chrono::Utc::now()
+                .format("%Y")
+                .to_string()
+                .parse::<i32>()
+                .unwrap_or(2024);
 
             let result = sqlx::query(
                 r#"
