@@ -4,8 +4,10 @@
 //! - pathgen: Path generation for media files (external crate)
 //! - rss: RSS feed fetching and parsing (external crate)
 //! - title: Title cleaning utilities for search
+//! - tempdir: Temporary download directory utilities
 //! - tracing_layer: Tracing layer for database logging
 
+pub mod tempdir;
 pub mod title;
 mod tracing_layer;
 
@@ -17,5 +19,6 @@ pub use pathgen::{
 // Re-export from external rss crate
 pub use rss::{ClientProvider, FetchContext, FetchResult, RssClient, RssError, RssItem, RssSource};
 pub use mikan::SeasonIterator;
+pub use tempdir::{generate_temp_download_dir, is_temp_download_path};
 pub use title::clean_title_for_search;
 pub use tracing_layer::{create_log_channel, start_log_writer, DatabaseLayer, LogReceiver};

@@ -158,4 +158,30 @@ pub trait Downloader: Send + Sync {
     /// - Path must be relative to the task's content root
     /// - If task doesn't exist, returns error
     async fn rename_file(&self, id: &str, old_path: &str, new_path: &str) -> Result<()>;
+
+    /// Set the location of a task (move files to a new directory).
+    ///
+    /// This is used to move downloaded files from a temporary location
+    /// to their final destination. The operation is atomic when supported
+    /// by the downloader.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Task ID (e.g., torrent hash)
+    /// * `location` - New absolute path for the task's files
+    ///
+    /// # Notes
+    ///
+    /// - The directory structure within the task is preserved
+    /// - If the task doesn't exist, returns error
+    /// - If location is the same, this is a no-op
+    /// - For multi-file torrents, the entire folder is moved
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Task doesn't exist
+    /// - Target directory cannot be created/written
+    /// - Move operation fails
+    async fn set_location(&self, id: &str, location: &str) -> Result<()>;
 }

@@ -438,6 +438,7 @@ impl RssProcessingService {
         }
 
         // 2. Add download task
+        // Note: DownloaderHandle automatically converts save_path to temporary directory
         let options = AddTaskOptions::new(torrent_url)
             .save_path(&ctx.bangumi.bangumi.save_path)
             .rename(&filename);

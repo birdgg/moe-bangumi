@@ -166,6 +166,7 @@ impl WashingService {
         }
 
         // 4. Add new download task
+        // Note: DownloaderHandle automatically converts save_path to temporary directory
         let options = AddTaskOptions::new(params.torrent_url)
             .save_path(params.save_path)
             .rename(params.rename);

@@ -257,4 +257,13 @@ impl Downloader for QBittorrentDownloader {
             .map_err(DownloaderError::from)?;
         Ok(())
     }
+
+    async fn set_location(&self, id: &str, location: &str) -> Result<()> {
+        self.client
+            .set_location(&[id], location)
+            .await
+            .map_err(DownloaderError::from)?;
+        tracing::debug!("Set location for task {} to {}", id, location);
+        Ok(())
+    }
 }

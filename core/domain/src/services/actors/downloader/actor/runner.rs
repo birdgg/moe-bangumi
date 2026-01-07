@@ -97,6 +97,11 @@ impl DownloaderActor {
                 let result = self.with_retry_complete_rename(&id).await;
                 let _ = reply.send(result);
             }
+
+            DownloaderMessage::SetLocation { id, location, reply } => {
+                let result = self.with_retry_set_location(&id, &location).await;
+                let _ = reply.send(result);
+            }
         }
     }
 
@@ -122,14 +127,27 @@ impl DownloaderActor {
 
     /// 添加任务（带重试）
     ///
-    /// 自动添加以下 tag：
-    /// - `tags::MOE`: 标识由本应用添加的任务
-    /// - `tags::RENAME`: 确保 RenameJob 能识别需要重命名的任务
+    /// 自动处理：
+    /// - 添加 `tags::MOE` 标签：标识由本应用添加的任务
+    /// - 添加 `tags::RENAME` 标签：确保 RenameJob 能识别需要重命名的任务
+    /// - 将 `save_path` 转换为临时下载目录：下载完成后由 RenameJob 迁移到最终位置
     async fn with_retry_add_task(
         &mut self,
         options: downloader::AddTaskOptions,
     ) -> Result<String, DownloaderError> {
-        let opts = options.add_tag(tags::MOE).add_tag(tags::RENAME);
+        use crate::utils::generate_temp_download_dir;
+
+        // Convert save_path to temporary download directory
+        let opts = if let Some(ref save_path) = options.save_path {
+            let temp_path = generate_temp_download_dir(save_path);
+            options.save_path(&temp_path)
+        } else {
+            options
+        };
+
+        // Add tags for tracking
+        let opts = opts.add_tag(tags::MOE).add_tag(tags::RENAME);
+
         self.with_retry(|client| {
             let opts = opts.clone();
             Box::pin(async move { client.add_task(opts).await })
@@ -263,6 +281,24 @@ impl DownloaderActor {
         self.with_retry(|client| {
             let id = id.clone();
             Box::pin(async move { client.remove_tags(&id, &[tags::RENAME]).await })
+        })
+        .await
+    }
+
+    /// 设置任务位置（带重试）
+    ///
+    /// 将任务文件移动到新目录。
+    async fn with_retry_set_location(
+        &mut self,
+        id: &str,
+        location: &str,
+    ) -> Result<(), DownloaderError> {
+        let id = id.to_string();
+        let location = location.to_string();
+        self.with_retry(|client| {
+            let id = id.clone();
+            let location = location.clone();
+            Box::pin(async move { client.set_location(&id, &location).await })
         })
         .await
     }

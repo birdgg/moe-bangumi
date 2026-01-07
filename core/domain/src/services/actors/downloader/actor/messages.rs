@@ -66,6 +66,13 @@ pub enum DownloaderMessage {
         reply: oneshot::Sender<Result<(), DownloaderError>>,
     },
 
+    /// 设置任务位置（移动文件到新目录）
+    SetLocation {
+        id: String,
+        location: String,
+        reply: oneshot::Sender<Result<(), DownloaderError>>,
+    },
+
     /// 内部消息：设置变化，使客户端失效
     InvalidateClient,
 }

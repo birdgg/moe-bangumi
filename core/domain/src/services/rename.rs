@@ -315,6 +315,33 @@ impl RenameService {
             bangumi.metadata.title_chinese
         );
 
+        // Check if task is in temporary directory and move to final location first
+        use crate::utils::is_temp_download_path;
+        if is_temp_download_path(&task.save_path) {
+            let final_path = &bangumi.bangumi.save_path;
+            tracing::info!(
+                "Moving task from temporary location {} to final location {}",
+                task.save_path,
+                final_path
+            );
+
+            match self.downloader.set_location(&task.id, final_path).await {
+                Ok(()) => {
+                    tracing::info!("Successfully moved task {} to {}", task.id, final_path);
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to move task {} to final location: {}. Will retry on next rename cycle.",
+                        task.id,
+                        e
+                    );
+                    // Return error to skip this task - it will be retried next cycle
+                    // since the rename tag hasn't been removed
+                    return Err(RenameError::Downloader(e));
+                }
+            }
+        }
+
         let mut renamed_episodes = Vec::new();
 
         // Get file list from downloader

@@ -108,4 +108,11 @@ impl Downloader for DownloaderClient {
             Self::Transmission(d) => d.rename_file(id, old_path, new_path).await,
         }
     }
+
+    async fn set_location(&self, id: &str, location: &str) -> Result<()> {
+        match self {
+            Self::QBittorrent(d) => d.set_location(id, location).await,
+            Self::Transmission(d) => d.set_location(id, location).await,
+        }
+    }
 }

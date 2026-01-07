@@ -380,4 +380,24 @@ impl Downloader for TransmissionDownloader {
 
         Ok(())
     }
+
+    async fn set_location(&self, id: &str, location: &str) -> Result<()> {
+        let mut client = self.client.write().await;
+
+        // Transmission's torrent-set-location RPC method:
+        // - ids: torrent identifiers
+        // - location: new location path
+        // - move: if true, move from previous location; otherwise, search location for files
+        client
+            .torrent_set_location(
+                vec![Id::Hash(id.to_string())],
+                location.to_string(),
+                Some(true), // move files
+            )
+            .await
+            .map_err(map_trans_err)?;
+
+        tracing::debug!("Set location for task {} to {}", id, location);
+        Ok(())
+    }
 }

@@ -129,6 +129,17 @@ impl DownloaderHandle {
             .await
     }
 
+    /// 设置任务位置（移动文件到新目录）
+    ///
+    /// 将任务的文件从当前位置移动到指定的新目录。
+    /// 用于将文件从临时下载目录迁移到最终保存位置。
+    pub async fn set_location(&self, id: &str, location: &str) -> Result<(), DownloaderError> {
+        let id = id.to_string();
+        let location = location.to_string();
+        self.send_and_recv(|reply| DownloaderMessage::SetLocation { id, location, reply })
+            .await
+    }
+
     /// 发送失效通知（内部使用）
     pub(crate) async fn invalidate(&self) {
         let _ = self.sender.send(DownloaderMessage::InvalidateClient).await;

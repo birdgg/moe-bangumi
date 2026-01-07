@@ -284,4 +284,33 @@ impl QBittorrentClient {
         let response = request.send().await?;
         self.handle_response(response).await
     }
+
+    /// Set torrent location (move files to new directory)
+    /// POST /api/v2/torrents/setLocation
+    ///
+    /// # Arguments
+    /// * `hashes` - Torrent hashes, or `&["all"]` for all torrents
+    /// * `location` - The new absolute path for the torrent files
+    ///
+    /// # Notes
+    /// - If the location doesn't exist, it will be created
+    /// - Files are physically moved to the new location
+    /// - For multi-file torrents, the entire folder structure is preserved
+    pub async fn set_location(&self, hashes: &[&str], location: &str) -> crate::Result<()> {
+        let url = self.url("/torrents/setLocation");
+
+        let hashes_str = hashes.join("|");
+        let form = Form::new()
+            .text("hashes", hashes_str)
+            .text("location", location.to_string());
+
+        let mut request = self.client().post(&url).multipart(form);
+
+        if let Some(sid) = self.get_sid().await {
+            request = request.header(reqwest::header::COOKIE, format!("SID={}", sid));
+        }
+
+        let response = request.send().await?;
+        self.handle_response(response).await
+    }
 }
