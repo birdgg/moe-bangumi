@@ -17,7 +17,7 @@ use crate::state::AppState;
     )
 ))]
 pub async fn get_metadata(State(state): State<AppState>) -> AppResult<Json<Vec<Metadata>>> {
-    let metadata_list = state.metadata.get_all().await?;
+    let metadata_list = state.services.metadata.get_all().await?;
     Ok(Json(metadata_list))
 }
 
@@ -38,7 +38,7 @@ pub async fn get_metadata_by_id(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> AppResult<Json<Metadata>> {
-    let metadata = state.metadata.get_by_id(id).await?;
+    let metadata = state.services.metadata.get_by_id(id).await?;
     Ok(Json(metadata))
 }
 
@@ -61,6 +61,6 @@ pub async fn update_metadata(
     Path(id): Path<i64>,
     Json(payload): Json<UpdateMetadata>,
 ) -> AppResult<Json<Metadata>> {
-    let metadata = state.metadata.update(id, payload).await?;
+    let metadata = state.services.metadata.update(id, payload).await?;
     Ok(Json(metadata))
 }

@@ -4,73 +4,34 @@
 
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc;
-use tokio::time::MissedTickBehavior;
 
 use domain::services::RenameService;
+
+use super::actor::{spawn_periodic_actor, ActorHandle, PeriodicActor};
 
 /// Rename interval (10 minutes)
 const RENAME_INTERVAL: Duration = Duration::from_secs(600);
 
-/// Message types for RenameActor
-enum Message {
-    Shutdown,
-}
-
 /// Handle for communicating with RenameActor
-#[derive(Clone)]
-pub struct RenameHandle {
-    sender: mpsc::Sender<Message>,
-}
-
-impl RenameHandle {
-    /// Signal the actor to shutdown
-    pub async fn shutdown(&self) {
-        let _ = self.sender.send(Message::Shutdown).await;
-    }
-}
+pub type RenameHandle = ActorHandle;
 
 /// Rename Actor
 ///
 /// Runs a background task that processes file renames at regular intervals.
 struct RenameActor {
     rename_service: Arc<RenameService>,
-    receiver: mpsc::Receiver<Message>,
 }
 
-impl RenameActor {
-    fn new(rename_service: Arc<RenameService>, receiver: mpsc::Receiver<Message>) -> Self {
-        Self {
-            rename_service,
-            receiver,
-        }
+impl PeriodicActor for RenameActor {
+    fn interval(&self) -> Duration {
+        RENAME_INTERVAL
     }
 
-    async fn run(mut self) {
-        let mut timer = tokio::time::interval(RENAME_INTERVAL);
-        timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
-
-        // Skip first tick (immediate)
-        timer.tick().await;
-
-        loop {
-            tokio::select! {
-                _ = timer.tick() => {
-                    self.execute().await;
-                }
-                msg = self.receiver.recv() => {
-                    match msg {
-                        Some(Message::Shutdown) | None => {
-                            tracing::info!("Rename actor stopped");
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+    fn name(&self) -> &'static str {
+        "rename"
     }
 
-    async fn execute(&self) {
+    async fn execute(&mut self) {
         tracing::debug!("Rename job started");
 
         if let Err(e) = self.rename_service.process_all().await {
@@ -83,10 +44,5 @@ impl RenameActor {
 
 /// Create and start the rename actor
 pub fn create_rename_actor(rename_service: Arc<RenameService>) -> RenameHandle {
-    let (sender, receiver) = mpsc::channel(8);
-
-    let actor = RenameActor::new(rename_service, receiver);
-    tokio::spawn(actor.run());
-
-    RenameHandle { sender }
+    spawn_periodic_actor(RenameActor { rename_service })
 }

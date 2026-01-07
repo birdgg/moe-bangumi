@@ -27,7 +27,7 @@ pub async fn get_logs(
     State(state): State<AppState>,
     Query(params): Query<LogQueryParams>,
 ) -> AppResult<Json<Vec<Log>>> {
-    let logs = state.logs.list(params).await?;
+    let logs = state.services.logs.list(params).await?;
     Ok(Json(logs))
 }
 
@@ -44,10 +44,10 @@ pub async fn stream_logs(
     State(state): State<AppState>,
 ) -> Sse<impl Stream<Item = Result<SseEvent, Infallible>>> {
     // Get recent logs for initial push
-    let recent_logs = state.logs.recent(20).await;
+    let recent_logs = state.services.logs.recent(20).await;
 
     // Subscribe to new logs
-    let rx = state.logs.subscribe();
+    let rx = state.services.logs.subscribe();
     let broadcast_stream = BroadcastStream::new(rx);
 
     // Create stream that first sends recent logs, then broadcasts new ones
@@ -84,7 +84,7 @@ pub async fn stream_logs(
 ))]
 pub async fn cleanup_logs(State(state): State<AppState>) -> AppResult<Json<u64>> {
     // Delete logs older than 30 days
-    let deleted = state.logs.cleanup(30).await?;
+    let deleted = state.services.logs.cleanup(30).await?;
     Ok(Json(deleted))
 }
 
@@ -98,6 +98,6 @@ pub async fn cleanup_logs(State(state): State<AppState>) -> AppResult<Json<u64>>
     )
 ))]
 pub async fn clear_all_logs(State(state): State<AppState>) -> AppResult<Json<u64>> {
-    let deleted = state.logs.clear_all().await?;
+    let deleted = state.services.logs.clear_all().await?;
     Ok(Json(deleted))
 }

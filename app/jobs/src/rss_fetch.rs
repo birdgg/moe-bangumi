@@ -5,32 +5,17 @@
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc;
-use tokio::time::MissedTickBehavior;
 
 use domain::repositories::RssRepository;
 use domain::services::RssProcessingService;
 
+use super::actor::{spawn_periodic_actor, ActorHandle, PeriodicActor};
+
 /// RSS fetch interval (1 hour)
 const FETCH_INTERVAL: Duration = Duration::from_secs(3600);
 
-/// Message types for RssFetchActor
-enum Message {
-    Shutdown,
-}
-
 /// Handle for communicating with RssFetchActor
-#[derive(Clone)]
-pub struct RssFetchHandle {
-    sender: mpsc::Sender<Message>,
-}
-
-impl RssFetchHandle {
-    /// Signal the actor to shutdown
-    pub async fn shutdown(&self) {
-        let _ = self.sender.send(Message::Shutdown).await;
-    }
-}
+pub type RssFetchHandle = ActorHandle;
 
 /// RSS Fetch Actor
 ///
@@ -38,47 +23,18 @@ impl RssFetchHandle {
 struct RssFetchActor {
     db: SqlitePool,
     rss_processing: Arc<RssProcessingService>,
-    receiver: mpsc::Receiver<Message>,
 }
 
-impl RssFetchActor {
-    fn new(
-        db: SqlitePool,
-        rss_processing: Arc<RssProcessingService>,
-        receiver: mpsc::Receiver<Message>,
-    ) -> Self {
-        Self {
-            db,
-            rss_processing,
-            receiver,
-        }
+impl PeriodicActor for RssFetchActor {
+    fn interval(&self) -> Duration {
+        FETCH_INTERVAL
     }
 
-    async fn run(mut self) {
-        let mut timer = tokio::time::interval(FETCH_INTERVAL);
-        timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
-
-        // Skip first tick (immediate)
-        timer.tick().await;
-
-        loop {
-            tokio::select! {
-                _ = timer.tick() => {
-                    self.execute().await;
-                }
-                msg = self.receiver.recv() => {
-                    match msg {
-                        Some(Message::Shutdown) | None => {
-                            tracing::info!("RSS fetch actor stopped");
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+    fn name(&self) -> &'static str {
+        "rss_fetch"
     }
 
-    async fn execute(&self) {
+    async fn execute(&mut self) {
         tracing::debug!("RSS fetch job started");
 
         // Get all enabled RSS subscriptions
@@ -112,10 +68,5 @@ pub fn create_rss_fetch_actor(
     db: SqlitePool,
     rss_processing: Arc<RssProcessingService>,
 ) -> RssFetchHandle {
-    let (sender, receiver) = mpsc::channel(8);
-
-    let actor = RssFetchActor::new(db, rss_processing, receiver);
-    tokio::spawn(actor.run());
-
-    RssFetchHandle { sender }
+    spawn_periodic_actor(RssFetchActor { db, rss_processing })
 }

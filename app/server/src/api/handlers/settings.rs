@@ -40,7 +40,7 @@ pub struct TestNotificationRequest {
     )
 ))]
 pub async fn get_settings(State(state): State<AppState>) -> Json<Settings> {
-    Json(state.settings.get())
+    Json(state.infra.settings.get())
 }
 
 /// Update application settings
@@ -57,7 +57,7 @@ pub async fn update_settings(
     State(state): State<AppState>,
     Json(payload): Json<UpdateSettings>,
 ) -> AppResult<Json<Settings>> {
-    let settings = state.settings.update(payload).await?;
+    let settings = state.infra.settings.update(payload).await?;
     Ok(Json(settings))
 }
 
@@ -71,7 +71,7 @@ pub async fn update_settings(
     )
 ))]
 pub async fn reset_settings(State(state): State<AppState>) -> AppResult<Json<Settings>> {
-    let settings = state.settings.reset().await?;
+    let settings = state.infra.settings.reset().await?;
     Ok(Json(settings))
 }
 
@@ -153,7 +153,7 @@ pub async fn test_notification(
     }
 
     // Create a temporary Telegram notifier with the provided credentials
-    let client = state.http_client_service.get_client();
+    let client = state.infra.http_client.get_client();
     let notifier = crate::notify::telegram::TelegramNotifier::new_with_client(
         client,
         &payload.bot_token,

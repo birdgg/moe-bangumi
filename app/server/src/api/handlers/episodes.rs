@@ -23,6 +23,6 @@ pub async fn get_episodes(
     State(state): State<AppState>,
     Path(subject_id): Path<i64>,
 ) -> AppResult<Json<Vec<Episode>>> {
-    let episodes = state.metadata.get_episodes(subject_id).await?;
+    let episodes = state.services.metadata.get_episodes(subject_id).await?;
     Ok(Json(episodes))
 }

@@ -4,10 +4,10 @@
 
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc;
-use tokio::time::MissedTickBehavior;
 
 use domain::services::LogService;
+
+use super::actor::{spawn_periodic_actor, ActorHandle, PeriodicActor};
 
 /// Cleanup interval (24 hours)
 const CLEANUP_INTERVAL: Duration = Duration::from_secs(86400);
@@ -15,23 +15,8 @@ const CLEANUP_INTERVAL: Duration = Duration::from_secs(86400);
 /// Default retention period in days
 const DEFAULT_RETENTION_DAYS: i64 = 30;
 
-/// Message types for LogCleanupActor
-enum Message {
-    Shutdown,
-}
-
 /// Handle for communicating with LogCleanupActor
-#[derive(Clone)]
-pub struct LogCleanupHandle {
-    sender: mpsc::Sender<Message>,
-}
-
-impl LogCleanupHandle {
-    /// Signal the actor to shutdown
-    pub async fn shutdown(&self) {
-        let _ = self.sender.send(Message::Shutdown).await;
-    }
-}
+pub type LogCleanupHandle = ActorHandle;
 
 /// Log Cleanup Actor
 ///
@@ -39,43 +24,18 @@ impl LogCleanupHandle {
 struct LogCleanupActor {
     logs: Arc<LogService>,
     retention_days: i64,
-    receiver: mpsc::Receiver<Message>,
 }
 
-impl LogCleanupActor {
-    fn new(logs: Arc<LogService>, retention_days: i64, receiver: mpsc::Receiver<Message>) -> Self {
-        Self {
-            logs,
-            retention_days,
-            receiver,
-        }
+impl PeriodicActor for LogCleanupActor {
+    fn interval(&self) -> Duration {
+        CLEANUP_INTERVAL
     }
 
-    async fn run(mut self) {
-        let mut timer = tokio::time::interval(CLEANUP_INTERVAL);
-        timer.set_missed_tick_behavior(MissedTickBehavior::Skip);
-
-        // Skip first tick (immediate)
-        timer.tick().await;
-
-        loop {
-            tokio::select! {
-                _ = timer.tick() => {
-                    self.execute().await;
-                }
-                msg = self.receiver.recv() => {
-                    match msg {
-                        Some(Message::Shutdown) | None => {
-                            tracing::info!("Log cleanup actor stopped");
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+    fn name(&self) -> &'static str {
+        "log_cleanup"
     }
 
-    async fn execute(&self) {
+    async fn execute(&mut self) {
         tracing::debug!("Log cleanup job started");
 
         match self.logs.cleanup(self.retention_days).await {
@@ -103,10 +63,8 @@ pub fn create_log_cleanup_actor_with_retention(
     logs: Arc<LogService>,
     retention_days: i64,
 ) -> LogCleanupHandle {
-    let (sender, receiver) = mpsc::channel(8);
-
-    let actor = LogCleanupActor::new(logs, retention_days, receiver);
-    tokio::spawn(actor.run());
-
-    LogCleanupHandle { sender }
+    spawn_periodic_actor(LogCleanupActor {
+        logs,
+        retention_days,
+    })
 }

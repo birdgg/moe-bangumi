@@ -24,10 +24,11 @@ pub async fn get_mikan_rss(
     Query(query): Query<IdQuery>,
 ) -> AppResult<Json<mikan::BangumiDetail>> {
     let cache_key = format!("mikan:detail:{}", query.id);
-    let mikan = state.mikan.clone();
+    let mikan = state.clients.mikan.clone();
     let id = query.id.clone();
 
     let mut detail = state
+        .services
         .cache
         .get_or_fetch(&cache_key, MIKAN_DETAIL_CACHE_TTL, || async move {
             mikan.get_bangumi_detail(&id).await

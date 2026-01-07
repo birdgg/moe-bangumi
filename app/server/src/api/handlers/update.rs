@@ -27,7 +27,7 @@ pub struct UpdateResponse {
     )
 ))]
 pub async fn get_version(State(state): State<AppState>) -> Json<VersionInfo> {
-    Json(state.update.get_version_info())
+    Json(state.services.update.get_version_info())
 }
 
 /// Check for updates (triggers auto-update if available)
@@ -40,7 +40,7 @@ pub async fn get_version(State(state): State<AppState>) -> Json<VersionInfo> {
     )
 ))]
 pub async fn check_update(State(state): State<AppState>) -> AppResult<Json<UpdateResponse>> {
-    state.update.check_for_updates().await.map_err(|e| {
+    state.services.update.check_for_updates().await.map_err(|e| {
         crate::error::AppError::internal(format!("Failed to check for updates: {}", e))
     })?;
 

@@ -50,6 +50,7 @@ pub async fn search_bgmtv(
 ) -> AppResult<Json<Vec<SearchedMetadata>>> {
     let search_query = MetadataSearchQuery::new(&query.keyword);
     let results = state
+        .services
         .metadata
         .search_provider(&search_query, MetadataSource::Bgmtv)
         .await?;
@@ -72,6 +73,7 @@ pub async fn search_tmdb(
 ) -> AppResult<Json<Vec<SearchedMetadata>>> {
     let search_query = MetadataSearchQuery::new(&query.keyword);
     let results = state
+        .services
         .metadata
         .search_provider(&search_query, MetadataSource::Tmdb)
         .await?;
@@ -93,10 +95,11 @@ pub async fn search_mikan(
     Query(query): Query<SearchQuery>,
 ) -> AppResult<Json<Vec<mikan::SearchResult>>> {
     let cache_key = format!("mikan:search:{}", query.keyword);
-    let mikan = state.mikan.clone();
+    let mikan = state.clients.mikan.clone();
     let keyword = query.keyword.clone();
 
     let results = state
+        .services
         .cache
         .get_or_fetch(&cache_key, MIKAN_SEARCH_CACHE_TTL, || async move {
             mikan.search_bangumi(&keyword).await
@@ -124,6 +127,7 @@ pub async fn search_metadata(
 ) -> AppResult<Json<Vec<SearchedMetadata>>> {
     let search_query = MetadataSearchQuery::new(&query.keyword);
     let results = state
+        .services
         .metadata
         .search_provider(&search_query, query.source)
         .await?;
@@ -151,6 +155,7 @@ pub async fn find_metadata(
         search_query = search_query.with_year(year);
     }
     let result = state
+        .services
         .metadata
         .find_provider(&search_query, query.source)
         .await?;
@@ -174,6 +179,7 @@ pub async fn get_metadata_detail(
     Query(query): Query<DetailQuery>,
 ) -> AppResult<Json<Option<SearchedMetadata>>> {
     let result = state
+        .services
         .metadata
         .get_provider_detail(&query.external_id, query.source)
         .await?;

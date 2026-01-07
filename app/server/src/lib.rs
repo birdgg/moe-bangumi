@@ -76,9 +76,9 @@ pub async fn run_server(
     let state = AppState::new(pool, config, settings, current_version);
 
     // Import calendar seed data if needed (first startup)
-    if state.calendar.needs_seed_import().await.unwrap_or(false) {
+    if state.services.calendar.needs_seed_import().await.unwrap_or(false) {
         tracing::info!("Importing calendar seed data...");
-        match state.calendar.import_seed_data().await {
+        match state.services.calendar.import_seed_data().await {
             Ok(count) => tracing::info!("Imported {} calendar entries from seed data", count),
             Err(e) => tracing::warn!("Failed to import calendar seed data: {}", e),
         }
@@ -88,7 +88,7 @@ pub async fn run_server(
 
     // Start log writer if receiver is provided
     if let Some(receiver) = log_receiver {
-        start_log_writer(receiver, state.logs.clone());
+        start_log_writer(receiver, state.services.logs.clone());
     }
 
     // Serve poster images from data directory

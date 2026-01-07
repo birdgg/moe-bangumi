@@ -22,7 +22,7 @@ pub async fn create_bangumi(
     State(state): State<AppState>,
     Json(payload): Json<CreateBangumi>,
 ) -> AppResult<(StatusCode, Json<BangumiWithMetadata>)> {
-    let bangumi = state.bangumi.create(payload).await?;
+    let bangumi = state.services.bangumi.create(payload).await?;
     Ok((StatusCode::CREATED, Json(bangumi)))
 }
 
@@ -36,7 +36,7 @@ pub async fn create_bangumi(
     )
 ))]
 pub async fn get_bangumi(State(state): State<AppState>) -> AppResult<Json<Vec<BangumiWithMetadata>>> {
-    let bangumi_list = state.bangumi.get_all().await?;
+    let bangumi_list = state.services.bangumi.get_all().await?;
     Ok(Json(bangumi_list))
 }
 
@@ -57,7 +57,7 @@ pub async fn get_bangumi_by_id(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> AppResult<Json<BangumiWithRss>> {
-    let bangumi_with_rss = state.bangumi.get_with_rss(id).await?;
+    let bangumi_with_rss = state.services.bangumi.get_with_rss(id).await?;
     Ok(Json(bangumi_with_rss))
 }
 
@@ -80,6 +80,6 @@ pub async fn update_bangumi(
     Path(id): Path<i64>,
     Json(payload): Json<UpdateBangumiRequest>,
 ) -> AppResult<Json<BangumiWithRss>> {
-    let bangumi_with_rss = state.bangumi.update(id, payload).await?;
+    let bangumi_with_rss = state.services.bangumi.update(id, payload).await?;
     Ok(Json(bangumi_with_rss))
 }

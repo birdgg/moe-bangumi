@@ -18,7 +18,7 @@ use crate::state::AppState;
     )
 ))]
 pub async fn list_torrents(State(state): State<AppState>) -> AppResult<Json<Vec<Task>>> {
-    let torrents = state.downloader.get_tasks(None).await?;
+    let torrents = state.services.downloader.get_tasks(None).await?;
     Ok(Json(torrents))
 }
 
@@ -60,6 +60,7 @@ pub async fn delete_torrents(
 
     let hashes: Vec<&str> = payload.hashes.iter().map(|s| s.as_str()).collect();
     state
+        .services
         .downloader
         .delete_task(&hashes, payload.delete_files)
         .await?;

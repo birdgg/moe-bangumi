@@ -51,7 +51,7 @@ pub async fn get_calendar(
     let (year, season) = query.resolve();
 
     // Try to get from database first
-    let calendar = state.calendar.get_calendar(year, season).await?;
+    let calendar = state.services.calendar.get_calendar(year, season).await?;
 
     // If database is empty for this season, import seed data for this specific season
     if calendar.is_empty() {
@@ -60,8 +60,8 @@ pub async fn get_calendar(
             year,
             season
         );
-        state.calendar.import_season_if_missing(year, season).await?;
-        let calendar = state.calendar.get_calendar(year, season).await?;
+        state.services.calendar.import_season_if_missing(year, season).await?;
+        let calendar = state.services.calendar.get_calendar(year, season).await?;
         return Ok(Json(calendar));
     }
 
@@ -88,7 +88,7 @@ pub async fn refresh_calendar(
 ) -> AppResult<Json<Vec<CalendarDay>>> {
     let (year, season) = query.resolve();
     tracing::info!("Manual calendar refresh requested for {} {:?}", year, season);
-    state.calendar.import_seed_data().await?;
-    let calendar = state.calendar.get_calendar(year, season).await?;
+    state.services.calendar.import_seed_data().await?;
+    let calendar = state.services.calendar.get_calendar(year, season).await?;
     Ok(Json(calendar))
 }
