@@ -1,13 +1,15 @@
 import * as React from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import { SearchBangumiModal, BangumiModal } from "@/features/bangumi/components";
-import { type SearchedMetadata } from "@/lib/api";
+import { type SearchedMetadata, scanImportMutation, getBangumiQueryKey } from "@/lib/api";
 import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
 import { subjectToModalData } from "@/lib/converters";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -26,6 +28,51 @@ function AddBangumiButton({ onClick }: AddBangumiButtonProps) {
       <span className="absolute inset-0 bg-linear-to-r from-chart-2 via-chart-3 to-chart-1 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       <IconPlus className="relative z-10 size-4 transition-transform duration-300 group-hover:rotate-90" />
       <span className="relative z-10 hidden font-medium sm:inline">添加番剧</span>
+    </Button>
+  );
+}
+
+function SyncButton() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    ...scanImportMutation(),
+    onSuccess: () => {
+      toast.success("扫描已启动", {
+        description: "正在后台扫描本地目录，完成后自动刷新...",
+      });
+      // Delay refresh since scan runs in background
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: getBangumiQueryKey() });
+      }, 5000);
+    },
+    onError: (error) => {
+      const message = error.message || "扫描启动失败";
+      if (message.includes("already in progress")) {
+        toast.warning("扫描进行中", {
+          description: "请等待当前扫描完成",
+        });
+      } else {
+        toast.error("扫描失败", {
+          description: message,
+        });
+      }
+    },
+  });
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="group size-9 rounded-xl transition-all duration-300 hover:scale-105 hover:bg-transparent"
+      onClick={() => mutation.mutate({ body: {} })}
+      disabled={mutation.isPending}
+      title="扫描本地目录"
+    >
+      <IconRefresh
+        className={`size-4 text-foreground transition-transform duration-500 ${
+          mutation.isPending ? "animate-spin" : "group-hover:rotate-180"
+        }`}
+      />
     </Button>
   );
 }
@@ -54,6 +101,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           <div className="flex items-center gap-2">
             <AddBangumiButton onClick={() => setSearchModalOpen(true)} />
+            <SyncButton />
             <ThemeColorSelector />
             <ThemeToggleButton />
           </div>

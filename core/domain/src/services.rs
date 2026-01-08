@@ -9,6 +9,7 @@ mod http_client;
 mod log;
 mod rename;
 mod rss_processing;
+mod scan;
 mod settings;
 mod washing;
 
@@ -22,6 +23,7 @@ pub use http_client::{HttpClientError, HttpClientService};
 pub use log::{LogError, LogService};
 pub use rename::{RenameError, RenameService};
 pub use rss_processing::RssProcessingService;
+pub use scan::{ScanError, ScanService};
 pub use settings::{SettingsError, SettingsService, SettingsWatcher};
 pub use washing::{WashParams, WashingError, WashingService};
 

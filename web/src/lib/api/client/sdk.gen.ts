@@ -47,6 +47,9 @@ import type {
   RefreshCalendarResponses,
   ResetSettingsData,
   ResetSettingsResponses,
+  ScanImportData,
+  ScanImportErrors,
+  ScanImportResponses,
   SearchBgmtvData,
   SearchBgmtvResponses,
   SearchMetadataData,
@@ -172,7 +175,7 @@ export const getCalendar = <ThrowOnError extends boolean = false>(
 /**
  * Refresh calendar data
  *
- * Re-imports calendar data from GitHub seed file.
+ * Imports calendar data from GitHub seed file for the specified season.
  * Returns the updated calendar data.
  * Defaults to current season if year/season not specified.
  */
@@ -346,6 +349,28 @@ export const testProxy = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: "/api/proxy/test",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Start a background scan and import task
+ *
+ * Scans the downloader save path for Plex/Jellyfin formatted directories
+ * and imports them as bangumi subscriptions.
+ */
+export const scanImport = <ThrowOnError extends boolean = false>(
+  options: Options<ScanImportData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    ScanImportResponses,
+    ScanImportErrors,
+    ThrowOnError
+  >({
+    url: "/api/scan/import",
     ...options,
     headers: {
       "Content-Type": "application/json",

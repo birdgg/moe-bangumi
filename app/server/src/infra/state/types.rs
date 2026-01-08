@@ -12,7 +12,7 @@ use crate::config::Config;
 use domain::services::actors::metadata::{MetadataHandle, MetadataService, PosterService};
 use domain::services::{
     BangumiService, CacheService, CalendarService, DownloaderHandle, HttpClientService,
-    LogService, NotificationService, RenameService, SettingsService,
+    LogService, NotificationService, RenameService, ScanService, SettingsService,
 };
 use jobs::{LogCleanupHandle, RenameHandle, RssFetchHandle};
 use mikan::MikanClient;
@@ -46,6 +46,7 @@ pub struct AppServices {
     pub poster: Arc<PosterService>,
     pub notification: Arc<NotificationService>,
     pub rename: Arc<RenameService>,
+    pub scan: Arc<ScanService>,
     pub update: UpdateServiceHandle,
 }
 

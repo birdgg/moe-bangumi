@@ -729,6 +729,28 @@ export const RssEntrySchema = {
   },
 } as const;
 
+export const ScanImportRequestSchema = {
+  type: "object",
+  description: "Request body for scan import",
+} as const;
+
+export const ScanImportResponseSchema = {
+  type: "object",
+  description: "Response for scan import",
+  required: ["message", "started_at"],
+  properties: {
+    message: {
+      type: "string",
+      description: "Status message",
+    },
+    started_at: {
+      type: "string",
+      format: "date-time",
+      description: "Timestamp when scan was started",
+    },
+  },
+} as const;
+
 export const SearchResultSchema = {
   type: "object",
   required: ["id", "name"],

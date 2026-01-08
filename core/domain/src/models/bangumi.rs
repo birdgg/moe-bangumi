@@ -104,6 +104,9 @@ pub struct CreateBangumi {
     /// Source type
     #[serde(default)]
     pub source_type: SourceType,
+    /// Initial current episode (for imported bangumi with existing episodes)
+    #[serde(default)]
+    pub current_episode: Option<i32>,
 
     /// RSS subscriptions to create with this bangumi
     #[serde(default)]

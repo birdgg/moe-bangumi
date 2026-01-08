@@ -17,6 +17,10 @@ pub enum AppError {
     #[error("{0}")]
     BadRequest(String),
 
+    /// 资源冲突 (如并发操作)
+    #[error("{0}")]
+    Conflict(String),
+
     /// 数据库错误
     #[error("数据库错误: {0}")]
     Database(#[from] sqlx::Error),
@@ -63,6 +67,7 @@ impl IntoResponse for AppError {
         let (status, error_message, details) = match &self {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone(), None),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone(), None),
+            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg.clone(), None),
             AppError::Database(e) => {
                 tracing::error!("Database error: {}", e);
                 (
@@ -152,6 +157,11 @@ impl AppError {
     /// 创建 BadRequest 错误
     pub fn bad_request(msg: impl Into<String>) -> Self {
         Self::BadRequest(msg.into())
+    }
+
+    /// 创建 Conflict 错误
+    pub fn conflict(msg: impl Into<String>) -> Self {
+        Self::Conflict(msg.into())
     }
 
     /// 创建外部 API 错误

@@ -31,6 +31,7 @@ import {
   type Options,
   refreshCalendar,
   resetSettings,
+  scanImport,
   searchBgmtv,
   searchMetadata,
   searchMikan,
@@ -82,6 +83,8 @@ import type {
   RefreshCalendarResponse,
   ResetSettingsData,
   ResetSettingsResponse,
+  ScanImportData,
+  ScanImportResponse2,
   SearchBgmtvData,
   SearchBgmtvResponse,
   SearchMetadataData,
@@ -277,7 +280,7 @@ export const getCalendarOptions = (options?: Options<GetCalendarData>) =>
 /**
  * Refresh calendar data
  *
- * Re-imports calendar data from GitHub seed file.
+ * Imports calendar data from GitHub seed file for the specified season.
  * Returns the updated calendar data.
  * Defaults to current season if year/season not specified.
  */
@@ -657,6 +660,36 @@ export const testProxyMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await testProxy({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Start a background scan and import task
+ *
+ * Scans the downloader save path for Plex/Jellyfin formatted directories
+ * and imports them as bangumi subscriptions.
+ */
+export const scanImportMutation = (
+  options?: Partial<Options<ScanImportData>>,
+): UseMutationOptions<
+  ScanImportResponse2,
+  DefaultError,
+  Options<ScanImportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ScanImportResponse2,
+    DefaultError,
+    Options<ScanImportData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await scanImport({
         ...options,
         ...fnOptions,
         throwOnError: true,

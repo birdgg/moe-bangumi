@@ -104,8 +104,18 @@ export function useUpdateMetadata() {
   return useMutation({
     ...updateMetadataMutation(),
     onSuccess: () => {
-      // Invalidate bangumi queries since metadata changed
+      // Invalidate bangumi list query since metadata changed
       queryClient.invalidateQueries({ queryKey: getBangumiQueryKey() });
+      // Invalidate all bangumi detail queries since we don't know which bangumi uses this metadata
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && key.length > 0 &&
+            typeof key[0] === 'object' && key[0] !== null &&
+            'url' in key[0] && typeof key[0].url === 'string' &&
+            key[0].url.includes('/api/bangumi/');
+        },
+      });
     },
   });
 }

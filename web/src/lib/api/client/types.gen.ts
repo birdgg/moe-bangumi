@@ -524,6 +524,27 @@ export type RssEntry = {
   url: string;
 };
 
+/**
+ * Request body for scan import
+ */
+export type ScanImportRequest = {
+  [key: string]: unknown;
+};
+
+/**
+ * Response for scan import
+ */
+export type ScanImportResponse = {
+  /**
+   * Status message
+   */
+  message: string;
+  /**
+   * Timestamp when scan was started
+   */
+  started_at: string;
+};
+
 export type SearchResult = {
   id: string;
   name: string;
@@ -1543,6 +1564,30 @@ export type TestProxyResponses = {
    */
   200: unknown;
 };
+
+export type ScanImportData = {
+  body: ScanImportRequest;
+  path?: never;
+  query?: never;
+  url: "/api/scan/import";
+};
+
+export type ScanImportErrors = {
+  /**
+   * Scan already in progress
+   */
+  409: unknown;
+};
+
+export type ScanImportResponses = {
+  /**
+   * Scan started in background
+   */
+  202: ScanImportResponse;
+};
+
+export type ScanImportResponse2 =
+  ScanImportResponses[keyof ScanImportResponses];
 
 export type SearchBgmtvData = {
   body?: never;

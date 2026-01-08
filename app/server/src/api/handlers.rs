@@ -5,6 +5,7 @@ mod episodes;
 mod logs;
 mod metadata;
 mod mikan;
+mod scan;
 mod search;
 mod settings;
 mod torrents;
@@ -50,6 +51,7 @@ pub use episodes::get_episodes;
 pub use logs::{cleanup_logs, clear_all_logs, get_logs, stream_logs};
 pub use metadata::{get_metadata, get_metadata_by_id, update_metadata};
 pub use mikan::get_mikan_rss;
+pub use scan::{scan_import, ScanImportRequest, ScanImportResponse};
 pub use search::{find_metadata, get_metadata_detail, search_bgmtv, search_metadata, search_mikan, search_tmdb, DetailQuery, UnifiedSearchQuery};
 pub use settings::{
     get_settings, reset_settings, test_notification, test_proxy, update_settings,
@@ -92,6 +94,8 @@ mod openapi_paths {
     pub use super::torrents::{__path_delete_torrents, __path_list_torrents};
     #[doc(hidden)]
     pub use super::update::{__path_check_update, __path_get_version};
+    #[doc(hidden)]
+    pub use super::scan::__path_scan_import;
 }
 #[cfg(feature = "openapi")]
 pub use openapi_paths::*;

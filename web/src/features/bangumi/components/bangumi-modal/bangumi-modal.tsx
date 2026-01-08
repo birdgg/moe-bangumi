@@ -30,7 +30,7 @@ import {
 } from "@tabler/icons-react";
 
 import { TmdbMatcher } from "./tmdb-matcher";
-import { MikanRssModal } from "../mikan-rss-modal";
+import { MikanRssModal, type MikanIdSelection } from "../mikan-rss-modal";
 import { BangumiInfoCard } from "./bangumi-info-card";
 
 import type { BangumiModalProps, RssFormEntry } from "./types";
@@ -70,7 +70,10 @@ export function BangumiModal({
   }, [isEdit, episodes, data.episodeOffset]);
 
   const [selectedTmdbId, setSelectedTmdbId] = React.useState<string | null>(null);
-  const [selectedMikanId, setSelectedMikanId] = React.useState<string | null>(null);
+  const [selectedMikanId, setSelectedMikanId] = React.useState<MikanIdSelection>({
+    value: null,
+    isNewSelection: false,
+  });
   const [mikanModalOpen, setMikanModalOpen] = React.useState(false);
 
   const form = useForm({
@@ -92,11 +95,41 @@ export function BangumiModal({
             },
           });
           // Update mikan_id if user selected a new one from Mikan search
-          if (selectedMikanId !== null && bangumiWithRss) {
-            await updateMetadata.mutateAsync({
-              path: { id: bangumiWithRss.metadata_id },
-              body: { mikan_id: selectedMikanId },
-            });
+          // Only update if: 1) user made a new selection, 2) value differs from current
+          if (selectedMikanId.isNewSelection && bangumiWithRss) {
+            const currentMikanId = bangumiWithRss.metadata.mikan_id;
+            const newMikanId = selectedMikanId.value;
+            // Validate metadata_id
+            const metadataId = bangumiWithRss.metadata_id;
+            if (!metadataId || metadataId <= 0) {
+              console.error("Invalid metadata_id:", metadataId);
+              toast.warning("部分保存成功", {
+                description: "番剧信息已更新，但元数据 ID 无效，无法更新 Mikan ID",
+              });
+              onSuccess?.();
+              resetForm();
+              onOpenChange(false);
+              return;
+            }
+            // Only update if value is different
+            if (newMikanId !== currentMikanId) {
+              try {
+                await updateMetadata.mutateAsync({
+                  path: { id: metadataId },
+                  body: { mikan_id: newMikanId },
+                });
+              } catch (metadataError) {
+                // Bangumi update succeeded, but metadata update failed
+                console.error("Failed to update metadata:", metadataError);
+                toast.warning("部分保存成功", {
+                  description: "番剧信息已更新，但 Mikan ID 更新失败",
+                });
+                onSuccess?.();
+                resetForm();
+                onOpenChange(false);
+                return;
+              }
+            }
           }
           toast.success("保存成功", {
             description: `「${data.titleChinese}」已更新`,
@@ -120,7 +153,7 @@ export function BangumiModal({
                 year: data.year || new Date().getFullYear(),
                 bgmtv_id: data.bgmtvId,
                 tmdb_id: selectedTmdbId ? parseInt(selectedTmdbId, 10) : data.tmdbId ?? null,
-                mikan_id: selectedMikanId ?? data.mikanId ?? null,
+                mikan_id: selectedMikanId.value ?? data.mikanId ?? null,
                 poster_url: data.posterUrl || null,
                 air_date: data.airDate,
                 air_week: data.airWeek,
@@ -153,7 +186,7 @@ export function BangumiModal({
   const resetForm = React.useCallback(() => {
     form.reset();
     setSelectedTmdbId(null);
-    setSelectedMikanId(null);
+    setSelectedMikanId({ value: null, isNewSelection: false });
     setMikanModalOpen(false);
   }, [form]);
 
@@ -389,7 +422,7 @@ export function BangumiModal({
                       <MikanRssModal
                         open={mikanModalOpen}
                         onOpenChange={setMikanModalOpen}
-                        onSelect={(selectedEntries, newMikanId) => {
+                        onSelect={(selectedEntries, mikanIdSelection) => {
                           const existingEntries = Array.isArray(field.state.value) ? field.state.value : [];
                           const existingUrls = new Set(
                             existingEntries.map((e) => e.url)
@@ -408,10 +441,8 @@ export function BangumiModal({
                               ...newEntries,
                             ]);
                           }
-                          // Save the selected mikan_id for later use
-                          if (newMikanId) {
-                            setSelectedMikanId(newMikanId);
-                          }
+                          // Save the mikan_id selection info for later use
+                          setSelectedMikanId(mikanIdSelection);
                         }}
                         initialKeyword={searchKeyword}
                         mikanId={data.mikanId ?? undefined}

@@ -21,7 +21,7 @@ use domain::services::actors::metadata::{create_metadata_actor, MetadataHandle, 
 use domain::services::{
     create_downloader_service, create_notification_service, BangumiService, CacheService,
     CalendarService, HttpClientService, LogService, MetadataService, RenameService,
-    RssProcessingService, SettingsService, WashingService,
+    RssProcessingService, ScanService, SettingsService, WashingService,
 };
 use jobs::{create_log_cleanup_actor, create_rename_actor, create_rss_fetch_actor};
 
@@ -185,6 +185,14 @@ pub fn build_services(
         Arc::clone(&metadata_actor),
     ));
 
+    // Scan service
+    let scan = Arc::new(ScanService::new(
+        db.clone(),
+        Arc::clone(&bangumi),
+        Arc::clone(&metadata),
+        Arc::clone(settings),
+    ));
+
     // Update service
     let update = build_update_service(http_client, current_version);
 
@@ -198,6 +206,7 @@ pub fn build_services(
         poster,
         notification,
         rename,
+        scan,
         update,
     };
 

@@ -24,10 +24,15 @@ interface RssSelectionEntry {
   include_filters: string[];
 }
 
+export interface MikanIdSelection {
+  value: string | null;
+  isNewSelection: boolean;
+}
+
 interface MikanRssModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (entries: RssSelectionEntry[], selectedMikanId: string | null) => void;
+  onSelect: (entries: RssSelectionEntry[], mikanIdSelection: MikanIdSelection) => void;
   initialKeyword?: string;
   mikanId?: string;
 }
@@ -96,9 +101,13 @@ export function MikanRssModal({
         filters: [],
         include_filters: [],
       }));
-    // Return the mikan_id: use selectedBangumi.id if user searched and selected, otherwise use the provided mikanId
-    const selectedMikanId = selectedBangumi?.id ?? mikanId ?? null;
-    onSelect(selectedEntries, selectedMikanId);
+    // Return mikan_id with selection info:
+    // - If user searched and selected a bangumi, it's a new selection
+    // - If using direct mode (mikanId provided), it's not a new selection
+    const mikanIdSelection: MikanIdSelection = selectedBangumi
+      ? { value: selectedBangumi.id, isNewSelection: true }
+      : { value: mikanId ?? null, isNewSelection: false };
+    onSelect(selectedEntries, mikanIdSelection);
     onOpenChange(false);
   };
 

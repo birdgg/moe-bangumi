@@ -61,6 +61,10 @@ dev-all:
 transmission:
     docker compose -f docker/docker-compose.transmission.yaml up -d
 
+# Start qBittorrent in Docker
+qbittorrent:
+    docker compose -f docker/docker-compose.qbittorrent.yaml up -d
+
 # === Release Commands ===
 
 # Generate changelog (default: unreleased, use "full" to generate all)

@@ -92,6 +92,7 @@ impl BangumiService {
             auto_complete: data.auto_complete,
             save_path,
             source_type: data.source_type.as_str().to_string(),
+            current_episode: data.current_episode,
         };
 
         let bangumi = BangumiRepository::create(&self.db, create_data).await?;

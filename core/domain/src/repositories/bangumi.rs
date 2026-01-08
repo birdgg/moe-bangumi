@@ -35,6 +35,8 @@ pub struct CreateBangumiData {
     pub auto_complete: bool,
     pub save_path: String,
     pub source_type: String,
+    /// Initial current episode (defaults to 0 if None)
+    pub current_episode: Option<i32>,
 }
 
 pub struct BangumiRepository;
@@ -48,9 +50,9 @@ impl BangumiRepository {
         let result = sqlx::query(
             r#"
             INSERT INTO bangumi (
-                metadata_id, auto_complete, save_path, source_type
+                metadata_id, auto_complete, save_path, source_type, current_episode
             )
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, COALESCE($5, 0))
             RETURNING id
             "#,
         )
@@ -58,6 +60,7 @@ impl BangumiRepository {
         .bind(data.auto_complete)
         .bind(&data.save_path)
         .bind(&data.source_type)
+        .bind(data.current_episode)
         .fetch_one(pool)
         .await?;
 
