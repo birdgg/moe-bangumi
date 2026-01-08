@@ -7,6 +7,7 @@ import {
 } from "./hooks";
 import { CalendarCard, CalendarCardSkeleton, SeasonSelector } from "./components";
 import { BangumiModal } from "@/features/bangumi/components";
+import { useGetAllBangumi } from "@/features/bangumi/hooks/use-bangumi";
 import type { CalendarSubject } from "@/lib/api";
 import {
   IconAlertCircle,
@@ -14,7 +15,8 @@ import {
   IconRefresh,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { calendarSubjectToModalData } from "@/lib/converters";
+import { calendarSubjectToModalData, bangumiToModalData } from "@/lib/converters";
+import type { BangumiWithMetadata } from "@/lib/api";
 
 // Get today's weekday (1-7, Monday-Sunday)
 function getTodayWeekday(): number {
@@ -48,9 +50,43 @@ export function SchedulePage() {
   const { data: calendar, isLoading, error } = useCalendar(calendarParams);
   const refreshMutation = useRefreshCalendar(calendarParams);
 
+  // Get all subscribed bangumi to check subscription status
+  const { data: allBangumi } = useGetAllBangumi();
+
+  // Create maps to look up bangumi by bgmtv_id or mikan_id
+  const { bangumiByBgmtvId, bangumiByMikanId } = useMemo(() => {
+    const byBgmtvId = new Map<number, BangumiWithMetadata>();
+    const byMikanId = new Map<string, BangumiWithMetadata>();
+    if (allBangumi) {
+      for (const bangumi of allBangumi) {
+        if (bangumi.metadata.bgmtv_id) {
+          byBgmtvId.set(bangumi.metadata.bgmtv_id, bangumi);
+        }
+        if (bangumi.metadata.mikan_id) {
+          byMikanId.set(bangumi.metadata.mikan_id, bangumi);
+        }
+      }
+    }
+    return { bangumiByBgmtvId: byBgmtvId, bangumiByMikanId: byMikanId };
+  }, [allBangumi]);
+
+  // Helper to check if subscribed and get the bangumi
+  const findSubscribedBangumi = (subject: CalendarSubject): BangumiWithMetadata | null => {
+    if (subject.bgmtv_id && bangumiByBgmtvId.has(subject.bgmtv_id)) {
+      return bangumiByBgmtvId.get(subject.bgmtv_id)!;
+    }
+    if (subject.mikan_id && bangumiByMikanId.has(subject.mikan_id)) {
+      return bangumiByMikanId.get(subject.mikan_id)!;
+    }
+    return null;
+  };
+
   const [selectedSubject, setSelectedSubject] =
     useState<CalendarSubject | null>(null);
+  const [selectedBangumi, setSelectedBangumi] =
+    useState<BangumiWithMetadata | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add");
 
   const isRefreshing = refreshMutation.isPending;
 
@@ -70,7 +106,10 @@ export function SchedulePage() {
   }, [calendar, todayWeekday]);
 
   const handleCardClick = (subject: CalendarSubject) => {
+    const subscribedBangumi = findSubscribedBangumi(subject);
     setSelectedSubject(subject);
+    setSelectedBangumi(subscribedBangumi);
+    setModalMode(subscribedBangumi ? "edit" : "add");
     setModalOpen(true);
   };
 
@@ -78,6 +117,8 @@ export function SchedulePage() {
     if (!open) {
       setModalOpen(false);
       setSelectedSubject(null);
+      setSelectedBangumi(null);
+      setModalMode("add");
     }
   };
 
@@ -210,13 +251,17 @@ export function SchedulePage() {
 
                   {/* Cards grid */}
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
-                    {day.items.map((subject) => (
-                      <CalendarCard
-                        key={subject.bgmtv_id ?? subject.mikan_id ?? subject.title_chinese}
-                        subject={subject}
-                        onClick={() => handleCardClick(subject)}
-                      />
-                    ))}
+                    {day.items.map((subject) => {
+                      const isSubscribed = findSubscribedBangumi(subject) !== null;
+                      return (
+                        <CalendarCard
+                          key={subject.bgmtv_id ?? subject.mikan_id ?? subject.title_chinese}
+                          subject={subject}
+                          isSubscribed={isSubscribed}
+                          onClick={() => handleCardClick(subject)}
+                        />
+                      );
+                    })}
                   </div>
                 </section>
               );
@@ -225,16 +270,22 @@ export function SchedulePage() {
         )}
       </div>
 
-      {/* Add Bangumi Modal */}
-      {selectedSubject && (
+      {/* Bangumi Modal (Add or Edit) */}
+      {(selectedSubject || selectedBangumi) && (
         <BangumiModal
           open={modalOpen}
           onOpenChange={handleModalClose}
-          mode="add"
-          data={calendarSubjectToModalData(selectedSubject)}
+          mode={modalMode}
+          data={
+            modalMode === "edit" && selectedBangumi
+              ? bangumiToModalData(selectedBangumi)
+              : calendarSubjectToModalData(selectedSubject!)
+          }
           onSuccess={() => {
             setModalOpen(false);
             setSelectedSubject(null);
+            setSelectedBangumi(null);
+            setModalMode("add");
           }}
         />
       )}

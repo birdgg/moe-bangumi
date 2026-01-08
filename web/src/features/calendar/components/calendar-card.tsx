@@ -1,15 +1,18 @@
 import { cn } from "@/lib/utils";
 import type { CalendarSubject } from "@/lib/api";
+import { IconCheck } from "@tabler/icons-react";
 
 interface CalendarCardProps {
   subject: CalendarSubject;
   className?: string;
+  isSubscribed?: boolean;
   onClick?: () => void;
 }
 
 export function CalendarCard({
   subject,
   className,
+  isSubscribed,
   onClick,
 }: CalendarCardProps) {
   const displayName = subject.title_chinese || subject.title_japanese || "";
@@ -61,6 +64,36 @@ export function CalendarCard({
 
           {/* Decorative top wave */}
           <div className="absolute inset-x-0 top-0 h-8 bg-linear-to-b from-chart-1/20 to-transparent" />
+
+          {/* Subscribed badge */}
+          {isSubscribed && (
+            <div className="absolute right-2 top-2">
+              {/* Outer glow */}
+              <div className="absolute -inset-1.5 rounded-full bg-chart-1/30 blur-md" />
+
+              {/* Badge container */}
+              <div className="relative">
+                {/* Main badge */}
+                <div className={cn(
+                  "relative flex items-center gap-1 rounded-full px-2 py-0.5",
+                  "bg-linear-to-br from-chart-1 via-chart-1 to-chart-3",
+                  "text-[10px] font-bold tracking-wide text-white",
+                  "shadow-lg shadow-chart-1/40",
+                  "ring-1 ring-white/40 dark:ring-white/20",
+                  "backdrop-blur-sm"
+                )}>
+                  {/* Check icon */}
+                  <IconCheck className="size-2.5" strokeWidth={3} />
+
+                  {/* Badge text */}
+                  <span className="drop-shadow-sm">已订阅</span>
+                </div>
+
+                {/* Bottom highlight */}
+                <div className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full bg-chart-1/20 blur-sm" />
+              </div>
+            </div>
+          )}
 
           {/* Bottom info overlay */}
           <div className="absolute inset-x-0 bottom-0 px-2.5 pb-2.5">

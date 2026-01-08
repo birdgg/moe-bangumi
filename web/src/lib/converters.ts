@@ -1,4 +1,4 @@
-import type { SearchedMetadata, CalendarSubject } from "@/lib/api";
+import type { SearchedMetadata, CalendarSubject, BangumiWithMetadata } from "@/lib/api";
 import type { BangumiModalData } from "@/features/bangumi/components";
 
 /**
@@ -39,5 +39,31 @@ export function calendarSubjectToModalData(
     airDate: subject.air_date,
     airWeek: subject.air_week,
     mikanId: subject.mikan_id,
+  };
+}
+
+/**
+ * Convert BangumiWithMetadata to BangumiModalData for the edit modal
+ */
+export function bangumiToModalData(
+  bangumi: BangumiWithMetadata
+): BangumiModalData {
+  const { metadata } = bangumi;
+  return {
+    id: bangumi.id,
+    bgmtvId: metadata.bgmtv_id ?? 0,
+    tmdbId: metadata.tmdb_id,
+    titleChinese: metadata.title_chinese,
+    titleJapanese: metadata.title_japanese,
+    posterUrl: metadata.poster_url,
+    year: metadata.year,
+    season: metadata.season,
+    totalEpisodes: metadata.total_episodes,
+    platform: metadata.platform,
+    airDate: metadata.air_date,
+    airWeek: metadata.air_week,
+    mikanId: metadata.mikan_id,
+    episodeOffset: metadata.episode_offset,
+    autoComplete: bangumi.auto_complete,
   };
 }
