@@ -12,7 +12,7 @@ use thiserror::Error;
 
 /// Base URL for downloading calendar seed data from GitHub
 const CALENDAR_SEED_BASE_URL: &str =
-    "https://raw.githubusercontent.com/birdgg/bangumi-calendar/main";
+    "https://raw.githubusercontent.com/birdgg/bangumi-calendar/main/data";
 
 #[derive(Debug, Error)]
 pub enum CalendarError {
