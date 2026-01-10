@@ -27,13 +27,8 @@ import type {
   GetEpisodesResponses,
   GetLogsData,
   GetLogsResponses,
-  GetMetadataByIdData,
-  GetMetadataByIdErrors,
-  GetMetadataByIdResponses,
-  GetMetadataData,
   GetMetadataDetailData,
   GetMetadataDetailResponses,
-  GetMetadataResponses,
   GetMikanRssData,
   GetMikanRssResponses,
   GetSettingsData,
@@ -43,6 +38,8 @@ import type {
   ListTorrentsData,
   ListTorrentsErrors,
   ListTorrentsResponses,
+  PerformUpdateData,
+  PerformUpdateResponses,
   RefreshCalendarData,
   RefreshCalendarResponses,
   ResetSettingsData,
@@ -72,9 +69,6 @@ import type {
   UpdateBangumiData,
   UpdateBangumiErrors,
   UpdateBangumiResponses,
-  UpdateMetadataData,
-  UpdateMetadataErrors,
-  UpdateMetadataResponses,
   UpdateSettingsData,
   UpdateSettingsResponses,
 } from "./types.gen";
@@ -264,48 +258,6 @@ export const streamLogs = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: "/api/logs/stream", ...options });
-
-/**
- * Get all metadata
- */
-export const getMetadata = <ThrowOnError extends boolean = false>(
-  options?: Options<GetMetadataData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<GetMetadataResponses, unknown, ThrowOnError>({
-    url: "/api/metadata",
-    ...options,
-  });
-
-/**
- * Get a metadata by ID
- */
-export const getMetadataById = <ThrowOnError extends boolean = false>(
-  options: Options<GetMetadataByIdData, ThrowOnError>,
-) =>
-  (options.client ?? client).get<
-    GetMetadataByIdResponses,
-    GetMetadataByIdErrors,
-    ThrowOnError
-  >({ url: "/api/metadata/{id}", ...options });
-
-/**
- * Update a metadata
- */
-export const updateMetadata = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateMetadataData, ThrowOnError>,
-) =>
-  (options.client ?? client).patch<
-    UpdateMetadataResponses,
-    UpdateMetadataErrors,
-    ThrowOnError
-  >({
-    url: "/api/metadata/{id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
 
 /**
  * Get bangumi detail with RSS URLs from Mikan
@@ -537,7 +489,7 @@ export const getVersion = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Check for updates (triggers auto-update if available)
+ * Check for updates (check only, does not auto-update)
  */
 export const checkUpdate = <ThrowOnError extends boolean = false>(
   options?: Options<CheckUpdateData, ThrowOnError>,
@@ -545,3 +497,15 @@ export const checkUpdate = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).post<CheckUpdateResponses, unknown, ThrowOnError>(
     { url: "/api/version/check", ...options },
   );
+
+/**
+ * Perform update (download and install)
+ */
+export const performUpdate = <ThrowOnError extends boolean = false>(
+  options?: Options<PerformUpdateData, ThrowOnError>,
+) =>
+  (options?.client ?? client).post<
+    PerformUpdateResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/api/version/update", ...options });
