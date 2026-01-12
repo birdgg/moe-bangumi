@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// Version information including current and latest versions
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(utoipa::ToSchema)]
 pub struct VersionInfo {
     /// Current running version
     pub current: String,
@@ -51,7 +51,7 @@ impl VersionInfo {
 /// Current status of the update process
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(utoipa::ToSchema)]
 pub enum UpdateStatus {
     /// No update in progress
     #[default]

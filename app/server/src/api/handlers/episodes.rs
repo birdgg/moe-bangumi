@@ -8,7 +8,7 @@ use crate::error::AppResult;
 use crate::state::AppState;
 
 /// Get episodes by subject ID from BGM.tv
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/episodes/{subject_id}",
     tag = "episodes",
@@ -18,7 +18,7 @@ use crate::state::AppState;
     responses(
         (status = 200, description = "Episodes list", body = Vec<Episode>)
     )
-))]
+)]
 pub async fn get_episodes(
     State(state): State<AppState>,
     Path(subject_id): Path<i64>,

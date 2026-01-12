@@ -208,7 +208,7 @@ justfile                # Release 相关命令
 发布前请确认：
 
 - [ ] 所有测试通过 (`just test`)
-- [ ] 代码已合并到 main 分支
+- [ ] 代码已合并到 utopia 分支
 - [ ] 版本号符合语义化版本规范
 - [ ] Commit messages 遵循 Conventional Commits
 - [ ] GitHub Secrets 已配置

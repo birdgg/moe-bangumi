@@ -1,6 +1,6 @@
 use parser::SubType;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "openapi")]
+
 use utoipa::ToSchema;
 use washing::ComparableTorrent;
 
@@ -8,7 +8,7 @@ use super::Clearable;
 
 /// Torrent entity representing a BitTorrent file for bangumi episodes
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct Torrent {
     pub id: i64,
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -50,7 +50,7 @@ impl Torrent {
 
 /// Request body for creating a new torrent
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct CreateTorrent {
     /// Foreign key to bangumi
     pub bangumi_id: i64,

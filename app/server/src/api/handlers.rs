@@ -12,7 +12,6 @@ mod torrents;
 mod update;
 
 use serde::Deserialize;
-#[cfg(feature = "openapi")]
 use utoipa::IntoParams;
 
 // Cache TTL constants (in seconds)
@@ -20,24 +19,21 @@ const MIKAN_SEARCH_CACHE_TTL: i64 = 604800; // 1 week
 const MIKAN_DETAIL_CACHE_TTL: i64 = 2592000; // 30 days
 
 /// Query parameters for keyword search
-#[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(IntoParams))]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct SearchQuery {
     /// Keyword to search
     pub keyword: String,
 }
 
 /// Query parameters for TMDB search with filters
-#[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(IntoParams))]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct TmdbSearchQuery {
     /// Keyword to search
     pub keyword: String,
 }
 
 /// Query parameters for ID lookup
-#[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(IntoParams))]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct IdQuery {
     /// ID to lookup
     pub id: String,
@@ -61,7 +57,6 @@ pub use torrents::{delete_torrents, list_torrents, DeleteTorrentsRequest};
 pub use update::{check_update, get_version, perform_update, UpdateResponse};
 
 // Re-export utoipa path structs for OpenAPI routing
-#[cfg(feature = "openapi")]
 mod openapi_paths {
     #[doc(hidden)]
     pub use super::bangumi::{
@@ -97,5 +92,4 @@ mod openapi_paths {
     #[doc(hidden)]
     pub use super::scan::__path_scan_import;
 }
-#[cfg(feature = "openapi")]
 pub use openapi_paths::*;

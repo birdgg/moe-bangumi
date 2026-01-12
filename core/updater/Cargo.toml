@@ -20,11 +20,5 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 parking_lot = { workspace = true }
 
-[features]
-default = []
-# Enable OpenAPI schema generation
-openapi = ["dep:utoipa"]
-
 [dependencies.utoipa]
 workspace = true
-optional = true

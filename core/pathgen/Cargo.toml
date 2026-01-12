@@ -4,13 +4,6 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
-[features]
-default = []
-openapi = ["dep:utoipa"]
-
 [dependencies]
 thiserror.workspace = true
-
-[dependencies.utoipa]
-workspace = true
-optional = true
+utoipa.workspace = true

@@ -17,7 +17,7 @@ test:
 
 # Run the server (dev mode with debug logging)
 dev:
-    RUST_LOG=debug,sqlx=warn cargo run -p moe --features openapi
+    RUST_LOG=debug,sqlx=warn cargo run -p moe
 
 # Generate calendar seed data (all seasons from 2013)
 seed:
@@ -51,7 +51,7 @@ web-gen-api:
 dev-all:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
-    RUST_LOG=debug,sqlx=warn cargo run -p moe --features openapi &
+    RUST_LOG=debug,sqlx=warn cargo run -p moe &
     cd web && bun run dev &
     wait
 

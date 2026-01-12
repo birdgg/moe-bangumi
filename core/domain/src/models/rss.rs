@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "openapi")]
+
 use utoipa::ToSchema;
 
 /// RSS subscription entity
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct Rss {
     pub id: i64,
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -38,7 +38,7 @@ pub struct Rss {
 
 /// Request body for creating a new RSS subscription
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct CreateRss {
     /// Foreign key to bangumi
     pub bangumi_id: i64,

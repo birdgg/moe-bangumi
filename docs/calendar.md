@@ -36,7 +36,7 @@
 
 **下载地址：**
 ```
-https://raw.githubusercontent.com/birdgg/moe-bangumi/main/assets/seed/calendar.json
+https://raw.githubusercontent.com/birdgg/moe-bangumi/utopia/assets/seed/calendar.json
 ```
 
 **数据格式：**

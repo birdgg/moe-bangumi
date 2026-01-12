@@ -1,7 +1,5 @@
 pub mod api;
 pub mod infra;
-
-#[cfg(feature = "openapi")]
 pub mod openapi;
 
 // Re-export domain crate for backwards compatibility
@@ -25,7 +23,6 @@ use std::net::SocketAddr;
 use std::path::Path;
 
 use tower_http::services::{ServeDir, ServeFile};
-#[cfg(feature = "openapi")]
 use utoipa_scalar::{Scalar, Servable};
 
 // Re-export commonly used types for backwards compatibility
@@ -91,19 +88,10 @@ pub async fn run_server(
     }
 
     // Serve poster images from data directory
-    #[cfg(feature = "openapi")]
-    let app = {
-        let (router, api) = create_router(state);
-        router
-            .nest_service("/posters", ServeDir::new(&posters_path))
-            .merge(Scalar::with_url("/docs", api))
-    };
-
-    #[cfg(not(feature = "openapi"))]
-    let app = {
-        let router = create_router(state);
-        router.nest_service("/posters", ServeDir::new(&posters_path))
-    };
+    let (router, api) = create_router(state);
+    let app = router
+        .nest_service("/posters", ServeDir::new(&posters_path))
+        .merge(Scalar::with_url("/docs", api));
 
     // Serve static files if the dist directory exists (in Docker)
     let app = if Path::new(STATIC_DIR).exists() {

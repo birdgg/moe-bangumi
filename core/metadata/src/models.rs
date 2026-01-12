@@ -2,12 +2,12 @@
 
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-#[cfg(feature = "openapi")]
+
 use utoipa::ToSchema;
 
 /// Metadata data source identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum MetadataSource {
     Bgmtv,
@@ -16,7 +16,7 @@ pub enum MetadataSource {
 
 /// Platform type for bangumi (TV, Movie, OVA)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Platform {
     #[default]
@@ -75,7 +75,7 @@ impl SearchQuery {
 /// This represents metadata fetched from external sources (BGM.tv, TMDB, Mikan)
 /// before it is persisted to the database.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct SearchedMetadata {
     /// Data source identifier
     pub source: MetadataSource,
@@ -114,7 +114,7 @@ impl SearchedMetadata {
 
 /// Episode type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum EpisodeType {
     /// Main episode (本篇)
@@ -130,7 +130,7 @@ pub enum EpisodeType {
 
 /// Episode information from metadata provider
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub struct Episode {
     /// Episode ID from the source
     pub id: i64,

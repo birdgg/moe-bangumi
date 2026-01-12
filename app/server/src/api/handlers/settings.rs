@@ -8,7 +8,7 @@ use crate::state::AppState;
 
 /// Request body for testing proxy connection
 #[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(utoipa::ToSchema)]
 pub struct TestProxyRequest {
     /// Proxy server URL (e.g., http://127.0.0.1:7890)
     pub url: String,
@@ -22,7 +22,7 @@ pub struct TestProxyRequest {
 
 /// Request body for testing Telegram notification
 #[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(utoipa::ToSchema)]
 pub struct TestNotificationRequest {
     /// Telegram Bot API token
     pub bot_token: String,
@@ -31,20 +31,20 @@ pub struct TestNotificationRequest {
 }
 
 /// Get application settings
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/settings",
     tag = "settings",
     responses(
         (status = 200, description = "Application settings", body = Settings)
     )
-))]
+)]
 pub async fn get_settings(State(state): State<AppState>) -> Json<Settings> {
     Json(state.infra.settings.get())
 }
 
 /// Update application settings
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     patch,
     path = "/api/settings",
     tag = "settings",
@@ -52,7 +52,7 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Settings> {
     responses(
         (status = 200, description = "Settings updated successfully", body = Settings)
     )
-))]
+)]
 pub async fn update_settings(
     State(state): State<AppState>,
     Json(payload): Json<UpdateSettings>,
@@ -62,21 +62,21 @@ pub async fn update_settings(
 }
 
 /// Reset settings to defaults
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     post,
     path = "/api/settings/reset",
     tag = "settings",
     responses(
         (status = 200, description = "Settings reset successfully", body = Settings)
     )
-))]
+)]
 pub async fn reset_settings(State(state): State<AppState>) -> AppResult<Json<Settings>> {
     let settings = state.infra.settings.reset().await?;
     Ok(Json(settings))
 }
 
 /// Test proxy connection by making a request to mikanani.me
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     post,
     path = "/api/proxy/test",
     tag = "settings",
@@ -85,7 +85,7 @@ pub async fn reset_settings(State(state): State<AppState>) -> AppResult<Json<Set
         (status = 200, description = "Proxy connection successful"),
         (status = 400, description = "Invalid proxy configuration")
     )
-))]
+)]
 pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'static str> {
     // Build proxy with optional authentication
     let mut proxy = Proxy::all(&payload.url)
@@ -126,7 +126,7 @@ pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'st
 }
 
 /// Test Telegram notification by sending a test message
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     post,
     path = "/api/notification/test",
     tag = "settings",
@@ -135,7 +135,7 @@ pub async fn test_proxy(Json(payload): Json<TestProxyRequest>) -> AppResult<&'st
         (status = 200, description = "Notification sent successfully"),
         (status = 400, description = "Invalid configuration")
     )
-))]
+)]
 pub async fn test_notification(
     State(state): State<AppState>,
     Json(payload): Json<TestNotificationRequest>,

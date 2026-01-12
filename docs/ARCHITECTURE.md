@@ -187,22 +187,13 @@ src/models/             # Submodules directory
 src/models/mod.rs       # Don't use this pattern
 ```
 
-### Feature Flags
+### OpenAPI Documentation
 
-OpenAPI documentation is optional:
-
-```toml
-[features]
-default = []           # OpenAPI disabled by default
-openapi = [...]        # Enable for development/docs
-```
+OpenAPI documentation is always enabled. Access the API documentation at `/docs` when the server is running.
 
 ```bash
-# Development (with OpenAPI)
-just dev               # Enables openapi feature
-
-# Production build (minimal binary)
-just build-release     # No openapi, smaller binary
+# Development
+just dev               # Starts server with OpenAPI docs at /docs
 ```
 
 ## Adding a New Crate

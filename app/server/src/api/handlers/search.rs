@@ -4,7 +4,6 @@ use axum::{
 };
 use metadata::{MetadataSource, SearchQuery as MetadataSearchQuery, SearchedMetadata};
 use serde::Deserialize;
-#[cfg(feature = "openapi")]
 use utoipa::{IntoParams, ToSchema};
 
 use crate::error::AppResult;
@@ -13,8 +12,7 @@ use crate::state::AppState;
 use super::{SearchQuery, TmdbSearchQuery, MIKAN_SEARCH_CACHE_TTL};
 
 /// Query parameters for unified metadata search
-#[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(IntoParams, ToSchema))]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct UnifiedSearchQuery {
     /// Data source to search (bgmtv, tmdb)
     pub source: MetadataSource,
@@ -25,8 +23,7 @@ pub struct UnifiedSearchQuery {
 }
 
 /// Query parameters for metadata detail lookup
-#[derive(Debug, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(IntoParams, ToSchema))]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct DetailQuery {
     /// Data source (bgmtv, tmdb)
     pub source: MetadataSource,
@@ -35,7 +32,7 @@ pub struct DetailQuery {
 }
 
 /// Search for bangumi (Japanese anime) on BGM.tv
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/bgmtv",
     tag = "search",
@@ -43,7 +40,7 @@ pub struct DetailQuery {
     responses(
         (status = 200, description = "Search results", body = Vec<SearchedMetadata>)
     )
-))]
+)]
 pub async fn search_bgmtv(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
@@ -58,7 +55,7 @@ pub async fn search_bgmtv(
 }
 
 /// Search for anime on TMDB using discover API
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/tmdb",
     tag = "search",
@@ -66,7 +63,7 @@ pub async fn search_bgmtv(
     responses(
         (status = 200, description = "Search results from TMDB", body = Vec<SearchedMetadata>)
     )
-))]
+)]
 pub async fn search_tmdb(
     State(state): State<AppState>,
     Query(query): Query<TmdbSearchQuery>,
@@ -81,7 +78,7 @@ pub async fn search_tmdb(
 }
 
 /// Search for bangumi on Mikan
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/mikan",
     tag = "search",
@@ -89,7 +86,7 @@ pub async fn search_tmdb(
     responses(
         (status = 200, description = "Search results from Mikan", body = Vec<mikan::SearchResult>)
     )
-))]
+)]
 pub async fn search_mikan(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
@@ -112,7 +109,7 @@ pub async fn search_mikan(
 /// Unified metadata search across all data sources
 ///
 /// Returns standardized SearchedMetadata format regardless of data source.
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/metadata",
     tag = "search",
@@ -120,7 +117,7 @@ pub async fn search_mikan(
     responses(
         (status = 200, description = "Search results in unified format", body = Vec<SearchedMetadata>)
     )
-))]
+)]
 pub async fn search_metadata(
     State(state): State<AppState>,
     Query(query): Query<UnifiedSearchQuery>,
@@ -137,7 +134,7 @@ pub async fn search_metadata(
 /// Find best matching metadata from a specific data source
 ///
 /// Returns a single best matching result based on keyword and optional year filter.
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/metadata/find",
     tag = "search",
@@ -145,7 +142,7 @@ pub async fn search_metadata(
     responses(
         (status = 200, description = "Best matching metadata", body = Option<SearchedMetadata>)
     )
-))]
+)]
 pub async fn find_metadata(
     State(state): State<AppState>,
     Query(query): Query<UnifiedSearchQuery>,
@@ -165,7 +162,7 @@ pub async fn find_metadata(
 /// Get metadata detail by external ID from a specific data source
 ///
 /// Returns full metadata for a specific subject/show.
-#[cfg_attr(feature = "openapi", utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/search/metadata/detail",
     tag = "search",
@@ -173,7 +170,7 @@ pub async fn find_metadata(
     responses(
         (status = 200, description = "Metadata detail", body = Option<SearchedMetadata>)
     )
-))]
+)]
 pub async fn get_metadata_detail(
     State(state): State<AppState>,
     Query(query): Query<DetailQuery>,

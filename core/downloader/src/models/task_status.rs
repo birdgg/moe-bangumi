@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "openapi")]
+
 use utoipa::ToSchema;
 
 /// Download task status.
 ///
 /// Normalized across different downloader implementations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskStatus {
     /// Task is queued and waiting to start

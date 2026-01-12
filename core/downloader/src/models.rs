@@ -11,12 +11,12 @@ pub use task_filter::TaskFilter;
 pub use task_status::TaskStatus;
 
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "openapi")]
+
 use utoipa::ToSchema;
 
 /// Downloader type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[cfg_attr(feature = "openapi", derive(ToSchema))]
+#[derive(ToSchema)]
 pub enum DownloaderType {
     #[default]
     #[serde(rename = "qBittorrent")]
