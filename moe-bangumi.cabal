@@ -1,0 +1,114 @@
+cabal-version: 3.4
+name: moe-bangumi
+version: 0.1.0.0
+description: A Bangumi Management Tool
+homepage: https://github.com/birdgg/moe-bangumi
+license: MIT
+license-file: LICENSE
+author: birdgg
+maintainer: birdeggegg@gmail.com
+build-type: Simple
+extra-doc-files: CHANGELOG.md
+
+common common-extensions
+  default-extensions:
+    DataKinds
+    DeepSubsumption
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    GADTs
+    LambdaCase
+    NoStarIsType
+    NumericUnderscores
+    OverloadedLabels
+    OverloadedRecordDot
+    OverloadedStrings
+    PackageImports
+    PolyKinds
+    StrictData
+    TypeFamilies
+    UndecidableInstances
+    ViewPatterns
+
+  default-language: GHC2024
+
+common common-ghc-options
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -fhide-source-paths
+    -Wno-unused-do-bind
+    -fshow-hole-constraints
+    -Wno-unticked-promoted-constructors
+    -Werror=unused-imports
+    -fdicts-strict
+    -fmax-worker-args=16
+    -fspec-constr-recursive=16
+    -Wunused-packages
+    -flate-specialise
+    -funbox-strict-fields
+    -finline-generics-aggressively
+    -fexpose-all-unfoldings
+
+library
+  import: common-extensions, common-ghc-options
+  -- cabal-gild: discover src
+  other-modules:
+    Bangumi.Internal.Subtitle
+
+  hs-source-dirs: src
+  build-depends:
+    aeson,
+    base ^>=4.21.0.0,
+    filepath,
+    relude ^>=1.2,
+    text,
+    text-display,
+    time,
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude),
+    relude,
+
+executable moe-bangumi
+  import: common-extensions, common-ghc-options
+  main-is: Main.hs
+  -- other-modules:
+  -- other-extensions:
+  build-depends:
+    base ^>=4.21.0.0,
+    moe-bangumi,
+    relude ^>=1.2,
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude),
+    relude,
+
+  hs-source-dirs: app
+
+test-suite moe-bangumi-test
+  import: common-extensions, common-ghc-options
+  -- other-modules:
+  -- other-extensions:
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+    base ^>=4.21.0.0,
+    moe-bangumi,
+    relude ^>=1.2,
+    tasty,
+    tasty-hunit,
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude),
+    relude,
