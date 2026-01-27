@@ -1,7 +1,8 @@
 module Main (main) where
 
-import Moe.Core.Bangumi.File
-import Moe.Core.Bangumi.Parser
+import Moe.File.Naming
+import Moe.File.Parser
+import Moe.File.Types
 import Prelude
 import Test.Tasty
 import Test.Tasty.HUnit

@@ -1,0 +1,11 @@
+module Moe.Environment.Config
+  ( MoeError (..),
+  )
+where
+
+data MoeError
+  = DatabaseError Text
+  | NotFound Text
+  | ValidationError Text
+  | ExternalApiError Text
+  deriving stock (Eq, Show)
