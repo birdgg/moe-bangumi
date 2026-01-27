@@ -60,25 +60,34 @@ library
   import: common-extensions, common-ghc-options
   -- cabal-gild: discover src
   exposed-modules:
-    Moe.Bangumi.File
-    Moe.Bangumi.Parser
-    Moe.Model.Bangumi
+    Moe.Core.Bangumi.File
+    Moe.Core.Bangumi.Parser
+    Moe.Core.Model.Bangumi
+    Moe.Effect.Bangumi
+    Moe.App.Env
+    Moe.App.Error
+    Moe.App.Monad
+    Moe.App.Run
 
   other-modules:
-    Moe.Bangumi.Internal.BangumiFile
-    Moe.Bangumi.Internal.Content
-    Moe.Bangumi.Internal.Extension
-    Moe.Bangumi.Internal.Group
-    Moe.Bangumi.Internal.Naming
-    Moe.Bangumi.Internal.Subtitle
-    Moe.Bangumi.Parser.Internal.Bracket
-    Moe.Bangumi.Parser.Internal.EpisodePattern
-    Moe.Bangumi.Parser.TitleParser
-    Moe.Bangumi.Parser.Types
+    Moe.Core.Bangumi.Internal.BangumiFile
+    Moe.Core.Bangumi.Internal.Content
+    Moe.Core.Bangumi.Internal.Extension
+    Moe.Core.Bangumi.Internal.Group
+    Moe.Core.Bangumi.Internal.Naming
+    Moe.Core.Bangumi.Internal.Subtitle
+    Moe.Core.Bangumi.Parser.Internal.Bracket
+    Moe.Core.Bangumi.Parser.Internal.EpisodePattern
+    Moe.Core.Bangumi.Parser.TitleParser
+    Moe.Core.Bangumi.Parser.Types
+    Moe.Core.Model.Internal.Types
+    Moe.Infra.Effect.Bangumi
+    Moe.Infra.Persistence.Schema
 
   hs-source-dirs: src
   build-depends:
     base ^>=4.21.0.0,
+    effectful,
     effectful-sqlite,
     filepath,
     regex-tdfa,

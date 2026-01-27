@@ -1,11 +1,11 @@
-module Moe.Bangumi.Internal.BangumiFile
+module Moe.Core.Bangumi.Internal.BangumiFile
   ( BangumiMeta (..),
     BangumiFile (..),
   )
 where
 
-import Moe.Bangumi.Internal.Content (BangumiContent, TmdbId, Year)
-import Moe.Bangumi.Internal.Extension (FileType)
+import Moe.Core.Bangumi.Internal.Content (BangumiContent, TmdbId, Year)
+import Moe.Core.Bangumi.Internal.Extension (FileType)
 
 data BangumiMeta = BangumiMeta
   { name :: Text,

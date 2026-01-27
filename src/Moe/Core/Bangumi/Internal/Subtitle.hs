@@ -1,4 +1,4 @@
-module Moe.Bangumi.Internal.Subtitle
+module Moe.Core.Bangumi.Internal.Subtitle
   ( SubtitleLang (..),
     SubtitleList,
   )

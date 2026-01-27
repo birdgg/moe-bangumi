@@ -1,4 +1,4 @@
-module Moe.Bangumi.Parser.Internal.Bracket
+module Moe.Core.Bangumi.Parser.Internal.Bracket
   ( extractBracket,
   )
 where

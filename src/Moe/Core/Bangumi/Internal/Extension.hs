@@ -1,11 +1,11 @@
-module Moe.Bangumi.Internal.Extension
+module Moe.Core.Bangumi.Internal.Extension
   ( VideoExt (..),
     SubtitleExt (..),
     FileType (..),
   )
 where
 
-import Moe.Bangumi.Internal.Subtitle (SubtitleLang)
+import Moe.Core.Bangumi.Internal.Subtitle (SubtitleLang)
 
 data VideoExt
   = MKV

@@ -1,4 +1,4 @@
-module Moe.Bangumi.Internal.Content
+module Moe.Core.Bangumi.Internal.Content
   ( SeasonNum (..),
     EpisodeNum (..),
     Index (..),

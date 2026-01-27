@@ -1,4 +1,4 @@
-module Moe.Bangumi.Parser.Internal.EpisodePattern
+module Moe.Core.Bangumi.Parser.Internal.EpisodePattern
   ( episodePatterns,
     extractFirstDigits,
     extractAfterE,

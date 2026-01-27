@@ -1,4 +1,4 @@
-module Moe.Bangumi.Parser.TitleParser
+module Moe.Core.Bangumi.Parser.TitleParser
   ( parseTitle,
     extractGroup,
     extractEpisode,
@@ -6,11 +6,11 @@ module Moe.Bangumi.Parser.TitleParser
   )
 where
 
-import Moe.Bangumi.Internal.Group (normalizeGroup)
-import Moe.Bangumi.Internal.Subtitle (SubtitleLang (..))
-import Moe.Bangumi.Parser.Internal.Bracket (extractBracket)
-import Moe.Bangumi.Parser.Internal.EpisodePattern (episodePatterns)
-import Moe.Bangumi.Parser.Types (SubscriptionTitleResult (..))
+import Moe.Core.Bangumi.Internal.Group (normalizeGroup)
+import Moe.Core.Bangumi.Internal.Subtitle (SubtitleLang (..))
+import Moe.Core.Bangumi.Parser.Internal.Bracket (extractBracket)
+import Moe.Core.Bangumi.Parser.Internal.EpisodePattern (episodePatterns)
+import Moe.Core.Bangumi.Parser.Types (SubscriptionTitleResult (..))
 import Data.Char (isDigit)
 import Data.Text qualified as T
 import Text.Regex.TDFA ((=~))
