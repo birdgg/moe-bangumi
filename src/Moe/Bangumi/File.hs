@@ -1,4 +1,4 @@
-module Bangumi.File
+module Moe.Bangumi.File
   ( SubtitleLang (..),
     SubtitleList,
     VideoExt (..),
@@ -22,8 +22,8 @@ module Bangumi.File
   )
 where
 
-import Bangumi.Internal.BangumiFile
-import Bangumi.Internal.Content
-import Bangumi.Internal.Extension
-import Bangumi.Internal.Naming
-import Bangumi.Internal.Subtitle
+import Moe.Bangumi.Internal.BangumiFile
+import Moe.Bangumi.Internal.Content
+import Moe.Bangumi.Internal.Extension
+import Moe.Bangumi.Internal.Naming
+import Moe.Bangumi.Internal.Subtitle

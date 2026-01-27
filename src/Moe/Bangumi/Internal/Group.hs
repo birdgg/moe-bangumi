@@ -1,4 +1,4 @@
-module Bangumi.Internal.Group
+module Moe.Bangumi.Internal.Group
   ( Group (..),
     normalizeGroup,
     knownGroups,

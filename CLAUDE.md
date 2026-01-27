@@ -25,6 +25,8 @@ cabal repl               # Start GHCi with project loaded
 
 - GHC 9.12.2 with GHC2024 language standard
 - Uses Relude as alternative Prelude
+  - `show` returns `Text` (not `String`), use directly without `T.pack`
+  - `toString` converts `Text` to `String`/`FilePath`, use instead of `T.unpack`
 - Test framework: Tasty with HUnit
 
 ## Architecture

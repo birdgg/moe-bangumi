@@ -1,9 +1,9 @@
-module Bangumi.Parser.Types
+module Moe.Bangumi.Parser.Types
   ( SubscriptionTitleResult (..),
   )
 where
 
-import Bangumi.Internal.Subtitle (SubtitleLang)
+import Moe.Bangumi.Internal.Subtitle (SubtitleLang)
 
 data SubscriptionTitleResult = SubscriptionTitleResult
   { episode :: Int

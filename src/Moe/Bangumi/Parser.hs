@@ -1,4 +1,4 @@
-module Bangumi.Parser
+module Moe.Bangumi.Parser
   ( SubscriptionTitleResult (..),
     parseTitle,
     extractGroup,
@@ -10,6 +10,6 @@ module Bangumi.Parser
   )
 where
 
-import Bangumi.Internal.Group
-import Bangumi.Parser.Types
-import Bangumi.Parser.TitleParser
+import Moe.Bangumi.Internal.Group
+import Moe.Bangumi.Parser.Types
+import Moe.Bangumi.Parser.TitleParser

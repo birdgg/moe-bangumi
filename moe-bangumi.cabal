@@ -59,18 +59,32 @@ common common-ghc-options
 library
   import: common-extensions, common-ghc-options
   -- cabal-gild: discover src
+  exposed-modules:
+    Moe.Bangumi.File
+    Moe.Bangumi.Parser
+    Moe.Model.Bangumi
+
   other-modules:
-    Bangumi.Internal.Subtitle
+    Moe.Bangumi.Internal.BangumiFile
+    Moe.Bangumi.Internal.Content
+    Moe.Bangumi.Internal.Extension
+    Moe.Bangumi.Internal.Group
+    Moe.Bangumi.Internal.Naming
+    Moe.Bangumi.Internal.Subtitle
+    Moe.Bangumi.Parser.Internal.Bracket
+    Moe.Bangumi.Parser.Internal.EpisodePattern
+    Moe.Bangumi.Parser.TitleParser
+    Moe.Bangumi.Parser.Types
 
   hs-source-dirs: src
   build-depends:
-    aeson,
     base ^>=4.21.0.0,
+    effectful-sqlite,
     filepath,
+    regex-tdfa,
     relude ^>=1.2,
     text,
     text-display,
-    time,
 
   mixins:
     base hiding (Prelude),

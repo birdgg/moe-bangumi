@@ -1,4 +1,4 @@
-module Bangumi.Internal.Naming
+module Moe.Bangumi.Internal.Naming
   ( generatePath,
     generateFileName,
     generateFullPath,
@@ -6,9 +6,9 @@ module Bangumi.Internal.Naming
   )
 where
 
-import Bangumi.Internal.BangumiFile (BangumiFile (..), BangumiMeta (..))
-import Bangumi.Internal.Content
-import Bangumi.Internal.Extension (FileType (..))
+import Moe.Bangumi.Internal.BangumiFile (BangumiFile (..), BangumiMeta (..))
+import Moe.Bangumi.Internal.Content
+import Moe.Bangumi.Internal.Extension (FileType (..))
 import Data.Text qualified as T
 import System.FilePath ((</>))
 
