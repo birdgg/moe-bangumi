@@ -2,33 +2,31 @@ module Main (main) where
 
 import Options.Applicative
 
-data Command
-  = Version
-  | Sync SyncOptions
+import Moe.Web.Server qualified as Server
+
+newtype Command
+  = Serve ServeOptions
   deriving stock (Show)
 
-newtype SyncOptions = SyncOptions
-  { season :: Maybe Text
+newtype ServeOptions = ServeOptions
+  { port :: Word16
   }
   deriving stock (Show)
 
 commandParser :: Parser Command
-commandParser =
-  subparser
-    ( command "version" (info (pure Version) (progDesc "Show version"))
-        <> command "sync" (info (Sync <$> syncOptionsParser) (progDesc "Sync bangumi data"))
-    )
+commandParser = Serve <$> serveOptionsParser
 
-syncOptionsParser :: Parser SyncOptions
-syncOptionsParser =
-  SyncOptions
-    <$> optional
-      ( strOption
-          ( long "season"
-              <> short 's'
-              <> metavar "SEASON"
-              <> help "Anime season (e.g., '2026 Winter')"
-          )
+serveOptionsParser :: Parser ServeOptions
+serveOptionsParser =
+  ServeOptions
+    <$> option
+      auto
+      ( long "port"
+          <> short 'p'
+          <> metavar "PORT"
+          <> value 8080
+          <> showDefault
+          <> help "Port to listen on"
       )
 
 opts :: ParserInfo Command
@@ -42,9 +40,5 @@ opts =
 
 main :: IO ()
 main = do
-  cmd <- execParser opts
-  case cmd of
-    Version -> putTextLn "moe-bangumi 0.1.0.0"
-    Sync options -> do
-      putTextLn $ "Syncing with options: " <> show options
-      putTextLn "Sync not implemented yet"
+  Serve options <- execParser opts
+  Server.runServer options.port
