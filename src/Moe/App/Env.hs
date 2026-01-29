@@ -1,9 +1,13 @@
 module Moe.App.Env
   ( MoeEnv (..),
     MetadataConfig (..),
+    LogConfig (..),
+    LogDestination (..),
     defaultMoeEnv,
   )
 where
+
+import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 
 data MetadataConfig = MetadataConfig
   { tmdbApiKey :: Text,
@@ -13,7 +17,8 @@ data MetadataConfig = MetadataConfig
 
 data MoeEnv = MoeEnv
   { databasePath :: FilePath,
-    metadataConfig :: MetadataConfig
+    metadataConfig :: MetadataConfig,
+    logConfig :: LogConfig
   }
   deriving stock (Eq, Show)
 
@@ -25,5 +30,6 @@ defaultMoeEnv =
         MetadataConfig
           { tmdbApiKey = "",
             bgmtvUserAgent = "moe-bangumi/0.1.0"
-          }
+          },
+      logConfig = defaultLogConfig
     }

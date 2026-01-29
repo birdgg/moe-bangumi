@@ -88,6 +88,7 @@ library
     Moe.Infra.BangumiData.Client
     Moe.App.Env
     Moe.App.Error
+    Moe.App.Logging
     Moe.App.Monad
     Moe.Web.Server
     Moe.Web.Types
@@ -117,8 +118,11 @@ library
     http-client-tls,
     http-media,
     http-types,
+    log-base,
+    log-effectful,
     mtl,
     openapi3,
+    pretty-simple,
     regex-tdfa,
     servant,
     servant-client,

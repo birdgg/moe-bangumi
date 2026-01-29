@@ -7,12 +7,14 @@ where
 
 import Effectful
 import Effectful.Error.Static (Error, runErrorNoCallStack)
+import Effectful.Log (Log)
 import Effectful.Sqlite (SQLite, runSQLiteWithPath)
 import Moe.Adapter.Database.Bangumi (runBangumiQuerySQLite, runBangumiUpdateSQLite)
 import Moe.Adapter.Http.BangumiData (runBangumiDataHttp)
 import Moe.Adapter.Http.Metadata (runMetadataHttp)
 import Moe.App.Env (MoeEnv (..))
 import Moe.App.Error (MoeError)
+import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.Effect.Bangumi (BangumiQuery, BangumiUpdate)
 import Moe.Effect.BangumiData (BangumiData)
 import Moe.Effect.Metadata (Metadata)
@@ -22,6 +24,7 @@ type MoeEffects =
      BangumiUpdate,
      BangumiData,
      Metadata,
+     Log,
      SQLite,
      Error MoeError,
      IOE
@@ -31,11 +34,14 @@ type MoeM a = Eff MoeEffects a
 
 runMoe :: MoeEnv -> MoeM a -> IO (Either MoeError a)
 runMoe env app =
-  app
-    & runBangumiQuerySQLite
-    & runBangumiUpdateSQLite
-    & runBangumiDataHttp
-    & runMetadataHttp env.metadataConfig
-    & runSQLiteWithPath env.databasePath
-    & runErrorNoCallStack
-    & runEff
+  runEff
+    . runErrorNoCallStack
+    . runSQLiteWithPath env.databasePath
+    $ makeLogger env.logConfig.destination
+    $ \logger ->
+      app
+        & runBangumiQuerySQLite
+        & runBangumiUpdateSQLite
+        & runBangumiDataHttp
+        & runMetadataHttp env.metadataConfig
+        & runLog "moe-bangumi" logger env.logConfig.logLevel
