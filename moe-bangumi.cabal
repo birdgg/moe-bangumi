@@ -75,13 +75,16 @@ library
   hs-source-dirs: src
   exposed-modules:
     Moe.Domain.Bangumi.Types
+    Moe.Domain.Setting.Types
     Moe.Domain.File.Types
     Moe.Domain.File.Naming
     Moe.Domain.File.Parser
     Moe.Effect.Bangumi
     Moe.Effect.BangumiData
+    Moe.Effect.Setting
     Moe.Effect.Metadata
     Moe.Adapter.Database.Bangumi
+    Moe.Adapter.File.Setting
     Moe.Adapter.Http.BangumiData
     Moe.Adapter.Http.Metadata
     Moe.Infra.BangumiData.Types
@@ -110,6 +113,7 @@ library
     async,
     base ^>=4.21.0.0,
     bytestring,
+    directory,
     effectful,
     effectful-th,
     effectful-sqlite,
