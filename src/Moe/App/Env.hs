@@ -1,16 +1,14 @@
 module Moe.App.Env
   ( MoeEnv (..),
-    LogConfig (..),
-    LogDestination (..),
     AppEnv (..),
     defaultMoeEnv,
+    parseMoeEnv,
     getDatabasePath,
     getSettingPath,
   )
 where
 
 import Data.Text.Display (Display (..))
-import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 import System.FilePath ((</>))
 
 data AppEnv
@@ -25,10 +23,7 @@ instance Display AppEnv where
 data MoeEnv = MoeEnv
   { appEnv :: AppEnv,
     port :: Int,
-    dataFolder :: FilePath,
-    tmdbApiKey :: Text,
-    bgmtvUserAgent :: Text,
-    logConfig :: LogConfig
+    dataFolder :: FilePath
   }
   deriving stock (Eq, Show)
 
@@ -37,11 +32,26 @@ defaultMoeEnv =
   MoeEnv
     { appEnv = Development,
       port = 3000,
-      dataFolder = "./data",
-      tmdbApiKey = "",
-      bgmtvUserAgent = "moe-bangumi/0.1.0",
-      logConfig = defaultLogConfig
+      dataFolder = "./data"
     }
+
+parseMoeEnv :: IO MoeEnv
+parseMoeEnv = do
+  appEnv <- parseAppEnv <$> lookupEnv "MOE_ENV"
+  port <- parsePort <$> lookupEnv "MOE_PORT"
+  dataFolder <- parseDataFolder <$> lookupEnv "MOE_DATA_FOLDER"
+  pure MoeEnv {appEnv, port, dataFolder}
+  where
+    parseAppEnv :: Maybe String -> AppEnv
+    parseAppEnv (Just "prod") = Production
+    parseAppEnv (Just "production") = Production
+    parseAppEnv _ = Development
+
+    parsePort :: Maybe String -> Int
+    parsePort mstr = fromMaybe 3000 (mstr >>= readMaybe)
+
+    parseDataFolder :: Maybe String -> FilePath
+    parseDataFolder = fromMaybe "./data"
 
 getDatabasePath :: MoeEnv -> FilePath
 getDatabasePath env = dataFolder env </> "moe-bangumi.db"

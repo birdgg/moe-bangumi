@@ -15,7 +15,7 @@ import Moe.Adapter.Http.BangumiData (runBangumiDataHttp)
 import Moe.Adapter.Http.Metadata (runMetadataHttp)
 import Moe.App.Env (MoeEnv (..), getDatabasePath, getSettingPath)
 import Moe.App.Error (MoeError)
-import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
+import Moe.App.Logging (LogConfig (..), defaultLogConfig, makeLogger, runLog)
 import Moe.Effect.Bangumi (BangumiQuery, BangumiUpdate)
 import Moe.Effect.BangumiData (BangumiData)
 import Moe.Effect.Setting (Setting)
@@ -40,12 +40,12 @@ runMoe env app =
   runEff
     . runErrorNoCallStack
     . runSQLiteWithPath (getDatabasePath env)
-    $ makeLogger env.logConfig.destination
+    $ makeLogger defaultLogConfig.destination
     $ \logger ->
       app
         & runBangumiQuerySQLite
         & runBangumiUpdateSQLite
         & runBangumiDataHttp
-        & runMetadataHttp env
+        & runMetadataHttp
         & runSettingFile (getSettingPath env)
-        & runLog "moe-bangumi" logger env.logConfig.logLevel
+        & runLog "moe-bangumi" logger defaultLogConfig.logLevel

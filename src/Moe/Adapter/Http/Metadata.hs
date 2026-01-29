@@ -7,9 +7,11 @@ import Data.Text qualified as T
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static (Error, throwError)
-import Moe.App.Env (MetadataConfig (..))
 import Moe.App.Error (MoeError (..))
+import Moe.Domain.Setting.Types (MetadataConfig (..))
+import Moe.Domain.Setting.Types qualified as Setting
 import Moe.Effect.Metadata (Metadata (..))
+import Moe.Effect.Setting (Setting, getSetting)
 import Moe.Infra.BangumiData.Client qualified as BangumiDataClient
 import Moe.Infra.BangumiData.Types (BangumiDataItem (..), TitleTranslate (..))
 import Network.HTTP.Client (newManager)
@@ -19,23 +21,29 @@ import Servant.Client (mkClientEnv, runClientM)
 import Web.Bgmtv.Client qualified as Bgmtv
 import Web.Bgmtv.Types qualified as Bgmtv
 
+bgmtvUserAgent :: Text
+bgmtvUserAgent = "moe-bangumi/0.1.0"
+
 runMetadataHttp ::
-  (IOE :> es, Error MoeError :> es) =>
-  MetadataConfig ->
+  (IOE :> es, Error MoeError :> es, Setting :> es) =>
   Eff (Metadata : es) a ->
   Eff es a
-runMetadataHttp config = interpret $ \_ -> \case
+runMetadataHttp = interpret $ \_ -> \case
   SearchBgmtv keyword maybeYear -> do
-    let bgmtvConfig = Bgmtv.defaultConfig config.bgmtvUserAgent
+    let bgmtvConfig = Bgmtv.defaultConfig bgmtvUserAgent
         req = buildBgmtvRequest keyword maybeYear
     result <- liftIO $ Bgmtv.runBgmtv bgmtvConfig (Bgmtv.searchSubjectsM bgmtvConfig.userAgent req)
     case result of
       Left err -> throwError $ ExternalApiError ("Bgmtv search failed: " <> show err)
       Right resp -> pure resp.data_
   SearchTmdb keyword _maybeYear -> do
+    pref <- getSetting
+    apiKey <- case Setting.metadata pref of
+      Just cfg -> pure cfg.tmdbApiKey
+      Nothing -> throwError $ ExternalApiError "TMDB API key not configured"
     manager <- liftIO $ newManager tlsManagerSettings
     let clientEnv = mkClientEnv manager Tmdb.tmdbBaseUrl
-    result <- liftIO $ runClientM (Tmdb.searchMulti config.tmdbApiKey "zh-CN" keyword) clientEnv
+    result <- liftIO $ runClientM (Tmdb.searchMulti apiKey "zh-CN" keyword) clientEnv
     case result of
       Left err -> throwError $ ExternalApiError ("TMDB search failed: " <> show err)
       Right resp -> pure resp.results
