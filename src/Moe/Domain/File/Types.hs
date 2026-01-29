@@ -1,4 +1,4 @@
-module Moe.Core.File.Types
+module Moe.Domain.File.Types
   ( SubtitleLang (..),
     SubtitleList,
     VideoExt (..),

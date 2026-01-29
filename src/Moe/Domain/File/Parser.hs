@@ -1,4 +1,4 @@
-module Moe.Core.File.Parser
+module Moe.Domain.File.Parser
   ( SubscriptionTitleResult (..),
     parseTitle,
     extractGroup,
@@ -10,6 +10,6 @@ module Moe.Core.File.Parser
   )
 where
 
-import Moe.Core.Internal.File.Group
-import Moe.Core.Internal.File.Parser.Types
-import Moe.Core.Internal.File.TitleParser
+import Moe.Domain.Internal.File.Group
+import Moe.Domain.Internal.File.Parser.Types
+import Moe.Domain.Internal.File.TitleParser

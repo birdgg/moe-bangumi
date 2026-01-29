@@ -1,4 +1,4 @@
-module Moe.Adapter.Http.Metadata.Interpreter
+module Moe.Adapter.Http.Metadata
   ( runMetadataHttp,
   )
 where
@@ -7,11 +7,11 @@ import Data.Text qualified as T
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static (Error, throwError)
-import Moe.Adapter.Http.BangumiData.Client qualified as BangumiDataClient
-import Moe.Adapter.Http.BangumiData.Types (BangumiDataItem (..), TitleTranslate (..))
 import Moe.App.Env (MetadataConfig (..))
 import Moe.App.Error (MoeError (..))
 import Moe.Effect.Metadata (Metadata (..))
+import Moe.Infra.BangumiData.Client qualified as BangumiDataClient
+import Moe.Infra.BangumiData.Types (BangumiDataItem (..), TitleTranslate (..))
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.Tmdb.Client qualified as Tmdb

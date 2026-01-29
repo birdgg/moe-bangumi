@@ -1,9 +1,9 @@
-module Moe.Core.Internal.File.Parser.Types
+module Moe.Domain.Internal.File.Parser.Types
   ( SubscriptionTitleResult (..),
   )
 where
 
-import Moe.Core.File.Types (SubtitleLang)
+import Moe.Domain.File.Types (SubtitleLang)
 
 data SubscriptionTitleResult = SubscriptionTitleResult
   { episode :: Int,

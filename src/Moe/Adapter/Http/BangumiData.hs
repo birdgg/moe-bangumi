@@ -1,4 +1,4 @@
-module Moe.Adapter.Http.BangumiData.Interpreter
+module Moe.Adapter.Http.BangumiData
   ( runBangumiDataHttp,
   )
 where
@@ -6,11 +6,11 @@ where
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static (Error, throwError)
-import Moe.Adapter.Http.BangumiData.Client qualified as Client
-import Moe.Adapter.Http.BangumiData.Types (BangumiDataItem, itemToAnimeSeason)
 import Moe.App.Error (MoeError (..))
-import Moe.Core.Bangumi.Types (AnimeSeason (..), seasonToMonths)
+import Moe.Domain.Bangumi.Types (AnimeSeason (..), seasonToMonths)
 import Moe.Effect.BangumiData (BangumiData (..))
+import Moe.Infra.BangumiData.Client qualified as Client
+import Moe.Infra.BangumiData.Types (BangumiDataItem, itemToAnimeSeason)
 
 runBangumiDataHttp ::
   (IOE :> es, Error MoeError :> es) =>

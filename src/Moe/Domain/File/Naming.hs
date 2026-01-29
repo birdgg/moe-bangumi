@@ -1,4 +1,4 @@
-module Moe.Core.File.Naming
+module Moe.Domain.File.Naming
   ( generatePath,
     generateFileName,
     generateFullPath,
@@ -7,7 +7,7 @@ module Moe.Core.File.Naming
 where
 
 import Data.Text qualified as T
-import Moe.Core.File.Types
+import Moe.Domain.File.Types
 import System.FilePath ((</>))
 
 generatePath :: BangumiFile -> FilePath

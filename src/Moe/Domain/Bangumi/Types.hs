@@ -1,4 +1,4 @@
-module Moe.Core.Bangumi.Types
+module Moe.Domain.Bangumi.Types
   ( BangumiId (..),
     TmdbId (..),
     BgmtvId (..),

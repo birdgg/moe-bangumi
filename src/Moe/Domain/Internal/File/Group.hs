@@ -1,4 +1,4 @@
-module Moe.Core.Internal.File.Group
+module Moe.Domain.Internal.File.Group
   ( Group (..),
     normalizeGroup,
     knownGroups,

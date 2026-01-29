@@ -1,4 +1,4 @@
-module Moe.Adapter.Http.BangumiData.Client
+module Moe.Infra.BangumiData.Client
   ( fetchByMonth,
     fetchByMonths,
   )
@@ -6,7 +6,7 @@ where
 
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Aeson (eitherDecode)
-import Moe.Adapter.Http.BangumiData.Types (BangumiDataItem)
+import Moe.Infra.BangumiData.Types (BangumiDataItem)
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (statusCode)

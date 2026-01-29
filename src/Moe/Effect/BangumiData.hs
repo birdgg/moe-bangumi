@@ -5,17 +5,11 @@ module Moe.Effect.BangumiData
 where
 
 import Effectful
-import Effectful.Dispatch.Dynamic
-import Moe.Adapter.Http.BangumiData.Types (BangumiDataItem)
-import Moe.Core.Bangumi.Types (AnimeSeason)
+import Effectful.TH (makeEffect)
+import Moe.Domain.Bangumi.Types (AnimeSeason)
+import Moe.Infra.BangumiData.Types (BangumiDataItem)
 
 data BangumiData :: Effect where
   FetchBangumiDataByAnimeSeason :: AnimeSeason -> BangumiData m [BangumiDataItem]
 
-type instance DispatchOf BangumiData = Dynamic
-
-fetchBangumiDataByAnimeSeason ::
-  (HasCallStack, BangumiData :> es) =>
-  AnimeSeason ->
-  Eff es [BangumiDataItem]
-fetchBangumiDataByAnimeSeason = send . FetchBangumiDataByAnimeSeason
+makeEffect ''BangumiData

@@ -1,4 +1,4 @@
-module Moe.Core.Internal.File.Parser.EpisodePattern
+module Moe.Domain.Internal.File.Parser.EpisodePattern
   ( episodePatterns,
     extractFirstDigits,
     extractAfterE,

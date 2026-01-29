@@ -1,4 +1,4 @@
-module Moe.Core.Internal.File.Parser.Bracket
+module Moe.Domain.Internal.File.Parser.Bracket
   ( extractBracket,
   )
 where

@@ -6,33 +6,78 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        App Layer                             │
+│                        App Layer                            │
 │  Moe.App.*  (运行时环境、Effect 组合、程序入口)              │
 ├─────────────────────────────────────────────────────────────┤
-│                      Infra Layer                             │
-│  Moe.Infra.*  (Effect 解释器、数据库、外部服务)              │
+│                      Adapter Layer                          │
+│  Moe.Adapter.*  (Effect 解释器，run* 前缀)                  │
 ├─────────────────────────────────────────────────────────────┤
-│                     Effect Layer                             │
+│                       Infra Layer                           │
+│  Moe.Infra.*  (三方 API 封装，纯 IO)                        │
+├─────────────────────────────────────────────────────────────┤
+│                      Effect Layer                           │
 │  Moe.Effect.*  (Effect 接口定义)                            │
 ├─────────────────────────────────────────────────────────────┤
-│                      Core Layer                              │
-│  Moe.Core.*  (纯业务逻辑、领域模型、解析器)                  │
+│                      Domain Layer                           │
+│  Moe.Domain.*  (纯业务逻辑、领域模型、解析器)                │
 └─────────────────────────────────────────────────────────────┘
+```
+
+## 目录结构
+
+```
+src/Moe/
+├── Domain/                          # Layer 3: 纯业务逻辑（无 Effect）
+│   ├── Bangumi/
+│   │   └── Types.hs                 # 番剧领域模型
+│   ├── File/
+│   │   ├── Types.hs                 # 文件类型定义
+│   │   ├── Naming.hs                # 文件命名规则
+│   │   └── Parser.hs                # 标题解析器 API
+│   └── Internal/
+│       └── File/                    # 内部实现
+│
+├── Effect/                          # Layer 2: Effect 定义
+│   ├── Bangumi.hs                   # BangumiQuery, BangumiUpdate
+│   ├── BangumiData.hs               # BangumiData
+│   └── Metadata.hs                  # Metadata
+│
+├── Adapter/                         # Layer 1: Effect 实现
+│   ├── Database/
+│   │   ├── Bangumi.hs               # runBangumiQuerySQLite, runBangumiUpdateSQLite
+│   │   └── Orphans.hs               # 序列化实例
+│   └── Http/
+│       ├── BangumiData.hs           # runBangumiDataHttp
+│       └── Metadata.hs              # runMetadataHttp
+│
+├── Infra/                           # 三方 API 封装
+│   └── BangumiData/
+│       ├── Types.hs                 # API 响应类型
+│       └── Client.hs                # HTTP 客户端
+│
+├── App/                             # 应用层
+│   ├── Env.hs                       # 运行时环境配置
+│   ├── Error.hs                     # 应用级错误类型
+│   └── Monad.hs                     # MoeM 类型别名和 runMoe
+│
+└── Web/                             # Web 服务
+    ├── Server.hs
+    └── API/
 ```
 
 ## 层级职责
 
-### Layer 3: Core (`Moe.Core.*`)
+### Layer 3: Domain (`Moe.Domain.*`)
 
 **纯函数层，无任何副作用**
 
 | 模块 | 职责 |
 |------|------|
-| `Moe.Core.Model.Bangumi` | 番剧领域模型，纯数据类型 |
-| `Moe.Core.Model.Internal.Types` | 共享类型 (TmdbId, BgmtvId) |
-| `Moe.Core.Bangumi.File` | 文件命名规则公开 API |
-| `Moe.Core.Bangumi.Parser` | 标题解析器公开 API |
-| `Moe.Core.Bangumi.Internal.*` | 内部实现细节 |
+| `Moe.Domain.Bangumi.Types` | 番剧领域模型，纯数据类型 |
+| `Moe.Domain.File.Types` | 文件、集数、字幕等类型定义 |
+| `Moe.Domain.File.Naming` | 文件命名规则 |
+| `Moe.Domain.File.Parser` | 标题解析器公开 API |
+| `Moe.Domain.Internal.*` | 内部实现细节 |
 
 **设计原则**:
 - 所有函数必须是纯函数
@@ -58,49 +103,69 @@ generateFullPath :: BangumiFile -> FilePath
 
 | 模块 | 职责 |
 |------|------|
-| `Moe.Effect.Bangumi` | Bangumi CRUD 操作 Effect |
+| `Moe.Effect.Bangumi` | BangumiQuery 和 BangumiUpdate Effect |
+| `Moe.Effect.BangumiData` | BangumiData Effect |
+| `Moe.Effect.Metadata` | Metadata Effect（多源搜索） |
 
 **设计原则**:
 - 使用 Effectful 的 Dynamic dispatch
 - 只定义接口，不实现具体逻辑
-- 只依赖 Core 层的类型
+- 只依赖 Domain 层的类型
+- 使用 `effectful-th` 生成 send 函数
 
 ```haskell
-data Bangumi :: Effect where
-  GetBangumi :: BangumiId -> Bangumi m (Maybe Model.Bangumi)
-  ListBangumi :: Bangumi m [Model.Bangumi]
-  CreateBangumi :: Model.Bangumi -> Bangumi m BangumiId
-  UpdateBangumi :: Model.Bangumi -> Bangumi m ()
-  DeleteBangumi :: BangumiId -> Bangumi m ()
+data BangumiQuery :: Effect where
+  GetBangumi :: Types.BangumiId -> BangumiQuery m (Maybe Types.Bangumi)
+  ListBangumi :: BangumiQuery m [Types.Bangumi]
 
-type instance DispatchOf Bangumi = Dynamic
+makeEffect ''BangumiQuery
 ```
 
-### Layer 1: Infrastructure (`Moe.Infra.*`)
+### Layer 1: Adapter (`Moe.Adapter.*`)
 
-**Effect 解释器和外部系统集成**
+**Effect 解释器**
 
 | 模块 | 职责 |
 |------|------|
-| `Moe.Infra.Effect.Bangumi` | Bangumi Effect 的 SQLite 实现 |
-| `Moe.Infra.Persistence.Schema` | 数据库序列化实例 |
+| `Moe.Adapter.Database.Bangumi` | SQLite 数据库实现 |
+| `Moe.Adapter.Http.BangumiData` | BangumiData HTTP 实现 |
+| `Moe.Adapter.Http.Metadata` | Metadata HTTP 实现 |
 
 **设计原则**:
 - 实现 Effect 的具体解释器
-- 处理所有 IO 操作
+- 函数使用 `run*` 前缀
 - 可替换实现 (测试时用 mock)
+- 调用 Infra 层的 API
 
 ```haskell
-runBangumiSQLite
+runBangumiQuerySQLite
   :: (SQLite :> es)
-  => Eff (Bangumi : es) a
+  => Eff (BangumiQuery : es) a
   -> Eff es a
-runBangumiSQLite = interpret $ \_ -> \case
+runBangumiQuerySQLite = interpret $ \_ -> \case
   GetBangumi bid -> ...
-  CreateBangumi bangumi -> ...
+  ListBangumi -> ...
 ```
 
-### Layer 1: Application (`Moe.App.*`)
+### Infra (`Moe.Infra.*`)
+
+**三方 API 封装层（纯 IO）**
+
+| 模块 | 职责 |
+|------|------|
+| `Moe.Infra.BangumiData.Types` | API 响应类型、转换函数 |
+| `Moe.Infra.BangumiData.Client` | HTTP 客户端封装 |
+
+**设计原则**:
+- 封装三方库的原始 API
+- 纯 IO 函数，不涉及 Effect 系统
+- 定义 API 相关的类型
+
+```haskell
+fetchByMonths :: Word16 -> [Int] -> IO (Either String [BangumiDataItem])
+```
+
+### Application (`Moe.App.*`)
 
 **应用程序入口和配置**
 
@@ -108,61 +173,69 @@ runBangumiSQLite = interpret $ \_ -> \case
 |------|------|
 | `Moe.App.Env` | 运行时环境配置 |
 | `Moe.App.Error` | 应用级错误类型 |
-| `Moe.App.Monad` | App monad 类型别名 |
-| `Moe.App.Run` | Effect stack 运行器 |
+| `Moe.App.Monad` | MoeM 类型别名和 runMoe |
 
 ```haskell
-type AppEffects =
-  '[ Bangumi,
+type MoeEffects =
+  '[ BangumiQuery,
+     BangumiUpdate,
+     BangumiData,
+     Metadata,
      SQLite,
-     Error AppError,
+     Error MoeError,
      IOE
    ]
 
-type App a = Eff AppEffects a
+type MoeM a = Eff MoeEffects a
 
-runApp :: AppEnv -> App a -> IO (Either AppError a)
+runMoe :: MoeEnv -> MoeM a -> IO (Either MoeError a)
 ```
 
 ## 依赖规则
 
 ```
-Core  ←─────  Effect  ←─────  Infra
-  ↑                             ↑
-  └─────────────────────────────┘
+Domain  ←─────  Effect  ←─────  Adapter
+                  ↑                ↓
+                  └──────── Infra ─┘
                                 ↑
               App ──────────────┘
 ```
 
 | 层级 | 可依赖 | 禁止依赖 |
 |------|--------|----------|
-| Core | 无 | Effect, Infra, App |
-| Effect | Core | Infra, App |
-| Infra | Core, Effect | App |
-| App | Core, Effect, Infra | - |
+| Domain | 无 | Effect, Adapter, Infra, App |
+| Effect | Domain, Infra(Types) | Adapter, App |
+| Infra | Domain | Effect, Adapter, App |
+| Adapter | Domain, Effect, Infra | App |
+| App | Domain, Effect, Adapter, Infra | - |
 
 ## 模块导出策略
 
 ### 公开模块 (exposed-modules)
 
 ```
-Moe.Core.Bangumi.File      -- 文件命名 API
-Moe.Core.Bangumi.Parser    -- 解析器 API
-Moe.Core.Model.Bangumi     -- 领域模型
-Moe.Effect.Bangumi         -- Effect 接口
-Moe.App.Env                -- 环境配置
-Moe.App.Error              -- 错误类型
-Moe.App.Monad              -- App monad
-Moe.App.Run                -- 运行器
+Moe.Domain.Bangumi.Types    -- 领域模型
+Moe.Domain.File.Types       -- 文件类型
+Moe.Domain.File.Naming      -- 文件命名 API
+Moe.Domain.File.Parser      -- 解析器 API
+Moe.Effect.Bangumi          -- Effect 接口
+Moe.Effect.BangumiData      -- Effect 接口
+Moe.Effect.Metadata         -- Effect 接口
+Moe.Adapter.Database.Bangumi -- 数据库适配器
+Moe.Adapter.Http.BangumiData -- HTTP 适配器
+Moe.Adapter.Http.Metadata    -- HTTP 适配器
+Moe.Infra.BangumiData.Types  -- API 类型
+Moe.Infra.BangumiData.Client -- API 客户端
+Moe.App.Env                  -- 环境配置
+Moe.App.Error                -- 错误类型
+Moe.App.Monad                -- App monad
 ```
 
 ### 内部模块 (other-modules)
 
 ```
-Moe.Core.Bangumi.Internal.*
-Moe.Core.Model.Internal.*
-Moe.Infra.Effect.*
-Moe.Infra.Persistence.*
+Moe.Domain.Internal.*
+Moe.Adapter.Database.Orphans
 ```
 
 ## Effect 组合示例
@@ -172,7 +245,7 @@ Moe.Infra.Persistence.*
 ```haskell
 import Moe.Effect.Bangumi
 
-getAllBangumi :: (Bangumi :> es) => Eff es [Model.Bangumi]
+getAllBangumi :: (BangumiQuery :> es) => Eff es [Types.Bangumi]
 getAllBangumi = listBangumi
 ```
 
@@ -180,35 +253,36 @@ getAllBangumi = listBangumi
 
 ```haskell
 import Moe.Effect.Bangumi
-import Effectful.Sqlite (SQLite, withTransaction)
+import Moe.Effect.Metadata
 
-createWithTransaction
-  :: (Bangumi :> es, SQLite :> es)
-  => Model.Bangumi
-  -> Eff es BangumiId
-createWithTransaction bangumi =
-  withTransaction $ createBangumi bangumi
+searchAndCreate
+  :: (BangumiQuery :> es, Metadata :> es)
+  => Text
+  -> Eff es [Types.Bangumi]
+searchAndCreate keyword = do
+  results <- searchBgmtv keyword Nothing
+  -- ...
 ```
 
 ### 运行 App
 
 ```haskell
-import Moe.App.Env (defaultAppEnv)
-import Moe.App.Run (runApp)
+import Moe.App.Env (defaultMoeEnv)
+import Moe.App.Monad (runMoe)
 
 main :: IO ()
 main = do
-  result <- runApp defaultAppEnv $ do
-    bid <- createBangumi newBangumi
-    getBangumi bid
+  result <- runMoe defaultMoeEnv $ do
+    items <- listBangumi
+    pure items
   case result of
     Left err -> print err
-    Right bangumi -> print bangumi
+    Right items -> print items
 ```
 
 ## 测试策略
 
-### Core 层测试
+### Domain 层测试
 
 纯函数，直接测试：
 
@@ -223,10 +297,10 @@ testCase "generateFullPath" $ do
 使用 mock 解释器：
 
 ```haskell
-runBangumiMock :: Eff (Bangumi : es) a -> Eff es a
-runBangumiMock = interpret $ \_ -> \case
+runBangumiQueryMock :: Eff (BangumiQuery : es) a -> Eff es a
+runBangumiQueryMock = interpret $ \_ -> \case
   GetBangumi _ -> pure $ Just mockBangumi
-  ...
+  ListBangumi -> pure [mockBangumi]
 ```
 
 ### 集成测试
@@ -234,10 +308,10 @@ runBangumiMock = interpret $ \_ -> \case
 使用内存数据库：
 
 ```haskell
-testWithDb :: App a -> IO a
+testWithDb :: MoeM a -> IO a
 testWithDb action = do
-  env <- AppEnv ":memory:"
-  result <- runApp env action
+  let env = defaultMoeEnv { databasePath = ":memory:" }
+  result <- runMoe env action
   either (error . show) pure result
 ```
 
@@ -246,20 +320,21 @@ testWithDb action = do
 ### 添加新 Effect
 
 1. 在 `Moe.Effect/` 创建 Effect 定义
-2. 在 `Moe.Infra.Effect/` 创建解释器
-3. 在 `Moe.App.Monad` 添加到 AppEffects
-4. 在 `Moe.App.Run` 组合解释器
+2. 在 `Moe.Adapter/` 创建解释器（使用 `run*` 前缀）
+3. 在 `Moe.App.Monad` 添加到 MoeEffects
+4. 组合解释器到 runMoe
 
 ### 添加新领域模型
 
-1. 在 `Moe.Core.Model/` 创建纯数据类型
-2. 在 `Moe.Infra.Persistence.Schema` 添加序列化实例
+1. 在 `Moe.Domain/` 创建纯数据类型
+2. 在 `Moe.Adapter.Database.Orphans` 添加序列化实例
 3. 如需持久化，创建对应 Effect
 
-### 添加新业务逻辑
+### 添加新三方 API 集成
 
-1. 纯逻辑放入 `Moe.Core.*`
-2. 需要副作用的逻辑放入 `Moe.Service.*` (未来)
+1. 在 `Moe.Infra/` 创建 API 封装
+2. 定义 API 类型和客户端函数
+3. 在 `Moe.Adapter/` 创建 Effect 解释器
 
 ## 参考资源
 

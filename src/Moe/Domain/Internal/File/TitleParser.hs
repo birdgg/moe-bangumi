@@ -1,4 +1,4 @@
-module Moe.Core.Internal.File.TitleParser
+module Moe.Domain.Internal.File.TitleParser
   ( parseTitle,
     extractGroup,
     extractEpisode,
@@ -8,11 +8,11 @@ where
 
 import Data.Char (isDigit)
 import Data.Text qualified as T
-import Moe.Core.File.Types (SubtitleLang (..))
-import Moe.Core.Internal.File.Group (normalizeGroup)
-import Moe.Core.Internal.File.Parser.Bracket (extractBracket)
-import Moe.Core.Internal.File.Parser.EpisodePattern (episodePatterns)
-import Moe.Core.Internal.File.Parser.Types (SubscriptionTitleResult (..))
+import Moe.Domain.File.Types (SubtitleLang (..))
+import Moe.Domain.Internal.File.Group (normalizeGroup)
+import Moe.Domain.Internal.File.Parser.Bracket (extractBracket)
+import Moe.Domain.Internal.File.Parser.EpisodePattern (episodePatterns)
+import Moe.Domain.Internal.File.Parser.Types (SubscriptionTitleResult (..))
 import Text.Regex.TDFA ((=~))
 
 parseTitle :: Text -> Maybe SubscriptionTitleResult

@@ -28,6 +28,7 @@ common common-extensions
     PackageImports
     PolyKinds
     StrictData
+    TemplateHaskell
     TypeFamilies
     UndecidableInstances
     ViewPatterns
@@ -73,29 +74,35 @@ library
   import: common-extensions, common-ghc-options, common-relude
   hs-source-dirs: src
   exposed-modules:
-    Moe.Core.Bangumi.Types
-    Moe.Core.File.Types
-    Moe.Core.File.Naming
-    Moe.Core.File.Parser
+    Moe.Domain.Bangumi.Types
+    Moe.Domain.File.Types
+    Moe.Domain.File.Naming
+    Moe.Domain.File.Parser
     Moe.Effect.Bangumi
     Moe.Effect.BangumiData
     Moe.Effect.Metadata
     Moe.Adapter.Database.Bangumi
-    Moe.Adapter.Http.BangumiData.Types
-    Moe.Adapter.Http.BangumiData.Client
-    Moe.Adapter.Http.BangumiData.Interpreter
-    Moe.Adapter.Http.Metadata.Interpreter
+    Moe.Adapter.Http.BangumiData
+    Moe.Adapter.Http.Metadata
+    Moe.Infra.BangumiData.Types
+    Moe.Infra.BangumiData.Client
     Moe.App.Env
     Moe.App.Error
     Moe.App.Monad
+    Moe.Web.Server
+    Moe.Web.Types
+    Moe.Web.Routers
+    Moe.Web.Scalar
+    Moe.Web.API.Routes
+    Moe.Web.API.Server
 
   other-modules:
     Moe.Adapter.Database.Orphans
-    Moe.Core.Internal.File.Group
-    Moe.Core.Internal.File.TitleParser
-    Moe.Core.Internal.File.Parser.Bracket
-    Moe.Core.Internal.File.Parser.EpisodePattern
-    Moe.Core.Internal.File.Parser.Types
+    Moe.Domain.Internal.File.Group
+    Moe.Domain.Internal.File.TitleParser
+    Moe.Domain.Internal.File.Parser.Bracket
+    Moe.Domain.Internal.File.Parser.EpisodePattern
+    Moe.Domain.Internal.File.Parser.Types
 
   build-depends:
     aeson ^>=2.2,
@@ -103,18 +110,26 @@ library
     base ^>=4.21.0.0,
     bytestring,
     effectful,
+    effectful-th,
     effectful-sqlite,
     filepath,
     http-client,
     http-client-tls,
+    http-media,
     http-types,
+    mtl,
+    openapi3,
     regex-tdfa,
+    servant,
+    servant-client,
+    servant-openapi3,
+    servant-server,
     text,
     text-display,
     time,
     tmdb,
     bgmtv,
-    servant-client,
+    warp,
 
 executable moe-cli
   import: common-extensions, common-ghc-options, common-rts-options, common-relude

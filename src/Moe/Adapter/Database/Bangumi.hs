@@ -8,7 +8,7 @@ import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Sqlite (ExecuteResult (..), Only (..), SQLite, execute, executeReturning, query, query_)
 import Moe.Adapter.Database.Orphans ()
-import Moe.Core.Bangumi.Types qualified as Types
+import Moe.Domain.Bangumi.Types qualified as Types
 import Moe.Effect.Bangumi (BangumiQuery (..), BangumiUpdate (..))
 
 runBangumiQuerySQLite ::

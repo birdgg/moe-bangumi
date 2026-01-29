@@ -3,7 +3,7 @@
 module Moe.Adapter.Database.Orphans () where
 
 import Effectful.Sqlite (FromField (..), FromRow (..), SQLData (..), ToField (..), ToRow (..), field)
-import Moe.Core.Bangumi.Types
+import Moe.Domain.Bangumi.Types
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField

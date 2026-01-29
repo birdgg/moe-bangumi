@@ -1,4 +1,4 @@
-module Moe.Adapter.Http.BangumiData.Types
+module Moe.Infra.BangumiData.Types
   ( BangumiDataItem (..),
     BangumiDataSite (..),
     TitleTranslate (..),
@@ -14,7 +14,7 @@ import Data.Aeson
 import Data.Time (defaultTimeLocale, parseTimeM)
 import Data.Time.Calendar (toGregorian)
 import Data.Time.LocalTime (LocalTime (..), localDay)
-import Moe.Core.Bangumi.Types qualified as Types
+import Moe.Domain.Bangumi.Types qualified as Types
 
 data BangumiDataItem = BangumiDataItem
   { title :: Text,
