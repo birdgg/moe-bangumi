@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Moe.File.Naming
-import Moe.File.Parser
-import Moe.File.Types
+import Moe.Core.File.Naming
+import Moe.Core.File.Parser
+import Moe.Core.File.Types
 import Prelude
 import Test.Tasty
 import Test.Tasty.HUnit

@@ -20,6 +20,7 @@ cabal repl               # Start GHCi with project loaded
 - Do not add comments to code
 - No suffix for field names (use `name` not `nameField`)
 - Moe module (domain module) must remain pure - no side effects
+- After editing Haskell files, run `hlint` on changed files and apply suggestions
 
 ## Technical Stack
 

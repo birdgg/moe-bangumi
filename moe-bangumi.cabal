@@ -69,106 +69,52 @@ common common-relude
     relude (Relude as Prelude),
     relude,
 
-library bangumi-data
+library
   import: common-extensions, common-ghc-options, common-relude
-  hs-source-dirs: src/libs/bangumi-data/src
+  hs-source-dirs: src
   exposed-modules:
-    BangumiData.Types
-    BangumiData.Client
+    Moe.Core.Bangumi.Types
+    Moe.Core.File.Types
+    Moe.Core.File.Naming
+    Moe.Core.File.Parser
+    Moe.Effect.Bangumi
+    Moe.Effect.BangumiData
+    Moe.Effect.Metadata
+    Moe.Adapter.Database.Bangumi
+    Moe.Adapter.Http.BangumiData.Types
+    Moe.Adapter.Http.BangumiData.Client
+    Moe.Adapter.Http.BangumiData.Interpreter
+    Moe.Adapter.Http.Metadata.Interpreter
+    Moe.App.Env
+    Moe.App.Error
+    Moe.App.Monad
+
+  other-modules:
+    Moe.Adapter.Database.Orphans
+    Moe.Core.Internal.File.Group
+    Moe.Core.Internal.File.TitleParser
+    Moe.Core.Internal.File.Parser.Bracket
+    Moe.Core.Internal.File.Parser.EpisodePattern
+    Moe.Core.Internal.File.Parser.Types
 
   build-depends:
     aeson ^>=2.2,
+    async,
     base ^>=4.21.0.0,
     bytestring,
+    effectful,
+    effectful-sqlite,
+    filepath,
     http-client,
     http-client-tls,
-    text,
-
-library moe-file
-  import: common-extensions, common-ghc-options, common-relude
-  hs-source-dirs: src/file
-  exposed-modules:
-    Moe.File.Types
-    Moe.File.Naming
-    Moe.File.Parser
-
-  other-modules:
-    Moe.File.Internal.Group
-    Moe.File.Internal.TitleParser
-    Moe.File.Internal.Parser.Bracket
-    Moe.File.Internal.Parser.EpisodePattern
-    Moe.File.Internal.Parser.Types
-
-  build-depends:
-    base ^>=4.21.0.0,
-    filepath,
+    http-types,
     regex-tdfa,
     text,
     text-display,
-
-library
-  import: common-extensions, common-ghc-options, common-relude
-  hs-source-dirs: src/core
-  exposed-modules:
-    Moe.Environment
-    Moe.Environment.Env
-    Moe.Environment.Config
-    Moe.Model.Bangumi
-    Moe.Model.Bangumi.Types
-    Moe.Model.Bangumi.Query
-    Moe.Model.Bangumi.Update
-    Moe.Model.Bangumi.Interpreter
-    Moe.Model.Bangumi.Orphans
-    Moe.Model.BangumiData
-    Moe.Model.BangumiData.Types
-    Moe.Model.BangumiData.Query
-    Moe.Model.BangumiData.Interpreter
-    Moe.Monad
-
-  build-depends:
-    moe-bangumi:bangumi-data,
-    base ^>=4.21.0.0,
-    effectful,
-    effectful-sqlite,
-    text,
     time,
-
-library moe-web
-  import: common-extensions, common-ghc-options, common-relude
-  hs-source-dirs: src/web
-  exposed-modules:
-    MoeWeb.Server
-    MoeWeb.Routes
-    MoeWeb.Types
-    MoeWeb.API.Routes
-    MoeWeb.API.Server
-    MoeWeb.Common.Scalar
-
-  build-depends:
-    moe-bangumi,
-    base ^>=4.21.0.0,
-    bytestring,
-    effectful,
-    http-media,
-    mtl,
-    openapi3,
-    optics-core,
-    servant,
-    servant-openapi3,
-    servant-server,
-    text,
-    text-display,
-    wai,
-    wai-app-static,
-    warp,
-
-executable moe-server
-  import: common-extensions, common-ghc-options, common-rts-options, common-relude
-  main-is: Main.hs
-  hs-source-dirs: app/server
-  build-depends:
-    base ^>=4.21.0.0,
-    moe-bangumi:moe-web,
+    tmdb,
+    bgmtv,
+    servant-client,
 
 executable moe-cli
   import: common-extensions, common-ghc-options, common-rts-options, common-relude
@@ -187,6 +133,6 @@ test-suite moe-bangumi-test
   main-is: Main.hs
   build-depends:
     base ^>=4.21.0.0,
-    moe-bangumi:moe-file,
+    moe-bangumi,
     tasty,
     tasty-hunit,
