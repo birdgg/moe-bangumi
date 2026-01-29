@@ -1,0 +1,20 @@
+Codemap Diff Report
+===================
+Generated: 2026-01-30
+
+Status: Initial creation, no previous version
+
+Created Files:
+- docs/codemaps/architecture.md
+- docs/codemaps/backend.md
+- docs/codemaps/data.md
+
+Summary:
+This is the first generation of codemaps for moe-bangumi.
+No previous version exists for comparison.
+
+Changes from docs/ARCHITECTURE.md:
+- Condensed 344-line detailed documentation into 3 focused codemaps
+- architecture.md: High-level overview, tech stack, layer diagram
+- backend.md: Module tree, effect system, key modules
+- data.md: Domain models, database schema, external API types
