@@ -76,23 +76,23 @@ library
   exposed-modules:
     Moe.Domain.Bangumi.Types
     Moe.Domain.Setting.Types
+    Moe.Domain.Scheduler.Types
     Moe.Domain.File.Types
     Moe.Domain.File.Naming
     Moe.Domain.File.Parser
-    Moe.Effect.Bangumi
-    Moe.Effect.BangumiData
     Moe.Effect.Setting
     Moe.Effect.Metadata
     Moe.Adapter.Database.Bangumi
     Moe.Adapter.File.Setting
-    Moe.Adapter.Http.BangumiData
     Moe.Adapter.Http.Metadata
+    Moe.Adapter.Scheduler.Jobs
     Moe.Infra.BangumiData.Types
     Moe.Infra.BangumiData.Client
     Moe.App.Env
     Moe.App.Error
     Moe.App.Logging
     Moe.App.Monad
+    Moe.App.Scheduler
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
@@ -112,12 +112,14 @@ library
     aeson ^>=2.2,
     async,
     base ^>=4.21.0.0,
+    require-callstack,
     bytestring,
     directory,
     effectful,
     effectful-th,
     effectful-sqlite,
     filepath,
+    hashable,
     http-client,
     http-client-tls,
     http-media,
@@ -128,6 +130,7 @@ library
     openapi3,
     pretty-simple,
     regex-tdfa,
+    safe-exceptions,
     servant,
     servant-client,
     servant-openapi3,

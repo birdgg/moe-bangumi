@@ -3,14 +3,15 @@ module Moe.Domain.Bangumi.Types
     TmdbId (..),
     BgmtvId (..),
     MikanId (..),
-    AnimeSeason (..),
+    BangumiSeason (..),
     Season (..),
     Bangumi (..),
-    animeSeasonFromMonth,
-    animeSeasonToText,
+    airDateToBangumiSeason,
     seasonToMonths,
   )
 where
+
+import Data.Time.Calendar (Day, Year, toGregorian)
 
 newtype BangumiId = BangumiId Int64
   deriving stock (Eq, Show)
@@ -36,18 +37,19 @@ instance ToText Season where
   toText Summer = "Summer"
   toText Fall = "Fall"
 
-data AnimeSeason = AnimeSeason
-  { year :: Word16,
+data BangumiSeason = BangumiSeason
+  { year :: Year,
     season :: Season
   }
   deriving stock (Eq, Show, Ord)
 
-instance ToText AnimeSeason where
-  toText (AnimeSeason y s) = show y <> " " <> toText s
+instance ToText BangumiSeason where
+  toText (BangumiSeason y s) = show y <> " " <> toText s
 
-animeSeasonFromMonth :: Word16 -> Int -> AnimeSeason
-animeSeasonFromMonth y month =
-  AnimeSeason y (monthToSeason month)
+airDateToBangumiSeason :: Day -> BangumiSeason
+airDateToBangumiSeason day =
+  let (y, m, _) = toGregorian day
+   in BangumiSeason y (monthToSeason m)
 
 monthToSeason :: Int -> Season
 monthToSeason m
@@ -55,9 +57,6 @@ monthToSeason m
   | m >= 4 && m <= 6 = Spring
   | m >= 7 && m <= 9 = Summer
   | otherwise = Fall
-
-animeSeasonToText :: AnimeSeason -> Text
-animeSeasonToText = toText
 
 seasonToMonths :: Season -> [Int]
 seasonToMonths Winter = [1, 2, 3]
@@ -68,12 +67,10 @@ seasonToMonths Fall = [10, 11, 12]
 data Bangumi = Bangumi
   { id :: Maybe BangumiId,
     name :: Text,
-    year :: Maybe Word16,
-    animeSeason :: Maybe AnimeSeason,
+    airDate :: Maybe Day,
     mikanId :: Maybe MikanId,
     tmdbId :: Maybe TmdbId,
     bgmtvId :: Maybe BgmtvId,
-    posterUrl :: Maybe Text,
-    overview :: Maybe Text
+    posterUrl :: Maybe Text
   }
   deriving stock (Eq, Show)

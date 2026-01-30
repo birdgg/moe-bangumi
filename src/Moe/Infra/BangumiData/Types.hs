@@ -5,14 +5,13 @@ module Moe.Infra.BangumiData.Types
     extractMikanId,
     extractBgmtvId,
     extractTmdbId,
-    itemToAnimeSeason,
     toBangumi,
   )
 where
 
 import Data.Aeson
 import Data.Time (defaultTimeLocale, parseTimeM)
-import Data.Time.Calendar (toGregorian)
+import Data.Time.Calendar (Day)
 import Data.Time.LocalTime (LocalTime (..), localDay)
 import Moe.Domain.Bangumi.Types qualified as Types
 
@@ -78,27 +77,24 @@ findSiteId siteName = fmap (.siteId) . find (\s -> s.site == siteName)
 parseId :: (Word32 -> a) -> Text -> Maybe a
 parseId constructor t = constructor <$> readMaybe (toString t)
 
-itemToAnimeSeason :: BangumiDataItem -> Maybe Types.AnimeSeason
-itemToAnimeSeason item = item.begin >>= parseAnimeSeasonFromISO8601
+parseAirDate :: BangumiDataItem -> Maybe Day
+parseAirDate item = item.begin >>= parseAirDateFromISO8601
 
-parseAnimeSeasonFromISO8601 :: Text -> Maybe Types.AnimeSeason
-parseAnimeSeasonFromISO8601 t = do
+parseAirDateFromISO8601 :: Text -> Maybe Day
+parseAirDateFromISO8601 t = do
   localTime <- parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%S%Q%Z" (toString t)
-  let (y, m, _) = toGregorian (localDay (localTime :: LocalTime))
-  pure $ Types.animeSeasonFromMonth (fromIntegral y) m
+  pure $ localDay (localTime :: LocalTime)
 
 toBangumi :: BangumiDataItem -> Types.Bangumi
 toBangumi item =
   Types.Bangumi
     { id = Nothing,
       name = selectName item,
-      year = fmap (.year) (itemToAnimeSeason item),
-      animeSeason = itemToAnimeSeason item,
+      airDate = parseAirDate item,
       mikanId = extractMikanId item.sites,
       tmdbId = extractTmdbId item.sites,
       bgmtvId = extractBgmtvId item.sites,
-      posterUrl = Nothing,
-      overview = Nothing
+      posterUrl = Nothing
     }
 
 selectName :: BangumiDataItem -> Text
