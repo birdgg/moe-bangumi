@@ -67,6 +67,7 @@ library
   import: common-extensions, common-ghc-options
   hs-source-dirs: src
   exposed-modules:
+    Moe.Prelude
     Moe.Domain.Bangumi.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Scheduler.Types
@@ -107,6 +108,7 @@ library
     aeson ^>=2.2,
     async,
     base ^>=4.21.0.0,
+    containers,
     require-callstack,
     bytestring,
     directory,
