@@ -4,7 +4,10 @@ module Moe.App.BangumiSync
   )
 where
 
+import Control.Applicative ((<|>))
 import Control.Monad (forM_, void)
+import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.Conversions (ToText (..))
 import Effectful
@@ -35,7 +38,6 @@ syncBangumiSeason ::
   BangumiSeason ->
   Eff es [Bangumi]
 syncBangumiSeason forceRefresh season = do
-  Log.logInfo_ $ "Syncing bangumi for season: " <> toText season
   existing <- notransact $ DB.listBangumiBySeason season
   if null existing || forceRefresh
     then fetchAndStoreBangumiSeason season
@@ -56,13 +58,11 @@ fetchAndStoreBangumiSeason ::
 fetchAndStoreBangumiSeason season = do
   Log.logInfo_ $ "Fetching bangumi-data for season: " <> toText season
   items <- fetchBangumiDataBySeason season
-  Log.logInfo_ $ "Found " <> T.pack (show (length items)) <> " items from bangumi-data"
   let basicBangumis = map toBangumi items
   enrichedBangumis <- mapM enrichWithDetails basicBangumis
   transact $ do
     forM_ enrichedBangumis $ \b -> do
       void $ DB.upsertBangumi b
-  Log.logInfo_ $ "Stored " <> T.pack (show (length enrichedBangumis)) <> " bangumi"
   pure enrichedBangumis
 
 enrichWithDetails ::
@@ -70,29 +70,23 @@ enrichWithDetails ::
   Bangumi ->
   Eff es Bangumi
 enrichWithDetails bangumi = do
-  case bangumi.bgmtvId of
-    Just (BgmtvId bid) -> do
-      mDetail <- getBgmtvDetail bid
-      case mDetail of
-        Just detail -> pure $ applyBgmtvDetail detail bangumi
-        Nothing -> tryTmdbEnrich bangumi
-    Nothing -> tryTmdbEnrich bangumi
+  result <- runMaybeT $ tryBgmtvEnrich <|> tryTmdbEnrich
+  pure $ fromMaybe bangumi result
+  where
+    tryBgmtvEnrich = do
+      BgmtvId bid <- MaybeT $ pure bangumi.bgmtvId
+      detail <- MaybeT $ getBgmtvDetail bid
+      pure $ applyBgmtvDetail detail bangumi
 
-tryTmdbEnrich ::
-  (Metadata :> es, IOE :> es) =>
-  Bangumi ->
-  Eff es Bangumi
-tryTmdbEnrich bangumi =
-  case bangumi.tmdbId of
-    Just (TmdbId tid) -> do
+    tryTmdbEnrich = do
+      TmdbId tid <- MaybeT $ pure bangumi.tmdbId
       case bangumi.kind of
         Tv -> do
-          mDetail <- getTmdbTvDetail tid
-          pure $ maybe bangumi (`applyTmdbTvDetail` bangumi) mDetail
+          detail <- MaybeT $ getTmdbTvDetail tid
+          pure $ applyTmdbTvDetail detail bangumi
         Movie -> do
-          mDetail <- getTmdbMovieDetail tid
-          pure $ maybe bangumi (`applyTmdbMovieDetail` bangumi) mDetail
-    Nothing -> pure bangumi
+          detail <- MaybeT $ getTmdbMovieDetail tid
+          pure $ applyTmdbMovieDetail detail bangumi
 
 applyBgmtvDetail :: Bgmtv.SubjectDetail -> Bangumi -> Bangumi
 applyBgmtvDetail detail b =

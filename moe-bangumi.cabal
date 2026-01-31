@@ -125,6 +125,7 @@ library
     log-base,
     log-effectful,
     mtl,
+    transformers,
     openapi3,
     pretty-simple,
     regex-tdfa,
