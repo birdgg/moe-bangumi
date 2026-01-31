@@ -15,4 +15,4 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/bgmtv-hs.git
-  tag: main
+  tag: 48751858543bfd3b699cc510bf8f4e6bd2718b08

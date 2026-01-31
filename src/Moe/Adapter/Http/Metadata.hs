@@ -26,6 +26,11 @@ import Web.Bgmtv.Types qualified as Bgmtv
 bgmtvUserAgent :: Text
 bgmtvUserAgent = "moe-bangumi/0.1.0"
 
+mkBgmtvClient :: Manager -> Bgmtv.BgmtvClient
+mkBgmtvClient = Bgmtv.newBgmtvClientWith ?? Bgmtv.defaultConfig bgmtvUserAgent
+  where
+    (??) = flip
+
 runMetadataHttp ::
   (IOE :> es, Error MoeError :> es, Setting :> es) =>
   Manager ->
@@ -33,9 +38,9 @@ runMetadataHttp ::
   Eff es a
 runMetadataHttp manager = interpret $ \_ -> \case
   SearchBgmtv keyword maybeYear -> do
-    let bgmtvConfig = Bgmtv.defaultConfig bgmtvUserAgent
+    let bgmtvClient = mkBgmtvClient manager
         req = buildBgmtvRequest keyword maybeYear
-    result <- liftIO $ Bgmtv.runBgmtv bgmtvConfig (Bgmtv.searchSubjectsM bgmtvConfig.userAgent req)
+    result <- liftIO $ bgmtvClient.searchSubjects req
     case result of
       Left err -> throwError $ ExternalApiError ("Bgmtv search failed: " <> T.pack (show err))
       Right resp -> pure resp.data_
@@ -57,8 +62,8 @@ runMetadataHttp manager = interpret $ \_ -> \case
       Left err -> throwError $ ExternalApiError ("BangumiData fetch failed: " <> T.pack err)
       Right items -> pure $ filter (matchesKeyword keyword) items
   GetBgmtvDetail bgmtvId -> do
-    let bgmtvConfig = Bgmtv.defaultConfig bgmtvUserAgent
-    result <- liftIO $ Bgmtv.getSubject bgmtvConfig (fromIntegral bgmtvId)
+    let bgmtvClient = mkBgmtvClient manager
+    result <- liftIO $ bgmtvClient.getSubject (Bgmtv.SubjectId (fromIntegral bgmtvId))
     pure $ either (const Nothing) Just result
   GetTmdbTvDetail tmdbId -> do
     pref <- getSetting
