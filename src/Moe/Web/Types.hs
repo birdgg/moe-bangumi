@@ -5,6 +5,7 @@ module Moe.Web.Types
 where
 
 import Effectful
+import Effectful.Concurrent (Concurrent)
 import Effectful.Error.Static (Error)
 import Effectful.Log (Log)
 import Effectful.Reader.Static qualified as Reader
@@ -24,6 +25,7 @@ type MoeEffects =
      Error ServerError,
      Log,
      Sqlite,
+     Concurrent,
      Reader.Reader MoeEnv,
      IOE
    ]

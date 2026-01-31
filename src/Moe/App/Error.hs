@@ -3,6 +3,8 @@ module Moe.App.Error
   )
 where
 
+import Data.Text (Text)
+
 data MoeError
   = DatabaseError Text
   | NotFound Text

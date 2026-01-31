@@ -7,6 +7,9 @@ module Moe.Domain.Internal.File.TitleParser
 where
 
 import Data.Char (isDigit)
+import Data.List (sort)
+import Data.Maybe (mapMaybe, listToMaybe)
+import Data.Text (Text)
 import Data.Text qualified as T
 import Moe.Domain.File.Types (SubtitleLang (..))
 import Moe.Domain.Internal.File.Group (normalizeGroup)
@@ -33,7 +36,7 @@ preprocess =
     . T.replace "】" "]"
   where
     removeTechnicalSpecs t =
-      unwords $ filter (not . isTechnicalSpec) $ words t
+      T.unwords $ filter (not . isTechnicalSpec) $ T.words t
 
     isTechnicalSpec word =
       let lower = T.toLower word
@@ -67,3 +70,11 @@ extractSubtitles t =
     matchesCht = t =~ ("繁|CHT|BIG5" :: Text)
     matchesJpn = t =~ ("日|JP|JPSC" :: Text)
     matchesEng = t =~ ("ENG|英语|英文" :: Text)
+
+ordNub :: (Ord a) => [a] -> [a]
+ordNub = go mempty
+  where
+    go _ [] = []
+    go seen (x : xs)
+      | x `elem` seen = go seen xs
+      | otherwise = x : go (x : seen) xs

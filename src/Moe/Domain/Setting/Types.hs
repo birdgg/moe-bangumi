@@ -9,6 +9,8 @@ module Moe.Domain.Setting.Types
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
+import GHC.Generics (Generic)
 
 data DownloaderConfig = DownloaderConfig
   { url :: Text,

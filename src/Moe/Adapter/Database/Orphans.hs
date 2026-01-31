@@ -2,8 +2,18 @@
 
 module Moe.Adapter.Database.Orphans () where
 
+import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Text.Conversions (ToText (..))
 import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..), field)
-import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiId (..), BgmtvId (..), MikanId (..), TmdbId (..))
+import Moe.Domain.Bangumi.Types
+  ( Bangumi (..),
+    BangumiId (..),
+    BangumiKind (..),
+    BgmtvId (..),
+    MikanId (..),
+    TmdbId (..),
+  )
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField
@@ -29,10 +39,24 @@ instance FromField MikanId where
 instance ToField MikanId where
   toField (MikanId i) = toField i
 
+instance FromField BangumiKind where
+  fromField f = do
+    t <- fromField @Text f
+    case t of
+      "tv" -> pure Tv
+      "movie" -> pure Movie
+      _ -> fail $ "Invalid kind: " <> T.unpack t
+
+instance ToField BangumiKind where
+  toField = toField . toText
+
 instance FromRow Bangumi where
   fromRow =
     Bangumi
       <$> field
+      <*> field
+      <*> field
+      <*> field
       <*> field
       <*> field
       <*> field
@@ -44,8 +68,11 @@ instance ToRow Bangumi where
   toRow b =
     toRow
       ( b.id,
-        b.name,
+        b.titleChs,
+        b.titleJap,
         b.airDate,
+        b.seasonNumber,
+        b.kind,
         b.mikanId,
         b.tmdbId,
         b.bgmtvId,

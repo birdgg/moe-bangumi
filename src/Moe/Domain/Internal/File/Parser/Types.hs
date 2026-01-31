@@ -3,6 +3,7 @@ module Moe.Domain.Internal.File.Parser.Types
   )
 where
 
+import Data.Text (Text)
 import Moe.Domain.File.Types (SubtitleLang)
 
 data SubscriptionTitleResult = SubscriptionTitleResult

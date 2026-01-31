@@ -4,6 +4,7 @@ module Moe.Adapter.File.Setting
 where
 
 import Data.Aeson (eitherDecodeFileStrict, encodeFile)
+import Data.Either (fromRight)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 import Moe.Domain.Setting.Types (defaultUserPreference)

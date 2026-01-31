@@ -1,6 +1,7 @@
 module Moe.Web.Routers where
 
 import Data.OpenApi (OpenApi)
+import GHC.Generics (Generic)
 import Servant.API
 
 import Moe.Web.API.Routes qualified as API

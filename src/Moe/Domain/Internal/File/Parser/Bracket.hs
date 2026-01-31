@@ -3,6 +3,7 @@ module Moe.Domain.Internal.File.Parser.Bracket
   )
 where
 
+import Data.Text (Text)
 import Data.Text qualified as T
 
 extractBracket :: Text -> Maybe Text

@@ -7,7 +7,9 @@ module Moe.Domain.Internal.File.Parser.EpisodePattern
 where
 
 import Data.Char (isDigit)
+import Data.Text (Text)
 import Data.Text qualified as T
+import Text.Read (readMaybe)
 
 episodePatterns :: [(Text, Text -> Maybe Int)]
 episodePatterns =
@@ -24,7 +26,7 @@ episodePatterns =
 extractFirstDigits :: Text -> Maybe Int
 extractFirstDigits t =
   let digits = T.takeWhile isDigit $ T.dropWhile (not . isDigit) t
-   in if T.null digits then Nothing else readMaybe (toString digits)
+   in if T.null digits then Nothing else readMaybe (T.unpack digits)
 
 extractAfterE :: Text -> Maybe Int
 extractAfterE t =
@@ -32,7 +34,7 @@ extractAfterE t =
     (_, rest)
       | T.length rest > 1 ->
           let digits = T.takeWhile isDigit (T.drop 1 rest)
-           in if T.null digits then Nothing else readMaybe (toString digits)
+           in if T.null digits then Nothing else readMaybe (T.unpack digits)
     _ -> Nothing
 
 extractAfterEP :: Text -> Maybe Int
@@ -41,4 +43,4 @@ extractAfterEP t =
       afterE = T.drop 1 $ snd $ T.breakOn "E" upper
       afterP = if T.isPrefixOf "P" afterE then T.drop 1 afterE else afterE
       digits = T.takeWhile isDigit afterP
-   in if T.null digits then Nothing else readMaybe (toString digits)
+   in if T.null digits then Nothing else readMaybe (T.unpack digits)

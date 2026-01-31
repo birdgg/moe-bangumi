@@ -5,6 +5,8 @@ module Moe.Domain.Internal.File.Group
   )
 where
 
+import Data.List (find)
+import Data.Text (Text)
 import Data.Text qualified as T
 
 data Group = Group

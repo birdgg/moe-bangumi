@@ -13,9 +13,13 @@ module Moe.App.Env
   )
 where
 
+import Data.Maybe (fromMaybe)
 import Data.Text.Display (Display (..))
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
+import Numeric.Natural (Natural)
+import System.Environment (lookupEnv)
 import System.FilePath ((</>))
+import Text.Read (readMaybe)
 
 data AppEnv
   = Development

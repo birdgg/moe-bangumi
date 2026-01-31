@@ -5,13 +5,29 @@ module Moe.Domain.Bangumi.Types
     MikanId (..),
     BangumiSeason (..),
     Season (..),
+    BangumiKind (..),
     Bangumi (..),
     airDateToBangumiSeason,
     seasonToMonths,
+    seasonFromText,
+    bangumiSeasonFromText,
+    bangumiSeasonToText,
+    getCurrentBangumiSeason,
+    getBangumiSeason,
   )
 where
 
+import Data.Int (Int64)
+import Data.OpenApi (ToParamSchema (..), toParamSchema)
+import Data.Proxy (Proxy (..))
+import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Text.Conversions (ToText (..))
+import Data.Time (getCurrentTime, utctDay)
 import Data.Time.Calendar (Day, Year, toGregorian)
+import Data.Word (Word32)
+import Text.Read (readMaybe)
+import Web.HttpApiData (FromHttpApiData (..))
 
 newtype BangumiId = BangumiId Int64
   deriving stock (Eq, Show)
@@ -31,6 +47,14 @@ newtype MikanId = MikanId Word32
 data Season = Winter | Spring | Summer | Fall
   deriving stock (Eq, Show, Ord, Enum, Bounded)
 
+instance FromHttpApiData Season where
+  parseUrlPiece t = case seasonFromText t of
+    Just s -> Right s
+    Nothing -> Left $ "Invalid season: " <> t
+
+instance ToParamSchema Season where
+  toParamSchema _ = toParamSchema (Proxy @Text)
+
 instance ToText Season where
   toText Winter = "Winter"
   toText Spring = "Spring"
@@ -43,8 +67,34 @@ data BangumiSeason = BangumiSeason
   }
   deriving stock (Eq, Show, Ord)
 
+instance FromHttpApiData BangumiSeason where
+  parseUrlPiece t = case bangumiSeasonFromText t of
+    Just s -> Right s
+    Nothing -> Left $ "Invalid BangumiSeason: " <> t
+
 instance ToText BangumiSeason where
-  toText (BangumiSeason y s) = show y <> " " <> toText s
+  toText = bangumiSeasonToText
+
+bangumiSeasonToText :: BangumiSeason -> Text
+bangumiSeasonToText (BangumiSeason y s) = T.pack (show y) <> "-" <> toText s
+
+bangumiSeasonFromText :: Text -> Maybe BangumiSeason
+bangumiSeasonFromText t = case T.splitOn "-" t of
+  [yearText, seasonText] -> do
+    year <- readMaybe (T.unpack yearText)
+    season <- seasonFromText seasonText
+    pure $ BangumiSeason year season
+  _ -> Nothing
+
+seasonFromText :: Text -> Maybe Season
+seasonFromText "Winter" = Just Winter
+seasonFromText "Spring" = Just Spring
+seasonFromText "Summer" = Just Summer
+seasonFromText "Fall" = Just Fall
+seasonFromText _ = Nothing
+
+getCurrentBangumiSeason :: IO BangumiSeason
+getCurrentBangumiSeason = airDateToBangumiSeason . utctDay <$> getCurrentTime
 
 airDateToBangumiSeason :: Day -> BangumiSeason
 airDateToBangumiSeason day =
@@ -64,13 +114,26 @@ seasonToMonths Spring = [4, 5, 6]
 seasonToMonths Summer = [7, 8, 9]
 seasonToMonths Fall = [10, 11, 12]
 
+data BangumiKind = Tv | Movie
+  deriving stock (Eq, Show, Ord, Enum, Bounded)
+
+instance ToText BangumiKind where
+  toText Tv = "tv"
+  toText Movie = "movie"
+
 data Bangumi = Bangumi
   { id :: Maybe BangumiId,
-    name :: Text,
+    titleChs :: Text,
+    titleJap :: Maybe Text,
     airDate :: Maybe Day,
+    seasonNumber :: Maybe Word32,
+    kind :: BangumiKind,
     mikanId :: Maybe MikanId,
     tmdbId :: Maybe TmdbId,
     bgmtvId :: Maybe BgmtvId,
     posterUrl :: Maybe Text
   }
   deriving stock (Eq, Show)
+
+getBangumiSeason :: Bangumi -> Maybe BangumiSeason
+getBangumiSeason b = airDateToBangumiSeason <$> b.airDate

@@ -63,15 +63,8 @@ common common-rts-options
     -threaded
     "-with-rtsopts=-N -T"
 
-common common-relude
-  build-depends: relude ^>=1.2
-  mixins:
-    base hiding (Prelude),
-    relude (Relude as Prelude),
-    relude,
-
 library
-  import: common-extensions, common-ghc-options, common-relude
+  import: common-extensions, common-ghc-options
   hs-source-dirs: src
   exposed-modules:
     Moe.Domain.Bangumi.Types
@@ -93,12 +86,14 @@ library
     Moe.App.Logging
     Moe.App.Monad
     Moe.App.Scheduler
+    Moe.App.BangumiSync
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
     Moe.Web.Scalar
     Moe.Web.API.Routes
     Moe.Web.API.Server
+    Moe.Web.API.Types
 
   other-modules:
     Moe.Adapter.Database.Orphans
@@ -120,6 +115,7 @@ library
     effectful-sqlite,
     filepath,
     hashable,
+    http-api-data,
     http-client,
     http-client-tls,
     http-media,
@@ -136,6 +132,7 @@ library
     servant-openapi3,
     servant-server,
     text,
+    text-conversions,
     text-display,
     time,
     tmdb,
@@ -143,17 +140,15 @@ library
     warp,
 
 executable moe-cli
-  import: common-extensions, common-ghc-options, common-rts-options, common-relude
+  import: common-extensions, common-ghc-options, common-rts-options
   main-is: Main.hs
   hs-source-dirs: app/cli
   build-depends:
     base ^>=4.21.0.0,
     moe-bangumi,
-    optparse-applicative,
-    text,
 
 test-suite moe-bangumi-test
-  import: common-extensions, common-ghc-options, common-relude
+  import: common-extensions, common-ghc-options
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Main.hs

@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Data.List (sort)
 import Moe.Domain.File.Naming
 import Moe.Domain.File.Parser
 import Moe.Domain.File.Types

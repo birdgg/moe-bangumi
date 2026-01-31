@@ -9,11 +9,17 @@ module Moe.Infra.BangumiData.Types
   )
 where
 
+import Control.Monad ((>=>))
 import Data.Aeson
+import Data.List (find)
+import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, parseTimeM)
 import Data.Time.Calendar (Day)
 import Data.Time.LocalTime (LocalTime (..), localDay)
+import Data.Word (Word32)
 import Moe.Domain.Bangumi.Types qualified as Types
+import Text.Read (readMaybe)
 
 data BangumiDataItem = BangumiDataItem
   { title :: Text,
@@ -75,30 +81,37 @@ findSiteId :: Text -> [BangumiDataSite] -> Maybe Text
 findSiteId siteName = fmap (.siteId) . find (\s -> s.site == siteName)
 
 parseId :: (Word32 -> a) -> Text -> Maybe a
-parseId constructor t = constructor <$> readMaybe (toString t)
+parseId constructor t = constructor <$> readMaybe (T.unpack t)
 
 parseAirDate :: BangumiDataItem -> Maybe Day
 parseAirDate item = item.begin >>= parseAirDateFromISO8601
 
 parseAirDateFromISO8601 :: Text -> Maybe Day
 parseAirDateFromISO8601 t = do
-  localTime <- parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%S%Q%Z" (toString t)
+  localTime <- parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%S%Q%Z" (T.unpack t)
   pure $ localDay (localTime :: LocalTime)
 
 toBangumi :: BangumiDataItem -> Types.Bangumi
 toBangumi item =
   Types.Bangumi
     { id = Nothing,
-      name = selectName item,
+      titleChs = selectChsName item,
+      titleJap = Just item.title,
       airDate = parseAirDate item,
+      seasonNumber = Nothing,
+      kind = parseKind item.itemType,
       mikanId = extractMikanId item.sites,
       tmdbId = extractTmdbId item.sites,
       bgmtvId = extractBgmtvId item.sites,
       posterUrl = Nothing
     }
 
-selectName :: BangumiDataItem -> Text
-selectName item =
+parseKind :: Text -> Types.BangumiKind
+parseKind "movie" = Types.Movie
+parseKind _ = Types.Tv
+
+selectChsName :: BangumiDataItem -> Text
+selectChsName item =
   case item.titleTranslate.zhHans of
     (n : _) -> n
     [] -> case item.titleTranslate.zhHant of

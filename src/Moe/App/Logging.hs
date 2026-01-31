@@ -10,12 +10,16 @@ where
 
 import Data.Aeson qualified as Aeson
 import Data.ByteString.Char8 qualified as BS
+import Data.ByteString.Lazy qualified as LBS
+import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Time.Clock (diffUTCTime, getCurrentTime, nominalDiffTimeToSeconds)
 import Effectful
 import Effectful.Log (Log, LogLevel (..), Logger)
 import Effectful.Log qualified as Log
 import Log.Internal.Logger (withLogger)
 import Log.Logger (mkLogger)
+import System.IO (stdout)
 import Text.Pretty.Simple (pPrintLightBg)
 
 data LogDestination
@@ -51,7 +55,7 @@ withJSONFileBackend :: (IOE :> es) => FilePath -> (Logger -> Eff es a) -> Eff es
 withJSONFileBackend path action = withRunInIO $ \unlift -> do
   liftIO $ BS.hPutStrLn stdout $ BS.pack $ "Redirecting logs to " <> path
   logger <- liftIO $ mkLogger "file-json" $ \msg ->
-    BS.appendFile path (toStrict $ Aeson.encode msg <> "\n")
+    BS.appendFile path (LBS.toStrict $ Aeson.encode msg <> "\n")
   withLogger logger (unlift . action)
 
 runLog :: (IOE :> es) => Text -> Logger -> LogLevel -> Eff (Log : es) a -> Eff es a
@@ -63,5 +67,5 @@ timeAction label action = do
   result <- action
   end <- liftIO getCurrentTime
   let elapsed = realToFrac (nominalDiffTimeToSeconds (diffUTCTime end start)) * 1000 :: Double
-  Log.logInfo_ $ label <> " took " <> show elapsed <> "ms"
+  Log.logInfo_ $ label <> " took " <> T.pack (show elapsed) <> "ms"
   pure result

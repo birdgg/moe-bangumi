@@ -6,6 +6,7 @@ where
 
 import Control.Concurrent.Async (mapConcurrently)
 import Data.Aeson (eitherDecode)
+import Data.Word (Word16)
 import Moe.Infra.BangumiData.Types (BangumiDataItem)
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)

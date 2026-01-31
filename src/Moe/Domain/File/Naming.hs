@@ -6,7 +6,10 @@ module Moe.Domain.File.Naming
   )
 where
 
+import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Conversions (ToText (..))
+import Data.Word (Word8)
 import Moe.Domain.File.Types
 import System.FilePath ((</>))
 
@@ -15,10 +18,10 @@ generatePath file = case file.content of
   Episode epType -> showBaseName file.meta </> episodeDir epType
   Extra _ -> showBaseName file.meta </> "extras"
   TrailerItem _ -> showBaseName file.meta </> "trailers"
-  Movie movieYear -> toString $ nameWithYear file.meta.name movieYear
+  Movie movieYear -> T.unpack $ nameWithYear file.meta.name movieYear
 
 generateFileName :: BangumiFile -> FilePath
-generateFileName file = toString $ baseName <> extension
+generateFileName file = T.unpack $ baseName <> extension
   where
     baseName = case file.content of
       Episode epType -> episodeBaseName file.meta.name epType
@@ -41,16 +44,16 @@ sanitizeName = T.map replaceChar . T.filter (`notElem` forbiddenChars)
     replaceChar c = c
 
 showBaseName :: BangumiMeta -> FilePath
-showBaseName meta = toString $ case meta.year of
+showBaseName meta = T.unpack $ case meta.year of
   Just year -> nameWithYear meta.name year
   Nothing -> sanitizeName meta.name
 
 nameWithYear :: Text -> Year -> Text
-nameWithYear name (Year y) = sanitizeName name <> " (" <> show y <> ")"
+nameWithYear name (Year y) = sanitizeName name <> " (" <> T.pack (show y) <> ")"
 
 episodeDir :: EpisodeType -> FilePath
 episodeDir = \case
-  Regular (SeasonNum s) _ -> toString $ "Season " <> padded s
+  Regular (SeasonNum s) _ -> T.unpack $ "Season " <> padded s
   Special _ -> "Season 00"
 
 episodeBaseName :: Text -> EpisodeType -> Text
@@ -63,19 +66,19 @@ episodeBaseName name = \case
 extraBaseName :: ExtraContent -> Text
 extraBaseName = \case
   NCOP Nothing -> "NCOP"
-  NCOP (Just (Index i)) -> "NCOP" <> show i
+  NCOP (Just (Index i)) -> "NCOP" <> T.pack (show i)
   NCED Nothing -> "NCED"
-  NCED (Just (Index i)) -> "NCED" <> show i
+  NCED (Just (Index i)) -> "NCED" <> T.pack (show i)
   Menu Nothing -> "Menu"
-  Menu (Just (Index i)) -> "Menu" <> show i
+  Menu (Just (Index i)) -> "Menu" <> T.pack (show i)
 
 trailerBaseName :: TrailerContent -> Text
 trailerBaseName = \case
-  PV (Index i) -> "PV" <> show i
+  PV (Index i) -> "PV" <> T.pack (show i)
   Preview -> "Preview"
   Trailer -> "Trailer"
   CM Nothing -> "CM"
-  CM (Just (Index i)) -> "CM" <> show i
+  CM (Just (Index i)) -> "CM" <> T.pack (show i)
 
 fileTypeExtension :: FileType -> Text
 fileTypeExtension = \case
@@ -84,5 +87,5 @@ fileTypeExtension = \case
 
 padded :: Word8 -> Text
 padded n
-  | n < 10 = "0" <> show n
-  | otherwise = show n
+  | n < 10 = "0" <> T.pack (show n)
+  | otherwise = T.pack (show n)
