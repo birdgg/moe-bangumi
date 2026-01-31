@@ -12,16 +12,13 @@ import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static (Error, throwError)
 import Moe.App.Error (MoeError (..))
 import Moe.Domain.Bangumi.Types qualified as BangumiTypes
-import Moe.Domain.Setting.Types (MetadataConfig (..))
 import Moe.Domain.Setting.Types qualified as Setting
 import Moe.Effect.Metadata (Metadata (..))
 import Moe.Effect.Setting (Setting, getSetting)
 import Moe.Infra.BangumiData.Client qualified as BangumiDataClient
 import Moe.Infra.BangumiData.Types (BangumiDataItem (..), TitleTranslate (..))
-import Network.HTTP.Client (newManager)
-import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.Tmdb.Client qualified as Tmdb
-import Servant.Client (ClientError, mkClientEnv, runClientM)
+import Network.Tmdb qualified as Tmdb
+import Servant.Client (ClientError)
 import Web.Bgmtv.Client qualified as Bgmtv
 import Web.Bgmtv.Types qualified as Bgmtv
 
@@ -42,15 +39,14 @@ runMetadataHttp = interpret $ \_ -> \case
       Right resp -> pure resp.data_
   SearchTmdb keyword _maybeYear -> do
     pref <- getSetting
-    apiKey <- case Setting.metadata pref of
-      Just cfg -> pure cfg.tmdbApiKey
+    case Setting.tmdb pref of
       Nothing -> throwError $ ExternalApiError "TMDB API key not configured"
-    manager <- liftIO $ newManager tlsManagerSettings
-    let clientEnv = mkClientEnv manager Tmdb.tmdbBaseUrl
-    result <- liftIO $ runClientM (Tmdb.searchMulti apiKey "zh-CN" keyword) clientEnv
-    case result of
-      Left err -> throwError $ ExternalApiError ("TMDB search failed: " <> T.pack (show err))
-      Right resp -> pure resp.results
+      Just cfg -> do
+        client <- liftIO $ Tmdb.newTmdbClient (Tmdb.TmdbConfig cfg.apiKey "zh-CN")
+        result <- liftIO $ Tmdb.searchMulti client keyword
+        case result of
+          Left err -> throwError $ ExternalApiError ("TMDB search failed: " <> T.pack (show err))
+          Right resp -> pure resp.results
   SearchBangumiData keyword maybeYear -> do
     let targetYear = fromMaybe 2024 maybeYear
         months = [1 .. 12]
@@ -64,21 +60,19 @@ runMetadataHttp = interpret $ \_ -> \case
     pure $ either (const Nothing) Just result
   GetTmdbTvDetail tmdbId -> do
     pref <- getSetting
-    case Setting.metadata pref of
+    case Setting.tmdb pref of
       Nothing -> pure Nothing
       Just cfg -> do
-        manager <- liftIO $ newManager tlsManagerSettings
-        let clientEnv = mkClientEnv manager Tmdb.tmdbBaseUrl
-        result <- liftIO $ runClientM (Tmdb.getTvDetail cfg.tmdbApiKey "zh-CN" (fromIntegral tmdbId)) clientEnv
+        client <- liftIO $ Tmdb.newTmdbClient (Tmdb.TmdbConfig cfg.apiKey "zh-CN")
+        result <- liftIO $ Tmdb.getTvDetail client (fromIntegral tmdbId)
         pure $ handleTmdbResult result
   GetTmdbMovieDetail tmdbId -> do
     pref <- getSetting
-    case Setting.metadata pref of
+    case Setting.tmdb pref of
       Nothing -> pure Nothing
       Just cfg -> do
-        manager <- liftIO $ newManager tlsManagerSettings
-        let clientEnv = mkClientEnv manager Tmdb.tmdbBaseUrl
-        result <- liftIO $ runClientM (Tmdb.getMovieDetail cfg.tmdbApiKey "zh-CN" (fromIntegral tmdbId)) clientEnv
+        client <- liftIO $ Tmdb.newTmdbClient (Tmdb.TmdbConfig cfg.apiKey "zh-CN")
+        result <- liftIO $ Tmdb.getMovieDetail client (fromIntegral tmdbId)
         pure $ handleTmdbResult result
   FetchBangumiDataBySeason season -> do
     let year = fromIntegral season.year

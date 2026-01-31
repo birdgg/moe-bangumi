@@ -3,7 +3,7 @@ module Moe.Domain.Setting.Types
     DownloaderConfig (..),
     FilterConfig (..),
     NotificationConfig (..),
-    MetadataConfig (..),
+    TMDBConfig (..),
     defaultUserPreference,
   )
 where
@@ -35,8 +35,8 @@ data NotificationConfig = NotificationConfig
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-data MetadataConfig = MetadataConfig
-  { tmdbApiKey :: Text
+data TMDBConfig = TMDBConfig
+  { apiKey :: Text
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -45,7 +45,7 @@ data UserPreference = UserPreference
   { downloader :: Maybe DownloaderConfig,
     filter :: Maybe FilterConfig,
     notification :: Maybe NotificationConfig,
-    metadata :: Maybe MetadataConfig
+    tmdb :: Maybe TMDBConfig
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -56,5 +56,5 @@ defaultUserPreference =
     { downloader = Nothing,
       filter = Nothing,
       notification = Nothing,
-      metadata = Nothing
+      tmdb = Nothing
     }

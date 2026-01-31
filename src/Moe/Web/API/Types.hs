@@ -50,7 +50,7 @@ data SettingResponse = SettingResponse
   { downloader :: Maybe DownloaderConfigResponse,
     filter :: Maybe FilterConfigResponse,
     notification :: Maybe NotificationConfigResponse,
-    metadata :: Maybe MetadataConfigResponse
+    tmdb :: Maybe TMDBConfigResponse
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)
@@ -75,8 +75,8 @@ data NotificationConfigResponse = NotificationConfigResponse
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)
 
-data MetadataConfigResponse = MetadataConfigResponse
-  { tmdbApiKeyConfigured :: Bool
+data TMDBConfigResponse = TMDBConfigResponse
+  { apiKeyConfigured :: Bool
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)
@@ -87,7 +87,7 @@ toSettingResponse pref =
     { downloader = toDownloaderResponse <$> pref.downloader,
       filter = toFilterResponse <$> pref.filter,
       notification = toNotificationResponse <$> pref.notification,
-      metadata = toMetadataResponse <$> pref.metadata
+      tmdb = toTMDBResponse <$> pref.tmdb
     }
 
 toDownloaderResponse :: Setting.DownloaderConfig -> DownloaderConfigResponse
@@ -110,10 +110,10 @@ toNotificationResponse cfg =
     { chatId = cfg.chatId
     }
 
-toMetadataResponse :: Setting.MetadataConfig -> MetadataConfigResponse
-toMetadataResponse cfg =
-  MetadataConfigResponse
-    { tmdbApiKeyConfigured = cfg.tmdbApiKey /= ""
+toTMDBResponse :: Setting.TMDBConfig -> TMDBConfigResponse
+toTMDBResponse cfg =
+  TMDBConfigResponse
+    { apiKeyConfigured = cfg.apiKey /= ""
     }
 
 newtype UpdateSettingRequest = UpdateSettingRequest
