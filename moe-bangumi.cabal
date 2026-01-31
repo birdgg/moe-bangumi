@@ -76,10 +76,8 @@ library
     Moe.Domain.File.Parser
     Moe.Effect.Setting
     Moe.Effect.Metadata
+    Moe.Effect.BangumiData
     Moe.Adapter.Database.Bangumi
-    Moe.Adapter.File.Setting
-    Moe.Adapter.TVar.Setting
-    Moe.Adapter.Http.Metadata
     Moe.Adapter.Scheduler.Jobs
     Moe.Infra.BangumiData.Types
     Moe.Infra.BangumiData.Client

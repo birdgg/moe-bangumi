@@ -25,8 +25,9 @@ import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
-import Moe.Adapter.TVar.Setting (runSettingTVar)
-import Moe.Adapter.Http.Metadata (runMetadataHttp)
+import Moe.Effect.BangumiData (runBangumiDataHttp)
+import Moe.Effect.Metadata (runMetadataHttp)
+import Moe.Effect.Setting (runSettingTVar)
 import Moe.Adapter.Scheduler.Jobs (defaultJobs)
 import Moe.App.BangumiSync (syncBangumiSeason)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), getDatabasePath, getSettingPath, mkMoeEnv, parseMoeConfig)
@@ -39,8 +40,6 @@ import Moe.Web.API.Server qualified as API
 import Moe.Web.Routers
 import Moe.Web.Scalar (scalarHtml)
 import Moe.Web.Types
-import Network.HTTP.Client qualified as HTTP
-import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.Wai.Handler.Warp
   ( defaultSettings,
     runSettings,
@@ -81,7 +80,6 @@ logSchedulerException env logger exception =
 
 runServer :: (RequireCallStack, Concurrent :> es, IOE :> es) => Logger -> MoeEnv -> Eff es ()
 runServer logger env = do
-  _httpManager <- liftIO $ HTTP.newManager tlsManagerSettings
   let schedulerCfg = env.config.schedulerConfig
   when schedulerCfg.enableScheduler $ do
     let jobs = defaultJobs schedulerCfg
@@ -110,9 +108,10 @@ runStartupSync logger env = do
           runLog "startup-sync" logger env.config.logConfig.logLevel $
             runSettingTVar env.settingVar (getSettingPath env) $
               runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ "Startup sync error: " <> T.pack (show err)) $
-                runMetadataHttp $ do
+                runBangumiDataHttp env.httpManager $
+                  runMetadataHttp env.httpManager $ do
                   Log.logInfo_ $ "Starting sync for current season: " <> toText currentSeason
-                  result <- Safe.tryAny $ syncBangumiSeason currentSeason
+                  result <- Safe.tryAny $ syncBangumiSeason False currentSeason
                   case result of
                     Left err -> Log.logAttention_ $ "Startup sync failed: " <> T.pack (show err)
                     Right bangumis -> Log.logInfo_ $ "Startup sync completed, synced " <> T.pack (show (length bangumis)) <> " bangumi"
@@ -159,7 +158,8 @@ naturalTransform env logger app = do
     liftIO $
       Right
         <$> app
-          & runMetadataHttp
+          & runMetadataHttp env.httpManager
+          & runBangumiDataHttp env.httpManager
           & runSettingTVar env.settingVar (getSettingPath env)
           & runErrorWith
             ( \_callstack moeErr -> do
