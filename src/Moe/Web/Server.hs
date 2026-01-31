@@ -25,7 +25,7 @@ import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
-import Moe.Adapter.File.Setting (runSettingFile)
+import Moe.Adapter.TVar.Setting (runSettingTVar)
 import Moe.Adapter.Http.Metadata (runMetadataHttp)
 import Moe.Adapter.Scheduler.Jobs (defaultJobs)
 import Moe.App.BangumiSync (syncBangumiSeason)
@@ -108,7 +108,7 @@ runStartupSync logger env = do
       runConcurrent $
         runSqlite (DbFile $ getDatabasePath env) $
           runLog "startup-sync" logger env.config.logConfig.logLevel $
-            runSettingFile (getSettingPath env) $
+            runSettingTVar env.settingVar (getSettingPath env) $
               runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ "Startup sync error: " <> T.pack (show err)) $
                 runMetadataHttp $ do
                   Log.logInfo_ $ "Starting sync for current season: " <> toText currentSeason
@@ -160,7 +160,7 @@ naturalTransform env logger app = do
       Right
         <$> app
           & runMetadataHttp
-          & runSettingFile (getSettingPath env)
+          & runSettingTVar env.settingVar (getSettingPath env)
           & runErrorWith
             ( \_callstack moeErr -> do
                 Log.logAttention_ $ "Application error: " <> T.pack (show moeErr)

@@ -78,6 +78,7 @@ library
     Moe.Effect.Metadata
     Moe.Adapter.Database.Bangumi
     Moe.Adapter.File.Setting
+    Moe.Adapter.TVar.Setting
     Moe.Adapter.Http.Metadata
     Moe.Adapter.Scheduler.Jobs
     Moe.Infra.BangumiData.Types
@@ -97,6 +98,7 @@ library
     Moe.Web.API.Types
 
   other-modules:
+    Moe.Orphans
     Moe.Adapter.Database.Orphans
     Moe.Domain.Internal.File.Group
     Moe.Domain.Internal.File.TitleParser
@@ -133,6 +135,7 @@ library
     servant-client,
     servant-openapi3,
     servant-server,
+    stm,
     text,
     text-conversions,
     text-display,

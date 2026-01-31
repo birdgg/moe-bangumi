@@ -13,10 +13,15 @@ module Moe.App.Env
   )
 where
 
+import Control.Concurrent.STM (TVar, newTVarIO)
+import Data.Aeson (eitherDecodeFileStrict)
+import Data.Either (fromRight)
 import Data.Maybe (fromMaybe)
 import Data.Text.Display (Display (..))
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
+import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
 import Numeric.Natural (Natural)
+import System.Directory (doesFileExist)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
 import Text.Read (readMaybe)
@@ -56,8 +61,9 @@ data MoeConfig = MoeConfig
   }
   deriving stock (Eq, Show)
 
-newtype MoeEnv = MoeEnv
-  { config :: MoeConfig
+data MoeEnv = MoeEnv
+  { config :: MoeConfig,
+    settingVar :: TVar UserPreference
   }
 
 defaultMoeConfig :: MoeConfig
@@ -115,7 +121,18 @@ parseSchedulerConfig = do
     parseBool def _ = def
 
 mkMoeEnv :: MoeConfig -> IO MoeEnv
-mkMoeEnv config = pure MoeEnv {config}
+mkMoeEnv config = do
+  let settingPath = config.dataFolder </> "setting.json"
+  initialSetting <- loadSettingFromFile settingPath
+  settingVar <- newTVarIO initialSetting
+  pure MoeEnv {config, settingVar}
+
+loadSettingFromFile :: FilePath -> IO UserPreference
+loadSettingFromFile path = do
+  exists <- doesFileExist path
+  if exists
+    then fromRight defaultUserPreference <$> eitherDecodeFileStrict path
+    else pure defaultUserPreference
 
 getDatabasePath :: MoeEnv -> FilePath
 getDatabasePath env = getDatabasePath' env.config

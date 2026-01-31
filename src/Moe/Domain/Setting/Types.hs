@@ -9,6 +9,7 @@ module Moe.Domain.Setting.Types
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.OpenApi (ToSchema)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -19,26 +20,26 @@ data DownloaderConfig = DownloaderConfig
     savePath :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data FilterConfig = FilterConfig
   { globalRssFilter :: [Text]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data NotificationConfig = NotificationConfig
   { botToken :: Text,
     chatId :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data MetadataConfig = MetadataConfig
   { tmdbApiKey :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data UserPreference = UserPreference
   { downloader :: Maybe DownloaderConfig,
@@ -47,7 +48,7 @@ data UserPreference = UserPreference
     metadata :: Maybe MetadataConfig
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 defaultUserPreference :: UserPreference
 defaultUserPreference =

@@ -4,7 +4,8 @@ import Data.Text (Text)
 import Data.Time.Calendar (Year)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (Season)
-import Moe.Web.API.Types (BangumiResponse)
+import Moe.Domain.Setting.Types (UserPreference)
+import Moe.Web.API.Types (BangumiResponse, SettingResponse)
 import Servant
 
 type Routes = "api" :> NamedRoutes Routes'
@@ -17,6 +18,15 @@ data Routes' mode = Routes'
           :> "season"
           :> QueryParam' '[Required, Strict] "year" Year
           :> QueryParam' '[Required, Strict] "season" Season
-          :> Get '[JSON] [BangumiResponse]
+          :> Get '[JSON] [BangumiResponse],
+    getSetting ::
+      mode
+        :- "settings"
+          :> Get '[JSON] SettingResponse,
+    updateSetting ::
+      mode
+        :- "settings"
+          :> ReqBody '[JSON] UserPreference
+          :> Put '[JSON] SettingResponse
   }
   deriving stock (Generic)
