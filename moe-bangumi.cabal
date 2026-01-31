@@ -132,7 +132,6 @@ library
     regex-tdfa,
     safe-exceptions,
     servant,
-    servant-client,
     servant-openapi3,
     servant-server,
     stm,
