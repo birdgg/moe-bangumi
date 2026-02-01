@@ -4,10 +4,20 @@ module Moe.Effect.BangumiData.API
   )
 where
 
+import Data.Aeson (FromJSON, eitherDecode)
 import Data.Text qualified as T
 import Moe.Effect.BangumiData.Types (BangumiDataItem)
+import Network.HTTP.Media ((//))
 import Servant.API
 import Text.Printf (printf)
+
+data PlainJSON
+
+instance Accept PlainJSON where
+  contentType _ = "text" // "plain"
+
+instance (FromJSON a) => MimeUnrender PlainJSON a where
+  mimeUnrender _ = eitherDecode
 
 newtype MonthFile = MonthFile (Int, Int)
 
@@ -21,4 +31,4 @@ type BangumiDataAPI =
     :> "data"
     :> "items"
     :> Capture "month_file" MonthFile
-    :> Get '[JSON] [BangumiDataItem]
+    :> Get '[PlainJSON] [BangumiDataItem]
