@@ -14,7 +14,9 @@ module Moe.Effect.Metadata
   )
 where
 
+import Control.Applicative ((<|>))
 import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Calendar (Year)
@@ -82,13 +84,14 @@ runMetadataHttp ::
 runMetadataHttp manager = interpret $ \_ -> \case
   SearchBgmtv keyword maybeYear -> do
     let bgmtvClient = mkBgmtvClient manager
-        req = buildBgmtvRequest keyword maybeYear
+        req = buildBgmtvRequest keyword
     result <- liftIO $ bgmtvClient.searchSubjects req
     resp <- liftError ExternalApiError "Bgmtv search failed: " result
-    pure $ map mkSearchResult resp.data_
+    pure $ filterByYear maybeYear getYear $ map mkSearchResult resp.data_
     where
       mkSearchResult s = BgmtvSearchResult s (parseBgmtvTitle (s.name, s.nameCn))
-  SearchTmdb keyword _maybeYear -> do
+      getYear r = extractYear r.subject.date
+  SearchTmdb keyword maybeYear -> do
     pref <- getSetting
     case Setting.tmdb pref of
       Nothing -> throwError $ ExternalApiError "TMDB API key not configured"
@@ -96,7 +99,9 @@ runMetadataHttp manager = interpret $ \_ -> \case
         let client = mkTmdbApi cfg manager
         result <- liftIO $ client.searchMulti keyword
         resp <- liftError ExternalApiError "TMDB search failed: " result
-        pure resp.results
+        pure $ filterByYear maybeYear getYear resp.results
+    where
+      getYear r = extractYear =<< (r.firstAirDate <|> r.releaseDate)
   SearchBangumiData keyword maybeYear -> do
     let targetYear = fromMaybe 2024 maybeYear
         months = [Month.YearMonth targetYear m | m <- [1 .. 12]]
@@ -142,8 +147,8 @@ withTmdbClient manager action = do
 mkTmdbApi :: Setting.TMDBConfig -> Manager -> Tmdb.TmdbApi
 mkTmdbApi cfg = Tmdb.newTmdbApi (Tmdb.TmdbConfig cfg.apiKey Tmdb.zhCN)
 
-buildBgmtvRequest :: Text -> Maybe Year -> Bgmtv.SearchRequest
-buildBgmtvRequest keyword maybeYear =
+buildBgmtvRequest :: Text -> Bgmtv.SearchRequest
+buildBgmtvRequest keyword =
   Bgmtv.SearchRequest
     { keyword = keyword,
       filter_ =
@@ -163,3 +168,10 @@ matchesKeyword keyword item =
       zhHansMatch = any (T.isInfixOf kw . T.toLower) hans
       zhHantMatch = any (T.isInfixOf kw . T.toLower) hant
    in titleMatch || zhHansMatch || zhHantMatch
+
+filterByYear :: Maybe Year -> (a -> Maybe Year) -> [a] -> [a]
+filterByYear Nothing _ results = results
+filterByYear (Just y) getYear results = filter ((Just y ==) . getYear) results
+
+extractYear :: Text -> Maybe Year
+extractYear = readMaybe . T.unpack . T.take 4
