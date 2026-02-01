@@ -7,6 +7,8 @@ module Moe.App.Env
     defaultSchedulerConfig,
     parseMoeConfig,
     mkMoeEnv,
+    mkDbPool,
+    destroyDbPool,
     getDatabasePath,
     getSettingPath,
     getLogPath,
@@ -17,8 +19,12 @@ import Control.Concurrent.STM (TVar, newTVarIO)
 import Data.Aeson (eitherDecodeFileStrict)
 import Data.Either (fromRight)
 import Data.Maybe (fromMaybe)
+import Data.Pool qualified as Pool
 import Data.Text.Display (Display (..))
+import Database.SQLite.Simple qualified as Sqlite
 import Effectful
+import Effectful.Sqlite (SqlitePool (..))
+import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
 import Network.HTTP.Client (Manager, newManager)
@@ -67,7 +73,8 @@ data MoeConfig = MoeConfig
 data MoeEnv = MoeEnv
   { config :: MoeConfig,
     settingVar :: TVar UserPreference,
-    httpManager :: Manager
+    httpManager :: Manager,
+    dbPool :: SqlitePool
   }
 
 defaultMoeConfig :: MoeConfig
@@ -130,7 +137,28 @@ mkMoeEnv config = do
   initialSetting <- loadSettingFromFile settingPath
   settingVar <- liftIO $ newTVarIO initialSetting
   httpManager <- liftIO $ newManager tlsManagerSettings
-  pure MoeEnv {config, settingVar, httpManager}
+  dbPool <- mkDbPool (getDatabasePath' config)
+  pure MoeEnv {config, settingVar, httpManager, dbPool}
+
+mkDbPool :: (IOE :> es) => FilePath -> Eff es SqlitePool
+mkDbPool dbPath = liftIO $ do
+  numCapabilities <- getNumCapabilities
+  fmap SqlitePool $
+    Pool.newPool $
+      Pool.defaultPoolConfig
+        (openDb dbPath)
+        Sqlite.close
+        0.5
+        numCapabilities
+
+openDb :: FilePath -> IO Sqlite.Connection
+openDb dbPath = do
+  conn <- Sqlite.open dbPath
+  Sqlite.execute_ conn "PRAGMA busy_timeout = 3000"
+  pure conn
+
+destroyDbPool :: MoeEnv -> IO ()
+destroyDbPool env = Pool.destroyAllResources (getPool env.dbPool)
 
 loadSettingFromFile :: (IOE :> es) => FilePath -> Eff es UserPreference
 loadSettingFromFile path = do

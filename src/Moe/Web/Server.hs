@@ -29,7 +29,7 @@ import Effectful.Sqlite (SqliteDb (..), runSqlite)
 import Moe.Adapter.Scheduler.Jobs (defaultJobs)
 import Moe.App.BangumiSync (syncBangumiSeason)
 import Moe.App.Bootstrap (bootstrap)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), getDatabasePath, getSettingPath)
+import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), destroyDbPool, getSettingPath)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.App.Scheduler (JobDefinition, startScheduler)
 import Moe.Domain.Bangumi.Types (getCurrentBangumiSeason)
@@ -78,7 +78,7 @@ runMoe = do
     )
 
 shutdownMoe :: MoeEnv -> IO ()
-shutdownMoe _env = pure ()
+shutdownMoe = destroyDbPool
 
 logSchedulerException :: MoeEnv -> Logger -> Safe.SomeException -> IO ()
 logSchedulerException env logger exception =
@@ -113,7 +113,7 @@ runStartupSync logger env = do
   void $
     runEff $
       runConcurrent $
-        runSqlite (DbFile $ getDatabasePath env) $
+        runSqlite (DbPool env.dbPool) $
           runLog "startup-sync" logger env.config.logConfig.logLevel $
             runSettingTVar env.settingVar (getSettingPath env) $
               runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ "Startup sync error: " <> T.pack (show err)) $
@@ -179,7 +179,7 @@ naturalTransform env logger app = do
           )
         & runErrorWith (\_callstack err -> pure . Left $ err)
         & runLog "moe-server" logger env.config.logConfig.logLevel
-        & runSqlite (DbFile $ getDatabasePath env)
+        & runSqlite (DbPool env.dbPool)
         & runConcurrent
         & Reader.runReader env
         & runEff

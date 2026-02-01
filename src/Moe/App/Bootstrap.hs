@@ -7,14 +7,15 @@ import Effectful
 import Effectful.Concurrent (Concurrent)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (SqliteDb (..), notransact, runMigrations, runSqlite)
-import Moe.App.Env (MoeEnv (..), MoeConfig (..), getDatabasePath, mkMoeEnv, parseMoeConfig)
+import Moe.App.Env (MoeConfig (..), MoeEnv (..), mkMoeEnv, parseMoeConfig)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import System.Directory (createDirectoryIfMissing)
 
 bootstrap :: (IOE :> es, Concurrent :> es) => Eff es MoeEnv
 bootstrap = do
-  env <- parseMoeConfig >>= mkMoeEnv
-  ensureDataFolder env.config.dataFolder
+  config <- parseMoeConfig
+  ensureDataFolder config.dataFolder
+  env <- mkMoeEnv config
   runDatabaseMigrations env
   pure env
 
@@ -25,7 +26,7 @@ runDatabaseMigrations :: (IOE :> es, Concurrent :> es) => MoeEnv -> Eff es ()
 runDatabaseMigrations env =
   makeLogger env.config.logConfig.destination $ \logger ->
     runLog "bootstrap" logger env.config.logConfig.logLevel $
-      runSqlite (DbFile $ getDatabasePath env) $
+      runSqlite (DbPool env.dbPool) $
         notransact $ do
           Log.logInfo_ "Running database migrations"
           runMigrations "migrations"
