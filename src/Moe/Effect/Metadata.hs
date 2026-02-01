@@ -1,5 +1,7 @@
 module Moe.Effect.Metadata
   ( Metadata (..),
+    BgmtvSearchResult (..),
+    BgmtvDetailResult (..),
     searchBgmtv,
     searchTmdb,
     searchBangumiData,
@@ -14,34 +16,50 @@ where
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Word (Word16, Word32)
+import Data.Time.Calendar (Year)
+import Data.Time.Calendar.Month qualified as Month
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Error.Static (Error, throwError)
 import Effectful.TH (makeEffect)
-import Moe.App.Error (MoeError (..))
+import GHC.Generics (Generic)
+import Moe.Error (MoeError (..), liftError)
+import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle, parseBgmtvTitle)
 import Moe.Domain.Bangumi.Types (BangumiSeason)
 import Moe.Domain.Bangumi.Types qualified as BangumiTypes
 import Moe.Domain.Setting.Types qualified as Setting
+import Moe.Effect.BangumiData (BangumiDataItem (..), TitleTranslate (..))
 import Moe.Effect.BangumiData qualified as BangumiData
 import Moe.Effect.Setting (Setting, getSetting)
-import Moe.Infra.BangumiData.Types (BangumiDataItem (..), TitleTranslate (..))
 import Network.HTTP.Client (Manager)
+import Network.Tmdb (MovieId, TvShowId)
 import Network.Tmdb qualified as Tmdb
 import Network.Tmdb.Types.Movie (MovieDetail)
 import Network.Tmdb.Types.Search (MultiSearchResult)
 import Network.Tmdb.Types.Tv (TvDetail)
 import Web.Bgmtv.Client qualified as Bgmtv
-import Web.Bgmtv.Types (Subject, SubjectDetail)
+import Web.Bgmtv.Types (Subject, SubjectDetail, SubjectId)
 import Web.Bgmtv.Types qualified as Bgmtv
 
+data BgmtvSearchResult = BgmtvSearchResult
+  { subject :: Subject,
+    parsed :: BgmtvParsedTitle
+  }
+  deriving stock (Eq, Show, Generic)
+
+data BgmtvDetailResult = BgmtvDetailResult
+  { detail :: SubjectDetail,
+    parsed :: BgmtvParsedTitle
+  }
+  deriving stock (Eq, Show, Generic)
+
 data Metadata :: Effect where
-  SearchBgmtv :: Text -> Maybe Word16 -> Metadata m [Subject]
-  SearchTmdb :: Text -> Maybe Word16 -> Metadata m [MultiSearchResult]
-  SearchBangumiData :: Text -> Maybe Word16 -> Metadata m [BangumiDataItem]
-  GetBgmtvDetail :: Word32 -> Metadata m (Maybe SubjectDetail)
-  GetTmdbTvDetail :: Word32 -> Metadata m (Maybe TvDetail)
-  GetTmdbMovieDetail :: Word32 -> Metadata m (Maybe MovieDetail)
+  SearchBgmtv :: Text -> Maybe Year -> Metadata m [BgmtvSearchResult]
+  SearchTmdb :: Text -> Maybe Year -> Metadata m [MultiSearchResult]
+  SearchBangumiData :: Text -> Maybe Year -> Metadata m [BangumiDataItem]
+  GetBgmtvDetail :: SubjectId -> Metadata m (Maybe BgmtvDetailResult)
+  GetTmdbTvDetail :: TvShowId -> Metadata m (Maybe TvDetail)
+  GetTmdbMovieDetail :: MovieId -> Metadata m (Maybe MovieDetail)
   FetchBangumiDataBySeason :: BangumiSeason -> Metadata m [BangumiDataItem]
 
 makeEffect ''Metadata
@@ -64,9 +82,10 @@ runMetadataHttp manager = interpret $ \_ -> \case
     let bgmtvClient = mkBgmtvClient manager
         req = buildBgmtvRequest keyword maybeYear
     result <- liftIO $ bgmtvClient.searchSubjects req
-    case result of
-      Left err -> throwError $ ExternalApiError ("Bgmtv search failed: " <> T.pack (show err))
-      Right resp -> pure resp.data_
+    resp <- liftError ExternalApiError "Bgmtv search failed: " result
+    pure $ map mkSearchResult resp.data_
+    where
+      mkSearchResult s = BgmtvSearchResult s (parseBgmtvTitle (s.name, s.nameCn))
   SearchTmdb keyword _maybeYear -> do
     pref <- getSetting
     case Setting.tmdb pref of
@@ -74,43 +93,38 @@ runMetadataHttp manager = interpret $ \_ -> \case
       Just cfg -> do
         let client = mkTmdbApi cfg manager
         result <- liftIO $ client.searchMulti keyword
-        case result of
-          Left err -> throwError $ ExternalApiError ("TMDB search failed: " <> T.pack (show err))
-          Right resp -> pure resp.results
+        resp <- liftError ExternalApiError "TMDB search failed: " result
+        pure resp.results
   SearchBangumiData keyword maybeYear -> do
     let targetYear = fromMaybe 2024 maybeYear
-        months = [1 .. 12]
-    result <- BangumiData.fetchByMonths targetYear months
-    case result of
-      Left err -> throwError $ ExternalApiError ("BangumiData fetch failed: " <> T.pack err)
-      Right items -> pure $ filter (matchesKeyword keyword) items
-  GetBgmtvDetail bgmtvId -> do
+        months = [Month.YearMonth targetYear m | m <- [1 .. 12]]
+    items <- BangumiData.fetchByMonths months
+    pure $ filter (matchesKeyword keyword) items
+  GetBgmtvDetail subjectId -> do
     let bgmtvClient = mkBgmtvClient manager
-    result <- liftIO $ bgmtvClient.getSubject (Bgmtv.SubjectId (fromIntegral bgmtvId))
-    pure $ either (const Nothing) Just result
-  GetTmdbTvDetail tmdbId -> do
+    result <- liftIO $ bgmtvClient.getSubject subjectId
+    pure $ either (const Nothing) (Just . mkDetailResult) result
+    where
+      mkDetailResult d = BgmtvDetailResult d (parseBgmtvTitle (d.name, d.nameCn))
+  GetTmdbTvDetail tvShowId -> do
     pref <- getSetting
     case Setting.tmdb pref of
       Nothing -> pure Nothing
       Just cfg -> do
         let client = mkTmdbApi cfg manager
-        result <- liftIO $ client.getTvDetail (Tmdb.TvShowId (fromIntegral tmdbId))
+        result <- liftIO $ client.getTvDetail tvShowId
         pure $ handleTmdbResult result
-  GetTmdbMovieDetail tmdbId -> do
+  GetTmdbMovieDetail movieId -> do
     pref <- getSetting
     case Setting.tmdb pref of
       Nothing -> pure Nothing
       Just cfg -> do
         let client = mkTmdbApi cfg manager
-        result <- liftIO $ client.getMovieDetail (Tmdb.MovieId (fromIntegral tmdbId))
+        result <- liftIO $ client.getMovieDetail movieId
         pure $ handleTmdbResult result
   FetchBangumiDataBySeason season -> do
-    let year = fromIntegral season.year
-        months = BangumiTypes.seasonToMonths season.season
-    result <- BangumiData.fetchByMonths year months
-    case result of
-      Left err -> throwError $ ExternalApiError ("BangumiData fetch failed: " <> T.pack err)
-      Right items -> pure items
+    let months = [Month.YearMonth season.year m | m <- BangumiTypes.seasonToMonths season.season]
+    BangumiData.fetchByMonths months
 
 handleTmdbResult :: Either Tmdb.TmdbError a -> Maybe a
 handleTmdbResult = either (const Nothing) Just
@@ -118,7 +132,7 @@ handleTmdbResult = either (const Nothing) Just
 mkTmdbApi :: Setting.TMDBConfig -> Manager -> Tmdb.TmdbApi
 mkTmdbApi cfg = Tmdb.newTmdbApi (Tmdb.TmdbConfig cfg.apiKey Tmdb.zhCN)
 
-buildBgmtvRequest :: Text -> Maybe Word16 -> Bgmtv.SearchRequest
+buildBgmtvRequest :: Text -> Maybe Year -> Bgmtv.SearchRequest
 buildBgmtvRequest keyword maybeYear =
   Bgmtv.SearchRequest
     { keyword = keyword,
@@ -131,7 +145,7 @@ buildBgmtvRequest keyword maybeYear =
             }
     }
 
-buildYearFilter :: Word16 -> [Text]
+buildYearFilter :: Year -> [Text]
 buildYearFilter year =
   [ ">=" <> T.pack (show year) <> "-01-01",
     "<=" <> T.pack (show year) <> "-12-31"

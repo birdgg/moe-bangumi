@@ -17,13 +17,16 @@ import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, notransact, transact)
 import Moe.Adapter.Database.Bangumi qualified as DB
-import Moe.App.Error (MoeError)
+import Moe.Error (MoeError)
+import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle (..))
 import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiKind (..), BangumiSeason, BgmtvId (..), TmdbId (..))
-import Moe.Effect.Metadata (Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
-import Moe.Infra.BangumiData.Types (toBangumi)
+import Moe.Effect.Metadata (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
+import Moe.Effect.BangumiData (toBangumi)
+import Network.Tmdb (MovieId (..), TvShowId (..))
 import Network.Tmdb.Types.Image qualified as TmdbImage
 import Network.Tmdb.Types.Movie qualified as TmdbMovie
 import Network.Tmdb.Types.Tv qualified as TmdbTv
+import Web.Bgmtv.Types (SubjectId (..))
 import Web.Bgmtv.Types qualified as Bgmtv
 
 syncBangumiSeason ::
@@ -75,26 +78,30 @@ enrichWithDetails bangumi = do
   where
     tryBgmtvEnrich = do
       BgmtvId bid <- MaybeT $ pure bangumi.bgmtvId
-      detail <- MaybeT $ getBgmtvDetail bid
-      pure $ applyBgmtvDetail detail bangumi
+      result <- MaybeT $ getBgmtvDetail (SubjectId (fromIntegral bid))
+      pure $ applyBgmtvDetail result bangumi
 
     tryTmdbEnrich = do
       TmdbId tid <- MaybeT $ pure bangumi.tmdbId
       case bangumi.kind of
         Tv -> do
-          detail <- MaybeT $ getTmdbTvDetail tid
+          detail <- MaybeT $ getTmdbTvDetail (TvShowId (fromIntegral tid))
           pure $ applyTmdbTvDetail detail bangumi
         Movie -> do
-          detail <- MaybeT $ getTmdbMovieDetail tid
+          detail <- MaybeT $ getTmdbMovieDetail (MovieId (fromIntegral tid))
           pure $ applyTmdbMovieDetail detail bangumi
 
-applyBgmtvDetail :: Bgmtv.SubjectDetail -> Bangumi -> Bangumi
-applyBgmtvDetail detail b =
-  b
-    { posterUrl = Just detail.images.large,
-      titleChs = if detail.nameCn == "" then b.titleChs else detail.nameCn,
-      titleJap = Just detail.name
-    }
+applyBgmtvDetail :: BgmtvDetailResult -> Bangumi -> Bangumi
+applyBgmtvDetail BgmtvDetailResult {detail, parsed} b =
+  let BgmtvParsedTitle parsedChs parsedJap parsedSeason = parsed
+      subjectDetail :: Bgmtv.SubjectDetail
+      subjectDetail = detail
+   in b
+        { posterUrl = Just subjectDetail.images.large,
+          titleChs = if parsedChs == "" then b.titleChs else parsedChs,
+          titleJap = Just parsedJap,
+          seasonNumber = parsedSeason <|> b.seasonNumber
+        }
 
 applyTmdbTvDetail :: TmdbTv.TvDetail -> Bangumi -> Bangumi
 applyTmdbTvDetail detail b =
