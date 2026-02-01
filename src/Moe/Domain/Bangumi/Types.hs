@@ -6,6 +6,7 @@ module Moe.Domain.Bangumi.Types
     BangumiSeason (..),
     Season (..),
     BangumiKind (..),
+    bangumiKindFromText,
     Bangumi (..),
     airDateToBangumiSeason,
     seasonToMonths,
@@ -17,15 +18,19 @@ module Moe.Domain.Bangumi.Types
   )
 where
 
+import Data.Aeson (ToJSON (..))
 import Data.Int (Int64)
-import Data.OpenApi (ToParamSchema (..), toParamSchema)
+import Data.OpenApi (ToParamSchema (..), ToSchema, Schema (..))
 import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Conversions (ToText (..))
 import Data.Time (getCurrentTime, utctDay)
+import GHC.Generics (Generic)
+import Moe.Prelude (inverseMap)
 import Data.Time.Calendar (Day, Year, toGregorian)
 import Data.Word (Word32)
+import Moe.Orphans ()
 import Text.Read (readMaybe)
 import Web.HttpApiData (FromHttpApiData (..))
 
@@ -45,7 +50,8 @@ newtype MikanId = MikanId Word32
   deriving newtype (Num)
 
 data Season = Winter | Spring | Summer | Fall
-  deriving stock (Eq, Show, Ord, Enum, Bounded)
+  deriving stock (Eq, Show, Ord, Enum, Bounded, Generic)
+  deriving anyclass (ToSchema)
 
 instance FromHttpApiData Season where
   parseUrlPiece t = case seasonFromText t of
@@ -53,7 +59,9 @@ instance FromHttpApiData Season where
     Nothing -> Left $ "Invalid season: " <> t
 
 instance ToParamSchema Season where
-  toParamSchema _ = toParamSchema (Proxy @Text)
+  toParamSchema _ =
+    let base = toParamSchema (Proxy @Text)
+     in base {_schemaEnum = Just $ map toJSON [minBound @Season .. maxBound]}
 
 instance ToText Season where
   toText Winter = "Winter"
@@ -61,11 +69,15 @@ instance ToText Season where
   toText Summer = "Summer"
   toText Fall = "Fall"
 
+instance ToJSON Season where
+  toJSON = toJSON . toText
+
 data BangumiSeason = BangumiSeason
   { year :: Year,
     season :: Season
   }
-  deriving stock (Eq, Show, Ord)
+  deriving stock (Eq, Show, Ord, Generic)
+  deriving anyclass (ToJSON, ToSchema)
 
 instance FromHttpApiData BangumiSeason where
   parseUrlPiece t = case bangumiSeasonFromText t of
@@ -76,7 +88,7 @@ instance ToText BangumiSeason where
   toText = bangumiSeasonToText
 
 bangumiSeasonToText :: BangumiSeason -> Text
-bangumiSeasonToText (BangumiSeason y s) = T.pack (show y) <> "-" <> toText s
+bangumiSeasonToText (BangumiSeason y s) = toText y <> "-" <> toText s
 
 bangumiSeasonFromText :: Text -> Maybe BangumiSeason
 bangumiSeasonFromText t = case T.splitOn "-" t of
@@ -114,12 +126,21 @@ seasonToMonths Spring = [4, 5, 6]
 seasonToMonths Summer = [7, 8, 9]
 seasonToMonths Fall = [10, 11, 12]
 
-data BangumiKind = Tv | Movie
-  deriving stock (Eq, Show, Ord, Enum, Bounded)
+data BangumiKind = Tv | Web | Movie | Ova
+  deriving stock (Eq, Show, Ord, Enum, Bounded, Generic)
+  deriving anyclass (ToSchema)
 
 instance ToText BangumiKind where
   toText Tv = "tv"
+  toText Web = "web"
   toText Movie = "movie"
+  toText Ova = "ova"
+
+instance ToJSON BangumiKind where
+  toJSON = toJSON . toText
+
+bangumiKindFromText :: Text -> Maybe BangumiKind
+bangumiKindFromText = inverseMap toText
 
 data Bangumi = Bangumi
   { id :: Maybe BangumiId,

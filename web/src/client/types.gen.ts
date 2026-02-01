@@ -6,16 +6,20 @@ export type ClientOptions = {
 
 export type BangumiResponse = {
     airDate?: Day;
-    bangumiSeason?: string;
+    bgmtvId?: number;
     id?: number;
-    kind: string;
+    kind: BangumiKind;
+    mikanId?: number;
     posterUrl?: string;
-    seasonNumber?: number;
+    season?: number;
     titleChs: string;
     titleJap?: string;
+    tmdbId?: number;
 };
 
 export type Day = string;
+
+export type BangumiKind = 'Tv' | 'Web' | 'Movie' | 'Ova';
 
 export type CalendarEntry = {
     bangumis: Array<BangumiResponse>;
@@ -93,7 +97,7 @@ export type GetApiBangumiSeasonData = {
     path?: never;
     query: {
         year: number;
-        season: string;
+        season: 'Winter' | 'Spring' | 'Summer' | 'Fall';
         force?: boolean;
     };
     url: '/api/bangumi/season';
@@ -117,7 +121,7 @@ export type GetApiCalendarData = {
     path?: never;
     query: {
         year: number;
-        season: string;
+        season: 'Winter' | 'Spring' | 'Summer' | 'Fall';
     };
     url: '/api/calendar';
 };
