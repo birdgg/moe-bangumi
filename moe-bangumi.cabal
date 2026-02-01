@@ -89,6 +89,7 @@ library
     Moe.Effect.BangumiData.Types
     Moe.Adapter.Database.Bangumi
     Moe.Adapter.Scheduler.Jobs
+    Moe.App.Bootstrap
     Moe.App.Env
     Moe.App.Logging
     Moe.App.Monad

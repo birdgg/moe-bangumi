@@ -18,8 +18,11 @@ import Data.Aeson (eitherDecodeFileStrict)
 import Data.Either (fromRight)
 import Data.Maybe (fromMaybe)
 import Data.Text.Display (Display (..))
+import Effectful
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
+import Network.HTTP.Client (Manager, newManager)
+import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Numeric.Natural (Natural)
 import System.Directory (doesFileExist)
 import System.Environment (lookupEnv)
@@ -63,7 +66,8 @@ data MoeConfig = MoeConfig
 
 data MoeEnv = MoeEnv
   { config :: MoeConfig,
-    settingVar :: TVar UserPreference
+    settingVar :: TVar UserPreference,
+    httpManager :: Manager
   }
 
 defaultMoeConfig :: MoeConfig
@@ -76,12 +80,12 @@ defaultMoeConfig =
       schedulerConfig = defaultSchedulerConfig
     }
 
-parseMoeConfig :: IO MoeConfig
+parseMoeConfig :: (IOE :> es) => Eff es MoeConfig
 parseMoeConfig = do
-  appEnv <- parseAppEnv <$> lookupEnv "MOE_ENV"
-  port <- parsePort <$> lookupEnv "MOE_PORT"
-  dataFolder <- parseDataFolder <$> lookupEnv "MOE_DATA_FOLDER"
-  logDest <- parseLogDest dataFolder <$> lookupEnv "MOE_LOG_DEST"
+  appEnv <- parseAppEnv <$> liftIO (lookupEnv "MOE_ENV")
+  port <- parsePort <$> liftIO (lookupEnv "MOE_PORT")
+  dataFolder <- parseDataFolder <$> liftIO (lookupEnv "MOE_DATA_FOLDER")
+  logDest <- parseLogDest dataFolder <$> liftIO (lookupEnv "MOE_LOG_DEST")
   schedulerConfig <- parseSchedulerConfig
   let logConfig = LogConfig {destination = logDest, logLevel = defaultLogConfig.logLevel}
   pure MoeConfig {appEnv, port, dataFolder, logConfig, schedulerConfig}
@@ -101,12 +105,12 @@ parseMoeConfig = do
     parseLogDest folder (Just "file") = JsonFile (folder </> "moe-bangumi.log")
     parseLogDest _ _ = PrettyStdOut
 
-parseSchedulerConfig :: IO SchedulerConfig
+parseSchedulerConfig :: (IOE :> es) => Eff es SchedulerConfig
 parseSchedulerConfig = do
-  rssSyncInterval <- parseNatural 300 <$> lookupEnv "MOE_RSS_SYNC_INTERVAL"
-  bangumiDataSyncInterval <- parseNatural 86400 <$> lookupEnv "MOE_BANGUMI_SYNC_INTERVAL"
-  cleanupInterval <- parseNatural 3600 <$> lookupEnv "MOE_CLEANUP_INTERVAL"
-  enableScheduler <- parseBool True <$> lookupEnv "MOE_SCHEDULER_ENABLED"
+  rssSyncInterval <- parseNatural 300 <$> liftIO (lookupEnv "MOE_RSS_SYNC_INTERVAL")
+  bangumiDataSyncInterval <- parseNatural 86400 <$> liftIO (lookupEnv "MOE_BANGUMI_SYNC_INTERVAL")
+  cleanupInterval <- parseNatural 3600 <$> liftIO (lookupEnv "MOE_CLEANUP_INTERVAL")
+  enableScheduler <- parseBool True <$> liftIO (lookupEnv "MOE_SCHEDULER_ENABLED")
   pure SchedulerConfig {rssSyncInterval, bangumiDataSyncInterval, cleanupInterval, enableScheduler}
   where
     parseNatural :: Natural -> Maybe String -> Natural
@@ -120,18 +124,19 @@ parseSchedulerConfig = do
     parseBool _ (Just "0") = False
     parseBool def _ = def
 
-mkMoeEnv :: MoeConfig -> IO MoeEnv
+mkMoeEnv :: (IOE :> es) => MoeConfig -> Eff es MoeEnv
 mkMoeEnv config = do
   let settingPath = config.dataFolder </> "setting.json"
   initialSetting <- loadSettingFromFile settingPath
-  settingVar <- newTVarIO initialSetting
-  pure MoeEnv {config, settingVar}
+  settingVar <- liftIO $ newTVarIO initialSetting
+  httpManager <- liftIO $ newManager tlsManagerSettings
+  pure MoeEnv {config, settingVar, httpManager}
 
-loadSettingFromFile :: FilePath -> IO UserPreference
+loadSettingFromFile :: (IOE :> es) => FilePath -> Eff es UserPreference
 loadSettingFromFile path = do
-  exists <- doesFileExist path
+  exists <- liftIO $ doesFileExist path
   if exists
-    then fromRight defaultUserPreference <$> eitherDecodeFileStrict path
+    then fromRight defaultUserPreference <$> liftIO (eitherDecodeFileStrict path)
     else pure defaultUserPreference
 
 getDatabasePath :: MoeEnv -> FilePath

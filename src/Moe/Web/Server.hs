@@ -4,6 +4,7 @@ module Moe.Web.Server
   )
 where
 
+import Control.Exception (bracket)
 import Control.Exception.Backtrace (BacktraceMechanism (..), setBacktraceMechanismState)
 import Control.Exception.Safe qualified as Safe
 import Control.Monad (void, when)
@@ -20,21 +21,22 @@ import Data.Text.IO qualified as TIO
 import Effectful
 import Effectful.Concurrent (Concurrent, forkIO, runConcurrent)
 import Effectful.Dispatch.Static (unsafeEff_)
-import Effectful.Error.Static (runErrorWith)
+import Effectful.Error.Static (runErrorWith, throwError)
 import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
-import Moe.Effect.BangumiData (runBangumiDataHttp)
-import Moe.Effect.Metadata (runMetadataHttp)
-import Moe.Effect.Setting (runSettingTVar)
 import Moe.Adapter.Scheduler.Jobs (defaultJobs)
 import Moe.App.BangumiSync (syncBangumiSeason)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), getDatabasePath, getSettingPath, mkMoeEnv, parseMoeConfig)
-import Moe.App.Error (MoeError (..))
+import Moe.App.Bootstrap (bootstrap)
+import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), getDatabasePath, getSettingPath)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.App.Scheduler (JobDefinition, startScheduler)
 import Moe.Domain.Bangumi.Types (getCurrentBangumiSeason)
+import Moe.Effect.BangumiData (runBangumiDataHttp)
+import Moe.Effect.Metadata (runMetadataHttp)
+import Moe.Effect.Setting (runSettingTVar)
+import Moe.Error (MoeError (..))
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
 import Moe.Web.Routers
@@ -63,13 +65,20 @@ import Servant.Server.Generic (AsServerT)
 runMoe :: IO ()
 runMoe = do
   setBacktraceMechanismState HasCallStackBacktrace True
-  env <- parseMoeConfig >>= mkMoeEnv
-  runEff . withUnliftStrategy (ConcUnlift Ephemeral Unlimited) . runConcurrent $ do
-    let baseURL = "http://localhost:" <> display env.config.port
-    liftIO $ TIO.putStrLn $ "Starting server on " <> baseURL
-    let withLogger = makeLogger env.config.logConfig.destination
-    withLogger $ \appLogger ->
-      provideCallStack $ runServer appLogger env
+  bracket
+    (bootstrap & runConcurrent & runEff)
+    shutdownMoe
+    ( \env ->
+        runEff . withUnliftStrategy (ConcUnlift Ephemeral Unlimited) . runConcurrent $ do
+          let baseURL = "http://localhost:" <> display env.config.port
+          liftIO $ TIO.putStrLn $ "Starting server on " <> baseURL
+          let withLogger = makeLogger env.config.logConfig.destination
+          withLogger $ \appLogger ->
+            provideCallStack $ runServer appLogger env
+    )
+
+shutdownMoe :: MoeEnv -> IO ()
+shutdownMoe _env = pure ()
 
 logSchedulerException :: MoeEnv -> Logger -> Safe.SomeException -> IO ()
 logSchedulerException env logger exception =
@@ -108,13 +117,14 @@ runStartupSync logger env = do
           runLog "startup-sync" logger env.config.logConfig.logLevel $
             runSettingTVar env.settingVar (getSettingPath env) $
               runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ "Startup sync error: " <> T.pack (show err)) $
-                runBangumiDataHttp env.httpManager $
-                  runMetadataHttp env.httpManager $ do
-                  Log.logInfo_ $ "Starting sync for current season: " <> toText currentSeason
-                  result <- Safe.tryAny $ syncBangumiSeason False currentSeason
-                  case result of
-                    Left err -> Log.logAttention_ $ "Startup sync failed: " <> T.pack (show err)
-                    Right bangumis -> Log.logInfo_ $ "Startup sync completed, synced " <> T.pack (show (length bangumis)) <> " bangumi"
+                runErrorWith (\_ (err :: T.Text) -> throwError $ ExternalApiError err) $
+                  runBangumiDataHttp env.httpManager $
+                    runMetadataHttp env.httpManager $ do
+                      Log.logInfo_ $ "Starting sync for current season: " <> toText currentSeason
+                      result <- Safe.tryAny $ syncBangumiSeason False currentSeason
+                      case result of
+                        Left err -> Log.logAttention_ $ "Startup sync failed: " <> T.pack (show err)
+                        Right bangumis -> Log.logInfo_ $ "Startup sync completed, synced " <> T.pack (show (length bangumis)) <> " bangumi"
 
 logStartupSyncException :: MoeEnv -> Logger -> Safe.SomeException -> IO ()
 logStartupSyncException env logger exception =
@@ -158,20 +168,21 @@ naturalTransform env logger app = do
     liftIO $
       Right
         <$> app
-          & runMetadataHttp env.httpManager
-          & runBangumiDataHttp env.httpManager
-          & runSettingTVar env.settingVar (getSettingPath env)
-          & runErrorWith
-            ( \_callstack moeErr -> do
-                Log.logAttention_ $ "Application error: " <> T.pack (show moeErr)
-                pure . Left $ moeErrorToServerError moeErr
-            )
-          & runErrorWith (\_callstack err -> pure . Left $ err)
-          & runLog "moe-server" logger env.config.logConfig.logLevel
-          & runSqlite (DbFile $ getDatabasePath env)
-          & runConcurrent
-          & Reader.runReader env
-          & runEff
+        & runMetadataHttp env.httpManager
+        & runBangumiDataHttp env.httpManager
+        & runSettingTVar env.settingVar (getSettingPath env)
+        & runErrorWith (\_callstack (err :: T.Text) -> throwError $ ExternalApiError err)
+        & runErrorWith
+          ( \_callstack moeErr -> do
+              Log.logAttention_ $ "Application error: " <> T.pack (show moeErr)
+              pure . Left $ moeErrorToServerError moeErr
+          )
+        & runErrorWith (\_callstack err -> pure . Left $ err)
+        & runLog "moe-server" logger env.config.logConfig.logLevel
+        & runSqlite (DbFile $ getDatabasePath env)
+        & runConcurrent
+        & Reader.runReader env
+        & runEff
   either Except.throwError pure result
 
 moeErrorToServerError :: MoeError -> ServerError
