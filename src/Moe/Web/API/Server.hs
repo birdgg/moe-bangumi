@@ -4,6 +4,7 @@ import Moe.Web.API.Bangumi.Handler (handleBangumiSeason)
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Setting.Handler (handleGetSetting, handleUpdateSetting)
+import Moe.Web.API.Tracking.Handler qualified as Tracking
 import Moe.Web.Types (MoeEff)
 import Servant (ServerT)
 
@@ -14,5 +15,10 @@ apiServer =
       bangumiSeason = handleBangumiSeason,
       calendar = handleCalendar,
       getSetting = handleGetSetting,
-      updateSetting = handleUpdateSetting
+      updateSetting = handleUpdateSetting,
+      listTracking = Tracking.handleListTracking,
+      getTracking = Tracking.handleGetTracking,
+      createTracking = Tracking.handleCreateTracking,
+      updateTracking = Tracking.handleUpdateTracking,
+      deleteTracking = Tracking.handleDeleteTracking
     }

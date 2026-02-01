@@ -76,6 +76,7 @@ library
     Moe.Domain.Bangumi.Parser.Internal.Pattern
     Moe.Domain.Bangumi.Group.Types
     Moe.Domain.Bangumi.Subtitle.Types
+    Moe.Domain.Tracking.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.File.Types
@@ -88,6 +89,7 @@ library
     Moe.Effect.BangumiData.Client
     Moe.Effect.BangumiData.Types
     Moe.Adapter.Database.Bangumi
+    Moe.Adapter.Database.Tracking
     Moe.Adapter.Scheduler.Jobs
     Moe.App.Bootstrap
     Moe.App.Env
@@ -101,12 +103,14 @@ library
     Moe.Web.Scalar
     Moe.Web.API.Routes
     Moe.Web.API.Server
-    Moe.Web.API.Bangumi.Types
+    Moe.Web.API.DTO.Bangumi
+    Moe.Web.API.DTO.Calendar
+    Moe.Web.API.DTO.Setting
+    Moe.Web.API.DTO.Tracking
     Moe.Web.API.Bangumi.Handler
-    Moe.Web.API.Calendar.Types
     Moe.Web.API.Calendar.Handler
-    Moe.Web.API.Setting.Types
     Moe.Web.API.Setting.Handler
+    Moe.Web.API.Tracking.Handler
 
   other-modules:
     Moe.Orphans

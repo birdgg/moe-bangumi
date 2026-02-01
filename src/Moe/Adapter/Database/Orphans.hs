@@ -14,6 +14,11 @@ import Moe.Domain.Bangumi.Types
     MikanId (..),
     TmdbId (..),
   )
+import Moe.Domain.Tracking.Types
+  ( Tracking (..),
+    TrackingId (..),
+    TrackingType (..),
+  )
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField
@@ -44,7 +49,9 @@ instance FromField BangumiKind where
     t <- fromField @Text f
     case t of
       "tv" -> pure Tv
+      "web" -> pure Web
       "movie" -> pure Movie
+      "ova" -> pure Ova
       _ -> fail $ "Invalid kind: " <> T.unpack t
 
 instance ToField BangumiKind where
@@ -77,4 +84,44 @@ instance ToRow Bangumi where
         b.tmdbId,
         b.bgmtvId,
         b.posterUrl
+      )
+
+instance FromField TrackingId where
+  fromField = fmap TrackingId . fromField
+
+instance ToField TrackingId where
+  toField (TrackingId i) = toField i
+
+instance FromField TrackingType where
+  fromField f = do
+    t <- fromField @Text f
+    case t of
+      "subscription" -> pure Subscription
+      "collection" -> pure Collection
+      _ -> fail $ "Invalid tracking type: " <> T.unpack t
+
+instance ToField TrackingType where
+  toField = toField . toText
+
+instance FromRow Tracking where
+  fromRow =
+    Tracking
+      <$> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+
+instance ToRow Tracking where
+  toRow t =
+    toRow
+      ( t.id,
+        t.bangumiId,
+        t.trackingType,
+        t.rssUrl,
+        t.lastPubdate,
+        t.currentEpisode,
+        t.createdAt
       )

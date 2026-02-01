@@ -1,13 +1,15 @@
 module Moe.Web.API.Routes where
 
+import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Time.Calendar (Year)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (Season)
 import Moe.Domain.Setting.Types (UserPreference)
-import Moe.Web.API.Bangumi.Types (BangumiResponse)
-import Moe.Web.API.Calendar.Types (CalendarEntry)
-import Moe.Web.API.Setting.Types (SettingResponse)
+import Moe.Web.API.DTO.Bangumi (BangumiResponse)
+import Moe.Web.API.DTO.Calendar (CalendarEntry)
+import Moe.Web.API.DTO.Setting (SettingResponse)
+import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, UpdateTrackingRequest)
 import Servant
 
 type Routes = "api" :> NamedRoutes Routes'
@@ -36,6 +38,31 @@ data Routes' mode = Routes'
       mode
         :- "settings"
           :> ReqBody '[JSON] UserPreference
-          :> Put '[JSON] SettingResponse
+          :> Put '[JSON] SettingResponse,
+    listTracking ::
+      mode
+        :- "tracking"
+          :> Get '[JSON] [TrackingResponse],
+    getTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> Get '[JSON] TrackingResponse,
+    createTracking ::
+      mode
+        :- "tracking"
+          :> ReqBody '[JSON] CreateTrackingRequest
+          :> Post '[JSON] TrackingResponse,
+    updateTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> ReqBody '[JSON] UpdateTrackingRequest
+          :> Put '[JSON] TrackingResponse,
+    deleteTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> Delete '[JSON] NoContent
   }
   deriving stock (Generic)
