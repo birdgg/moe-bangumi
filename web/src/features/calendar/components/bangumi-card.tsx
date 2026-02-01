@@ -1,10 +1,15 @@
-import type { BangumiResponse } from "@/client/types.gen"
+import type { BangumiResponse } from "@/client/types.gen";
 
 interface BangumiCardProps {
-  bangumi: BangumiResponse
+  bangumi: BangumiResponse;
 }
 
 export function BangumiCard({ bangumi }: BangumiCardProps) {
+  const seasonText =
+    bangumi.kind === "tv" && bangumi.season && bangumi.season > 1
+      ? ` 第${bangumi.season}季`
+      : "";
+
   return (
     <div className="group w-44">
       <div className="liquid-glass-card relative overflow-hidden rounded-2xl">
@@ -27,9 +32,10 @@ export function BangumiCard({ bangumi }: BangumiCardProps) {
         <div className="liquid-glass-content relative h-14 p-3">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-foreground/90">
             {bangumi.titleChs}
+            {seasonText}
           </h3>
         </div>
       </div>
     </div>
-  )
+  );
 }

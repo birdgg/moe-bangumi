@@ -20,7 +20,7 @@ where
 
 import Data.Aeson (ToJSON (..))
 import Data.Int (Int64)
-import Data.OpenApi (ToParamSchema (..), ToSchema, Schema (..))
+import Data.OpenApi (ToParamSchema (..), ToSchema (..), Schema (..), NamedSchema (..), OpenApiType (..))
 import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -128,7 +128,14 @@ seasonToMonths Fall = [10, 11, 12]
 
 data BangumiKind = Tv | Web | Movie | Ova
   deriving stock (Eq, Show, Ord, Enum, Bounded, Generic)
-  deriving anyclass (ToSchema)
+
+instance ToSchema BangumiKind where
+  declareNamedSchema _ = do
+    let enumValues = map toJSON [minBound @BangumiKind .. maxBound]
+    pure $ NamedSchema (Just "BangumiKind") $ mempty
+      { _schemaType = Just OpenApiString
+      , _schemaEnum = Just enumValues
+      }
 
 instance ToText BangumiKind where
   toText Tv = "tv"
