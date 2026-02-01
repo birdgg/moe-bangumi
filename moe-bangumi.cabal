@@ -67,8 +67,15 @@ library
   import: common-extensions, common-ghc-options
   hs-source-dirs: src
   exposed-modules:
+    Moe.Error
     Moe.Prelude
     Moe.Domain.Bangumi.Types
+    Moe.Domain.Bangumi.Parser
+    Moe.Domain.Bangumi.Parser.Bgmtv
+    Moe.Domain.Bangumi.Parser.File
+    Moe.Domain.Bangumi.Parser.Internal.Pattern
+    Moe.Domain.Bangumi.Group.Types
+    Moe.Domain.Bangumi.Subtitle.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.File.Types
@@ -77,12 +84,12 @@ library
     Moe.Effect.Setting
     Moe.Effect.Metadata
     Moe.Effect.BangumiData
+    Moe.Effect.BangumiData.API
+    Moe.Effect.BangumiData.Client
+    Moe.Effect.BangumiData.Types
     Moe.Adapter.Database.Bangumi
     Moe.Adapter.Scheduler.Jobs
-    Moe.Infra.BangumiData.Types
-    Moe.Infra.BangumiData.Client
     Moe.App.Env
-    Moe.App.Error
     Moe.App.Logging
     Moe.App.Monad
     Moe.App.Scheduler
@@ -98,11 +105,6 @@ library
   other-modules:
     Moe.Orphans
     Moe.Adapter.Database.Orphans
-    Moe.Domain.Internal.File.Group
-    Moe.Domain.Internal.File.TitleParser
-    Moe.Domain.Internal.File.Parser.Bracket
-    Moe.Domain.Internal.File.Parser.EpisodePattern
-    Moe.Domain.Internal.File.Parser.Types
 
   build-depends:
     aeson ^>=2.2,
@@ -128,9 +130,11 @@ library
     transformers,
     openapi3,
     pretty-simple,
-    regex-tdfa,
+    regex-rure,
     safe-exceptions,
     servant,
+    servant-client,
+    servant-client-core,
     servant-openapi3,
     servant-server,
     stm,
@@ -155,8 +159,14 @@ test-suite moe-bangumi-test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Main.hs
+
+  other-modules:
+    Moe.Domain.Bangumi.Parser.BgmtvSpec
+    Moe.Domain.File.NamingSpec
+
   build-depends:
     base ^>=4.21.0.0,
     moe-bangumi,
     tasty,
     tasty-hunit,
+    text,
