@@ -5,7 +5,9 @@ import Data.Time.Calendar (Year)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (Season)
 import Moe.Domain.Setting.Types (UserPreference)
-import Moe.Web.API.Types (BangumiResponse, SettingResponse)
+import Moe.Web.API.Bangumi.Types (BangumiResponse)
+import Moe.Web.API.Calendar.Types (CalendarResponse)
+import Moe.Web.API.Setting.Types (SettingResponse)
 import Servant
 
 type Routes = "api" :> NamedRoutes Routes'
@@ -18,7 +20,14 @@ data Routes' mode = Routes'
           :> "season"
           :> QueryParam' '[Required, Strict] "year" Year
           :> QueryParam' '[Required, Strict] "season" Season
+          :> QueryParam "force" Bool
           :> Get '[JSON] [BangumiResponse],
+    calendar ::
+      mode
+        :- "calendar"
+          :> QueryParam' '[Required, Strict] "year" Year
+          :> QueryParam' '[Required, Strict] "season" Season
+          :> Get '[JSON] CalendarResponse,
     getSetting ::
       mode
         :- "settings"

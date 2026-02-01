@@ -94,14 +94,19 @@ library
     Moe.App.Logging
     Moe.App.Monad
     Moe.App.Scheduler
-    Moe.App.BangumiSync
+    Moe.App.CalendarSync
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
     Moe.Web.Scalar
     Moe.Web.API.Routes
     Moe.Web.API.Server
-    Moe.Web.API.Types
+    Moe.Web.API.Bangumi.Types
+    Moe.Web.API.Bangumi.Handler
+    Moe.Web.API.Calendar.Types
+    Moe.Web.API.Calendar.Handler
+    Moe.Web.API.Setting.Types
+    Moe.Web.API.Setting.Handler
 
   other-modules:
     Moe.Orphans
@@ -112,6 +117,7 @@ library
     async,
     base ^>=4.21.0.0,
     containers,
+    cron,
     require-callstack,
     bytestring,
     directory,
