@@ -1,5 +1,6 @@
 module Moe.Web.API.Tracking.Handler
   ( handleListTracking,
+    handleListTrackingWithBangumi,
     handleGetTracking,
     handleCreateTracking,
     handleUpdateTracking,
@@ -17,10 +18,12 @@ import Moe.Error (MoeError (..))
 import Moe.Web.API.DTO.Tracking
   ( CreateTrackingRequest,
     TrackingResponse,
+    TrackingWithBangumiResponse,
     UpdateTrackingRequest,
     applyUpdateRequest,
     fromCreateRequest,
     toTrackingResponse,
+    toTrackingWithBangumiResponse,
   )
 import Moe.Web.Types (MoeEff)
 import Servant (NoContent (..))
@@ -29,6 +32,11 @@ handleListTracking :: MoeEff [TrackingResponse]
 handleListTracking = do
   trackings <- notransact DB.listTracking
   pure $ mapMaybe toTrackingResponse trackings
+
+handleListTrackingWithBangumi :: MoeEff [TrackingWithBangumiResponse]
+handleListTrackingWithBangumi = do
+  results <- notransact DB.listTrackingWithBangumi
+  pure $ mapMaybe (uncurry toTrackingWithBangumiResponse) results
 
 handleGetTracking :: Int64 -> MoeEff TrackingResponse
 handleGetTracking tid = do

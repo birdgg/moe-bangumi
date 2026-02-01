@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetApiBangumiSeasonData, GetApiBangumiSeasonErrors, GetApiBangumiSeasonResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiHealthData, GetApiHealthResponses, GetApiSettingsData, GetApiSettingsResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses } from './types.gen';
+import type { DeleteApiTrackingByIdData, DeleteApiTrackingByIdErrors, DeleteApiTrackingByIdResponses, GetApiBangumiSeasonData, GetApiBangumiSeasonErrors, GetApiBangumiSeasonResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiHealthData, GetApiHealthResponses, GetApiSettingsData, GetApiSettingsResponses, GetApiTrackingBangumisData, GetApiTrackingBangumisResponses, GetApiTrackingByIdData, GetApiTrackingByIdErrors, GetApiTrackingByIdResponses, GetApiTrackingData, GetApiTrackingResponses, PostApiTrackingData, PostApiTrackingErrors, PostApiTrackingResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses, PutApiTrackingByIdData, PutApiTrackingByIdErrors, PutApiTrackingByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -32,5 +32,31 @@ export const putApiSettings = <ThrowOnError extends boolean = false>(options?: O
     headers: {
         'Content-Type': 'application/json;charset=utf-8',
         ...options?.headers
+    }
+});
+
+export const getApiTracking = <ThrowOnError extends boolean = false>(options?: Options<GetApiTrackingData, ThrowOnError>) => (options?.client ?? client).get<GetApiTrackingResponses, unknown, ThrowOnError>({ url: '/api/tracking', ...options });
+
+export const postApiTracking = <ThrowOnError extends boolean = false>(options?: Options<PostApiTrackingData, ThrowOnError>) => (options?.client ?? client).post<PostApiTrackingResponses, PostApiTrackingErrors, ThrowOnError>({
+    url: '/api/tracking',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+        ...options?.headers
+    }
+});
+
+export const getApiTrackingBangumis = <ThrowOnError extends boolean = false>(options?: Options<GetApiTrackingBangumisData, ThrowOnError>) => (options?.client ?? client).get<GetApiTrackingBangumisResponses, unknown, ThrowOnError>({ url: '/api/tracking/bangumis', ...options });
+
+export const deleteApiTrackingById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiTrackingByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiTrackingByIdResponses, DeleteApiTrackingByIdErrors, ThrowOnError>({ url: '/api/tracking/{id}', ...options });
+
+export const getApiTrackingById = <ThrowOnError extends boolean = false>(options: Options<GetApiTrackingByIdData, ThrowOnError>) => (options.client ?? client).get<GetApiTrackingByIdResponses, GetApiTrackingByIdErrors, ThrowOnError>({ url: '/api/tracking/{id}', ...options });
+
+export const putApiTrackingById = <ThrowOnError extends boolean = false>(options: Options<PutApiTrackingByIdData, ThrowOnError>) => (options.client ?? client).put<PutApiTrackingByIdResponses, PutApiTrackingByIdErrors, ThrowOnError>({
+    url: '/api/tracking/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+        ...options.headers
     }
 });

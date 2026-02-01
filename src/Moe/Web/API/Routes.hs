@@ -9,7 +9,7 @@ import Moe.Domain.Setting.Types (UserPreference)
 import Moe.Web.API.DTO.Bangumi (BangumiResponse)
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
 import Moe.Web.API.DTO.Setting (SettingResponse)
-import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, UpdateTrackingRequest)
+import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, TrackingWithBangumiResponse, UpdateTrackingRequest)
 import Servant
 
 type Routes = "api" :> NamedRoutes Routes'
@@ -43,6 +43,11 @@ data Routes' mode = Routes'
       mode
         :- "tracking"
           :> Get '[JSON] [TrackingResponse],
+    listTrackingWithBangumi ::
+      mode
+        :- "tracking"
+          :> "bangumis"
+          :> Get '[JSON] [TrackingWithBangumiResponse],
     getTracking ::
       mode
         :- "tracking"

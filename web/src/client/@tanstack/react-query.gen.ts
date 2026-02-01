@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getApiBangumiSeason, getApiCalendar, getApiHealth, getApiSettings, type Options, putApiSettings } from '../sdk.gen';
-import type { GetApiBangumiSeasonData, GetApiBangumiSeasonResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiSettingsData, GetApiSettingsResponse, PutApiSettingsData, PutApiSettingsResponse } from '../types.gen';
+import { deleteApiTrackingById, getApiBangumiSeason, getApiCalendar, getApiHealth, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiTracking, putApiSettings, putApiTrackingById } from '../sdk.gen';
+import type { DeleteApiTrackingByIdData, GetApiBangumiSeasonData, GetApiBangumiSeasonResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiTrackingData, PostApiTrackingResponse, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -103,6 +103,93 @@ export const putApiSettingsMutation = (options?: Partial<Options<PutApiSettingsD
     const mutationOptions: UseMutationOptions<PutApiSettingsResponse, DefaultError, Options<PutApiSettingsData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await putApiSettings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiTrackingQueryKey = (options?: Options<GetApiTrackingData>) => createQueryKey('getApiTracking', options);
+
+export const getApiTrackingOptions = (options?: Options<GetApiTrackingData>) => queryOptions<GetApiTrackingResponse, DefaultError, GetApiTrackingResponse, ReturnType<typeof getApiTrackingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiTracking({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiTrackingQueryKey(options)
+});
+
+export const postApiTrackingMutation = (options?: Partial<Options<PostApiTrackingData>>): UseMutationOptions<PostApiTrackingResponse, DefaultError, Options<PostApiTrackingData>> => {
+    const mutationOptions: UseMutationOptions<PostApiTrackingResponse, DefaultError, Options<PostApiTrackingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiTracking({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiTrackingBangumisQueryKey = (options?: Options<GetApiTrackingBangumisData>) => createQueryKey('getApiTrackingBangumis', options);
+
+export const getApiTrackingBangumisOptions = (options?: Options<GetApiTrackingBangumisData>) => queryOptions<GetApiTrackingBangumisResponse, DefaultError, GetApiTrackingBangumisResponse, ReturnType<typeof getApiTrackingBangumisQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiTrackingBangumis({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiTrackingBangumisQueryKey(options)
+});
+
+export const deleteApiTrackingByIdMutation = (options?: Partial<Options<DeleteApiTrackingByIdData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiTrackingByIdData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiTrackingByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiTrackingById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiTrackingByIdQueryKey = (options: Options<GetApiTrackingByIdData>) => createQueryKey('getApiTrackingById', options);
+
+export const getApiTrackingByIdOptions = (options: Options<GetApiTrackingByIdData>) => queryOptions<GetApiTrackingByIdResponse, DefaultError, GetApiTrackingByIdResponse, ReturnType<typeof getApiTrackingByIdQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiTrackingById({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiTrackingByIdQueryKey(options)
+});
+
+export const putApiTrackingByIdMutation = (options?: Partial<Options<PutApiTrackingByIdData>>): UseMutationOptions<PutApiTrackingByIdResponse, DefaultError, Options<PutApiTrackingByIdData>> => {
+    const mutationOptions: UseMutationOptions<PutApiTrackingByIdResponse, DefaultError, Options<PutApiTrackingByIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await putApiTrackingById({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

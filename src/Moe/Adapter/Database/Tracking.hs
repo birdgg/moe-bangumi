@@ -2,6 +2,7 @@ module Moe.Adapter.Database.Tracking
   ( getTracking,
     getTrackingByBangumi,
     listTracking,
+    listTrackingWithBangumi,
     createTracking,
     updateTracking,
     deleteTracking,
@@ -14,10 +15,37 @@ import Data.String (fromString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful
-import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query, query_)
+import Effectful.Sqlite (FromRow (..), Only (..), SqliteTransaction, execute, field, query, query_)
 import Moe.Adapter.Database.Orphans ()
 import Moe.Domain.Bangumi.Types qualified as Bangumi
 import Moe.Domain.Tracking.Types qualified as Types
+
+newtype TrackingBangumiRow = TrackingBangumiRow {unRow :: (Types.Tracking, Bangumi.Bangumi)}
+
+instance FromRow TrackingBangumiRow where
+  fromRow = do
+    tracking <-
+      Types.Tracking
+        <$> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+    bangumi <-
+      Bangumi.Bangumi
+        <$> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+        <*> field
+    pure $ TrackingBangumiRow (tracking, bangumi)
 
 trackingColumns :: Text
 trackingColumns = "id, bangumi_id, tracking_type, rss_url, last_pubdate, current_episode, created_at"
@@ -43,6 +71,19 @@ listTracking ::
   Eff es [Types.Tracking]
 listTracking =
   query_ (fromString $ "SELECT " <> T.unpack trackingColumns <> " FROM tracking")
+
+listTrackingWithBangumi ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  Eff es [(Types.Tracking, Bangumi.Bangumi)]
+listTrackingWithBangumi = do
+  rows <-
+    query_
+      "SELECT \
+      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.last_pubdate, t.current_episode, t.created_at, \
+      \b.id, b.title_chs, b.title_jap, b.air_date, b.season_number, b.kind, b.mikan_id, b.tmdb_id, b.bangumi_tv_id, b.poster_url \
+      \FROM tracking t \
+      \INNER JOIN bangumi b ON t.bangumi_id = b.id"
+  pure $ map unRow rows
 
 createTracking ::
   (SqliteTransaction :> es, IOE :> es) =>

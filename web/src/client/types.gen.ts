@@ -19,7 +19,7 @@ export type BangumiResponse = {
 
 export type Day = string;
 
-export type BangumiKind = 'Tv' | 'Web' | 'Movie' | 'Ova';
+export type BangumiKind = 'tv' | 'web' | 'movie' | 'ova';
 
 export type CalendarEntry = {
     bangumis: Array<BangumiResponse>;
@@ -77,6 +77,38 @@ export type NotificationConfig = {
 export type TmdbConfig = {
     apiKey: string;
     language?: string;
+};
+
+export type TrackingResponse = {
+    bangumiId: number;
+    createdAt?: UtcTime;
+    currentEpisode: number;
+    id: number;
+    lastPubdate?: UtcTime;
+    rssUrl?: string;
+    trackingType: TrackingType;
+};
+
+export type TrackingType = 'Subscription' | 'Collection';
+
+export type UtcTime = string;
+
+export type TrackingWithBangumiResponse = {
+    bangumi: BangumiResponse;
+    tracking: TrackingResponse;
+};
+
+export type CreateTrackingRequest = {
+    bangumiId: number;
+    currentEpisode?: number;
+    mikanId?: number;
+    trackingType: TrackingType;
+};
+
+export type UpdateTrackingRequest = {
+    currentEpisode?: number;
+    rssUrl?: string;
+    trackingType?: TrackingType;
 };
 
 export type GetApiHealthData = {
@@ -171,3 +203,117 @@ export type PutApiSettingsResponses = {
 };
 
 export type PutApiSettingsResponse = PutApiSettingsResponses[keyof PutApiSettingsResponses];
+
+export type GetApiTrackingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tracking';
+};
+
+export type GetApiTrackingResponses = {
+    200: Array<TrackingResponse>;
+};
+
+export type GetApiTrackingResponse = GetApiTrackingResponses[keyof GetApiTrackingResponses];
+
+export type PostApiTrackingData = {
+    body?: CreateTrackingRequest;
+    path?: never;
+    query?: never;
+    url: '/api/tracking';
+};
+
+export type PostApiTrackingErrors = {
+    /**
+     * Invalid `body`
+     */
+    400: unknown;
+};
+
+export type PostApiTrackingResponses = {
+    200: TrackingResponse;
+};
+
+export type PostApiTrackingResponse = PostApiTrackingResponses[keyof PostApiTrackingResponses];
+
+export type GetApiTrackingBangumisData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tracking/bangumis';
+};
+
+export type GetApiTrackingBangumisResponses = {
+    200: Array<TrackingWithBangumiResponse>;
+};
+
+export type GetApiTrackingBangumisResponse = GetApiTrackingBangumisResponses[keyof GetApiTrackingBangumisResponses];
+
+export type DeleteApiTrackingByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/tracking/{id}';
+};
+
+export type DeleteApiTrackingByIdErrors = {
+    /**
+     * `id` not found
+     */
+    404: unknown;
+};
+
+export type DeleteApiTrackingByIdResponses = {
+    200: unknown;
+};
+
+export type GetApiTrackingByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/tracking/{id}';
+};
+
+export type GetApiTrackingByIdErrors = {
+    /**
+     * `id` not found
+     */
+    404: unknown;
+};
+
+export type GetApiTrackingByIdResponses = {
+    200: TrackingResponse;
+};
+
+export type GetApiTrackingByIdResponse = GetApiTrackingByIdResponses[keyof GetApiTrackingByIdResponses];
+
+export type PutApiTrackingByIdData = {
+    body?: UpdateTrackingRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/tracking/{id}';
+};
+
+export type PutApiTrackingByIdErrors = {
+    /**
+     * Invalid `body`
+     */
+    400: unknown;
+    /**
+     * `id` not found
+     */
+    404: unknown;
+};
+
+export type PutApiTrackingByIdResponses = {
+    200: TrackingResponse;
+};
+
+export type PutApiTrackingByIdResponse = PutApiTrackingByIdResponses[keyof PutApiTrackingByIdResponses];

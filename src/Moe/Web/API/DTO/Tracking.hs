@@ -1,13 +1,16 @@
 module Moe.Web.API.DTO.Tracking
   ( TrackingResponse (..),
+    TrackingWithBangumiResponse (..),
     CreateTrackingRequest (..),
     UpdateTrackingRequest (..),
     toTrackingResponse,
+    toTrackingWithBangumiResponse,
     fromCreateRequest,
     applyUpdateRequest,
   )
 where
 
+import Control.Applicative ((<|>))
 import Data.Aeson (FromJSON (..), ToJSON (..))
 import Data.Coerce (coerce)
 import Data.Int (Int64)
@@ -20,6 +23,8 @@ import Data.Time (UTCTime)
 import Data.Word (Word32)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (BangumiId (..))
+import Moe.Domain.Bangumi.Types qualified as Bangumi
+import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 import Moe.Domain.Tracking.Types (Tracking (..), TrackingId (..), TrackingType (..))
 
 instance ToJSON TrackingType where
@@ -94,15 +99,30 @@ fromCreateRequest req =
 mikanIdToRssUrl :: Word32 -> Text
 mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> T.pack (show mid)
 
-{- HLINT ignore applyUpdateRequest "Redundant id" -}
 applyUpdateRequest :: UpdateTrackingRequest -> Tracking -> Tracking
 applyUpdateRequest req t =
   Tracking
     { id = t.id,
       bangumiId = t.bangumiId,
       trackingType = fromMaybe t.trackingType req.trackingType,
-      rssUrl = maybe t.rssUrl Just req.rssUrl,
+      rssUrl = req.rssUrl <|> t.rssUrl,
       lastPubdate = t.lastPubdate,
       currentEpisode = fromMaybe t.currentEpisode req.currentEpisode,
       createdAt = t.createdAt
     }
+
+data TrackingWithBangumiResponse = TrackingWithBangumiResponse
+  { tracking :: TrackingResponse,
+    bangumi :: BangumiResponse
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (ToJSON, ToSchema)
+
+toTrackingWithBangumiResponse :: Tracking -> Bangumi.Bangumi -> Maybe TrackingWithBangumiResponse
+toTrackingWithBangumiResponse t b = do
+  trackingResp <- toTrackingResponse t
+  pure
+    TrackingWithBangumiResponse
+      { tracking = trackingResp,
+        bangumi = toBangumiResponse b
+      }

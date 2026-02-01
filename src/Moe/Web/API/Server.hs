@@ -17,6 +17,7 @@ apiServer =
       getSetting = handleGetSetting,
       updateSetting = handleUpdateSetting,
       listTracking = Tracking.handleListTracking,
+      listTrackingWithBangumi = Tracking.handleListTrackingWithBangumi,
       getTracking = Tracking.handleGetTracking,
       createTracking = Tracking.handleCreateTracking,
       updateTracking = Tracking.handleUpdateTracking,
