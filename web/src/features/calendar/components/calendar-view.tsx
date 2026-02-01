@@ -10,9 +10,9 @@ function CalendarSkeleton() {
       {Array.from({ length: 7 }).map((_, i) => (
         <div key={i} className="flex flex-col gap-3">
           <Skeleton className="h-9 w-20 rounded-lg" />
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             {Array.from({ length: 5 }).map((_, j) => (
-              <Skeleton key={j} className="h-56 w-32 shrink-0 rounded-lg" />
+              <Skeleton key={j} className="h-72 w-44 rounded-2xl" />
             ))}
           </div>
         </div>

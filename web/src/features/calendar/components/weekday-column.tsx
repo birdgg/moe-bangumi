@@ -26,12 +26,12 @@ export function WeekdayRow({ weekday, bangumis }: WeekdayRowProps) {
           {bangumis.length} 部
         </span>
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <div className="flex flex-wrap gap-4">
         {bangumis.map((bangumi) => (
           <BangumiCard key={bangumi.id ?? bangumi.titleChs} bangumi={bangumi} />
         ))}
         {bangumis.length === 0 && (
-          <div className="flex h-40 w-full items-center justify-center rounded-lg bg-muted/30 text-sm text-muted-foreground">
+          <div className="flex h-72 w-full items-center justify-center rounded-2xl bg-muted/20 text-sm text-muted-foreground backdrop-blur-sm">
             暂无番剧
           </div>
         )}
