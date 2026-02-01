@@ -6,6 +6,7 @@ module Moe.Effect.Metadata
     searchTmdb,
     searchBangumiData,
     getBgmtvDetail,
+    getBangumiEpisodeOffset,
     getTmdbTvDetail,
     getTmdbMovieDetail,
     fetchBangumiDataBySeason,
@@ -23,7 +24,6 @@ import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Error.Static (Error, throwError)
 import Effectful.TH (makeEffect)
 import GHC.Generics (Generic)
-import Moe.Error (MoeError (..), liftError)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle, parseBgmtvTitle)
 import Moe.Domain.Bangumi.Types (BangumiSeason)
 import Moe.Domain.Bangumi.Types qualified as BangumiTypes
@@ -31,6 +31,7 @@ import Moe.Domain.Setting.Types qualified as Setting
 import Moe.Effect.BangumiData (BangumiDataItem (..), TitleTranslate (..))
 import Moe.Effect.BangumiData qualified as BangumiData
 import Moe.Effect.Setting (Setting, getSetting)
+import Moe.Error (MoeError (..), liftError)
 import Network.HTTP.Client (Manager)
 import Network.Tmdb (MovieId, TvShowId)
 import Network.Tmdb qualified as Tmdb
@@ -58,6 +59,7 @@ data Metadata :: Effect where
   SearchTmdb :: Text -> Maybe Year -> Metadata m [MultiSearchResult]
   SearchBangumiData :: Text -> Maybe Year -> Metadata m [BangumiDataItem]
   GetBgmtvDetail :: SubjectId -> Metadata m (Maybe BgmtvDetailResult)
+  GetBangumiEpisodeOffset :: SubjectId -> Metadata m Double
   GetTmdbTvDetail :: TvShowId -> Metadata m (Maybe TvDetail)
   GetTmdbMovieDetail :: MovieId -> Metadata m (Maybe MovieDetail)
   FetchBangumiDataBySeason :: BangumiSeason -> Metadata m [BangumiDataItem]
@@ -106,28 +108,36 @@ runMetadataHttp manager = interpret $ \_ -> \case
     pure $ either (const Nothing) (Just . mkDetailResult) result
     where
       mkDetailResult d = BgmtvDetailResult d (parseBgmtvTitle (d.name, d.nameCn))
-  GetTmdbTvDetail tvShowId -> do
-    pref <- getSetting
-    case Setting.tmdb pref of
-      Nothing -> pure Nothing
-      Just cfg -> do
-        let client = mkTmdbApi cfg manager
-        result <- liftIO $ client.getTvDetail tvShowId
-        pure $ handleTmdbResult result
-  GetTmdbMovieDetail movieId -> do
-    pref <- getSetting
-    case Setting.tmdb pref of
-      Nothing -> pure Nothing
-      Just cfg -> do
-        let client = mkTmdbApi cfg manager
-        result <- liftIO $ client.getMovieDetail movieId
-        pure $ handleTmdbResult result
+  GetBangumiEpisodeOffset subjectId -> do
+    let bgmtvClient = mkBgmtvClient manager
+    result <- liftIO $ bgmtvClient.getEpisodes subjectId (Just 1) Nothing
+    pure $ case result of
+      Right resp | (ep : _) <- resp.data_ -> ep.sort - fromMaybe 0 ep.ep
+      _ -> 0
+  GetTmdbTvDetail tvShowId ->
+    withTmdbClient manager $ \client -> client.getTvDetail tvShowId
+  GetTmdbMovieDetail movieId ->
+    withTmdbClient manager $ \client -> client.getMovieDetail movieId
   FetchBangumiDataBySeason season -> do
     let months = [Month.YearMonth season.year m | m <- BangumiTypes.seasonToMonths season.season]
     BangumiData.fetchByMonths months
 
 handleTmdbResult :: Either Tmdb.TmdbError a -> Maybe a
 handleTmdbResult = either (const Nothing) Just
+
+withTmdbClient ::
+  (Setting :> es, IOE :> es) =>
+  Manager ->
+  (Tmdb.TmdbApi -> IO (Either Tmdb.TmdbError a)) ->
+  Eff es (Maybe a)
+withTmdbClient manager action = do
+  pref <- getSetting
+  case Setting.tmdb pref of
+    Nothing -> pure Nothing
+    Just cfg -> do
+      let client = mkTmdbApi cfg manager
+      result <- liftIO $ action client
+      pure $ handleTmdbResult result
 
 mkTmdbApi :: Setting.TMDBConfig -> Manager -> Tmdb.TmdbApi
 mkTmdbApi cfg = Tmdb.newTmdbApi (Tmdb.TmdbConfig cfg.apiKey Tmdb.zhCN)
@@ -141,15 +151,9 @@ buildBgmtvRequest keyword maybeYear =
           Bgmtv.SearchFilter
             { subjectType = Just [Bgmtv.Anime],
               metaTags = Nothing,
-              airDate = fmap buildYearFilter maybeYear
+              airDate = Nothing
             }
     }
-
-buildYearFilter :: Year -> [Text]
-buildYearFilter year =
-  [ ">=" <> T.pack (show year) <> "-01-01",
-    "<=" <> T.pack (show year) <> "-12-31"
-  ]
 
 matchesKeyword :: Text -> BangumiDataItem -> Bool
 matchesKeyword keyword item =
