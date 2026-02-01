@@ -76,56 +76,58 @@ export function BangumiCard({ bangumi }: BangumiCardProps) {
             </div>
           )}
 
-          <div className="absolute top-2 right-2 z-10">
-            <button
-              type="button"
-              onClick={handleSubscribe}
-              disabled={isPending}
-              className={`subscribe-btn-corner ${isSubscribed ? "subscribed" : "opacity-0 group-hover:opacity-100"} transition-all duration-300`}
-            >
-              {isPending ? (
-                <svg
-                  className="size-3.5 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              ) : isSubscribed ? (
-                <>
-                  <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                  </svg>
-                  <span>已订阅</span>
-                </>
-              ) : (
-                <>
+          {bangumi.mikanId && (
+            <div className="absolute top-2 right-2 z-10">
+              <button
+                type="button"
+                onClick={handleSubscribe}
+                disabled={isPending}
+                className={`subscribe-btn-corner ${isSubscribed ? "subscribed" : "opacity-0 group-hover:opacity-100"} transition-all duration-300`}
+              >
+                {isPending ? (
                   <svg
-                    className="size-3.5"
+                    className="size-3.5 animate-spin"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
                   >
-                    <path d="M12 5v14M5 12h14" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
-                  <span>订阅</span>
-                </>
-              )}
-            </button>
-          </div>
+                ) : isSubscribed ? (
+                  <>
+                    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                    </svg>
+                    <span>已订阅</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    <span>订阅</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="liquid-glass-content relative h-14 p-3">
