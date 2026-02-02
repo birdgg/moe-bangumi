@@ -7,14 +7,13 @@ where
 import Control.Exception (bracket)
 import Control.Exception.Backtrace (BacktraceMechanism (..), setBacktraceMechanismState)
 import Control.Exception.Safe qualified as Safe
-import Control.Monad (void, when)
+import Control.Monad (void)
 import Control.Monad.Except qualified as Except
 import Data.ByteString.Lazy qualified as LBS
 import Data.Function ((&))
 import Data.OpenApi (OpenApi)
 import Data.Proxy (Proxy (..))
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Data.Text.Display (display)
 import Data.Text.Encoding (encodeUtf8)
 import Data.Text.IO qualified as TIO
@@ -26,16 +25,15 @@ import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
-import Moe.Adapter.Scheduler.Jobs (defaultJobs)
-import Moe.App.BangumiSync (syncBangumiSeason)
 import Moe.App.Bootstrap (bootstrap)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), SchedulerConfig (..), destroyDbPool, getSettingPath)
+import Moe.App.CalendarSync (runInitialSeasonSync)
+import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool, getSettingPath)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.App.Scheduler (JobDefinition, startScheduler)
-import Moe.Domain.Bangumi.Types (getCurrentBangumiSeason)
-import Moe.Effect.BangumiData (runBangumiDataHttp)
-import Moe.Effect.Metadata (runMetadataHttp)
-import Moe.Effect.Setting (runSettingTVar)
+import Moe.App.Scheduler.Jobs (defaultJobs)
+import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
+import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
+import Moe.Infrastructure.Setting.Effect (runSettingTVar)
 import Moe.Error (MoeError (..))
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
@@ -80,58 +78,31 @@ runMoe = do
 shutdownMoe :: MoeEnv -> IO ()
 shutdownMoe = destroyDbPool
 
-logSchedulerException :: MoeEnv -> Logger -> Safe.SomeException -> IO ()
-logSchedulerException env logger exception =
+logException :: T.Text -> MoeEnv -> Logger -> Safe.SomeException -> IO ()
+logException component env logger exception =
   runEff $
-    runLog "scheduler" logger env.config.logConfig.logLevel $
+    runLog component logger env.config.logConfig.logLevel $
       Log.logAttention_ $
-        "Scheduler crashed: " <> T.pack (show exception)
+        component <> " crashed: " <> T.pack (show exception)
 
 runServer :: (RequireCallStack, Concurrent :> es, IOE :> es) => Logger -> MoeEnv -> Eff es ()
 runServer logger env = do
   let schedulerCfg = env.config.schedulerConfig
-  when schedulerCfg.enableScheduler $ do
-    let jobs = defaultJobs schedulerCfg
-    void $
-      forkIO $
-        unsafeEff_ $
-          Safe.withException
-            (runScheduler logger env jobs)
-            (logSchedulerException env logger)
   void $
     forkIO $
       unsafeEff_ $
         Safe.withException
-          (runStartupSync logger env)
-          (logStartupSyncException env logger)
+          (runInitialSeasonSync logger env)
+          (logException "initial-sync" env logger)
+  let jobs = defaultJobs schedulerCfg env logger
+  void $
+    forkIO $
+      unsafeEff_ $
+        Safe.withException
+          (runScheduler logger env jobs)
+          (logException "scheduler" env logger)
   let warpSettings = setPort env.config.port defaultSettings
   liftIO $ runSettings warpSettings (mkServer env logger)
-
-runStartupSync :: Logger -> MoeEnv -> IO ()
-runStartupSync logger env = do
-  currentSeason <- getCurrentBangumiSeason
-  void $
-    runEff $
-      runConcurrent $
-        runSqlite (DbPool env.dbPool) $
-          runLog "startup-sync" logger env.config.logConfig.logLevel $
-            runSettingTVar env.settingVar (getSettingPath env) $
-              runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ "Startup sync error: " <> T.pack (show err)) $
-                runErrorWith (\_ (err :: T.Text) -> throwError $ ExternalApiError err) $
-                  runBangumiDataHttp env.httpManager $
-                    runMetadataHttp env.httpManager $ do
-                      Log.logInfo_ $ "Starting sync for current season: " <> toText currentSeason
-                      result <- Safe.tryAny $ syncBangumiSeason False currentSeason
-                      case result of
-                        Left err -> Log.logAttention_ $ "Startup sync failed: " <> T.pack (show err)
-                        Right bangumis -> Log.logInfo_ $ "Startup sync completed, synced " <> T.pack (show (length bangumis)) <> " bangumi"
-
-logStartupSyncException :: MoeEnv -> Logger -> Safe.SomeException -> IO ()
-logStartupSyncException env logger exception =
-  runEff $
-    runLog "startup-sync" logger env.config.logConfig.logLevel $
-      Log.logAttention_ $
-        "Startup sync crashed: " <> T.pack (show exception)
 
 runScheduler :: Logger -> MoeEnv -> [JobDefinition] -> IO ()
 runScheduler logger env jobs =

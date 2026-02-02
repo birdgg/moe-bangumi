@@ -5,8 +5,8 @@ module Moe.Web.API.Setting.Handler
 where
 
 import Moe.Domain.Setting.Types (UserPreference)
-import Moe.Effect.Setting (getSetting, saveSetting)
-import Moe.Web.API.Setting.Types (SettingResponse, toSettingResponse)
+import Moe.Infrastructure.Setting.Effect (getSetting, saveSetting)
+import Moe.Web.API.DTO.Setting (SettingResponse, toSettingResponse)
 import Moe.Web.Types (MoeEff)
 
 handleGetSetting :: MoeEff SettingResponse

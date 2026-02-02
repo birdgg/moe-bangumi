@@ -23,14 +23,14 @@ import Effectful.Error.Static (Error, runErrorWith, throwError)
 import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, SqliteDb (..), notransact, runSqlite, transact)
-import Moe.Adapter.Database.Bangumi qualified as DB
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle (..))
 import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiKind (..), BangumiSeason, BgmtvId (..), TmdbId (..), airDateToBangumiSeason, getCurrentBangumiSeason)
-import Moe.Effect.BangumiData (runBangumiDataHttp, toBangumi)
-import Moe.Effect.Metadata (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail, runMetadataHttp)
-import Moe.Effect.Setting (runSettingTVar)
+import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp, toBangumi)
+import Moe.Infrastructure.Database.Bangumi qualified as DB
+import Moe.Infrastructure.Metadata.Effect (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail, runMetadataHttp)
+import Moe.Infrastructure.Setting.Effect (runSettingTVar)
 import Moe.Error (MoeError (..))
 import Network.Tmdb (MovieId (..), TvShowId (..))
 import Network.Tmdb.Types.Image qualified as TmdbImage
@@ -125,7 +125,7 @@ enrichWithDetails ::
   Eff es Bangumi
 enrichWithDetails bangumi = do
   result <- runMaybeT $ tryBgmtvEnrich <|> tryTmdbEnrich
-  pure $ fromMaybe bangumi result
+  pure $ defaultTvSeasonNumber $ fromMaybe bangumi result
   where
     tryBgmtvEnrich = do
       BgmtvId bid <- MaybeT $ pure bangumi.bgmtvId
@@ -135,12 +135,17 @@ enrichWithDetails bangumi = do
     tryTmdbEnrich = do
       TmdbId tid <- MaybeT $ pure bangumi.tmdbId
       case bangumi.kind of
-        Tv -> do
-          detail <- MaybeT $ getTmdbTvDetail (TvShowId (fromIntegral tid))
-          pure $ applyTmdbTvDetail detail bangumi
         Movie -> do
           detail <- MaybeT $ getTmdbMovieDetail (MovieId (fromIntegral tid))
           pure $ applyTmdbMovieDetail detail bangumi
+        _ -> do
+          detail <- MaybeT $ getTmdbTvDetail (TvShowId (fromIntegral tid))
+          pure $ applyTmdbTvDetail detail bangumi
+
+defaultTvSeasonNumber :: Bangumi -> Bangumi
+defaultTvSeasonNumber b = case (b.kind, b.seasonNumber) of
+  (Tv, Nothing) -> b {seasonNumber = Just 1}
+  _ -> b
 
 applyBgmtvDetail :: BgmtvDetailResult -> Bangumi -> Bangumi
 applyBgmtvDetail BgmtvDetailResult {detail, parsed} b =

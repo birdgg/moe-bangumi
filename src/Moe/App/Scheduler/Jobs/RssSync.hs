@@ -1,4 +1,4 @@
-module Moe.Adapter.Scheduler.Jobs.RssSync
+module Moe.App.Scheduler.Jobs.RssSync
   ( rssSyncJob,
   )
 where

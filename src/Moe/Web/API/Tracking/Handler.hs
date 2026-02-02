@@ -12,7 +12,7 @@ import Data.Int (Int64)
 import Data.Maybe (mapMaybe)
 import Effectful.Error.Static (throwError)
 import Effectful.Sqlite (notransact, transact)
-import Moe.Adapter.Database.Tracking qualified as DB
+import Moe.Infrastructure.Database.Tracking qualified as DB
 import Moe.Domain.Tracking.Types (TrackingId (..))
 import Moe.Error (MoeError (..))
 import Moe.Web.API.DTO.Tracking

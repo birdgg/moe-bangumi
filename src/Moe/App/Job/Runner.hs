@@ -16,10 +16,10 @@ import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
 import Moe.App.Job.Types
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Domain.Scheduler.Types (JobResult (..))
-import Moe.Effect.BangumiData (runBangumiDataHttp)
-import Moe.Effect.Metadata (runMetadataHttp)
-import Moe.Effect.Rss (runRss)
-import Moe.Effect.Setting (runSettingTVar)
+import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
+import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
+import Moe.Infrastructure.Rss.Effect (runRss)
+import Moe.Infrastructure.Setting.Effect (runSettingTVar)
 import Moe.Error (MoeError (..))
 
 runMetadataJob ::
@@ -61,7 +61,8 @@ runRssJob logPrefix logger env action =
         runSqlite (DbPool env.dbPool) $
           runLog logPrefix logger env.config.logConfig.logLevel $
             runErrorWith logMoeError $
-              runRss env.httpManager action
+              runSettingTVar env.settingVar (getSettingPath env) $
+                runRss env.httpManager action
   where
     logMoeError :: (Log :> es) => a -> MoeError -> Eff es JobResult
     logMoeError _ err = do

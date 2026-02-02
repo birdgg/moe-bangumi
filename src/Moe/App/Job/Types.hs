@@ -12,10 +12,10 @@ import Effectful.Concurrent (Concurrent)
 import Effectful.Error.Static (Error)
 import Effectful.Log (Log)
 import Effectful.Sqlite (Sqlite)
-import Moe.Effect.BangumiData (BangumiData)
-import Moe.Effect.Metadata (Metadata)
-import Moe.Effect.Rss (Rss)
-import Moe.Effect.Setting (Setting)
+import Moe.Infrastructure.BangumiData.Effect (BangumiData)
+import Moe.Infrastructure.Metadata.Effect (Metadata)
+import Moe.Infrastructure.Rss.Effect (Rss)
+import Moe.Infrastructure.Setting.Effect (Setting)
 import Moe.Error (MoeError)
 
 type BaseJobEffects =
@@ -40,6 +40,7 @@ type MetadataJobEffects =
 
 type RssJobEffects =
   '[ Rss,
+     Setting,
      Error MoeError,
      Log,
      Sqlite,

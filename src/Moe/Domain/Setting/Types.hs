@@ -5,6 +5,7 @@ module Moe.Domain.Setting.Types
     NotificationConfig (..),
     TMDBConfig (..),
     defaultUserPreference,
+    defaultFilterConfig,
   )
 where
 
@@ -36,7 +37,8 @@ data NotificationConfig = NotificationConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data TMDBConfig = TMDBConfig
-  { apiKey :: Text
+  { apiKey :: Text,
+    language :: Maybe Text
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -54,7 +56,17 @@ defaultUserPreference :: UserPreference
 defaultUserPreference =
   UserPreference
     { downloader = Nothing,
-      filter = Nothing,
+      filter = Just defaultFilterConfig,
       notification = Nothing,
       tmdb = Nothing
+    }
+
+defaultFilterConfig :: FilterConfig
+defaultFilterConfig =
+  FilterConfig
+    { globalRssFilter =
+        [ "720[Pp]",
+          "\\d-\\d",
+          "合集"
+        ]
     }

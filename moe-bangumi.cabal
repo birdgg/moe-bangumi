@@ -82,19 +82,21 @@ library
     Moe.Domain.File.Types
     Moe.Domain.File.Naming
     Moe.Domain.File.Parser
-    Moe.Effect.Setting
-    Moe.Effect.Metadata
-    Moe.Effect.BangumiData
-    Moe.Effect.Rss
-    Moe.Effect.Rss.Types
-    Moe.Effect.Rss.Source
-    Moe.Effect.Rss.Client
-    Moe.Effect.BangumiData.API
-    Moe.Effect.BangumiData.Client
-    Moe.Effect.BangumiData.Types
-    Moe.Adapter.Database.Bangumi
-    Moe.Adapter.Database.Tracking
-    Moe.Adapter.Scheduler.Jobs
+    Moe.Infrastructure.Setting.Effect
+    Moe.Infrastructure.Metadata.Effect
+    Moe.Infrastructure.BangumiData.Effect
+    Moe.Infrastructure.BangumiData.Types
+    Moe.Infrastructure.BangumiData.API
+    Moe.Infrastructure.BangumiData.Client
+    Moe.Infrastructure.Rss.Effect
+    Moe.Infrastructure.Rss.Types
+    Moe.Infrastructure.Rss.Source
+    Moe.Infrastructure.Rss.Client
+    Moe.Infrastructure.Download.Effect
+    Moe.Infrastructure.Download.QBittorrent
+    Moe.Infrastructure.Database.Bangumi
+    Moe.Infrastructure.Database.Tracking
+    Moe.App.Scheduler.Jobs
     Moe.App.Bootstrap
     Moe.App.Env
     Moe.App.Logging
@@ -104,6 +106,11 @@ library
     Moe.App.Job
     Moe.App.Job.Types
     Moe.App.Job.Runner
+    Moe.App.RssSync.Types
+    Moe.App.RssSync.Fetch
+    Moe.App.RssSync.Filter
+    Moe.App.RssSync.Download
+    Moe.App.RssSync.Pipeline
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
@@ -121,9 +128,9 @@ library
 
   other-modules:
     Moe.Orphans
-    Moe.Adapter.Database.Orphans
-    Moe.Adapter.Scheduler.Jobs.CalendarSync
-    Moe.Adapter.Scheduler.Jobs.RssSync
+    Moe.Infrastructure.Database.Orphans
+    Moe.App.Scheduler.Jobs.CalendarSync
+    Moe.App.Scheduler.Jobs.RssSync
 
   build-depends:
     aeson ^>=2.2,
@@ -166,6 +173,7 @@ library
     time,
     tmdb,
     bgmtv,
+    qbittorrent,
     warp,
     xml-conduit,
 
@@ -186,7 +194,7 @@ test-suite moe-bangumi-test
   other-modules:
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.File.NamingSpec
-    Moe.Effect.BangumiData.TypesSpec
+    Moe.Infrastructure.BangumiData.TypesSpec
 
   build-depends:
     base ^>=4.21.0.0,
