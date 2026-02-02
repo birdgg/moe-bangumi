@@ -12,7 +12,6 @@ import Control.Monad (forM_, void)
 import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Data.Time (UTCTime (..), getCurrentTime)
 import Data.Time.Calendar (Day, fromGregorian, toGregorian)
 import Data.Time.Calendar.Month (Month)
@@ -36,6 +35,7 @@ import Network.Tmdb (MovieId (..), TvShowId (..))
 import Network.Tmdb.Types.Image qualified as TmdbImage
 import Network.Tmdb.Types.Movie qualified as TmdbMovie
 import Network.Tmdb.Types.Tv qualified as TmdbTv
+import Relude (ToText (..))
 import Web.Bgmtv.Types (SubjectId (..))
 import Web.Bgmtv.Types qualified as Bgmtv
 

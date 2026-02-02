@@ -24,11 +24,10 @@ import Data.OpenApi (ToParamSchema (..), ToSchema (..), Schema (..), NamedSchema
 import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Data.Text.Display (Display (..))
 import Data.Time (getCurrentTime, utctDay)
 import GHC.Generics (Generic)
-import Moe.Prelude (inverseMap)
+import Relude (ToText (..), inverseMap)
 import Data.Time.Calendar (Day, Year, toGregorian)
 import Data.Word (Word32)
 import Moe.Orphans ()

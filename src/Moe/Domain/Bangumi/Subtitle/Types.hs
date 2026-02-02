@@ -5,8 +5,8 @@ module Moe.Domain.Bangumi.Subtitle.Types
   )
 where
 
-import Data.Text.Conversions (ToText (..))
 import Data.Text.Display
+import Relude (ToText (..))
 
 data SubtitleLang
   = CHS

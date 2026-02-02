@@ -19,9 +19,9 @@ module Moe.Domain.File.Types
 where
 
 import Data.Text (Text)
-import Data.Text.Conversions (ToText (..))
 import Data.Word (Word8, Word16, Word32)
 import Moe.Domain.Bangumi.Subtitle.Types
+import Relude (ToText (..))
 
 newtype SeasonNum = SeasonNum Word8
   deriving stock (Eq, Show)

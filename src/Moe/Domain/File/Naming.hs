@@ -8,9 +8,9 @@ where
 
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Data.Word (Word8)
 import Moe.Domain.File.Types
+import Relude (ToText (..))
 import System.FilePath ((</>))
 
 generatePath :: BangumiFile -> FilePath

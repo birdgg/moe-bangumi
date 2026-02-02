@@ -7,11 +7,11 @@ where
 
 import Data.Int (Int64)
 import Data.Text (Text)
-import Data.Text.Conversions (ToText (..))
 import Data.Time (UTCTime)
 import Data.Word (Word32)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (BangumiId)
+import Relude (ToText (..))
 
 newtype TrackingId = TrackingId Int64
   deriving stock (Eq, Show)

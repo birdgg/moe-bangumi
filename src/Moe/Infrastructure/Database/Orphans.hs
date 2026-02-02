@@ -4,7 +4,6 @@ module Moe.Infrastructure.Database.Orphans () where
 
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..), field)
 import Moe.Domain.Bangumi.Types
   ( Bangumi (..),
@@ -19,6 +18,7 @@ import Moe.Domain.Tracking.Types
     TrackingId (..),
     TrackingType (..),
   )
+import Relude (ToText (..))
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField

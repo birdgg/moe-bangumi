@@ -18,7 +18,6 @@ import Data.Maybe (fromMaybe)
 import Data.OpenApi (ToSchema)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Conversions (ToText (..))
 import Data.Time (UTCTime)
 import Data.Word (Word32)
 import GHC.Generics (Generic)
@@ -26,6 +25,7 @@ import Moe.Domain.Bangumi.Types (BangumiId (..))
 import Moe.Domain.Bangumi.Types qualified as Bangumi
 import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 import Moe.Domain.Tracking.Types (Tracking (..), TrackingId (..), TrackingType (..))
+import Relude (ToText (..))
 
 instance ToJSON TrackingType where
   toJSON = toJSON . toText

@@ -23,6 +23,7 @@ cabal repl               # Start GHCi with project loaded
 - Moe module (domain module) must remain pure - no side effects
 - After editing Haskell files, run `hlint` on changed files and apply suggestions
 - Use `Display` instance when need logging
+- Do not add statistical/counting logs (e.g., "Found N items", "Processed N records")
 
 ## Learn Pattern
 - learn haskell code pattern from learn/src, it is flora server source code
@@ -36,10 +37,10 @@ cabal repl               # Start GHCi with project loaded
 ## Technical Stack
 
 - GHC 9.12.2 with GHC2024 language standard
-- Uses standard Prelude with explicit imports
-  - `show` returns `String`, use `T.pack (show x)` when `Text` is needed
-  - `T.unpack` converts `Text` to `String`/`FilePath`
-  - `toText` from `Data.Text.Conversions` for type conversions
+- Uses `relude` as alternative prelude via `Moe.Prelude`
+  - `show` is polymorphic in relude, can return `Text` directly
+  - `toText` from `Relude` for type conversions
+  - `pass` is available from relude
 - Test framework: Tasty with HUnit
 
 ## Architecture
