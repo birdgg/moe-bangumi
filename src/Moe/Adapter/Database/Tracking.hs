@@ -33,6 +33,7 @@ instance FromRow TrackingBangumiRow where
         <*> field
         <*> field
         <*> field
+        <*> field
     bangumi <-
       Bangumi.Bangumi
         <$> field
@@ -48,7 +49,7 @@ instance FromRow TrackingBangumiRow where
     pure $ TrackingBangumiRow (tracking, bangumi)
 
 trackingColumns :: Text
-trackingColumns = "id, bangumi_id, tracking_type, rss_url, last_pubdate, current_episode, created_at"
+trackingColumns = "id, bangumi_id, tracking_type, rss_url, rss_enabled, last_pubdate, current_episode, created_at"
 
 getTracking ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -79,7 +80,7 @@ listTrackingWithBangumi = do
   rows <-
     query_
       "SELECT \
-      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.last_pubdate, t.current_episode, t.created_at, \
+      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.created_at, \
       \b.id, b.title_chs, b.title_jap, b.air_date, b.season_number, b.kind, b.mikan_id, b.tmdb_id, b.bangumi_tv_id, b.poster_url \
       \FROM tracking t \
       \INNER JOIN bangumi b ON t.bangumi_id = b.id"
@@ -92,10 +93,11 @@ createTracking ::
 createTracking tracking = do
   results <-
     query
-      "INSERT INTO tracking (bangumi_id, tracking_type, rss_url, last_pubdate, current_episode) VALUES (?, ?, ?, ?, ?) RETURNING id"
+      "INSERT INTO tracking (bangumi_id, tracking_type, rss_url, rss_enabled, last_pubdate, current_episode) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
       ( tracking.bangumiId,
         tracking.trackingType,
         tracking.rssUrl,
+        tracking.rssEnabled,
         tracking.lastPubdate,
         tracking.currentEpisode
       )
@@ -112,10 +114,11 @@ updateTracking tracking =
     Nothing -> pure ()
     Just (Types.TrackingId tid) ->
       execute
-        "UPDATE tracking SET bangumi_id = ?, tracking_type = ?, rss_url = ?, last_pubdate = ?, current_episode = ? WHERE id = ?"
+        "UPDATE tracking SET bangumi_id = ?, tracking_type = ?, rss_url = ?, rss_enabled = ?, last_pubdate = ?, current_episode = ? WHERE id = ?"
         ( tracking.bangumiId,
           tracking.trackingType,
           tracking.rssUrl,
+          tracking.rssEnabled,
           tracking.lastPubdate,
           tracking.currentEpisode,
           tid
@@ -128,17 +131,19 @@ upsertTracking ::
 upsertTracking tracking = do
   results <-
     query
-      "INSERT INTO tracking (bangumi_id, tracking_type, rss_url, last_pubdate, current_episode) \
-      \VALUES (?, ?, ?, ?, ?) \
+      "INSERT INTO tracking (bangumi_id, tracking_type, rss_url, rss_enabled, last_pubdate, current_episode) \
+      \VALUES (?, ?, ?, ?, ?, ?) \
       \ON CONFLICT (bangumi_id) DO UPDATE SET \
       \tracking_type = excluded.tracking_type, \
       \rss_url = excluded.rss_url, \
+      \rss_enabled = excluded.rss_enabled, \
       \last_pubdate = excluded.last_pubdate, \
       \current_episode = excluded.current_episode \
       \RETURNING id"
       ( tracking.bangumiId,
         tracking.trackingType,
         tracking.rssUrl,
+        tracking.rssEnabled,
         tracking.lastPubdate,
         tracking.currentEpisode
       )

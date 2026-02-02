@@ -113,6 +113,7 @@ instance FromRow Tracking where
       <*> field
       <*> field
       <*> field
+      <*> field
 
 instance ToRow Tracking where
   toRow t =
@@ -121,7 +122,9 @@ instance ToRow Tracking where
         t.bangumiId,
         t.trackingType,
         t.rssUrl,
+        t.rssEnabled,
         t.lastPubdate,
         t.currentEpisode,
         t.createdAt
       )
+

@@ -45,6 +45,7 @@ data TrackingResponse = TrackingResponse
     bangumiId :: Int64,
     trackingType :: TrackingType,
     rssUrl :: Maybe Text,
+    rssEnabled :: Bool,
     lastPubdate :: Maybe UTCTime,
     currentEpisode :: Word32,
     createdAt :: Maybe UTCTime
@@ -64,6 +65,7 @@ data CreateTrackingRequest = CreateTrackingRequest
 data UpdateTrackingRequest = UpdateTrackingRequest
   { trackingType :: Maybe TrackingType,
     rssUrl :: Maybe Text,
+    rssEnabled :: Maybe Bool,
     currentEpisode :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
@@ -79,6 +81,7 @@ toTrackingResponse t = do
         bangumiId = coerce t.bangumiId,
         trackingType = t.trackingType,
         rssUrl = t.rssUrl,
+        rssEnabled = t.rssEnabled,
         lastPubdate = t.lastPubdate,
         currentEpisode = t.currentEpisode,
         createdAt = t.createdAt
@@ -91,6 +94,7 @@ fromCreateRequest req =
       bangumiId = BangumiId req.bangumiId,
       trackingType = req.trackingType,
       rssUrl = mikanIdToRssUrl <$> req.mikanId,
+      rssEnabled = True,
       lastPubdate = Nothing,
       currentEpisode = fromMaybe 0 req.currentEpisode,
       createdAt = Nothing
@@ -106,6 +110,7 @@ applyUpdateRequest req t =
       bangumiId = t.bangumiId,
       trackingType = fromMaybe t.trackingType req.trackingType,
       rssUrl = req.rssUrl <|> t.rssUrl,
+      rssEnabled = fromMaybe t.rssEnabled req.rssEnabled,
       lastPubdate = t.lastPubdate,
       currentEpisode = fromMaybe t.currentEpisode req.currentEpisode,
       createdAt = t.createdAt

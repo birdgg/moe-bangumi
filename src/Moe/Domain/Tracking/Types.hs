@@ -28,6 +28,7 @@ data Tracking = Tracking
     bangumiId :: BangumiId,
     trackingType :: TrackingType,
     rssUrl :: Maybe Text,
+    rssEnabled :: Bool,
     lastPubdate :: Maybe UTCTime,
     currentEpisode :: Word32,
     createdAt :: Maybe UTCTime
