@@ -74,6 +74,7 @@ library
     Moe.Domain.Bangumi.Parser.Bgmtv
     Moe.Domain.Bangumi.Parser.File
     Moe.Domain.Bangumi.Parser.Internal.Pattern
+    Moe.Domain.Bangumi.Parser.RssTitle
     Moe.Domain.Bangumi.Group.Types
     Moe.Domain.Bangumi.Subtitle.Types
     Moe.Domain.Tracking.Types
@@ -106,11 +107,12 @@ library
     Moe.App.Job
     Moe.App.Job.Types
     Moe.App.Job.Runner
-    Moe.App.RssSync.Types
-    Moe.App.RssSync.Fetch
-    Moe.App.RssSync.Filter
-    Moe.App.RssSync.Download
-    Moe.App.RssSync.Pipeline
+    Moe.App.Subscription.Types
+    Moe.App.Subscription.Fetch
+    Moe.App.Subscription.Filter
+    Moe.App.Subscription.Download
+    Moe.App.Subscription.Pipeline
+    Moe.App.Subscription.SingleFetch
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
@@ -130,7 +132,7 @@ library
     Moe.Orphans
     Moe.Infrastructure.Database.Orphans
     Moe.App.Scheduler.Jobs.CalendarSync
-    Moe.App.Scheduler.Jobs.RssSync
+    Moe.App.Scheduler.Jobs.Subscription
 
   build-depends:
     aeson ^>=2.2,
@@ -193,6 +195,7 @@ test-suite moe-bangumi-test
 
   other-modules:
     Moe.Domain.Bangumi.Parser.BgmtvSpec
+    Moe.Domain.Bangumi.Parser.RssTitleSpec
     Moe.Domain.File.NamingSpec
     Moe.Infrastructure.BangumiData.TypesSpec
 
