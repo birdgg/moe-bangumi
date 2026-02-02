@@ -85,6 +85,10 @@ library
     Moe.Effect.Setting
     Moe.Effect.Metadata
     Moe.Effect.BangumiData
+    Moe.Effect.Rss
+    Moe.Effect.Rss.Types
+    Moe.Effect.Rss.Source
+    Moe.Effect.Rss.Client
     Moe.Effect.BangumiData.API
     Moe.Effect.BangumiData.Client
     Moe.Effect.BangumiData.Types
@@ -158,6 +162,7 @@ library
     tmdb,
     bgmtv,
     warp,
+    xml-conduit,
 
 executable moe-cli
   import: common-extensions, common-ghc-options, common-rts-options
@@ -176,6 +181,7 @@ test-suite moe-bangumi-test
   other-modules:
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.File.NamingSpec
+    Moe.Effect.BangumiData.TypesSpec
 
   build-depends:
     base ^>=4.21.0.0,
