@@ -101,6 +101,9 @@ library
     Moe.App.Monad
     Moe.App.Scheduler
     Moe.App.CalendarSync
+    Moe.App.Job
+    Moe.App.Job.Types
+    Moe.App.Job.Runner
     Moe.Web.Server
     Moe.Web.Types
     Moe.Web.Routers
@@ -119,6 +122,8 @@ library
   other-modules:
     Moe.Orphans
     Moe.Adapter.Database.Orphans
+    Moe.Adapter.Scheduler.Jobs.CalendarSync
+    Moe.Adapter.Scheduler.Jobs.RssSync
 
   build-depends:
     aeson ^>=2.2,
