@@ -1,4 +1,4 @@
-module Moe.Domain.Internal.File.Group
+module Moe.Domain.Bangumi.Group.Types
   ( Group (..),
     normalizeGroup,
     knownGroups,

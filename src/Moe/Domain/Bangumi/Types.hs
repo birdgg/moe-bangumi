@@ -25,6 +25,7 @@ import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Conversions (ToText (..))
+import Data.Text.Display (Display (..))
 import Data.Time (getCurrentTime, utctDay)
 import GHC.Generics (Generic)
 import Moe.Prelude (inverseMap)
@@ -36,6 +37,9 @@ import Web.HttpApiData (FromHttpApiData (..))
 
 newtype BangumiId = BangumiId Int64
   deriving stock (Eq, Show)
+
+instance Display BangumiId where
+  displayBuilder (BangumiId i) = displayBuilder i
 
 newtype TmdbId = TmdbId Word32
   deriving stock (Eq, Show)

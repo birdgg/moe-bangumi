@@ -1,8 +1,8 @@
 module Moe.Domain.File.Types
   ( SubtitleLang (..),
     SubtitleList,
-    VideoExt (..),
     SubtitleExt (..),
+    VideoExt (..),
     FileType (..),
     SeasonNum (..),
     EpisodeNum (..),
@@ -20,8 +20,8 @@ where
 
 import Data.Text (Text)
 import Data.Text.Conversions (ToText (..))
-import Data.Text.Display
 import Data.Word (Word8, Word16, Word32)
+import Moe.Domain.Bangumi.Subtitle.Types
 
 newtype SeasonNum = SeasonNum Word8
   deriving stock (Eq, Show)
@@ -68,27 +68,6 @@ data BangumiContent
   | Movie Year
   deriving stock (Eq, Show)
 
-data SubtitleLang
-  = CHS
-  | CHT
-  | JPN
-  | ENG
-  deriving stock (Eq, Ord, Show, Enum, Bounded)
-
-instance Display SubtitleLang where
-  displayBuilder CHS = "简"
-  displayBuilder CHT = "繁"
-  displayBuilder JPN = "日"
-  displayBuilder ENG = "英"
-
-instance ToText SubtitleLang where
-  toText CHS = "chs"
-  toText CHT = "cht"
-  toText JPN = "jpn"
-  toText ENG = "eng"
-
-type SubtitleList = [SubtitleLang]
-
 data VideoExt
   = MKV
   | MP4
@@ -101,19 +80,6 @@ instance ToText VideoExt where
   toText MP4 = "mp4"
   toText AVI = "avi"
   toText WEBM = "webm"
-
-data SubtitleExt
-  = SRT
-  | ASS
-  | SSA
-  | SUB
-  deriving stock (Eq, Ord, Show, Enum, Bounded)
-
-instance ToText SubtitleExt where
-  toText SRT = "srt"
-  toText ASS = "ass"
-  toText SSA = "ssa"
-  toText SUB = "sub"
 
 data FileType
   = Video VideoExt

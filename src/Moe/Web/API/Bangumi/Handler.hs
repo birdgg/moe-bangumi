@@ -7,7 +7,7 @@ import Data.Maybe (fromMaybe)
 import Data.Time.Calendar (Year)
 import Moe.App.CalendarSync (syncBangumiSeason)
 import Moe.Domain.Bangumi.Types (BangumiSeason (..), Season)
-import Moe.Web.API.Bangumi.Types (BangumiResponse, toBangumiResponse)
+import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 import Moe.Web.Types (MoeEff)
 
 handleBangumiSeason :: Year -> Season -> Maybe Bool -> MoeEff [BangumiResponse]

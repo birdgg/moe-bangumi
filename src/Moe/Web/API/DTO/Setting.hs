@@ -1,4 +1,4 @@
-module Moe.Web.API.Setting.Types
+module Moe.Web.API.DTO.Setting
   ( SettingResponse (..),
     toSettingResponse,
     DownloaderConfigResponse (..),

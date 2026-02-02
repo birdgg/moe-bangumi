@@ -1,29 +1,31 @@
-module Moe.Web.API.Bangumi.Types
+module Moe.Web.API.DTO.Bangumi
   ( BangumiResponse (..),
     toBangumiResponse,
   )
 where
 
+import Data.Aeson (ToJSON)
 import Data.Coerce (coerce)
 import Data.Int (Int64)
 import Data.OpenApi (ToSchema)
 import Data.Text (Text)
-import Data.Text.Conversions (ToText (..))
 import Data.Time.Calendar (Day)
 import Data.Word (Word32)
 import GHC.Generics (Generic)
+import Moe.Domain.Bangumi.Types (BangumiKind)
 import Moe.Domain.Bangumi.Types qualified as Types
-import Data.Aeson (ToJSON)
 
 data BangumiResponse = BangumiResponse
   { id :: Maybe Int64,
     titleChs :: Text,
     titleJap :: Maybe Text,
     airDate :: Maybe Day,
-    seasonNumber :: Maybe Word32,
-    kind :: Text,
+    season :: Maybe Word32,
+    kind :: BangumiKind,
     posterUrl :: Maybe Text,
-    bangumiSeason :: Maybe Text
+    tmdbId :: Maybe Word32,
+    mikanId :: Maybe Word32,
+    bgmtvId :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)
@@ -36,8 +38,10 @@ toBangumiResponse b =
       titleChs = b.titleChs,
       titleJap = b.titleJap,
       airDate = b.airDate,
-      seasonNumber = b.seasonNumber,
-      kind = toText b.kind,
+      season = b.seasonNumber,
+      kind = b.kind,
       posterUrl = b.posterUrl,
-      bangumiSeason = Types.bangumiSeasonToText <$> Types.getBangumiSeason b
+      tmdbId = coerce <$> b.tmdbId,
+      mikanId = coerce <$> b.mikanId,
+      bgmtvId = coerce <$> b.bgmtvId
     }

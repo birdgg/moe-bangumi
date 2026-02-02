@@ -9,10 +9,12 @@ module Moe.App.Logging
 where
 
 import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as KM
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
 import Data.Time.Clock (diffUTCTime, getCurrentTime, nominalDiffTimeToSeconds)
 import Effectful
 import Effectful.Log (Log, LogLevel (..), Logger)
@@ -20,7 +22,6 @@ import Effectful.Log qualified as Log
 import Log.Internal.Logger (withLogger)
 import Log.Logger (mkLogger)
 import System.IO (stdout)
-import Text.Pretty.Simple (pPrintLightBg)
 
 data LogDestination
   = PrettyStdOut
@@ -48,8 +49,21 @@ makeLogger dest action = case dest of
 withPrettyStdOutBackend :: (IOE :> es) => (Logger -> Eff es a) -> Eff es a
 withPrettyStdOutBackend action = withRunInIO $ \unlift -> do
   logger <- liftIO $ mkLogger "pretty-stdout" $ \msg ->
-    pPrintLightBg (Aeson.toJSON msg)
+    TIO.hPutStrLn stdout (formatLogMessage (Aeson.toJSON msg))
   withLogger logger (unlift . action)
+
+formatLogMessage :: Aeson.Value -> Text
+formatLogMessage val = case val of
+  Aeson.Object obj ->
+    let level = lookupText "level" obj
+        component = lookupText "component" obj
+        message = lookupText "message" obj
+     in "[" <> level <> "] [" <> component <> "] " <> message
+  _ -> T.pack (show val)
+  where
+    lookupText key obj = case KM.lookup key obj of
+      Just (Aeson.String t) -> t
+      _ -> ""
 
 withJSONFileBackend :: (IOE :> es) => FilePath -> (Logger -> Eff es a) -> Eff es a
 withJSONFileBackend path action = withRunInIO $ \unlift -> do

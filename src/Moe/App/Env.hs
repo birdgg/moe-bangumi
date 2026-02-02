@@ -20,6 +20,8 @@ import Data.Aeson (eitherDecodeFileStrict)
 import Data.Either (fromRight)
 import Data.Maybe (fromMaybe)
 import Data.Pool qualified as Pool
+import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
 import Effectful
@@ -29,7 +31,6 @@ import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Numeric.Natural (Natural)
 import System.Directory (doesFileExist)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
@@ -45,20 +46,16 @@ instance Display AppEnv where
   displayBuilder Production = "prod"
 
 data SchedulerConfig = SchedulerConfig
-  { rssSyncInterval :: Natural,
-    bangumiDataSyncInterval :: Natural,
-    cleanupInterval :: Natural,
-    enableScheduler :: Bool
+  { rssSyncCron :: Text,
+    calendarSyncCron :: Text
   }
   deriving stock (Eq, Show)
 
 defaultSchedulerConfig :: SchedulerConfig
 defaultSchedulerConfig =
   SchedulerConfig
-    { rssSyncInterval = 300,
-      bangumiDataSyncInterval = 86400,
-      cleanupInterval = 3600,
-      enableScheduler = True
+    { rssSyncCron = "*/5 * * * *",
+      calendarSyncCron = "0 6 1-10 * *"
     }
 
 data MoeConfig = MoeConfig
@@ -114,22 +111,12 @@ parseMoeConfig = do
 
 parseSchedulerConfig :: (IOE :> es) => Eff es SchedulerConfig
 parseSchedulerConfig = do
-  rssSyncInterval <- parseNatural 300 <$> liftIO (lookupEnv "MOE_RSS_SYNC_INTERVAL")
-  bangumiDataSyncInterval <- parseNatural 86400 <$> liftIO (lookupEnv "MOE_BANGUMI_SYNC_INTERVAL")
-  cleanupInterval <- parseNatural 3600 <$> liftIO (lookupEnv "MOE_CLEANUP_INTERVAL")
-  enableScheduler <- parseBool True <$> liftIO (lookupEnv "MOE_SCHEDULER_ENABLED")
-  pure SchedulerConfig {rssSyncInterval, bangumiDataSyncInterval, cleanupInterval, enableScheduler}
+  rssSyncCron <- parseCron "*/5 * * * *" <$> liftIO (lookupEnv "MOE_RSS_SYNC_CRON")
+  calendarSyncCron <- parseCron "0 6 1-10 * *" <$> liftIO (lookupEnv "MOE_CALENDAR_SYNC_CRON")
+  pure SchedulerConfig {rssSyncCron, calendarSyncCron}
   where
-    parseNatural :: Natural -> Maybe String -> Natural
-    parseNatural def mstr = fromMaybe def (mstr >>= readMaybe)
-
-    parseBool :: Bool -> Maybe String -> Bool
-    parseBool def Nothing = def
-    parseBool _ (Just "true") = True
-    parseBool _ (Just "1") = True
-    parseBool _ (Just "false") = False
-    parseBool _ (Just "0") = False
-    parseBool def _ = def
+    parseCron :: Text -> Maybe String -> Text
+    parseCron def = maybe def T.pack
 
 mkMoeEnv :: (IOE :> es) => MoeConfig -> Eff es MoeEnv
 mkMoeEnv config = do
