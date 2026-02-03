@@ -83,7 +83,6 @@ library
     Moe.App.Subscription.Fetch
     Moe.App.Subscription.Filter
     Moe.App.Subscription.Pipeline
-    Moe.App.Subscription.SingleFetch
     Moe.App.Subscription.Types
     Moe.App.Subscription.Washing
     Moe.Domain.Bangumi.Episode.Types
@@ -111,6 +110,7 @@ library
     Moe.Infrastructure.Database.Tracking
     Moe.Infrastructure.Download.Effect
     Moe.Infrastructure.Download.QBittorrent
+    Moe.Infrastructure.Download.Types
     Moe.Infrastructure.Metadata.Effect
     Moe.Infrastructure.Rss.Client
     Moe.Infrastructure.Rss.Effect
@@ -134,13 +134,7 @@ library
     Moe.Web.Types
 
   other-modules:
-    Moe.App.RssSync.Download
-    Moe.App.RssSync.Fetch
-    Moe.App.RssSync.Filter
-    Moe.App.RssSync.Pipeline
-    Moe.App.RssSync.Types
     Moe.App.Scheduler.Jobs.CalendarSync
-    Moe.App.Scheduler.Jobs.RssSync
     Moe.App.Scheduler.Jobs.Subscription
     Moe.Infrastructure.Database.Orphans
     Moe.Orphans
