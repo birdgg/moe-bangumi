@@ -10,7 +10,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word8)
 import Moe.Domain.Bangumi.File.Types
-import Relude (ToText (..))
+import Moe.Prelude (ToText (..))
 import System.FilePath ((</>))
 
 generatePath :: BangumiFile -> FilePath
@@ -58,27 +58,27 @@ episodeDir = \case
 
 episodeBaseName :: Text -> EpisodeType -> Text
 episodeBaseName name = \case
-  Regular (SeasonNumber s) (EpisodeIndex e) ->
-    sanitizeName name <> " - S" <> padded s <> "E" <> padded e
-  Special (EpisodeIndex e) ->
-    sanitizeName name <> " - S00E" <> padded e
+  Regular (SeasonNumber s) ep ->
+    sanitizeName name <> " - S" <> padded s <> "E" <> toText ep
+  Special ep ->
+    sanitizeName name <> " - S00E" <> toText ep
 
 extraBaseName :: ExtraContent -> Text
 extraBaseName = \case
   NCOP Nothing -> "NCOP"
-  NCOP (Just (Index i)) -> "NCOP" <> T.pack (show i)
+  NCOP (Just (ExtraIndex i)) -> "NCOP" <> T.pack (show i)
   NCED Nothing -> "NCED"
-  NCED (Just (Index i)) -> "NCED" <> T.pack (show i)
+  NCED (Just (ExtraIndex i)) -> "NCED" <> T.pack (show i)
   Menu Nothing -> "Menu"
-  Menu (Just (Index i)) -> "Menu" <> T.pack (show i)
+  Menu (Just (ExtraIndex i)) -> "Menu" <> T.pack (show i)
 
 trailerBaseName :: TrailerContent -> Text
 trailerBaseName = \case
-  PV (Index i) -> "PV" <> T.pack (show i)
+  PV (ExtraIndex i) -> "PV" <> T.pack (show i)
   Preview -> "Preview"
   Trailer -> "Trailer"
   CM Nothing -> "CM"
-  CM (Just (Index i)) -> "CM" <> T.pack (show i)
+  CM (Just (ExtraIndex i)) -> "CM" <> T.pack (show i)
 
 fileTypeExtension :: FileType -> Text
 fileTypeExtension = \case

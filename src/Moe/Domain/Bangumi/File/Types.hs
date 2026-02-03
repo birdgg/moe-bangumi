@@ -4,11 +4,11 @@ module Moe.Domain.Bangumi.File.Types
     SubtitleExt (..),
     VideoExt (..),
     FileType (..),
-    SeasonNumber (..),
-    EpisodeIndex (..),
-    Index (..),
+    EpisodeNumber (..),
+    ExtraIndex (..),
     Year,
     TmdbId (..),
+    SeasonNumber (..),
     EpisodeType (..),
     ExtraContent (..),
     TrailerContent (..),
@@ -21,31 +21,31 @@ where
 import Data.Text (Text)
 import Data.Time.Calendar (Year)
 import Data.Word (Word8)
-import Moe.Domain.Bangumi.Episode.Types (EpisodeIndex (..), SeasonNumber (..))
-import Moe.Domain.Bangumi.Subtitle.Types
-import Moe.Domain.Bangumi.Types (TmdbId (..))
+import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleExt (..), SubtitleLang (..), SubtitleList)
+import Moe.Domain.Bangumi.Types (SeasonNumber (..), TmdbId (..))
 import Relude (ToText (..))
 
-newtype Index = Index Word8
+newtype ExtraIndex = ExtraIndex Word8
   deriving stock (Eq, Show)
   deriving newtype (Num)
 
 data EpisodeType
-  = Regular SeasonNumber EpisodeIndex
-  | Special EpisodeIndex
+  = Regular SeasonNumber EpisodeNumber
+  | Special EpisodeNumber
   deriving stock (Eq, Show)
 
 data ExtraContent
-  = NCOP (Maybe Index)
-  | NCED (Maybe Index)
-  | Menu (Maybe Index)
+  = NCOP (Maybe ExtraIndex)
+  | NCED (Maybe ExtraIndex)
+  | Menu (Maybe ExtraIndex)
   deriving stock (Eq, Show)
 
 data TrailerContent
-  = PV Index
+  = PV ExtraIndex
   | Preview
   | Trailer
-  | CM (Maybe Index)
+  | CM (Maybe ExtraIndex)
   deriving stock (Eq, Show)
 
 data BangumiContent
