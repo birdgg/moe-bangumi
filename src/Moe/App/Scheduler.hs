@@ -10,21 +10,14 @@ where
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Async)
 import Control.Concurrent.Async qualified as Async
-import Control.Exception (SomeException)
 import Control.Exception qualified as Exception
-import Control.Monad (when)
-import Data.Foldable (traverse_)
-import Data.IORef (IORef, atomicModifyIORef', newIORef, readIORef)
-import Data.Text (Text)
-import Data.Text qualified as T
 import Data.Text.Display (display)
-import Data.Text.IO qualified as TIO
 import Data.Time (NominalDiffTime, diffUTCTime, getCurrentTime)
 import Effectful
 import Effectful.Log qualified as Log
 import Moe.Domain.Scheduler.Types
+import Moe.Prelude
 import System.Cron (nextMatch)
-import System.IO (hFlush, stdout)
 
 data JobDefinition = JobDefinition
   { jobConfig :: JobConfig,
@@ -73,7 +66,7 @@ runJobAsync stateRef def = do
   case nextMatch cfg.schedule now of
     Nothing -> do
       Log.logAttention_ $ "[" <> display cfg.jobId <> "] No upcoming schedule match"
-      liftIO $ Async.async $ pure ()
+      liftIO $ Async.async pass
     Just _ ->
       liftIO $ Async.async $ runJobLoop stateRef def
 
@@ -87,7 +80,7 @@ runJobLoop stateRef def = loop
       when st.running $ do
         now <- getCurrentTime
         case nextMatch cfg.schedule now of
-          Nothing -> pure ()
+          Nothing -> pass
           Just nextRun -> do
             let delay = diffUTCTime nextRun now
             when (delay > 0) $
@@ -102,7 +95,7 @@ sleepUntil delay stateRef = go (ceiling (delay * 1_000_000) :: Integer)
   where
     maxSleep = 60_000_000
     go remaining
-      | remaining <= 0 = pure ()
+      | remaining <= 0 = pass
       | otherwise = do
           st <- readIORef stateRef
           when st.running $ do
@@ -129,11 +122,11 @@ executeJob stateRef def = do
   logJob cfg.jobId $ "Finished: " <> display result
   where
     handleException :: SomeException -> IO JobResult
-    handleException e = pure $ JobFailure (T.pack (show e))
+    handleException e = pure $ JobFailure (toText (Prelude.show e))
 
 logJob :: JobId -> Text -> IO ()
 logJob jid msg = do
-  TIO.putStrLn $ "[" <> display jid <> "] " <> msg
+  putTextLn $ "[" <> display jid <> "] " <> msg
   hFlush stdout
 
 updateJobStatus :: IORef SchedulerState -> JobId -> JobStatus -> IO ()
