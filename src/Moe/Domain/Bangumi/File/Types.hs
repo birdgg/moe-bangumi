@@ -1,11 +1,11 @@
-module Moe.Domain.File.Types
+module Moe.Domain.Bangumi.File.Types
   ( SubtitleLang (..),
     SubtitleList,
     SubtitleExt (..),
     VideoExt (..),
     FileType (..),
-    SeasonNum (..),
-    EpisodeNum (..),
+    SeasonNumber (..),
+    EpisodeIndex (..),
     Index (..),
     Year (..),
     TmdbId (..),
@@ -19,17 +19,11 @@ module Moe.Domain.File.Types
 where
 
 import Data.Text (Text)
-import Data.Word (Word8, Word16, Word32)
+import Data.Word (Word8, Word16)
+import Moe.Domain.Bangumi.Episode.Types (EpisodeIndex (..), SeasonNumber (..))
 import Moe.Domain.Bangumi.Subtitle.Types
+import Moe.Domain.Bangumi.Types (TmdbId (..))
 import Relude (ToText (..))
-
-newtype SeasonNum = SeasonNum Word8
-  deriving stock (Eq, Show)
-  deriving newtype (Num)
-
-newtype EpisodeNum = EpisodeNum Word8
-  deriving stock (Eq, Show)
-  deriving newtype (Num)
 
 newtype Index = Index Word8
   deriving stock (Eq, Show)
@@ -39,13 +33,9 @@ newtype Year = Year Word16
   deriving stock (Eq, Show)
   deriving newtype (Num)
 
-newtype TmdbId = TmdbId Word32
-  deriving stock (Eq, Show)
-  deriving newtype (Num)
-
 data EpisodeType
-  = Regular SeasonNum EpisodeNum
-  | Special EpisodeNum
+  = Regular SeasonNumber EpisodeIndex
+  | Special EpisodeIndex
   deriving stock (Eq, Show)
 
 data ExtraContent

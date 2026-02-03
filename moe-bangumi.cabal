@@ -94,9 +94,8 @@ library
     Moe.Domain.Bangumi.Parser.RssTitle
     Moe.Domain.Bangumi.Subtitle.Types
     Moe.Domain.Bangumi.Types
-    Moe.Domain.File.Naming
-    Moe.Domain.File.Parser
-    Moe.Domain.File.Types
+    Moe.Domain.Bangumi.File.Naming
+    Moe.Domain.Bangumi.File.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Tracking.Types
@@ -204,7 +203,7 @@ test-suite moe-bangumi-test
   other-modules:
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.Bangumi.Parser.RssTitleSpec
-    Moe.Domain.File.NamingSpec
+    Moe.Domain.Bangumi.File.NamingSpec
     Moe.Infrastructure.BangumiData.TypesSpec
 
   build-depends:

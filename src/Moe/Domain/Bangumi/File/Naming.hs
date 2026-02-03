@@ -1,4 +1,4 @@
-module Moe.Domain.File.Naming
+module Moe.Domain.Bangumi.File.Naming
   ( generatePath,
     generateFileName,
     generateFullPath,
@@ -9,7 +9,7 @@ where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word8)
-import Moe.Domain.File.Types
+import Moe.Domain.Bangumi.File.Types
 import Relude (ToText (..))
 import System.FilePath ((</>))
 
@@ -53,14 +53,14 @@ nameWithYear name (Year y) = sanitizeName name <> " (" <> T.pack (show y) <> ")"
 
 episodeDir :: EpisodeType -> FilePath
 episodeDir = \case
-  Regular (SeasonNum s) _ -> T.unpack $ "Season " <> padded s
+  Regular (SeasonNumber s) _ -> T.unpack $ "Season " <> padded s
   Special _ -> "Season 00"
 
 episodeBaseName :: Text -> EpisodeType -> Text
 episodeBaseName name = \case
-  Regular (SeasonNum s) (EpisodeNum e) ->
+  Regular (SeasonNumber s) (EpisodeIndex e) ->
     sanitizeName name <> " - S" <> padded s <> "E" <> padded e
-  Special (EpisodeNum e) ->
+  Special (EpisodeIndex e) ->
     sanitizeName name <> " - S00E" <> padded e
 
 extraBaseName :: ExtraContent -> Text
