@@ -6,9 +6,10 @@ where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Read qualified as TR
+import Relude (toText, (<|>))
 import Effectful
-import Effectful.Dispatch.Dynamic (interpret, localSeqUnlift)
-import Effectful.Error.Static (throwError)
+import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Error.Static (Error, throwError)
 import Moe.Domain.Setting.Types (DownloaderConfig (..), UserPreference (..))
 import Moe.Infrastructure.Download.Effect (Download (..), DownloadError (..))
 import Moe.Infrastructure.Setting.Effect (Setting, getSetting)
@@ -23,20 +24,50 @@ import Network.QBittorrent.Client
 import Network.QBittorrent.Client qualified as QB
 
 runDownload ::
-  (Setting :> es, IOE :> es) =>
+  (Setting :> es, IOE :> es, Error DownloadError :> es) =>
   Manager ->
   Eff (Download : es) a ->
   Eff es a
-runDownload manager = interpret $ \env -> \case
-  AddTorrent url savePath -> do
-    pref <- getSetting
-    case pref.downloader of
-      Nothing -> localSeqUnlift env $ \unlift -> unlift $ throwError ConfigMissing
-      Just cfg -> do
-        result <- liftIO $ executeDownload manager cfg url savePath
-        case result of
-          Left err -> localSeqUnlift env $ \unlift -> unlift $ throwError err
-          Right () -> pure ()
+runDownload manager = interpret $ \_ -> \case
+  Login -> withConfig $ \cfg -> liftIO $ executeLogin manager cfg
+  AddTorrent url savePath -> withConfig $ \cfg -> liftIO $ executeDownload manager cfg url savePath
+  where
+    withConfig action = do
+      pref <- getSetting
+      case pref.downloader of
+        Nothing -> throwError ConfigMissing
+        Just cfg -> case validateConfig cfg of
+          Just err -> throwError err
+          Nothing -> do
+            result <- action cfg
+            case result of
+              Left err -> throwError err
+              Right a -> pure a
+
+validateConfig :: DownloaderConfig -> Maybe DownloadError
+validateConfig cfg =
+  checkEmpty "url" cfg.url
+    <|> checkEmpty "username" cfg.username
+    <|> checkEmpty "password" cfg.password
+  where
+    checkEmpty name value
+      | T.null value = Just $ InvalidConfig name
+      | otherwise = Nothing
+
+executeLogin ::
+  Manager ->
+  DownloaderConfig ->
+  IO (Either DownloadError ())
+executeLogin manager cfg = do
+  cookieJar <- newCookieJar
+  let qbConfig = toQBConfig cfg
+      env = mkClientEnvWithCookies manager qbConfig cookieJar
+  loginResult <- runClientM (QB.login qbConfig) env
+  pure $ case loginResult of
+    Left err -> Left $ LoginFailed $ toText $ show err
+    Right response
+      | response /= "Ok." -> Left $ LoginFailed response
+      | otherwise -> Right ()
 
 executeDownload ::
   Manager ->
@@ -51,7 +82,7 @@ executeDownload manager cfg url savePath = do
 
   loginResult <- runClientM (QB.login qbConfig) env
   case loginResult of
-    Left err -> pure $ Left $ LoginFailed $ T.pack $ show err
+    Left err -> pure $ Left $ LoginFailed $ toText $ show err
     Right response
       | response /= "Ok." -> pure $ Left $ LoginFailed response
       | otherwise -> do
@@ -66,7 +97,7 @@ executeDownload manager cfg url savePath = do
                   }
           addResult <- runClientM (QB.addTorrent req) env
           case addResult of
-            Left err -> pure $ Left $ AddTorrentFailed $ T.pack $ show err
+            Left err -> pure $ Left $ AddTorrentFailed $ toText $ show err
             Right _ -> pure $ Right ()
 
 toQBConfig :: DownloaderConfig -> QBConfig
