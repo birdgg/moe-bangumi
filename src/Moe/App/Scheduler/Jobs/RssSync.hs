@@ -12,9 +12,12 @@ import Moe.App.RssSync.Pipeline (runPipeline)
 import Moe.App.Scheduler (JobDefinition (..))
 import Moe.Domain.Scheduler.Types (JobResult (..), mkJobConfig)
 
-rssSyncJob :: Text -> MoeEnv -> Logger -> JobDefinition
-rssSyncJob cronExpr env logger =
-  case mkJobConfig "rss-sync" cronExpr of
+defaultCron :: Text
+defaultCron = "*/5 * * * *"
+
+rssSyncJob :: MoeEnv -> Logger -> JobDefinition
+rssSyncJob env logger =
+  case mkJobConfig "rss-sync" defaultCron of
     Left err -> error $ "Invalid rss-sync cron: " <> show err
     Right config ->
       JobDefinition

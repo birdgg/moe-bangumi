@@ -87,14 +87,13 @@ logException component env logger exception =
 
 runServer :: (RequireCallStack, Concurrent :> es, IOE :> es) => Logger -> MoeEnv -> Eff es ()
 runServer logger env = do
-  let schedulerCfg = env.config.schedulerConfig
   void $
     forkIO $
       unsafeEff_ $
         Safe.withException
           (runInitialSeasonSync logger env)
           (logException "initial-sync" env logger)
-  let jobs = defaultJobs schedulerCfg env logger
+  let jobs = defaultJobs env logger
   void $
     forkIO $
       unsafeEff_ $

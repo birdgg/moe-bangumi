@@ -2,9 +2,7 @@ module Moe.App.Env
   ( MoeConfig (..),
     MoeEnv (..),
     AppEnv (..),
-    SchedulerConfig (..),
     defaultMoeConfig,
-    defaultSchedulerConfig,
     parseMoeConfig,
     mkMoeEnv,
     mkDbPool,
@@ -20,8 +18,6 @@ import Data.Aeson (eitherDecodeFileStrict)
 import Data.Either (fromRight)
 import Data.Maybe (fromMaybe)
 import Data.Pool qualified as Pool
-import Data.Text (Text)
-import Data.Text qualified as T
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
 import Effectful
@@ -45,25 +41,11 @@ instance Display AppEnv where
   displayBuilder Development = "dev"
   displayBuilder Production = "prod"
 
-data SchedulerConfig = SchedulerConfig
-  { rssSyncCron :: Text,
-    calendarSyncCron :: Text
-  }
-  deriving stock (Eq, Show)
-
-defaultSchedulerConfig :: SchedulerConfig
-defaultSchedulerConfig =
-  SchedulerConfig
-    { rssSyncCron = "*/5 * * * *",
-      calendarSyncCron = "0 6 1-10 * *"
-    }
-
 data MoeConfig = MoeConfig
   { appEnv :: AppEnv,
     port :: Int,
     dataFolder :: FilePath,
-    logConfig :: LogConfig,
-    schedulerConfig :: SchedulerConfig
+    logConfig :: LogConfig
   }
   deriving stock (Eq, Show)
 
@@ -80,8 +62,7 @@ defaultMoeConfig =
     { appEnv = Development,
       port = 3000,
       dataFolder = "./data",
-      logConfig = defaultLogConfig,
-      schedulerConfig = defaultSchedulerConfig
+      logConfig = defaultLogConfig
     }
 
 parseMoeConfig :: (IOE :> es) => Eff es MoeConfig
@@ -90,9 +71,8 @@ parseMoeConfig = do
   port <- parsePort <$> liftIO (lookupEnv "MOE_PORT")
   dataFolder <- parseDataFolder <$> liftIO (lookupEnv "MOE_DATA_FOLDER")
   logDest <- parseLogDest dataFolder <$> liftIO (lookupEnv "MOE_LOG_DEST")
-  schedulerConfig <- parseSchedulerConfig
   let logConfig = LogConfig {destination = logDest, logLevel = defaultLogConfig.logLevel}
-  pure MoeConfig {appEnv, port, dataFolder, logConfig, schedulerConfig}
+  pure MoeConfig {appEnv, port, dataFolder, logConfig}
   where
     parseAppEnv :: Maybe String -> AppEnv
     parseAppEnv (Just "prod") = Production
@@ -108,15 +88,6 @@ parseMoeConfig = do
     parseLogDest :: FilePath -> Maybe String -> LogDestination
     parseLogDest folder (Just "file") = JsonFile (folder </> "moe-bangumi.log")
     parseLogDest _ _ = PrettyStdOut
-
-parseSchedulerConfig :: (IOE :> es) => Eff es SchedulerConfig
-parseSchedulerConfig = do
-  rssSyncCron <- parseCron "*/5 * * * *" <$> liftIO (lookupEnv "MOE_RSS_SYNC_CRON")
-  calendarSyncCron <- parseCron "0 6 1-10 * *" <$> liftIO (lookupEnv "MOE_CALENDAR_SYNC_CRON")
-  pure SchedulerConfig {rssSyncCron, calendarSyncCron}
-  where
-    parseCron :: Text -> Maybe String -> Text
-    parseCron def = maybe def T.pack
 
 mkMoeEnv :: (IOE :> es) => MoeConfig -> Eff es MoeEnv
 mkMoeEnv config = do

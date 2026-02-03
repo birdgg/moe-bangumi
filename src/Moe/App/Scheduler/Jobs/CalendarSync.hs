@@ -10,9 +10,12 @@ import Moe.App.Env (MoeEnv)
 import Moe.App.Scheduler (JobDefinition (..))
 import Moe.Domain.Scheduler.Types (JobResult (..), mkJobConfig)
 
-calendarSyncJob :: Text -> MoeEnv -> Logger -> JobDefinition
-calendarSyncJob cronExpr env logger =
-  case mkJobConfig "calendar-sync" cronExpr of
+defaultCron :: Text
+defaultCron = "0 6 1-10 * *"
+
+calendarSyncJob :: MoeEnv -> Logger -> JobDefinition
+calendarSyncJob env logger =
+  case mkJobConfig "calendar-sync" defaultCron of
     Left err -> error $ "Invalid calendar-sync cron: " <> show err
     Right config ->
       JobDefinition
