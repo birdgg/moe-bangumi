@@ -21,7 +21,7 @@ import Moe.Domain.Bangumi.Types qualified as Types
 import Moe.Infrastructure.Database.Orphans ()
 
 bangumiColumns :: Text
-bangumiColumns = "id, title_chs, title_jap, air_date, season_number, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url"
+bangumiColumns = "id, title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url"
 
 getBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -50,9 +50,9 @@ listBangumi =
 
 listBangumiBySeason ::
   (SqliteTransaction :> es, IOE :> es) =>
-  Types.BangumiSeason ->
+  Types.AirSeason ->
   Eff es [Types.Bangumi]
-listBangumiBySeason (Types.BangumiSeason year season) = do
+listBangumiBySeason (Types.AirSeason year season) = do
   let months = Types.seasonToMonths season
       monthPlaceholders = intercalate ", " (replicate (length months) "?")
       sql =
@@ -71,11 +71,11 @@ createBangumi ::
 createBangumi bangumi = do
   results <-
     query
-      "INSERT INTO bangumi (title_chs, title_jap, air_date, season_number, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
       ( bangumi.titleChs,
         bangumi.titleJap,
         bangumi.airDate,
-        bangumi.seasonNumber,
+        bangumi.season,
         bangumi.kind,
         bangumi.mikanId,
         bangumi.tmdbId,
@@ -95,11 +95,11 @@ updateBangumi bangumi =
     Nothing -> pure ()
     Just (Types.BangumiId bid) ->
       execute
-        "UPDATE bangumi SET title_chs = ?, title_jap = ?, air_date = ?, season_number = ?, kind = ?, mikan_id = ?, tmdb_id = ?, bangumi_tv_id = ?, poster_url = ? WHERE id = ?"
+        "UPDATE bangumi SET title_chs = ?, title_jap = ?, air_date = ?, season = ?, kind = ?, mikan_id = ?, tmdb_id = ?, bangumi_tv_id = ?, poster_url = ? WHERE id = ?"
         ( bangumi.titleChs,
           bangumi.titleJap,
           bangumi.airDate,
-          bangumi.seasonNumber,
+          bangumi.season,
           bangumi.kind,
           bangumi.mikanId,
           bangumi.tmdbId,
@@ -115,13 +115,13 @@ upsertBangumi ::
 upsertBangumi bangumi = do
   results <-
     query
-      "INSERT INTO bangumi (title_chs, title_jap, air_date, season_number, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) \
+      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) \
       \VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) \
       \ON CONFLICT (bangumi_tv_id) DO UPDATE SET \
       \title_chs = excluded.title_chs, \
       \title_jap = excluded.title_jap, \
       \air_date = excluded.air_date, \
-      \season_number = excluded.season_number, \
+      \season = excluded.season, \
       \kind = excluded.kind, \
       \mikan_id = excluded.mikan_id, \
       \tmdb_id = excluded.tmdb_id, \
@@ -130,7 +130,7 @@ upsertBangumi bangumi = do
       ( bangumi.titleChs,
         bangumi.titleJap,
         bangumi.airDate,
-        bangumi.seasonNumber,
+        bangumi.season,
         bangumi.kind,
         bangumi.mikanId,
         bangumi.tmdbId,

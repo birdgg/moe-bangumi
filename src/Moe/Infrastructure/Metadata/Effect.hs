@@ -26,7 +26,7 @@ import Effectful.Error.Static (Error, throwError)
 import Effectful.TH (makeEffect)
 import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle, parseBgmtvTitle)
-import Moe.Domain.Bangumi.Types (BangumiSeason)
+import Moe.Domain.Bangumi.Types (AirSeason)
 import Moe.Domain.Bangumi.Types qualified as BangumiTypes
 import Moe.Domain.Setting.Types qualified as Setting
 import Moe.Error (MoeError (..), liftError)
@@ -64,7 +64,7 @@ data Metadata :: Effect where
   GetBangumiEpisodeOffset :: SubjectId -> Metadata m Double
   GetTmdbTvDetail :: TvShowId -> Metadata m (Maybe TvDetail)
   GetTmdbMovieDetail :: MovieId -> Metadata m (Maybe MovieDetail)
-  FetchBangumiDataBySeason :: BangumiSeason -> Metadata m [BangumiDataItem]
+  FetchBangumiDataBySeason :: AirSeason -> Metadata m [BangumiDataItem]
 
 makeEffect ''Metadata
 

@@ -10,15 +10,15 @@ import Data.Time.Calendar (Day, Year)
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Effectful.Sqlite (notransact)
 import Moe.Infrastructure.Database.Bangumi qualified as DB
-import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiSeason (..), Season)
+import Moe.Domain.Bangumi.Types (AirSeason (..), Bangumi (..), Season)
 import Moe.Web.API.DTO.Bangumi (toBangumiResponse)
 import Moe.Web.API.DTO.Calendar (CalendarEntry (..))
 import Moe.Web.Types (MoeEff)
 
 handleCalendar :: Year -> Season -> MoeEff [CalendarEntry]
 handleCalendar year season = do
-  let bs = BangumiSeason year season
-  bangumis <- notransact $ DB.listBangumiBySeason bs
+  let airSeason = AirSeason year season
+  bangumis <- notransact $ DB.listBangumiBySeason airSeason
   pure $ groupByWeekday bangumis
 
 groupByWeekday :: [Bangumi] -> [CalendarEntry]

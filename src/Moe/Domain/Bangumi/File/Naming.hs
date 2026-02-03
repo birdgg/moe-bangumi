@@ -49,7 +49,7 @@ showBaseName meta = T.unpack $ case meta.year of
   Nothing -> sanitizeName meta.name
 
 nameWithYear :: Text -> Year -> Text
-nameWithYear name (Year y) = sanitizeName name <> " (" <> T.pack (show y) <> ")"
+nameWithYear name y = sanitizeName name <> " (" <> toText y <> ")"
 
 episodeDir :: EpisodeType -> FilePath
 episodeDir = \case

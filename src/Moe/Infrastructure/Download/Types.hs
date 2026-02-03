@@ -24,14 +24,14 @@ instance Display DownloadError where
   displayBuilder ConfigMissing = "Downloader config missing"
   displayBuilder (InvalidConfig field) = "Invalid config: " <> displayBuilder field <> " is empty"
 
-data Tag = MoeTag | RenameTag | SubscriptionTag | CollectionTag
+data Tag = Moe | Rename | Subscription | Collection
   deriving stock (Eq, Show, Bounded, Enum)
 
 instance ToText Tag where
-  toText MoeTag = "moe"
-  toText RenameTag = "rename"
-  toText SubscriptionTag = "subscription"
-  toText CollectionTag = "collection"
+  toText Moe = "moe"
+  toText Rename = "rename"
+  toText Subscription = "subscription"
+  toText Collection = "collection"
 
 fromTagText :: Text -> Maybe Tag
 fromTagText = inverseMap toText

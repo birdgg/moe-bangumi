@@ -7,7 +7,7 @@ module Moe.Domain.Bangumi.File.Types
     SeasonNumber (..),
     EpisodeIndex (..),
     Index (..),
-    Year (..),
+    Year,
     TmdbId (..),
     EpisodeType (..),
     ExtraContent (..),
@@ -19,17 +19,14 @@ module Moe.Domain.Bangumi.File.Types
 where
 
 import Data.Text (Text)
-import Data.Word (Word8, Word16)
+import Data.Time.Calendar (Year)
+import Data.Word (Word8)
 import Moe.Domain.Bangumi.Episode.Types (EpisodeIndex (..), SeasonNumber (..))
 import Moe.Domain.Bangumi.Subtitle.Types
 import Moe.Domain.Bangumi.Types (TmdbId (..))
 import Relude (ToText (..))
 
 newtype Index = Index Word8
-  deriving stock (Eq, Show)
-  deriving newtype (Num)
-
-newtype Year = Year Word16
   deriving stock (Eq, Show)
   deriving newtype (Num)
 

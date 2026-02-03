@@ -15,7 +15,7 @@ import Moe.Domain.Bangumi.Parser.Internal.Pattern
 data BgmtvParsedTitle = BgmtvParsedTitle
   { titleChs :: Text,
     titleJap :: Text,
-    seasonNumber :: Maybe Word32
+    season :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
 
@@ -26,7 +26,7 @@ parseBgmtvTitle (name, nameCn) =
    in BgmtvParsedTitle
         { titleChs = titleChs,
           titleJap = titleJap,
-          seasonNumber = seasonFromNameCn <|> seasonFromName
+          season = seasonFromNameCn <|> seasonFromName
         }
 
 parseTitle :: Text -> (Text, Maybe Word32)

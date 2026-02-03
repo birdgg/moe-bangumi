@@ -1,6 +1,8 @@
 module Moe.Domain.Bangumi.Episode.Types
   ( EpisodeId (..),
     EpisodeNumber (..),
+    SeasonNumber (..),
+    EpisodeIndex (..),
     Episode (..),
   )
 where
@@ -8,7 +10,7 @@ where
 import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Time (UTCTime)
-import Data.Word (Word32)
+import Data.Word (Word8, Word32)
 import Moe.Domain.Bangumi.Types (BangumiId)
 
 newtype EpisodeId = EpisodeId Int64
@@ -16,6 +18,14 @@ newtype EpisodeId = EpisodeId Int64
 
 newtype EpisodeNumber = EpisodeNumber Word32
   deriving stock (Eq, Ord, Show)
+  deriving newtype (Num)
+
+newtype SeasonNumber = SeasonNumber Word8
+  deriving stock (Eq, Show)
+  deriving newtype (Num)
+
+newtype EpisodeIndex = EpisodeIndex Word8
+  deriving stock (Eq, Show)
   deriving newtype (Num)
 
 data Episode = Episode

@@ -1,8 +1,8 @@
 module Moe.App.CalendarSync
   ( runInitialSeasonSync,
     runMonthlySync,
-    syncBangumiSeason,
-    fetchAndStoreBangumiSeason,
+    syncAirSeason,
+    fetchAndStoreAirSeason,
   )
 where
 
@@ -25,7 +25,7 @@ import Effectful.Sqlite (Sqlite, notransact, transact)
 import Moe.App.Effect.Runner (runCalendarSyncEffects)
 import Moe.App.Env (MoeEnv)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle (..))
-import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiKind (..), BangumiSeason, BgmtvId (..), TmdbId (..), airDateToBangumiSeason, getCurrentBangumiSeason)
+import Moe.Domain.Bangumi.Types (AirSeason, Bangumi (..), BangumiKind (..), BgmtvId (..), TmdbId (..), airDateToAirSeason, getCurrentAirSeason)
 import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.Effect (toBangumi)
 import Moe.Infrastructure.Database.Bangumi qualified as DB
@@ -40,7 +40,7 @@ import Web.Bgmtv.Types qualified as Bgmtv
 
 runInitialSeasonSync :: Logger -> MoeEnv -> IO ()
 runInitialSeasonSync logger env = do
-  currentSeason <- getCurrentBangumiSeason
+  currentSeason <- getCurrentAirSeason
   runSeasonSync logger env currentSeason "initial-sync"
 
 runMonthlySync :: Logger -> MoeEnv -> IO ()
@@ -58,19 +58,19 @@ runMonthSyncInternal :: Logger -> MoeEnv -> Month -> IO ()
 runMonthSyncInternal logger env month = do
   let Month.YearMonth year monthNum = month
       firstDayOfMonth = fromGregorian year monthNum 1
-      season = airDateToBangumiSeason firstDayOfMonth
+      season = airDateToAirSeason firstDayOfMonth
   runSeasonSync logger env season "calendar-sync"
 
-runSeasonSync :: Logger -> MoeEnv -> BangumiSeason -> T.Text -> IO ()
+runSeasonSync :: Logger -> MoeEnv -> AirSeason -> T.Text -> IO ()
 runSeasonSync logger env season logPrefix =
   runCalendarSyncEffects env logger logPrefix $ do
     Log.logInfo_ $ "Syncing season: " <> toText season
-    result <- Safe.tryAny $ syncBangumiSeason False season
+    result <- Safe.tryAny $ syncAirSeason False season
     case result of
       Left err -> Log.logAttention_ $ logPrefix <> " failed: " <> T.pack (show err)
       Right _ -> Log.logInfo_ $ logPrefix <> " completed for " <> toText season
 
-syncBangumiSeason ::
+syncAirSeason ::
   ( Metadata :> es,
     Sqlite :> es,
     Concurrent :> es,
@@ -79,17 +79,17 @@ syncBangumiSeason ::
     IOE :> es
   ) =>
   Bool ->
-  BangumiSeason ->
+  AirSeason ->
   Eff es [Bangumi]
-syncBangumiSeason forceRefresh season = do
+syncAirSeason forceRefresh season = do
   existing <- notransact $ DB.listBangumiBySeason season
   if null existing || forceRefresh
-    then fetchAndStoreBangumiSeason season
+    then fetchAndStoreAirSeason season
     else do
       Log.logInfo_ $ "Found " <> T.pack (show (length existing)) <> " existing bangumi"
       pure existing
 
-fetchAndStoreBangumiSeason ::
+fetchAndStoreAirSeason ::
   ( Metadata :> es,
     Sqlite :> es,
     Concurrent :> es,
@@ -97,9 +97,9 @@ fetchAndStoreBangumiSeason ::
     Error MoeError :> es,
     IOE :> es
   ) =>
-  BangumiSeason ->
+  AirSeason ->
   Eff es [Bangumi]
-fetchAndStoreBangumiSeason season = do
+fetchAndStoreAirSeason season = do
   Log.logInfo_ $ "Fetching bangumi-data for season: " <> toText season
   items <- fetchBangumiDataBySeason season
   let basicBangumis = map toBangumi items
@@ -133,8 +133,8 @@ enrichWithDetails bangumi = do
           pure $ applyTmdbTvDetail detail bangumi
 
 defaultTvSeasonNumber :: Bangumi -> Bangumi
-defaultTvSeasonNumber b = case (b.kind, b.seasonNumber) of
-  (Tv, Nothing) -> b {seasonNumber = Just 1}
+defaultTvSeasonNumber b = case (b.kind, b.season) of
+  (Tv, Nothing) -> b {season = Just 1}
   _ -> b
 
 applyBgmtvDetail :: BgmtvDetailResult -> Bangumi -> Bangumi
@@ -146,14 +146,14 @@ applyBgmtvDetail BgmtvDetailResult {detail, parsed} b =
         { posterUrl = Just subjectDetail.images.large,
           titleChs = if parsedChs == "" then b.titleChs else parsedChs,
           titleJap = Just parsedJap,
-          seasonNumber = parsedSeason <|> b.seasonNumber
+          season = parsedSeason <|> b.season
         }
 
 applyTmdbTvDetail :: TmdbTv.TvDetail -> Bangumi -> Bangumi
 applyTmdbTvDetail detail b =
   b
     { posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> detail.posterPath,
-      seasonNumber = Just $ fromIntegral detail.numberOfSeasons
+      season = Just $ fromIntegral detail.numberOfSeasons
     }
 
 applyTmdbMovieDetail :: TmdbMovie.MovieDetail -> Bangumi -> Bangumi

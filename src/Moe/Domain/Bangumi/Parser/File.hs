@@ -21,7 +21,7 @@ import Text.Read (readMaybe)
 
 data ParsedInfo = ParsedInfo
   { title :: Text,
-    seasonNumber :: Maybe Word32,
+    season :: Maybe Word32,
     episodeNumber :: Maybe EpisodeNumber,
     group :: Maybe Text
   }
@@ -31,7 +31,7 @@ parseInfo :: Text -> ParsedInfo
 parseInfo input =
   ParsedInfo
     { title = input,
-      seasonNumber = extractSeason input,
+      season = extractSeason input,
       episodeNumber = extractEpisode input,
       group = extractGroup input
     }

@@ -83,7 +83,7 @@ instance ToRow Bangumi where
         b.titleChs,
         b.titleJap,
         b.airDate,
-        b.seasonNumber,
+        b.season,
         b.kind,
         b.mikanId,
         b.tmdbId,
