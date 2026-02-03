@@ -5,6 +5,7 @@ module Moe.Domain.Bangumi.Types
     MikanId (..),
     AirSeason (..),
     Season (..),
+    SeasonNumber (..),
     BangumiKind (..),
     bangumiKindFromText,
     Bangumi (..),
@@ -26,8 +27,9 @@ import Data.Text.Display (Display (..))
 import Data.Time.Calendar (Day)
 import Data.Word (Word32)
 import GHC.Generics (Generic)
-import Moe.Domain.Bangumi.Metadata.Types
-import Moe.Domain.Bangumi.Season.Types
+import Moe.Domain.Bangumi.Internal.Metadata
+import Moe.Domain.Bangumi.Internal.Season
+import Moe.Domain.Bangumi.Season
 import Moe.Orphans ()
 import Relude (ToText (..), inverseMap)
 

@@ -13,7 +13,7 @@ import Moe.Domain.Bangumi.Types
     MikanId (..),
     TmdbId (..),
   )
-import Moe.Domain.Bangumi.Episode.Types
+import Moe.Domain.Bangumi.Episode
   ( Episode (..),
     EpisodeId (..),
     EpisodeNumber (..),
@@ -164,7 +164,7 @@ instance ToRow Episode where
       ( e.id,
         e.bangumiId,
         e.episodeNumber,
-        e.subtitleGroup,
+        e.group,
         e.resolution,
         e.infoHash,
         e.torrentUrl,

@@ -11,7 +11,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..))
 import Moe.Domain.Bangumi.Types (Bangumi (..))
-import Moe.Domain.Bangumi.Episode.Types (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
 import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
 import Moe.Domain.Setting.Types (FilterConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
@@ -44,7 +44,7 @@ processWashing episodeMap mConfig fi = do
           { id = Nothing,
             bangumiId = bangumiId,
             episodeNumber = epNum,
-            subtitleGroup = parsed.group,
+            group = parsed.group,
             resolution = parsed.resolution,
             infoHash = infoHash,
             torrentUrl = torrentUrl,
@@ -64,7 +64,7 @@ processWashing episodeMap mConfig fi = do
     Nothing -> Just $ NewEpisode task newEpisode
     Just existingEp ->
       let priority = maybe [] (.subtitleGroupPriority) mConfig
-       in if shouldUpgrade priority existingEp.subtitleGroup parsed.group
+       in if shouldUpgrade priority existingEp.group parsed.group
             then Just $ UpgradeEpisode task newEpisode existingEp
             else Just SkipEpisode
 

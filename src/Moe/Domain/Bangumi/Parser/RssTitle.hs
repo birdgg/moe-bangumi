@@ -10,8 +10,8 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
-import Moe.Domain.Bangumi.Subtitle.Types (SubtitleLang (..), SubtitleList)
-import Moe.Domain.Bangumi.Episode.Types (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleLang (..), SubtitleList)
+import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
 import Regex.Rure (RureMatch (..), hsFind)
 import Regex.Rure.FFI (rureDefaultFlags)
 

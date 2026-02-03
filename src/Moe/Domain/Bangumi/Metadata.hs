@@ -1,6 +1,8 @@
 module Moe.Domain.Bangumi.Metadata
-  ( module Moe.Domain.Bangumi.Metadata.Types,
+  ( TmdbId (..),
+    BgmtvId (..),
+    MikanId (..),
   )
 where
 
-import Moe.Domain.Bangumi.Metadata.Types
+import Moe.Domain.Bangumi.Internal.Metadata (BgmtvId (..), MikanId (..), TmdbId (..))

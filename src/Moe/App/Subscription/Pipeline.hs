@@ -16,7 +16,7 @@ import Moe.App.Subscription.Fetch (fetchAll)
 import Moe.App.Subscription.Filter (filterFetchResults)
 import Moe.App.Subscription.Types
 import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, processWashing)
-import Moe.Domain.Bangumi.Episode.Types (Episode (..))
+import Moe.Domain.Bangumi.Episode (Episode (..))
 import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiId)
 import Moe.Domain.Setting.Types (FilterConfig, UserPreference (..))
 import Moe.Infrastructure.Database.Episode qualified as EpisodeDB

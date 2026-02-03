@@ -1,4 +1,4 @@
-module Moe.Domain.Bangumi.Group.Types
+module Moe.Domain.Bangumi.Internal.Group
   ( Group (..),
     normalizeGroup,
     knownGroups,
@@ -8,12 +8,16 @@ where
 import Data.List (find)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Moe.Prelude (ToText (..))
 
 data Group = Group
   { name :: Text,
     aliases :: [Text]
   }
   deriving stock (Show, Eq)
+
+instance ToText Group where
+  toText = name
 
 knownGroups :: [Group]
 knownGroups =

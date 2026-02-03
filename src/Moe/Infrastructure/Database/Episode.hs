@@ -13,11 +13,11 @@ import Data.Text qualified as T
 import Effectful
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query)
 import Moe.Domain.Bangumi.Types (BangumiId (..))
-import Moe.Domain.Bangumi.Episode.Types (Episode (..), EpisodeId (..), EpisodeNumber)
+import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeId (..), EpisodeNumber)
 import Moe.Infrastructure.Database.Orphans ()
 
 episodeColumns :: Text
-episodeColumns = "id, bangumi_id, episode_number, subtitle_group, resolution, info_hash, torrent_url, pub_date, created_at"
+episodeColumns = "id, bangumi_id, episode_number, \"group\", resolution, info_hash, torrent_url, pub_date, created_at"
 
 getEpisode ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -47,10 +47,10 @@ upsertEpisode ::
 upsertEpisode ep = do
   results <-
     query
-      "INSERT INTO episode (bangumi_id, episode_number, subtitle_group, resolution, info_hash, torrent_url, pub_date) \
+      "INSERT INTO episode (bangumi_id, episode_number, \"group\", resolution, info_hash, torrent_url, pub_date) \
       \VALUES (?, ?, ?, ?, ?, ?, ?) \
       \ON CONFLICT (bangumi_id, episode_number) DO UPDATE SET \
-      \subtitle_group = excluded.subtitle_group, \
+      \\"group\" = excluded.\"group\", \
       \resolution = excluded.resolution, \
       \info_hash = excluded.info_hash, \
       \torrent_url = excluded.torrent_url, \
@@ -58,7 +58,7 @@ upsertEpisode ep = do
       \RETURNING id"
       ( ep.bangumiId,
         ep.episodeNumber,
-        ep.subtitleGroup,
+        ep.group,
         ep.resolution,
         ep.infoHash,
         ep.torrentUrl,

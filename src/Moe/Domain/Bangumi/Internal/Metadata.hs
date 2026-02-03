@@ -1,4 +1,4 @@
-module Moe.Domain.Bangumi.Metadata.Types
+module Moe.Domain.Bangumi.Internal.Metadata
   ( TmdbId (..),
     BgmtvId (..),
     MikanId (..),
