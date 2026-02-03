@@ -14,6 +14,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Data.Word (Word32)
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
+import Moe.Domain.Bangumi.Episode.Types (EpisodeNumber (..))
 import Regex.Rure (RureMatch (..), hsFind)
 import Regex.Rure.FFI (rureDefaultFlags)
 import Text.Read (readMaybe)
@@ -21,7 +22,7 @@ import Text.Read (readMaybe)
 data ParsedInfo = ParsedInfo
   { title :: Text,
     seasonNumber :: Maybe Word32,
-    episodeNumber :: Maybe Word32,
+    episodeNumber :: Maybe EpisodeNumber,
     group :: Maybe Text
   }
   deriving stock (Eq, Show)
@@ -40,10 +41,10 @@ extractSeason input = do
   matched <- findPattern seasonPattern input
   extractNumber matched
 
-extractEpisode :: Text -> Maybe Word32
+extractEpisode :: Text -> Maybe EpisodeNumber
 extractEpisode input = do
   matched <- findPattern episodePattern input
-  readMaybe (T.unpack matched)
+  EpisodeNumber <$> readMaybe (T.unpack matched)
 
 extractGroup :: Text -> Maybe Text
 extractGroup input =

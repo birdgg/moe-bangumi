@@ -13,6 +13,11 @@ import Moe.Domain.Bangumi.Types
     MikanId (..),
     TmdbId (..),
   )
+import Moe.Domain.Bangumi.Episode.Types
+  ( Episode (..),
+    EpisodeId (..),
+    EpisodeNumber (..),
+  )
 import Moe.Domain.Tracking.Types
   ( Tracking (..),
     TrackingId (..),
@@ -126,4 +131,43 @@ instance ToRow Tracking where
         t.lastPubdate,
         t.currentEpisode,
         t.createdAt
+      )
+
+instance FromField EpisodeId where
+  fromField = fmap EpisodeId . fromField
+
+instance ToField EpisodeId where
+  toField (EpisodeId i) = toField i
+
+instance FromField EpisodeNumber where
+  fromField = fmap EpisodeNumber . fromField
+
+instance ToField EpisodeNumber where
+  toField (EpisodeNumber n) = toField n
+
+instance FromRow Episode where
+  fromRow =
+    Episode
+      <$> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+      <*> field
+
+instance ToRow Episode where
+  toRow e =
+    toRow
+      ( e.id,
+        e.bangumiId,
+        e.episodeNumber,
+        e.subtitleGroup,
+        e.resolution,
+        e.infoHash,
+        e.torrentUrl,
+        e.pubDate,
+        e.createdAt
       )

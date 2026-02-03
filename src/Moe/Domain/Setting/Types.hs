@@ -24,7 +24,8 @@ data DownloaderConfig = DownloaderConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data FilterConfig = FilterConfig
-  { globalRssFilter :: [Text]
+  { globalRssFilter :: [Text],
+    subtitleGroupPriority :: [Text]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -68,5 +69,6 @@ defaultFilterConfig =
         [ "720[Pp]",
           "\\d-\\d",
           "合集"
-        ]
+        ],
+      subtitleGroupPriority = []
     }

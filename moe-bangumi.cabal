@@ -78,6 +78,7 @@ library
     Moe.Domain.Bangumi.Group.Types
     Moe.Domain.Bangumi.Subtitle.Types
     Moe.Domain.Tracking.Types
+    Moe.Domain.Bangumi.Episode.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.File.Types
@@ -97,6 +98,7 @@ library
     Moe.Infrastructure.Download.QBittorrent
     Moe.Infrastructure.Database.Bangumi
     Moe.Infrastructure.Database.Tracking
+    Moe.Infrastructure.Database.Episode
     Moe.App.Scheduler.Jobs
     Moe.App.Bootstrap
     Moe.App.Env
@@ -111,6 +113,7 @@ library
     Moe.App.Subscription.Fetch
     Moe.App.Subscription.Filter
     Moe.App.Subscription.Download
+    Moe.App.Subscription.Washing
     Moe.App.Subscription.Pipeline
     Moe.App.Subscription.SingleFetch
     Moe.Web.Server

@@ -9,14 +9,14 @@ import Data.Maybe (fromMaybe, listToMaybe, mapMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
-import Data.Word (Word32)
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
 import Moe.Domain.Bangumi.Subtitle.Types (SubtitleLang (..), SubtitleList)
+import Moe.Domain.Bangumi.Episode.Types (EpisodeNumber (..))
 import Regex.Rure (RureMatch (..), hsFind)
 import Regex.Rure.FFI (rureDefaultFlags)
 
 data RssTitleInfo = RssTitleInfo
-  { episode :: Maybe Word32,
+  { episode :: Maybe EpisodeNumber,
     group :: Maybe Text,
     resolution :: Maybe Text,
     subtitleList :: SubtitleList
@@ -72,7 +72,7 @@ prefixProcess :: Text -> Maybe Text -> Text
 prefixProcess input Nothing = input
 prefixProcess input (Just grp) = T.strip $ T.replace ("[" <> grp <> "]") "" input
 
-extractEpisodeNumber :: Text -> Maybe Word32
+extractEpisodeNumber :: Text -> Maybe EpisodeNumber
 extractEpisodeNumber input =
   let patterns =
         [ mkPattern $ TE.encodeUtf8 "第(\\d+)[话話集]",
@@ -85,7 +85,7 @@ extractEpisodeNumber input =
           mkPattern "[Ee][Pp]?(\\d+)",
           mkPattern " (\\d{1,3})(完)?( |\\[|$)"
         ]
-   in listToMaybe $ mapMaybe tryExtract patterns
+   in EpisodeNumber <$> listToMaybe (mapMaybe tryExtract patterns)
   where
     tryExtract pat = findPattern pat input >>= extractNumber
 
