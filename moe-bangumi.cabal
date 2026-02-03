@@ -56,6 +56,7 @@ common common-ghc-options
     -funbox-strict-fields
     -finline-generics-aggressively
     -fexpose-all-unfoldings
+    -fplugin=Effectful.Plugin
 
 common common-rts-options
   ghc-options:
@@ -67,94 +68,97 @@ library
   import: common-extensions, common-ghc-options
   hs-source-dirs: src
   exposed-modules:
-    Moe.Error
-    Moe.Prelude
-    Moe.Domain.Bangumi.Types
+    Moe.App.Bootstrap
+    Moe.App.CalendarSync
+    Moe.App.Effect.Runner
+    Moe.App.Env
+    Moe.App.Job
+    Moe.App.Job.Runner
+    Moe.App.Job.Types
+    Moe.App.Logging
+    Moe.App.Monad
+    Moe.App.Scheduler
+    Moe.App.Scheduler.Jobs
+    Moe.App.Subscription.Download
+    Moe.App.Subscription.Fetch
+    Moe.App.Subscription.Filter
+    Moe.App.Subscription.Pipeline
+    Moe.App.Subscription.SingleFetch
+    Moe.App.Subscription.Types
+    Moe.App.Subscription.Washing
+    Moe.Domain.Bangumi.Episode.Types
+    Moe.Domain.Bangumi.Group.Types
     Moe.Domain.Bangumi.Parser
     Moe.Domain.Bangumi.Parser.Bgmtv
     Moe.Domain.Bangumi.Parser.File
     Moe.Domain.Bangumi.Parser.Internal.Pattern
     Moe.Domain.Bangumi.Parser.RssTitle
-    Moe.Domain.Bangumi.Group.Types
     Moe.Domain.Bangumi.Subtitle.Types
-    Moe.Domain.Tracking.Types
-    Moe.Domain.Bangumi.Episode.Types
-    Moe.Domain.Setting.Types
-    Moe.Domain.Scheduler.Types
-    Moe.Domain.File.Types
+    Moe.Domain.Bangumi.Types
     Moe.Domain.File.Naming
     Moe.Domain.File.Parser
-    Moe.Infrastructure.Setting.Effect
-    Moe.Infrastructure.Metadata.Effect
-    Moe.Infrastructure.BangumiData.Effect
-    Moe.Infrastructure.BangumiData.Types
+    Moe.Domain.File.Types
+    Moe.Domain.Scheduler.Types
+    Moe.Domain.Setting.Types
+    Moe.Domain.Tracking.Types
+    Moe.Error
     Moe.Infrastructure.BangumiData.API
     Moe.Infrastructure.BangumiData.Client
-    Moe.Infrastructure.Rss.Effect
-    Moe.Infrastructure.Rss.Types
-    Moe.Infrastructure.Rss.Source
-    Moe.Infrastructure.Rss.Client
+    Moe.Infrastructure.BangumiData.Effect
+    Moe.Infrastructure.BangumiData.Types
+    Moe.Infrastructure.Database.Bangumi
+    Moe.Infrastructure.Database.Episode
+    Moe.Infrastructure.Database.Tracking
     Moe.Infrastructure.Download.Effect
     Moe.Infrastructure.Download.QBittorrent
-    Moe.Infrastructure.Database.Bangumi
-    Moe.Infrastructure.Database.Tracking
-    Moe.Infrastructure.Database.Episode
-    Moe.App.Scheduler.Jobs
-    Moe.App.Bootstrap
-    Moe.App.Env
-    Moe.App.Logging
-    Moe.App.Monad
-    Moe.App.Scheduler
-    Moe.App.CalendarSync
-    Moe.App.Job
-    Moe.App.Job.Types
-    Moe.App.Job.Runner
-    Moe.App.Subscription.Types
-    Moe.App.Subscription.Fetch
-    Moe.App.Subscription.Filter
-    Moe.App.Subscription.Download
-    Moe.App.Subscription.Washing
-    Moe.App.Subscription.Pipeline
-    Moe.App.Subscription.SingleFetch
-    Moe.Web.Server
-    Moe.Web.Types
-    Moe.Web.Routers
-    Moe.Web.Scalar
-    Moe.Web.API.Routes
-    Moe.Web.API.Server
+    Moe.Infrastructure.Metadata.Effect
+    Moe.Infrastructure.Rss.Client
+    Moe.Infrastructure.Rss.Effect
+    Moe.Infrastructure.Rss.Source
+    Moe.Infrastructure.Rss.Types
+    Moe.Infrastructure.Setting.Effect
+    Moe.Prelude
+    Moe.Web.API.Bangumi.Handler
+    Moe.Web.API.Calendar.Handler
     Moe.Web.API.DTO.Bangumi
     Moe.Web.API.DTO.Calendar
     Moe.Web.API.DTO.Setting
     Moe.Web.API.DTO.Tracking
-    Moe.Web.API.Bangumi.Handler
-    Moe.Web.API.Calendar.Handler
+    Moe.Web.API.Routes
+    Moe.Web.API.Server
     Moe.Web.API.Setting.Handler
     Moe.Web.API.Tracking.Handler
+    Moe.Web.Routers
+    Moe.Web.Scalar
+    Moe.Web.Server
+    Moe.Web.Types
 
   other-modules:
-    Moe.Orphans
-    Moe.Infrastructure.Database.Orphans
-    Moe.App.Scheduler.Jobs.CalendarSync
-    Moe.App.Scheduler.Jobs.Subscription
-    Moe.App.Scheduler.Jobs.RssSync
-    Moe.App.RssSync.Types
+    Moe.App.RssSync.Download
     Moe.App.RssSync.Fetch
     Moe.App.RssSync.Filter
-    Moe.App.RssSync.Download
     Moe.App.RssSync.Pipeline
+    Moe.App.RssSync.Types
+    Moe.App.Scheduler.Jobs.CalendarSync
+    Moe.App.Scheduler.Jobs.RssSync
+    Moe.App.Scheduler.Jobs.Subscription
+    Moe.Infrastructure.Database.Orphans
+    Moe.Orphans
 
   build-depends:
     aeson ^>=2.2,
     async,
     base ^>=4.22.0.0,
+    bgmtv,
+    bytestring,
     containers,
     cron,
-    require-callstack,
-    bytestring,
     directory,
     effectful,
-    effectful-th,
+    effectful-core,
+    effectful-plugin,
     effectful-sqlite,
+    effectful-th,
     filepath,
     hashable,
     http-api-data,
@@ -165,26 +169,26 @@ library
     log-base,
     log-effectful,
     mtl,
-    transformers,
     openapi3,
     pretty-simple,
+    qbittorrent,
     regex-rure,
     relude,
+    require-callstack,
     resource-pool,
     safe-exceptions,
     servant,
-    sqlite-simple,
     servant-client,
     servant-client-core,
     servant-openapi3,
     servant-server,
+    sqlite-simple,
     stm,
     text,
     text-display,
     time,
     tmdb,
-    bgmtv,
-    qbittorrent,
+    transformers,
     warp,
     xml-conduit,
 
@@ -194,6 +198,8 @@ executable moe-cli
   hs-source-dirs: app/cli
   build-depends:
     base ^>=4.22.0.0,
+    effectful-core,
+    effectful-plugin,
     moe-bangumi,
 
 test-suite moe-bangumi-test
@@ -201,7 +207,6 @@ test-suite moe-bangumi-test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Main.hs
-
   other-modules:
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.Bangumi.Parser.RssTitleSpec
@@ -210,6 +215,8 @@ test-suite moe-bangumi-test
 
   build-depends:
     base ^>=4.22.0.0,
+    effectful-core,
+    effectful-plugin,
     moe-bangumi,
     tasty,
     tasty-hunit,

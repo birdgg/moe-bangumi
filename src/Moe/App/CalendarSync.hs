@@ -16,21 +16,20 @@ import Data.Time (UTCTime (..), getCurrentTime)
 import Data.Time.Calendar (Day, fromGregorian, toGregorian)
 import Data.Time.Calendar.Month (Month)
 import Data.Time.Calendar.Month qualified as Month
-import Effectful
-import Effectful.Concurrent (Concurrent, runConcurrent)
-import Effectful.Error.Static (Error, runErrorWith, throwError)
+import Effectful (Eff, IOE, type (:>))
+import Effectful.Concurrent (Concurrent)
+import Effectful.Error.Static (Error)
 import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (Sqlite, SqliteDb (..), notransact, runSqlite, transact)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
-import Moe.App.Logging (LogConfig (..), runLog)
+import Effectful.Sqlite (Sqlite, notransact, transact)
+import Moe.App.Effect.Runner (runCalendarSyncEffects)
+import Moe.App.Env (MoeEnv)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle (..))
 import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiKind (..), BangumiSeason, BgmtvId (..), TmdbId (..), airDateToBangumiSeason, getCurrentBangumiSeason)
-import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp, toBangumi)
-import Moe.Infrastructure.Database.Bangumi qualified as DB
-import Moe.Infrastructure.Metadata.Effect (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail, runMetadataHttp)
-import Moe.Infrastructure.Setting.Effect (runSettingTVar)
 import Moe.Error (MoeError (..))
+import Moe.Infrastructure.BangumiData.Effect (toBangumi)
+import Moe.Infrastructure.Database.Bangumi qualified as DB
+import Moe.Infrastructure.Metadata.Effect (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
 import Network.Tmdb (MovieId (..), TvShowId (..))
 import Network.Tmdb.Types.Image qualified as TmdbImage
 import Network.Tmdb.Types.Movie qualified as TmdbMovie
@@ -64,21 +63,12 @@ runMonthSyncInternal logger env month = do
 
 runSeasonSync :: Logger -> MoeEnv -> BangumiSeason -> T.Text -> IO ()
 runSeasonSync logger env season logPrefix =
-  runEff $
-    withUnliftStrategy (ConcUnlift Ephemeral Unlimited) $
-      runConcurrent $
-      runSqlite (DbPool env.dbPool) $
-        runLog logPrefix logger env.config.logConfig.logLevel $
-          runSettingTVar env.settingVar (getSettingPath env) $
-            runErrorWith (\_ (err :: MoeError) -> Log.logAttention_ $ logPrefix <> " error: " <> T.pack (show err)) $
-              runErrorWith (\_ (err :: T.Text) -> throwError $ ExternalApiError err) $
-                runBangumiDataHttp env.httpManager $
-                  runMetadataHttp env.httpManager $ do
-                    Log.logInfo_ $ "Syncing season: " <> toText season
-                    result <- Safe.tryAny $ syncBangumiSeason False season
-                    case result of
-                      Left err -> Log.logAttention_ $ logPrefix <> " failed: " <> T.pack (show err)
-                      Right _ -> Log.logInfo_ $ logPrefix <> " completed for " <> toText season
+  runCalendarSyncEffects env logger logPrefix $ do
+    Log.logInfo_ $ "Syncing season: " <> toText season
+    result <- Safe.tryAny $ syncBangumiSeason False season
+    case result of
+      Left err -> Log.logAttention_ $ logPrefix <> " failed: " <> T.pack (show err)
+      Right _ -> Log.logInfo_ $ logPrefix <> " completed for " <> toText season
 
 syncBangumiSeason ::
   ( Metadata :> es,

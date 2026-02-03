@@ -6,17 +6,16 @@ module Moe.App.Job.Types
   )
 where
 
-import Data.Text (Text)
 import Effectful
 import Effectful.Concurrent (Concurrent)
 import Effectful.Error.Static (Error)
 import Effectful.Log (Log)
 import Effectful.Sqlite (Sqlite)
+import Moe.Error (MoeError)
 import Moe.Infrastructure.BangumiData.Effect (BangumiData)
 import Moe.Infrastructure.Metadata.Effect (Metadata)
 import Moe.Infrastructure.Rss.Effect (Rss)
 import Moe.Infrastructure.Setting.Effect (Setting)
-import Moe.Error (MoeError)
 
 type BaseJobEffects =
   '[ Error MoeError,
@@ -29,7 +28,6 @@ type BaseJobEffects =
 type MetadataJobEffects =
   '[ Metadata,
      BangumiData,
-     Error Text,
      Error MoeError,
      Setting,
      Log,

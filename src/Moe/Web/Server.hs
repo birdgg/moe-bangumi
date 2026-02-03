@@ -20,7 +20,7 @@ import Data.Text.IO qualified as TIO
 import Effectful
 import Effectful.Concurrent (Concurrent, forkIO, runConcurrent)
 import Effectful.Dispatch.Static (unsafeEff_)
-import Effectful.Error.Static (runErrorWith, throwError)
+import Effectful.Error.Static (runErrorWith)
 import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Effectful.Reader.Static qualified as Reader
@@ -31,10 +31,10 @@ import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool, getSettingPath)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.App.Scheduler (JobDefinition, startScheduler)
 import Moe.App.Scheduler.Jobs (defaultJobs)
+import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
 import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
 import Moe.Infrastructure.Setting.Effect (runSettingTVar)
-import Moe.Error (MoeError (..))
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
 import Moe.Web.Routers
@@ -142,7 +142,6 @@ naturalTransform env logger app = do
         & runMetadataHttp env.httpManager
         & runBangumiDataHttp env.httpManager
         & runSettingTVar env.settingVar (getSettingPath env)
-        & runErrorWith (\_callstack (err :: T.Text) -> throwError $ ExternalApiError err)
         & runErrorWith
           ( \_callstack moeErr -> do
               Log.logAttention_ $ "Application error: " <> T.pack (show moeErr)

@@ -5,22 +5,12 @@ module Moe.App.Job.Runner
 where
 
 import Data.Text (Text)
-import Data.Text qualified as T
-import Effectful
-import Effectful.Concurrent (runConcurrent)
-import Effectful.Error.Static (runErrorWith, throwError)
-import Effectful.Log (Log, Logger)
-import Effectful.Log qualified as Log
-import Effectful.Sqlite (SqliteDb (..), runSqlite)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
-import Moe.App.Job.Types
-import Moe.App.Logging (LogConfig (..), runLog)
-import Moe.Domain.Scheduler.Types (JobResult (..))
-import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
-import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
-import Moe.Infrastructure.Rss.Effect (runRss)
-import Moe.Infrastructure.Setting.Effect (runSettingTVar)
-import Moe.Error (MoeError (..))
+import Effectful (Eff)
+import Effectful.Log (Logger)
+import Moe.App.Effect.Runner (runMetadataEffects, runRssEffects)
+import Moe.App.Env (MoeEnv)
+import Moe.App.Job.Types (MetadataJobEffects, RssJobEffects)
+import Moe.Domain.Scheduler.Types (JobResult)
 
 runMetadataJob ::
   Text ->
@@ -28,25 +18,7 @@ runMetadataJob ::
   MoeEnv ->
   Eff MetadataJobEffects JobResult ->
   IO JobResult
-runMetadataJob logPrefix logger env action =
-  runEff $
-    withUnliftStrategy (ConcUnlift Ephemeral Unlimited) $
-      runConcurrent $
-        runSqlite (DbPool env.dbPool) $
-          runLog logPrefix logger env.config.logConfig.logLevel $
-            runSettingTVar env.settingVar (getSettingPath env) $
-              runErrorWith logMoeError $
-                runErrorWith (\_ (err :: Text) -> throwError $ toMoeError err) $
-                  runBangumiDataHttp env.httpManager $
-                    runMetadataHttp env.httpManager action
-  where
-    logMoeError :: (Log :> es) => a -> MoeError -> Eff es JobResult
-    logMoeError _ err = do
-      Log.logAttention_ $ logPrefix <> " error: " <> T.pack (show err)
-      pure $ JobFailure $ T.pack (show err)
-
-    toMoeError :: Text -> MoeError
-    toMoeError = ExternalApiError
+runMetadataJob logPrefix logger env = runMetadataEffects env logger logPrefix
 
 runRssJob ::
   Text ->
@@ -54,17 +26,4 @@ runRssJob ::
   MoeEnv ->
   Eff RssJobEffects JobResult ->
   IO JobResult
-runRssJob logPrefix logger env action =
-  runEff $
-    withUnliftStrategy (ConcUnlift Ephemeral Unlimited) $
-      runConcurrent $
-        runSqlite (DbPool env.dbPool) $
-          runLog logPrefix logger env.config.logConfig.logLevel $
-            runErrorWith logMoeError $
-              runSettingTVar env.settingVar (getSettingPath env) $
-                runRss env.httpManager action
-  where
-    logMoeError :: (Log :> es) => a -> MoeError -> Eff es JobResult
-    logMoeError _ err = do
-      Log.logAttention_ $ logPrefix <> " error: " <> T.pack (show err)
-      pure $ JobFailure $ T.pack (show err)
+runRssJob logPrefix logger env = runRssEffects env logger logPrefix

@@ -6,7 +6,10 @@ allow-newer:
   *:base,
   *:template-haskell,
   *:ghc-prim,
-  *:text
+  *:text,
+  *:containers,
+  *:bytestring,
+  *:time
 
 source-repository-package
   type: git
