@@ -7,7 +7,8 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Read qualified as TR
 import Effectful
-import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Dispatch.Dynamic (interpret, localSeqUnlift)
+import Effectful.Error.Static (throwError)
 import Moe.Domain.Setting.Types (DownloaderConfig (..), UserPreference (..))
 import Moe.Infrastructure.Download.Effect (Download (..), DownloadError (..))
 import Moe.Infrastructure.Setting.Effect (Setting, getSetting)
@@ -26,12 +27,16 @@ runDownload ::
   Manager ->
   Eff (Download : es) a ->
   Eff es a
-runDownload manager = interpret $ \_ -> \case
+runDownload manager = interpret $ \env -> \case
   AddTorrent url savePath -> do
     pref <- getSetting
     case pref.downloader of
-      Nothing -> pure $ Left ConfigMissing
-      Just cfg -> liftIO $ executeDownload manager cfg url savePath
+      Nothing -> localSeqUnlift env $ \unlift -> unlift $ throwError ConfigMissing
+      Just cfg -> do
+        result <- liftIO $ executeDownload manager cfg url savePath
+        case result of
+          Left err -> localSeqUnlift env $ \unlift -> unlift $ throwError err
+          Right () -> pure ()
 
 executeDownload ::
   Manager ->

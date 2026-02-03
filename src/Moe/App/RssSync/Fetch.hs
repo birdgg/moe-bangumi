@@ -8,6 +8,7 @@ import Data.Maybe (mapMaybe)
 import Data.Text.Display (display)
 import Effectful
 import Effectful.Concurrent (Concurrent)
+import Effectful.Error.Static (runErrorNoCallStack)
 import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, notransact)
@@ -31,7 +32,7 @@ fetchAll manager = do
     infos -> do
       Log.logInfo_ "Fetching RSS subscriptions..."
       results <- liftIO $ Async.forConcurrently infos $ \(bid, url, lastPub) -> do
-        result <- runEff $ runRss manager $ fetchRss url
+        result <- runEff $ runRss manager $ runErrorNoCallStack $ fetchRss url
         pure (bid, url, lastPub, result)
       let (successes, failures) = partitionResults results
       mapM_ logFailure failures
@@ -43,7 +44,7 @@ fetchAll manager = do
 
     partitionResults = foldr partition ([], [])
 
-    partition (bid, url, lastPub, Left err) (s, f) = (s, (bid, url, err) : f)
+    partition (bid, url, _, Left err) (s, f) = (s, (bid, url, err) : f)
     partition (bid, url, lastPub, Right items) (s, f) =
       (FetchResult bid url lastPub items : s, f)
 
