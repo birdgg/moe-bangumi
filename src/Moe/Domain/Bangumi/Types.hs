@@ -35,7 +35,7 @@ import Text.Read (readMaybe)
 import Web.HttpApiData (FromHttpApiData (..))
 
 newtype BangumiId = BangumiId Int64
-  deriving stock (Eq, Show)
+  deriving stock (Eq, Show, Ord)
 
 instance Display BangumiId where
   displayBuilder (BangumiId i) = displayBuilder i

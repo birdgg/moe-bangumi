@@ -17,10 +17,11 @@ import Effectful.Sqlite (Sqlite, notransact, transact)
 import Moe.App.Subscription.Download (toDownloadTasks)
 import Moe.App.Subscription.Filter (filterItems)
 import Moe.App.Subscription.Types (DownloadTask (..), FetchResult (..), FilteredItem (..))
-import Moe.Domain.Bangumi.Types (BangumiId)
+import Moe.Domain.Bangumi.Types (Bangumi, BangumiId)
 import Moe.Domain.Setting.Types (UserPreference (..))
 import Moe.Domain.Tracking.Types (Tracking (..))
 import Moe.Domain.Tracking.Types qualified as Tracking
+import Moe.Infrastructure.Database.Bangumi qualified as BangumiDB
 import Moe.Infrastructure.Database.Tracking qualified as DB
 import Moe.Infrastructure.Rss.Effect (Rss, RssError, fetchRss)
 import Moe.Infrastructure.Setting.Effect (Setting, getSetting)
@@ -35,15 +36,15 @@ data SingleFetchResult
 
 fetchSingle ::
   (Rss :> es, Error RssError :> es) =>
-  BangumiId ->
+  Bangumi ->
   Text ->
   Maybe UTCTime ->
   Eff es FetchResult
-fetchSingle bid url lastPub = do
+fetchSingle bangumi url lastPub = do
   items <- fetchRss url
   pure
     FetchResult
-      { bangumiId = bid,
+      { bangumi = bangumi,
         rssUrl = url,
         lastPubdate = lastPub,
         items = items
@@ -61,12 +62,16 @@ fetchSingleByBangumiId _manager bid = do
     Just tracking -> case tracking.rssUrl of
       Nothing -> pure $ Left "RSS URL not configured"
       Just url -> do
-        result <- runErrorNoCallStack $ fetchSingle bid url tracking.lastPubdate
-        case result of
-          Left err -> do
-            Log.logAttention_ $ "[" <> display bid <> "] RSS fetch failed: " <> display err
-            pure $ Left $ "RSS fetch failed: " <> display err
-          Right fr -> pure $ Right fr
+        mBangumi <- notransact $ BangumiDB.getBangumi bid
+        case mBangumi of
+          Nothing -> pure $ Left "Bangumi not found"
+          Just bangumi -> do
+            result <- runErrorNoCallStack $ fetchSingle bangumi url tracking.lastPubdate
+            case result of
+              Left err -> do
+                Log.logAttention_ $ "[" <> display bid <> "] RSS fetch failed: " <> display err
+                pure $ Left $ "RSS fetch failed: " <> display err
+              Right fr -> pure $ Right fr
 
 processSingleFetch ::
   (Rss :> es, Sqlite :> es, Concurrent :> es, Setting :> es, Log :> es, IOE :> es) =>

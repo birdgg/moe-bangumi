@@ -8,8 +8,7 @@ where
 import Control.Concurrent.Async qualified as Async
 import Control.Concurrent.QSem (QSem, newQSem, signalQSem, waitQSem)
 import Control.Exception (bracket_)
-import Data.Maybe (mapMaybe)
-import Data.Text (Text)
+import Data.Map.Strict qualified as Map
 import Data.Text.Display (display)
 import Data.Time (UTCTime)
 import Effectful
@@ -20,10 +19,12 @@ import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, notransact)
 import Moe.App.Subscription.SingleFetch (fetchSingle)
 import Moe.App.Subscription.Types (FetchResult (..))
-import Moe.Domain.Bangumi.Types (BangumiId)
+import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiId)
 import Moe.Domain.Tracking.Types (Tracking (..))
+import Moe.Infrastructure.Database.Bangumi qualified as BangumiDB
 import Moe.Infrastructure.Database.Tracking qualified as DB
 import Moe.Infrastructure.Rss.Effect (Rss, RssError, runRss)
+import Moe.Prelude
 import Network.HTTP.Client (Manager)
 
 defaultConcurrency :: Int
@@ -42,7 +43,10 @@ fetchAllWithLimit ::
   Eff es [FetchResult]
 fetchAllWithLimit concurrency manager = do
   trackings <- notransact DB.listEnabledRssTracking
-  let rssInfos = mapMaybe toRssInfo trackings
+  let bids = map (.bangumiId) trackings
+  bangumis <- notransact $ BangumiDB.getBangumiByIds bids
+  let bangumiMap = buildBangumiMap bangumis
+  let rssInfos = mapMaybe (toRssInfo bangumiMap) trackings
   case rssInfos of
     [] -> pure []
     infos -> do
@@ -51,15 +55,19 @@ fetchAllWithLimit concurrency manager = do
       mapM_ logFailure failures
       pure successes
   where
-    toRssInfo t = case t.rssUrl of
-      Just url -> Just (t.bangumiId, url, t.lastPubdate)
-      Nothing -> Nothing
+    buildBangumiMap :: [Bangumi] -> Map BangumiId Bangumi
+    buildBangumiMap = Map.fromList . mapMaybe (\b -> (,b) <$> b.id)
 
-    logFailure (bid, url, err) =
-      Log.logAttention_ $ "RSS fetch failed [" <> display bid <> "] " <> url <> ": " <> display err
+    toRssInfo bMap t = do
+      url <- t.rssUrl
+      bangumi <- Map.lookup t.bangumiId bMap
+      pure (bangumi, url, t.lastPubdate)
 
-type RssInfo = (BangumiId, Text, Maybe UTCTime)
-type FetchAttempt = (BangumiId, Text, Either RssError FetchResult)
+    logFailure (bangumi, url, err) =
+      Log.logAttention_ $ "RSS fetch failed [" <> display (bangumi.id) <> "] " <> url <> ": " <> display err
+
+type RssInfo = (Bangumi, Text, Maybe UTCTime)
+type FetchAttempt = (Bangumi, Text, Either RssError FetchResult)
 
 fetchWithSemaphore ::
   Int ->
@@ -68,16 +76,16 @@ fetchWithSemaphore ::
   IO [FetchAttempt]
 fetchWithSemaphore concurrency manager infos = do
   sem <- newQSem concurrency
-  Async.forConcurrently infos $ \(bid, url, lastPub) ->
+  Async.forConcurrently infos $ \(bangumi, url, lastPub) ->
     withSemaphore sem $ do
-      result <- runEff $ runRss manager $ runErrorNoCallStack $ fetchSingle bid url lastPub
-      pure (bid, url, result)
+      result <- runEff $ runRss manager $ runErrorNoCallStack $ fetchSingle bangumi url lastPub
+      pure (bangumi, url, result)
 
 withSemaphore :: QSem -> IO a -> IO a
 withSemaphore sem = bracket_ (waitQSem sem) (signalQSem sem)
 
-partitionResults :: [FetchAttempt] -> ([FetchResult], [(BangumiId, Text, RssError)])
+partitionResults :: [FetchAttempt] -> ([FetchResult], [(Bangumi, Text, RssError)])
 partitionResults = foldr partition ([], [])
   where
-    partition (bid, url, Left err) (s, f) = (s, (bid, url, err) : f)
-    partition (_bid, _url, Right fr) (s, f) = (fr : s, f)
+    partition (bangumi, url, Left err) (s, f) = (s, (bangumi, url, err) : f)
+    partition (_bangumi, _url, Right fr) (s, f) = (fr : s, f)

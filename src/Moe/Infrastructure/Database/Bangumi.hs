@@ -1,5 +1,6 @@
 module Moe.Infrastructure.Database.Bangumi
   ( getBangumi,
+    getBangumiByIds,
     listBangumi,
     listBangumiBySeason,
     createBangumi,
@@ -29,6 +30,17 @@ getBangumi ::
 getBangumi (Types.BangumiId bid) = do
   results <- query (fromString $ "SELECT " <> T.unpack bangumiColumns <> " FROM bangumi WHERE id = ?") (Only bid)
   pure $ listToMaybe results
+
+getBangumiByIds ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  [Types.BangumiId] ->
+  Eff es [Types.Bangumi]
+getBangumiByIds [] = pure []
+getBangumiByIds bids = do
+  let ids = map (\(Types.BangumiId i) -> i) bids
+      placeholders = intercalate ", " (replicate (length ids) "?")
+      sql = "SELECT " <> T.unpack bangumiColumns <> " FROM bangumi WHERE id IN (" <> placeholders <> ")"
+  query (fromString sql) ids
 
 listBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>

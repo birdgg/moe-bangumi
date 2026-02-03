@@ -6,7 +6,7 @@ where
 
 import Data.List (nubBy)
 import Data.List qualified as List
-import Data.Maybe (mapMaybe)
+import Moe.Prelude
 import Effectful
 import Effectful.Concurrent (Concurrent)
 import Effectful.Log (Log)
@@ -16,8 +16,8 @@ import Moe.App.Subscription.Fetch (fetchAll)
 import Moe.App.Subscription.Filter (filterFetchResults)
 import Moe.App.Subscription.Types
 import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, processWashing)
-import Moe.Domain.Bangumi.Types (BangumiId)
 import Moe.Domain.Bangumi.Episode.Types (Episode (..))
+import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiId)
 import Moe.Domain.Setting.Types (FilterConfig, UserPreference (..))
 import Moe.Infrastructure.Database.Episode qualified as EpisodeDB
 import Moe.Infrastructure.Rss.Effect (Rss)
@@ -29,7 +29,7 @@ runPipeline ::
   Manager ->
   Eff es ()
 runPipeline manager = do
-  Log.logInfo_ "Starting RSS sync pipeline..."
+  Log.logInfo_ "Starting RSS subscription"
 
   fetchResults <- fetchAll manager
 
@@ -46,8 +46,8 @@ runPipeline manager = do
 
 groupByBangumi :: [FilteredItem] -> [(BangumiId, [FilteredItem])]
 groupByBangumi items =
-  let bids = nubBy (\a b -> a.bangumiId == b.bangumiId) items
-   in [(bid.bangumiId, List.filter (\i -> i.bangumiId == bid.bangumiId) items) | bid <- bids]
+  let uniqueBids = mapMaybe (\fi -> fi.bangumi.id) $ nubBy (\a b -> a.bangumi.id == b.bangumi.id) items
+   in [(bid, List.filter (\i -> i.bangumi.id == Just bid) items) | bid <- uniqueBids]
 
 processAllGroups ::
   (Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>

@@ -10,8 +10,9 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..))
-import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
+import Moe.Domain.Bangumi.Types (Bangumi (..))
 import Moe.Domain.Bangumi.Episode.Types (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
 import Moe.Domain.Setting.Types (FilterConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
 
@@ -33,6 +34,7 @@ processWashing episodeMap mConfig fi = do
   title <- fi.item.title
   torrentUrl <- fi.item.torrentUrl
   infoHash <- fi.item.infoHash
+  bangumiId <- fi.bangumi.id
 
   let parsed = parseRssTitle title
   epNum <- parsed.episode
@@ -40,7 +42,7 @@ processWashing episodeMap mConfig fi = do
   let newEpisode =
         Episode
           { id = Nothing,
-            bangumiId = fi.bangumiId,
+            bangumiId = bangumiId,
             episodeNumber = epNum,
             subtitleGroup = parsed.group,
             resolution = parsed.resolution,
@@ -52,7 +54,7 @@ processWashing episodeMap mConfig fi = do
 
   let task =
         DownloadTask
-          { bangumiId = fi.bangumiId,
+          { bangumi = fi.bangumi,
             torrentUrl = torrentUrl,
             infoHash = Just infoHash,
             pubDate = fi.parsedPubDate
