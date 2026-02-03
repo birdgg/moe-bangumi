@@ -1,6 +1,12 @@
 packages: .
 
-with-compiler: ghc-9.12.2
+with-compiler: ghc-9.14.1
+
+allow-newer:
+  *:base,
+  *:template-haskell,
+  *:ghc-prim,
+  *:text
 
 source-repository-package
   type: git
@@ -15,4 +21,9 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/bgmtv-hs.git
-  tag: 48751858543bfd3b699cc510bf8f4e6bd2718b08
+  tag: 2149e95514a60cb6d0656f60a73594a1213654b4
+
+source-repository-package
+  type: git
+  location: https://github.com/birdgg/qbittorrent-hs.git
+  tag: main

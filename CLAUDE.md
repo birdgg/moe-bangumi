@@ -36,7 +36,7 @@ cabal repl               # Start GHCi with project loaded
 
 ## Technical Stack
 
-- GHC 9.12.2 with GHC2024 language standard
+- GHC 9.14.1 with GHC2024 language standard
 - Uses `relude` as alternative prelude via `Moe.Prelude`
   - `show` is polymorphic in relude, can return `Text` directly
   - `toText` from `Relude` for type conversions

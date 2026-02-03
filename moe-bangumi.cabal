@@ -136,11 +136,17 @@ library
     Moe.Infrastructure.Database.Orphans
     Moe.App.Scheduler.Jobs.CalendarSync
     Moe.App.Scheduler.Jobs.Subscription
+    Moe.App.Scheduler.Jobs.RssSync
+    Moe.App.RssSync.Types
+    Moe.App.RssSync.Fetch
+    Moe.App.RssSync.Filter
+    Moe.App.RssSync.Download
+    Moe.App.RssSync.Pipeline
 
   build-depends:
     aeson ^>=2.2,
     async,
-    base ^>=4.21.0.0,
+    base ^>=4.22.0.0,
     containers,
     cron,
     require-callstack,
@@ -187,7 +193,7 @@ executable moe-cli
   main-is: Main.hs
   hs-source-dirs: app/cli
   build-depends:
-    base ^>=4.21.0.0,
+    base ^>=4.22.0.0,
     moe-bangumi,
 
 test-suite moe-bangumi-test
@@ -203,7 +209,7 @@ test-suite moe-bangumi-test
     Moe.Infrastructure.BangumiData.TypesSpec
 
   build-depends:
-    base ^>=4.21.0.0,
+    base ^>=4.22.0.0,
     moe-bangumi,
     tasty,
     tasty-hunit,
