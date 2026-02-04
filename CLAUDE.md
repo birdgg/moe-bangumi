@@ -16,17 +16,12 @@ cabal repl               # Start GHCi with project loaded
 ```
 
 ## Code Style
-
+- add simple haddoc
 - when refer to `anime` use the word `bangumi`
-- Do not add comments to code
 - No suffix for field names (use `name` not `nameField`)
-- Moe module (domain module) must remain pure - no side effects
 - After editing Haskell files, run `hlint` on changed files and apply suggestions
-- Use `Display` instance when need logging
+- Use `Display` instance for logging
 - Do not add statistical/counting logs (e.g., "Found N items", "Processed N records")
-
-## Learn Pattern
-- learn haskell code pattern from learn/src, it is flora server source code
 
 ## Testing
 
@@ -56,3 +51,6 @@ cabal repl               # Start GHCi with project loaded
 - Use `effectful-th` to generate send functions: `makeEffect ''EffectName`
 - Effect definitions go in `src/Moe/Effect/`
 - Effect interpreters (implementations) go in `src/Moe/Adapter/`
+
+## Other
+- **database** since application not deployed, just modify init sql

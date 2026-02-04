@@ -13,6 +13,7 @@ data MoeError
   | NotFound Text
   | ValidationError Text
   | ExternalApiError Text
+  | DownloaderError Text
   deriving stock (Eq, Show)
 
 liftError :: (Show e, Error MoeError :> es) => (Text -> MoeError) -> Text -> Either e a -> Eff es a

@@ -73,3 +73,5 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+data/

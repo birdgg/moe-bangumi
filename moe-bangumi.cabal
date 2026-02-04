@@ -12,7 +12,6 @@ extra-doc-files: CHANGELOG.md
 
 common common-extensions
   default-extensions:
-    NoImplicitPrelude
     DataKinds
     DeepSubsumption
     DeriveAnyClass
@@ -21,6 +20,7 @@ common common-extensions
     DuplicateRecordFields
     GADTs
     LambdaCase
+    NoImplicitPrelude
     NoStarIsType
     NumericUnderscores
     OverloadedLabels
@@ -80,6 +80,7 @@ library
     Moe.App.Monad
     Moe.App.Scheduler
     Moe.App.Scheduler.Jobs
+    Moe.App.Subscription.Cleanup
     Moe.App.Subscription.Download
     Moe.App.Subscription.Fetch
     Moe.App.Subscription.Filter
@@ -95,7 +96,6 @@ library
     Moe.Domain.Bangumi.Internal.Metadata
     Moe.Domain.Bangumi.Internal.Season
     Moe.Domain.Bangumi.Internal.Subtitle
-    Moe.Domain.Bangumi.Metadata
     Moe.Domain.Bangumi.Parser
     Moe.Domain.Bangumi.Parser.Bgmtv
     Moe.Domain.Bangumi.Parser.File
@@ -114,8 +114,8 @@ library
     Moe.Infrastructure.Database.Bangumi
     Moe.Infrastructure.Database.Episode
     Moe.Infrastructure.Database.Tracking
+    Moe.Infrastructure.Download.Adapter
     Moe.Infrastructure.Download.Effect
-    Moe.Infrastructure.Download.QBittorrent
     Moe.Infrastructure.Download.Types
     Moe.Infrastructure.Metadata.Effect
     Moe.Infrastructure.Rss.Client
@@ -141,6 +141,7 @@ library
 
   other-modules:
     Moe.App.Scheduler.Jobs.CalendarSync
+    Moe.App.Scheduler.Jobs.Cleanup
     Moe.App.Scheduler.Jobs.Subscription
     Moe.Infrastructure.Database.Orphans
     Moe.Orphans
@@ -157,11 +158,12 @@ library
     effectful,
     effectful-core,
     effectful-plugin,
+    effectful-qbittorrent,
     effectful-sqlite,
     effectful-th,
     filepath,
     hashable,
-    http-api-data,
+    http-api-data >= 0.7,
     http-client,
     http-client-tls,
     http-media,
@@ -171,7 +173,6 @@ library
     mtl,
     openapi3,
     pretty-simple,
-    qbittorrent,
     regex-rure,
     relude,
     require-callstack,
@@ -208,9 +209,9 @@ test-suite moe-bangumi-test
   hs-source-dirs: test
   main-is: Main.hs
   other-modules:
+    Moe.Domain.Bangumi.File.NamingSpec
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.Bangumi.Parser.RssTitleSpec
-    Moe.Domain.Bangumi.File.NamingSpec
     Moe.Infrastructure.BangumiData.TypesSpec
 
   build-depends:

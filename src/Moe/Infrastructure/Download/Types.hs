@@ -1,29 +1,23 @@
+-- | Domain types for download/torrent management.
 module Moe.Infrastructure.Download.Types
   ( Tag (..),
     TagList (..),
-    DownloadError (..),
     fromTagText,
+    isDownloading,
+    isCompleted,
+
+    -- * Re-exports from effectful-qbittorrent
+    TorrentInfo (..),
+    TorrentState (..),
   )
 where
 
 import Data.Text qualified as T
-import Data.Text.Display (Display (..))
+import Effectful.QBittorrent (TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
-data DownloadError
-  = LoginFailed Text
-  | AddTorrentFailed Text
-  | ConfigMissing
-  | InvalidConfig Text
-  deriving stock (Eq, Show)
-
-instance Display DownloadError where
-  displayBuilder (LoginFailed msg) = "Login failed: " <> displayBuilder msg
-  displayBuilder (AddTorrentFailed msg) = "Add torrent failed: " <> displayBuilder msg
-  displayBuilder ConfigMissing = "Downloader config missing"
-  displayBuilder (InvalidConfig field) = "Invalid config: " <> displayBuilder field <> " is empty"
-
-data Tag = Moe | Rename | Subscription | Collection
+-- | Tags used for torrent management
+data Tag = Moe | Rename | Subscription | Collection | Deletion
   deriving stock (Eq, Show, Bounded, Enum)
 
 instance ToText Tag where
@@ -31,6 +25,7 @@ instance ToText Tag where
   toText Rename = "rename"
   toText Subscription = "subscription"
   toText Collection = "collection"
+  toText Deletion = "deletion"
 
 fromTagText :: Text -> Maybe Tag
 fromTagText = inverseMap toText
@@ -40,3 +35,30 @@ newtype TagList = TagList [Tag]
 
 instance ToText TagList where
   toText (TagList ts) = T.intercalate "," $ map toText ts
+
+-- | Check if torrent is currently downloading
+isDownloading :: TorrentInfo -> Bool
+isDownloading t = t.state `elem` downloadingStates
+  where
+    downloadingStates =
+      [ Downloading,
+        StalledDL,
+        MetaDL,
+        ForcedDL,
+        QueuedDL,
+        CheckingDL,
+        Allocating
+      ]
+
+-- | Check if torrent download is completed
+isCompleted :: TorrentInfo -> Bool
+isCompleted t = t.state `elem` completedStates
+  where
+    completedStates =
+      [ Uploading,
+        StalledUP,
+        PausedUP,
+        ForcedUP,
+        QueuedUP,
+        CheckingUP
+      ]

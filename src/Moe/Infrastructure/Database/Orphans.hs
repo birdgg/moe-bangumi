@@ -8,6 +8,7 @@ import Moe.Domain.Bangumi.Episode
   ( Episode (..),
     EpisodeId (..),
     EpisodeNumber (..),
+    GroupName (..),
   )
 import Moe.Domain.Bangumi.Types
   ( Bangumi (..),
@@ -143,6 +144,12 @@ instance FromField EpisodeNumber where
 
 instance ToField EpisodeNumber where
   toField (EpisodeNumber n) = toField n
+
+instance FromField GroupName where
+  fromField = fmap GroupName . fromField
+
+instance ToField GroupName where
+  toField (GroupName t) = toField t
 
 instance FromRow Episode where
   fromRow =

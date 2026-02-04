@@ -8,7 +8,7 @@ where
 import Data.List (elemIndex)
 import Data.Map.Strict qualified as Map
 import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..))
-import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..), GroupName (..))
 import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
 import Moe.Domain.Bangumi.Types (Bangumi (..))
 import Moe.Domain.Setting.Types (FilterConfig (..))
@@ -67,14 +67,14 @@ processWashing episodeMap mConfig fi = do
             then Just $ UpgradeEpisode task newEpisode existingEp
             else Just SkipEpisode
 
-shouldUpgrade :: [Text] -> Maybe Text -> Maybe Text -> Bool
+shouldUpgrade :: [Text] -> Maybe GroupName -> Maybe GroupName -> Bool
 shouldUpgrade _ Nothing (Just _) = True
 shouldUpgrade _ _ Nothing = False
 shouldUpgrade priority (Just existing) (Just new)
   | existing == new = False
   | otherwise =
-      let existingIdx = elemIndex existing priority
-          newIdx = elemIndex new priority
+      let existingIdx = elemIndex (toText existing) priority
+          newIdx = elemIndex (toText new) priority
        in case (existingIdx, newIdx) of
             (Nothing, Just _) -> True
             (Just ei, Just ni) -> ni < ei

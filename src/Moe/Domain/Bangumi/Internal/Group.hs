@@ -1,6 +1,7 @@
 module Moe.Domain.Bangumi.Internal.Group
-  ( Group (..),
-    normalizeGroup,
+  ( GroupName (..),
+    Group (..),
+    normalizeGroupName,
     knownGroups,
   )
 where
@@ -8,35 +9,44 @@ where
 import Data.Text qualified as T
 import Moe.Prelude
 
+-- | Subtitle group name
+newtype GroupName = GroupName Text
+  deriving stock (Eq, Ord, Show)
+  deriving newtype (Hashable)
+
+instance ToText GroupName where
+  toText (GroupName t) = t
+
 data Group = Group
-  { name :: Text,
+  { name :: GroupName,
     aliases :: [Text]
   }
   deriving stock (Show, Eq)
 
 instance ToText Group where
-  toText = name
+  toText = toText . name
 
 knownGroups :: [Group]
 knownGroups =
-  [ Group "SweetSub" [],
-    Group "千夏字幕组" [],
-    Group "拨雪寻春" ["❀拨雪寻春❀"],
-    Group "喵萌奶茶屋" [],
-    Group "LoliHouse" [],
-    Group "北宇治" ["北宇治字幕组"],
-    Group "诸神字幕组" [],
-    Group "霜庭云花" [],
-    Group "桜都字幕组" [],
-    Group "澄空学园" []
+  [ Group (GroupName "SweetSub") [],
+    Group (GroupName "千夏字幕组") [],
+    Group (GroupName "拨雪寻春") ["❀拨雪寻春❀"],
+    Group (GroupName "喵萌奶茶屋") [],
+    Group (GroupName "LoliHouse") [],
+    Group (GroupName "北宇治") ["北宇治字幕组"],
+    Group (GroupName "诸神字幕组") [],
+    Group (GroupName "霜庭云花") [],
+    Group (GroupName "桜都字幕组") [],
+    Group (GroupName "澄空学园") []
   ]
 
-normalizeGroup :: Text -> Text
-normalizeGroup raw =
+-- | Normalize a group name to its canonical form
+normalizeGroupName :: Text -> GroupName
+normalizeGroupName raw =
   case find (matchesGroup raw) knownGroups of
     Just g -> g.name
-    Nothing -> raw
+    Nothing -> GroupName raw
   where
     matchesGroup t g =
-      T.toLower t == T.toLower g.name
+      T.toLower t == T.toLower (toText g.name)
         || any (\a -> T.toLower t == T.toLower a) g.aliases

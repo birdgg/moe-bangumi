@@ -52,18 +52,19 @@
 程序通过 [bangumi-data](https://github.com/bangumi-data/bangumi-data) 获取每个季度的番剧，bangumi-data 数据结构参考 @bangumi-data.md
 
 ## 订阅番剧
-bangumi-data item 中含有 mikan id, 通过 `https://mikanani.me/RSS/Bangumi?bangumiId={mikan id}` rss url 来订阅番剧 torrent
+获取 tacking 表 enabled rss 和关联的 bangumi，每个 rss url 对应一部番剧。
 
+对 rss 处理并发执行，5个一组
+
+对于每个 rss 使用以下步骤
 把 rss 解析为 {title, torrentUrl, pubdate}
+根据 tacking pubdate 过滤已经处理的 item
+根据用户提供全局正则过滤符合 title 的 item
 
-rss 记录 pubdate 来过滤已经处理的 item
+对每集 title 使用 RssTitle parser 解析
+和数据库记录每一集和新的 rss item 放在一起洗版出优先的字幕组剧集
 
-用户可以提供全局正则用来对 title 过滤
-用户提供对字幕语言的过滤，比如只要包含简体的[CHS]
-对每集 title 使用 parser 解析，获得的字幕组进行洗版比较
-数据库记录每一集的字幕组，和新的 rss item 放在一起洗版出优先的字幕组剧集
-
-添加到下载器是使用 rename 参数重命名 torrent name 为符合规范的文件名，保存路径为临时目录下符合目录规范
+添加到下载器是使用 rename 参数重命名 torrent name 为符合规范的文件名，保存路径为临时目录下符合目录规范，添加 tag `subscription`
 
 ## 番剧合集
 用户通过 nyaa， acgrip rss 搜索，直接添加合集 torrent 到下载器

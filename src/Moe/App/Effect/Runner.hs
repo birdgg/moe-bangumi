@@ -2,6 +2,8 @@ module Moe.App.Effect.Runner
   ( runBaseEffects,
     runMetadataEffects,
     runRssEffects,
+    runSubscriptionEffects,
+    runCleanupEffects,
     runCalendarSyncEffects,
     BaseEffects,
     CalendarSyncEffects,
@@ -9,21 +11,23 @@ module Moe.App.Effect.Runner
 where
 
 import Effectful
-import Moe.Prelude
 import Effectful.Concurrent (Concurrent, runConcurrent)
 import Effectful.Error.Static (Error, runErrorWith)
 import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
-import Moe.App.Job.Types (MetadataJobEffects, RssJobEffects)
+import Moe.App.Job.Types (CleanupJobEffects, MetadataJobEffects, RssJobEffects, SubscriptionJobEffects)
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Domain.Scheduler.Types (JobResult (..))
+import Moe.Domain.Setting.Types (UserPreference (..))
 import Moe.Error (MoeError)
 import Moe.Infrastructure.BangumiData.Effect (BangumiData, runBangumiDataHttp)
+import Moe.Infrastructure.Download.Adapter (runDownloadQBittorrent)
 import Moe.Infrastructure.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infrastructure.Rss.Effect (runRss)
-import Moe.Infrastructure.Setting.Effect (Setting, runSettingTVar)
+import Moe.Infrastructure.Setting.Effect (Setting, getSetting, runSettingTVar)
+import Moe.Prelude
 
 type BaseEffects =
   '[ Log,
@@ -98,3 +102,42 @@ runCalendarSyncEffects env logger logPrefix action =
       runErrorWith (\_ err -> Log.logAttention_ $ logPrefix <> " error: " <> show err) $
         runBangumiDataHttp env.httpManager $
           runMetadataHttp env.httpManager action
+
+-- | Run subscription job effects (RSS + Download).
+runSubscriptionEffects ::
+  MoeEnv ->
+  Logger ->
+  Text ->
+  Eff SubscriptionJobEffects JobResult ->
+  IO JobResult
+runSubscriptionEffects env logger logPrefix action =
+  runBaseEffects env logger logPrefix $
+    runSettingTVar env.settingVar (getSettingPath env) $
+      runErrorWith (logMoeError logPrefix) $
+        runRss env.httpManager $ do
+          pref <- getSetting
+          case pref.downloader of
+            Nothing -> do
+              Log.logAttention_ $ logPrefix <> " downloader config missing"
+              pure $ JobFailure "Downloader config missing"
+            Just cfg ->
+              runDownloadQBittorrent cfg action
+
+-- | Run cleanup job effects (Download only).
+runCleanupEffects ::
+  MoeEnv ->
+  Logger ->
+  Text ->
+  Eff CleanupJobEffects JobResult ->
+  IO JobResult
+runCleanupEffects env logger logPrefix action =
+  runBaseEffects env logger logPrefix $
+    runSettingTVar env.settingVar (getSettingPath env) $
+      runErrorWith (logMoeError logPrefix) $ do
+        pref <- getSetting
+        case pref.downloader of
+          Nothing -> do
+            Log.logAttention_ $ logPrefix <> " downloader config missing"
+            pure $ JobFailure "Downloader config missing"
+          Just cfg ->
+            runDownloadQBittorrent cfg action

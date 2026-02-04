@@ -3,6 +3,9 @@ module Moe.Infrastructure.Database.Episode
     listEpisodesByBangumi,
     upsertEpisode,
     deleteEpisode,
+    deleteEpisodeByInfoHash,
+    getEpisodesByInfoHashes,
+    getNewerEpisode,
   )
 where
 
@@ -72,3 +75,36 @@ deleteEpisode ::
   Eff es ()
 deleteEpisode (EpisodeId eid) =
   execute "DELETE FROM episode WHERE id = ?" (Only eid)
+
+-- | Delete episode by info hash
+deleteEpisodeByInfoHash ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  Text ->
+  Eff es ()
+deleteEpisodeByInfoHash infoHash =
+  execute "DELETE FROM episode WHERE info_hash = ?" (Only infoHash)
+
+-- | Get episodes by info hashes
+getEpisodesByInfoHashes ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  [Text] ->
+  Eff es [Episode]
+getEpisodesByInfoHashes [] = pure []
+getEpisodesByInfoHashes hashes = do
+  let placeholders = T.intercalate "," $ replicate (length hashes) "?"
+      sql = "SELECT " <> episodeColumns <> " FROM episode WHERE info_hash IN (" <> placeholders <> ")"
+  query (fromString $ T.unpack sql) hashes
+
+-- | Get newer episode (same bangumi, same episode number, different hash, newer pub_date)
+getNewerEpisode ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  BangumiId ->
+  EpisodeNumber ->
+  Text ->
+  Eff es (Maybe Episode)
+getNewerEpisode (BangumiId bid) epNum oldHash = do
+  results <-
+    query
+      (fromString $ "SELECT " <> T.unpack episodeColumns <> " FROM episode WHERE bangumi_id = ? AND episode_number = ? AND info_hash != ? ORDER BY pub_date DESC LIMIT 1")
+      (bid, epNum, oldHash)
+  pure $ listToMaybe results
