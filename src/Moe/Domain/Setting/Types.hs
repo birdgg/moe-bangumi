@@ -11,8 +11,7 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
-import Data.Text (Text)
-import GHC.Generics (Generic)
+import Moe.Prelude
 
 data DownloaderConfig = DownloaderConfig
   { url :: Text,

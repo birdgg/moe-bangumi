@@ -7,17 +7,13 @@ where
 import Control.Exception (bracket)
 import Control.Exception.Backtrace (BacktraceMechanism (..), setBacktraceMechanismState)
 import Control.Exception.Safe qualified as Safe
-import Control.Monad (void)
 import Control.Monad.Except qualified as Except
 import Data.ByteString.Lazy qualified as LBS
-import Data.Function ((&))
 import Data.OpenApi (OpenApi)
-import Data.Proxy (Proxy (..))
-import Data.Text qualified as T
 import Data.Text.Display (display)
-import Data.Text.Encoding (encodeUtf8)
 import Data.Text.IO qualified as TIO
 import Effectful
+import Moe.Prelude
 import Effectful.Concurrent (Concurrent, forkIO, runConcurrent)
 import Effectful.Dispatch.Static (unsafeEff_)
 import Effectful.Error.Static (runErrorWith)
@@ -78,12 +74,12 @@ runMoe = do
 shutdownMoe :: MoeEnv -> IO ()
 shutdownMoe = destroyDbPool
 
-logException :: T.Text -> MoeEnv -> Logger -> Safe.SomeException -> IO ()
+logException :: Text -> MoeEnv -> Logger -> Safe.SomeException -> IO ()
 logException component env logger exception =
   runEff $
     runLog component logger env.config.logConfig.logLevel $
       Log.logAttention_ $
-        component <> " crashed: " <> T.pack (show exception)
+        component <> " crashed: " <> show exception
 
 runServer :: (RequireCallStack, Concurrent :> es, IOE :> es) => Logger -> MoeEnv -> Eff es ()
 runServer logger env = do
@@ -143,7 +139,7 @@ naturalTransform env logger app = do
         & runSettingTVar env.settingVar (getSettingPath env)
         & runErrorWith
           ( \_callstack moeErr -> do
-              Log.logAttention_ $ "Application error: " <> T.pack (show moeErr)
+              Log.logAttention_ $ "Application error: " <> show moeErr
               pure . Left $ moeErrorToServerError moeErr
           )
         & runErrorWith (\_callstack err -> pure . Left $ err)

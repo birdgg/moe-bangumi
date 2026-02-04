@@ -4,13 +4,13 @@ module Moe.App.Job.Runner
   )
 where
 
-import Data.Text (Text)
 import Effectful (Eff)
 import Effectful.Log (Logger)
 import Moe.App.Effect.Runner (runMetadataEffects, runRssEffects)
 import Moe.App.Env (MoeEnv)
 import Moe.App.Job.Types (MetadataJobEffects, RssJobEffects)
 import Moe.Domain.Scheduler.Types (JobResult)
+import Moe.Prelude
 
 runMetadataJob ::
   Text ->

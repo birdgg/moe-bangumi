@@ -20,18 +20,14 @@ module Moe.Domain.Bangumi.Types
 where
 
 import Data.Aeson (ToJSON (..))
-import Data.Int (Int64)
 import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (..))
-import Data.Text (Text)
 import Data.Text.Display (Display (..))
 import Data.Time.Calendar (Day)
-import Data.Word (Word32)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Internal.Metadata
 import Moe.Domain.Bangumi.Internal.Season
 import Moe.Domain.Bangumi.Season
 import Moe.Orphans ()
-import Relude (ToText (..), inverseMap)
+import Moe.Prelude
 
 newtype BangumiId = BangumiId Int64
   deriving stock (Eq, Show, Ord)

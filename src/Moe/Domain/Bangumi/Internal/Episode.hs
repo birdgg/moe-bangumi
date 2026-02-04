@@ -7,9 +7,7 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
-import Data.Word (Word32)
-import GHC.Generics (Generic)
-import Moe.Prelude (Padded (..), ToText)
+import Moe.Prelude
 
 newtype EpisodeNumber = EpisodeNumber Word32
   deriving stock (Eq, Ord, Show, Generic)

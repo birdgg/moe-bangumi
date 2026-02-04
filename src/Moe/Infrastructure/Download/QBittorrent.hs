@@ -3,11 +3,10 @@ module Moe.Infrastructure.Download.QBittorrent
   )
 where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Read qualified as TR
-import Relude (toText, (<|>))
 import Effectful
+import Moe.Prelude
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Error.Static (Error, throwError)
 import Moe.Domain.Setting.Types (DownloaderConfig (..), UserPreference (..))
@@ -64,7 +63,7 @@ executeLogin manager cfg = do
       env = mkClientEnvWithCookies manager qbConfig cookieJar
   loginResult <- runClientM (QB.login qbConfig) env
   pure $ case loginResult of
-    Left err -> Left $ LoginFailed $ toText $ show err
+    Left err -> Left $ LoginFailed $ show err
     Right response
       | response /= "Ok." -> Left $ LoginFailed response
       | otherwise -> Right ()
@@ -82,7 +81,7 @@ executeDownload manager cfg url savePath = do
 
   loginResult <- runClientM (QB.login qbConfig) env
   case loginResult of
-    Left err -> pure $ Left $ LoginFailed $ toText $ show err
+    Left err -> pure $ Left $ LoginFailed $ show err
     Right response
       | response /= "Ok." -> pure $ Left $ LoginFailed response
       | otherwise -> do
@@ -97,7 +96,7 @@ executeDownload manager cfg url savePath = do
                   }
           addResult <- runClientM (QB.addTorrent req) env
           case addResult of
-            Left err -> pure $ Left $ AddTorrentFailed $ toText $ show err
+            Left err -> pure $ Left $ AddTorrentFailed $ show err
             Right _ -> pure $ Right ()
 
 toQBConfig :: DownloaderConfig -> QBConfig

@@ -5,7 +5,7 @@ where
 
 import Data.Aeson (ToJSON)
 import Data.OpenApi (ToSchema)
-import GHC.Generics (Generic)
+import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (BangumiResponse)
 
 data CalendarEntry = CalendarEntry

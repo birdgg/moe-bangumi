@@ -5,11 +5,10 @@ module Moe.Domain.Bangumi.Episode
   )
 where
 
-import Data.Int (Int64)
-import Data.Text (Text)
 import Data.Time (UTCTime)
 import Moe.Domain.Bangumi.Internal.Episode (EpisodeNumber (..))
 import Moe.Domain.Bangumi.Types (BangumiId)
+import Moe.Prelude
 
 newtype EpisodeId = EpisodeId Int64
   deriving stock (Eq, Show)

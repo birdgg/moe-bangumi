@@ -5,10 +5,10 @@ module Moe.App.Subscription.Types
   )
 where
 
-import Data.Text (Text)
 import Data.Time (UTCTime)
 import Moe.Domain.Bangumi.Types (Bangumi)
 import Moe.Infrastructure.Rss.Types (RawItem)
+import Moe.Prelude
 
 data FetchResult = FetchResult
   { bangumi :: Bangumi,

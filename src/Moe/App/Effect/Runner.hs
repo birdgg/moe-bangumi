@@ -8,9 +8,8 @@ module Moe.App.Effect.Runner
   )
 where
 
-import Data.Text (Text)
-import Data.Text qualified as T
 import Effectful
+import Moe.Prelude
 import Effectful.Concurrent (Concurrent, runConcurrent)
 import Effectful.Error.Static (Error, runErrorWith)
 import Effectful.Log (Log, Logger)
@@ -73,8 +72,8 @@ runRssEffects env logger logPrefix action =
 
 logMoeError :: (Log :> es) => Text -> a -> MoeError -> Eff es JobResult
 logMoeError logPrefix _ err = do
-  Log.logAttention_ $ logPrefix <> " error: " <> T.pack (show err)
-  pure $ JobFailure $ T.pack (show err)
+  Log.logAttention_ $ logPrefix <> " error: " <> show err
+  pure $ JobFailure $ show err
 
 type CalendarSyncEffects =
   '[ Metadata,
@@ -96,6 +95,6 @@ runCalendarSyncEffects ::
 runCalendarSyncEffects env logger logPrefix action =
   runBaseEffects env logger logPrefix $
     runSettingTVar env.settingVar (getSettingPath env) $
-      runErrorWith (\_ err -> Log.logAttention_ $ logPrefix <> " error: " <> T.pack (show err)) $
+      runErrorWith (\_ err -> Log.logAttention_ $ logPrefix <> " error: " <> show err) $
         runBangumiDataHttp env.httpManager $
           runMetadataHttp env.httpManager action

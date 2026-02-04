@@ -120,7 +120,7 @@ updateLastPubdateForBangumi bid items = transact $ do
   where
     latestPubDate :: [FilteredItem] -> Maybe UTCTime
     latestPubDate [] = Nothing
-    latestPubDate xs = Just $ maximum $ map (.parsedPubDate) xs
+    latestPubDate (x : xs) = Just $ foldl' max x.parsedPubDate (map (.parsedPubDate) xs)
 
 fetchAll ::
   (Rss :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>

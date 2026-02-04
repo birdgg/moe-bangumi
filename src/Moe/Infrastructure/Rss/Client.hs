@@ -7,10 +7,9 @@ module Moe.Infrastructure.Rss.Client
 where
 
 import Control.Exception (try)
-import Data.ByteString (ByteString, fromStrict, toStrict)
 import Data.ByteString.Lazy qualified as LBS
-import Data.Text (Text)
 import Data.Text qualified as T
+import Moe.Prelude
 import Moe.Infrastructure.Rss.Source (SomeRssSource (..), parseItemFor, selectRssSource)
 import Moe.Infrastructure.Rss.Types
 import Network.HTTP.Client
@@ -28,7 +27,7 @@ parseRss :: Text -> ByteString -> Either RssError [RawItem]
 parseRss url = parseRssWithSource (selectRssSource url)
 
 parseRssWithSource :: SomeRssSource -> ByteString -> Either RssError [RawItem]
-parseRssWithSource source xml = parseRssItems source (fromStrict xml)
+parseRssWithSource source xml = parseRssItems source (LBS.fromStrict xml)
 
 fetchRssXml :: Manager -> Text -> IO (Either RssError ByteString)
 fetchRssXml manager url = do
@@ -43,17 +42,17 @@ fetchRssXml manager url = do
     pure (Status.statusCode (responseStatus response), responseBody response)
   case result of
     Left (e :: HttpException) ->
-      pure $ Left $ NetworkError $ T.pack (show e)
+      pure $ Left $ NetworkError $ show e
     Right (status, body)
       | status >= 200 && status < 300 ->
-          pure $ Right $ toStrict body
+          pure $ Right $ LBS.toStrict body
       | otherwise ->
-          pure $ Left $ NetworkError $ "HTTP " <> T.pack (show status)
+          pure $ Left $ NetworkError $ "HTTP " <> show status
 
 parseRssItems :: SomeRssSource -> LBS.ByteString -> Either RssError [RawItem]
 parseRssItems source xml =
   case parseLBS def xml of
-    Left err -> Left $ XmlParseError $ T.pack (show err)
+    Left err -> Left $ XmlParseError $ show err
     Right doc ->
       let cursor = fromDocument doc
           items = cursor $// element "item"

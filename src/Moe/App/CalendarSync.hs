@@ -6,12 +6,7 @@ module Moe.App.CalendarSync
   )
 where
 
-import Control.Applicative ((<|>))
 import Control.Exception.Safe qualified as Safe
-import Control.Monad (forM_, void)
-import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
-import Data.Maybe (fromMaybe)
-import Data.Text qualified as T
 import Data.Time (UTCTime (..), getCurrentTime)
 import Data.Time.Calendar (Day, fromGregorian, toGregorian)
 import Data.Time.Calendar.Month (Month)
@@ -30,11 +25,11 @@ import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.Effect (toBangumi)
 import Moe.Infrastructure.Database.Bangumi qualified as DB
 import Moe.Infrastructure.Metadata.Effect (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
+import Moe.Prelude
 import Network.Tmdb (MovieId (..), TvShowId (..))
 import Network.Tmdb.Types.Image qualified as TmdbImage
 import Network.Tmdb.Types.Movie qualified as TmdbMovie
 import Network.Tmdb.Types.Tv qualified as TmdbTv
-import Relude (ToText (..))
 import Web.Bgmtv.Types (SubjectId (..))
 import Web.Bgmtv.Types qualified as Bgmtv
 
@@ -61,13 +56,13 @@ runMonthSyncInternal logger env month = do
       season = airDateToAirSeason firstDayOfMonth
   runSeasonSync logger env season "calendar-sync"
 
-runSeasonSync :: Logger -> MoeEnv -> AirSeason -> T.Text -> IO ()
+runSeasonSync :: Logger -> MoeEnv -> AirSeason -> Text -> IO ()
 runSeasonSync logger env season logPrefix =
   runCalendarSyncEffects env logger logPrefix $ do
     Log.logInfo_ $ "Syncing season: " <> toText season
     result <- Safe.tryAny $ syncAirSeason False season
     case result of
-      Left err -> Log.logAttention_ $ logPrefix <> " failed: " <> T.pack (show err)
+      Left err -> Log.logAttention_ $ logPrefix <> " failed: " <> show err
       Right _ -> Log.logInfo_ $ logPrefix <> " completed for " <> toText season
 
 syncAirSeason ::
@@ -86,7 +81,7 @@ syncAirSeason forceRefresh season = do
   if null existing || forceRefresh
     then fetchAndStoreAirSeason season
     else do
-      Log.logInfo_ $ "Found " <> T.pack (show (length existing)) <> " existing bangumi"
+      Log.logInfo_ $ "Found " <> show (length existing) <> " existing bangumi"
       pure existing
 
 fetchAndStoreAirSeason ::

@@ -10,22 +10,14 @@ module Moe.Web.API.DTO.Tracking
   )
 where
 
-import Control.Applicative ((<|>))
 import Data.Aeson (FromJSON (..), ToJSON (..))
-import Data.Coerce (coerce)
-import Data.Int (Int64)
-import Data.Maybe (fromMaybe)
 import Data.OpenApi (ToSchema)
-import Data.Text (Text)
-import Data.Text qualified as T
 import Data.Time (UTCTime)
-import Data.Word (Word32)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (BangumiId (..))
 import Moe.Domain.Bangumi.Types qualified as Bangumi
-import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 import Moe.Domain.Tracking.Types (Tracking (..), TrackingId (..), TrackingType (..))
-import Relude (ToText (..))
+import Moe.Prelude
+import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 
 instance ToJSON TrackingType where
   toJSON = toJSON . toText
@@ -101,7 +93,7 @@ fromCreateRequest req =
     }
 
 mikanIdToRssUrl :: Word32 -> Text
-mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> T.pack (show mid)
+mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> show mid
 
 applyUpdateRequest :: UpdateTrackingRequest -> Tracking -> Tracking
 applyUpdateRequest req t =

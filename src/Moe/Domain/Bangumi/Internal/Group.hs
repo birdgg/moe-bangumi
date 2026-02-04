@@ -5,10 +5,8 @@ module Moe.Domain.Bangumi.Internal.Group
   )
 where
 
-import Data.List (find)
-import Data.Text (Text)
 import Data.Text qualified as T
-import Moe.Prelude (ToText (..))
+import Moe.Prelude
 
 data Group = Group
   { name :: Text,

@@ -6,9 +6,8 @@ where
 
 import Data.Aeson (ToJSON)
 import Data.OpenApi (ToSchema)
-import Data.Text (Text)
 import Data.Text.Display (Display (..))
-import GHC.Generics (Generic)
+import Moe.Prelude
 
 data RawItem = RawItem
   { title :: Maybe Text,

@@ -5,11 +5,10 @@ module Moe.Infrastructure.BangumiData.Client
   )
 where
 
-import Control.Monad.IO.Class (liftIO)
-import Data.Proxy (Proxy (..))
 import Effectful (Eff, IOE, (:>))
 import Moe.Infrastructure.BangumiData.API
 import Moe.Infrastructure.BangumiData.Types (BangumiDataItem)
+import Moe.Prelude
 import Network.HTTP.Client (Manager)
 import Servant.Client
 

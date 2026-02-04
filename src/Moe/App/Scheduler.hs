@@ -122,7 +122,7 @@ executeJob stateRef def = do
   logJob cfg.jobId $ "Finished: " <> display result
   where
     handleException :: SomeException -> IO JobResult
-    handleException e = pure $ JobFailure (toText (Prelude.show e))
+    handleException e = pure $ JobFailure (show e)
 
 logJob :: JobId -> Text -> IO ()
 logJob jid msg = do

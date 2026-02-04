@@ -9,13 +9,11 @@ module Moe.Domain.Scheduler.Types
   )
 where
 
-import Data.Hashable (Hashable)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Display (Display (..))
 import Data.Time (UTCTime)
-import GHC.Generics (Generic)
-import Numeric.Natural (Natural)
+import Moe.Prelude hiding (show)
+import Prelude (show)
 import System.Cron (CronSchedule)
 import System.Cron.Parser (parseCronSchedule)
 

@@ -6,15 +6,14 @@ module Moe.App.Subscription.Washing
 where
 
 import Data.List (elemIndex)
-import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.Text (Text)
 import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..))
-import Moe.Domain.Bangumi.Types (Bangumi (..))
 import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
 import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
+import Moe.Domain.Bangumi.Types (Bangumi (..))
 import Moe.Domain.Setting.Types (FilterConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
+import Moe.Prelude
 
 data WashingResult
   = NewEpisode DownloadTask Episode

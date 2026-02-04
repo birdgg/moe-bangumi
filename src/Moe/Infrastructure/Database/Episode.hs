@@ -6,15 +6,13 @@ module Moe.Infrastructure.Database.Episode
   )
 where
 
-import Data.Maybe (listToMaybe)
-import Data.String (fromString)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query)
-import Moe.Domain.Bangumi.Types (BangumiId (..))
 import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeId (..), EpisodeNumber)
+import Moe.Domain.Bangumi.Types (BangumiId (..))
 import Moe.Infrastructure.Database.Orphans ()
+import Moe.Prelude
 
 episodeColumns :: Text
 episodeColumns = "id, bangumi_id, episode_number, \"group\", resolution, info_hash, torrent_url, pub_date, created_at"

@@ -1,11 +1,9 @@
 module Moe.Web.API.Routes where
 
-import Data.Int (Int64)
-import Data.Text (Text)
 import Data.Time.Calendar (Year)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (Season)
 import Moe.Domain.Setting.Types (UserPreference)
+import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (BangumiResponse)
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
 import Moe.Web.API.DTO.Setting (SettingResponse)

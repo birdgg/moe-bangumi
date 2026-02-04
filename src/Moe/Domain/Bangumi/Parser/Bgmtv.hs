@@ -4,13 +4,9 @@ module Moe.Domain.Bangumi.Parser.Bgmtv
   )
 where
 
-import Control.Applicative ((<|>))
-import Data.Bifunctor (bimap)
-import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Word (Word32)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
+import Moe.Prelude
 
 data BgmtvParsedTitle = BgmtvParsedTitle
   { titleChs :: Text,

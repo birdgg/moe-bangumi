@@ -6,9 +6,9 @@ module Moe.Infrastructure.Setting.Effect
   )
 where
 
-import Control.Concurrent.STM (TVar, atomically, readTVarIO, writeTVar)
 import Data.Aeson (encodeFile)
 import Effectful
+import Moe.Prelude
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.TH (makeEffect)
 import Moe.Domain.Setting.Types (UserPreference)

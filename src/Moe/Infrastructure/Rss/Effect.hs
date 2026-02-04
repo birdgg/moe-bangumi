@@ -6,8 +6,8 @@ module Moe.Infrastructure.Rss.Effect
   )
 where
 
-import Data.Text (Text)
 import Effectful
+import Moe.Prelude
 import Effectful.Dispatch.Dynamic
 import Effectful.Error.Static (Error, throwError)
 import Moe.Infrastructure.Rss.Client qualified as Client

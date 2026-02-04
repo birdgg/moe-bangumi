@@ -7,9 +7,7 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
-import Data.Word (Word8)
-import GHC.Generics (Generic)
-import Moe.Prelude (Padded (..), ToText)
+import Moe.Prelude
 
 newtype SeasonNumber = SeasonNumber Word8
   deriving stock (Eq, Ord, Show, Generic)

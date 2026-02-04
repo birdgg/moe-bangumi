@@ -6,8 +6,8 @@ module Moe.Infrastructure.Download.Effect
   )
 where
 
-import Data.Text (Text)
 import Effectful
+import Moe.Prelude (Maybe, Text)
 import Effectful.TH (makeEffect)
 import Moe.Infrastructure.Download.Types (DownloadError (..))
 

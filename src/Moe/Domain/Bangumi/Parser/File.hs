@@ -8,16 +8,13 @@ module Moe.Domain.Bangumi.Parser.File
 where
 
 import Data.ByteString qualified as BS
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
-import Data.Word (Word32)
-import Moe.Domain.Bangumi.Parser.Internal.Pattern
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Parser.Internal.Pattern
+import Moe.Prelude
 import Regex.Rure (RureMatch (..), hsFind)
 import Regex.Rure.FFI (rureDefaultFlags)
-import Text.Read (readMaybe)
 
 data ParsedInfo = ParsedInfo
   { title :: Text,

@@ -12,13 +12,10 @@ where
 
 import Data.Aeson (ToJSON (..))
 import Data.OpenApi (Schema (..), ToParamSchema (..), ToSchema (..))
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (getCurrentTime, utctDay)
 import Data.Time.Calendar (Day, Year, toGregorian)
-import GHC.Generics (Generic)
-import Relude (Proxy (..), ToText (..), readMaybe, toString)
-import Relude qualified as R
+import Moe.Prelude
 import Web.HttpApiData (FromHttpApiData (..))
 
 data Season = Winter | Spring | Summer | Fall
@@ -60,7 +57,7 @@ instance ToText AirSeason where
   toText = airSeasonToText
 
 airSeasonToText :: AirSeason -> Text
-airSeasonToText (AirSeason y s) = R.show y <> "-" <> toText s
+airSeasonToText (AirSeason y s) = show y <> "-" <> toText s
 
 airSeasonFromText :: Text -> Maybe AirSeason
 airSeasonFromText t = case T.splitOn "-" t of

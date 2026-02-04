@@ -9,18 +9,13 @@ module Moe.Infrastructure.BangumiData.Types
   )
 where
 
-import Control.Monad ((>=>))
 import Data.Aeson
-import Data.List (find)
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, parseTimeM)
 import Data.Time.Calendar (Day)
 import Data.Time.LocalTime (LocalTime (..), localDay)
-import Data.Word (Word32)
 import Moe.Domain.Bangumi.Types qualified as Types
-import Text.Read (readMaybe)
+import Moe.Prelude
 
 data BangumiDataItem = BangumiDataItem
   { title :: Text,

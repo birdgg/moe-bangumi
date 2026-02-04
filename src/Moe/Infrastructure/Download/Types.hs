@@ -6,10 +6,9 @@ module Moe.Infrastructure.Download.Types
   )
 where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Display (Display (..))
-import Relude (ToText (..), inverseMap)
+import Moe.Prelude
 
 data DownloadError
   = LoginFailed Text

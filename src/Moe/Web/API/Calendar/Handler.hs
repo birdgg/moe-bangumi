@@ -3,14 +3,13 @@ module Moe.Web.API.Calendar.Handler
   )
 where
 
-import Data.List (sortOn)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (mapMaybe)
 import Data.Time.Calendar (Day, Year)
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Effectful.Sqlite (notransact)
-import Moe.Infrastructure.Database.Bangumi qualified as DB
 import Moe.Domain.Bangumi.Types (AirSeason (..), Bangumi (..), Season)
+import Moe.Infrastructure.Database.Bangumi qualified as DB
+import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (toBangumiResponse)
 import Moe.Web.API.DTO.Calendar (CalendarEntry (..))
 import Moe.Web.Types (MoeEff)

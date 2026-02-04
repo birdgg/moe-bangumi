@@ -1,5 +1,6 @@
 module Moe.Web.API.Server where
 
+import Moe.Prelude
 import Moe.Web.API.Bangumi.Handler (handleBangumiSeason)
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Routes qualified as API

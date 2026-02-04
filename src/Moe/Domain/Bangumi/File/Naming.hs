@@ -6,11 +6,9 @@ module Moe.Domain.Bangumi.File.Naming
   )
 where
 
-import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Word (Word8)
 import Moe.Domain.Bangumi.File.Types
-import Moe.Prelude (ToText (..))
+import Moe.Prelude
 import System.FilePath ((</>))
 
 generatePath :: BangumiFile -> FilePath
@@ -66,19 +64,19 @@ episodeBaseName name = \case
 extraBaseName :: ExtraContent -> Text
 extraBaseName = \case
   NCOP Nothing -> "NCOP"
-  NCOP (Just (ExtraIndex i)) -> "NCOP" <> T.pack (show i)
+  NCOP (Just (ExtraIndex i)) -> "NCOP" <> show i
   NCED Nothing -> "NCED"
-  NCED (Just (ExtraIndex i)) -> "NCED" <> T.pack (show i)
+  NCED (Just (ExtraIndex i)) -> "NCED" <> show i
   Menu Nothing -> "Menu"
-  Menu (Just (ExtraIndex i)) -> "Menu" <> T.pack (show i)
+  Menu (Just (ExtraIndex i)) -> "Menu" <> show i
 
 trailerBaseName :: TrailerContent -> Text
 trailerBaseName = \case
-  PV (ExtraIndex i) -> "PV" <> T.pack (show i)
+  PV (ExtraIndex i) -> "PV" <> show i
   Preview -> "Preview"
   Trailer -> "Trailer"
   CM Nothing -> "CM"
-  CM (Just (ExtraIndex i)) -> "CM" <> T.pack (show i)
+  CM (Just (ExtraIndex i)) -> "CM" <> show i
 
 fileTypeExtension :: FileType -> Text
 fileTypeExtension = \case
@@ -87,5 +85,5 @@ fileTypeExtension = \case
 
 padded :: Word8 -> Text
 padded n
-  | n < 10 = "0" <> T.pack (show n)
-  | otherwise = T.pack (show n)
+  | n < 10 = "0" <> show n
+  | otherwise = show n

@@ -7,6 +7,7 @@ where
 import Data.Aeson (FromJSON, eitherDecode)
 import Data.Text qualified as T
 import Moe.Infrastructure.BangumiData.Types (BangumiDataItem)
+import Moe.Prelude
 import Network.HTTP.Media ((//))
 import Servant.API
 import Text.Printf (printf)

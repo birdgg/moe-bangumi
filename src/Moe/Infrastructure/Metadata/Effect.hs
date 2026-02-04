@@ -14,9 +14,6 @@ module Moe.Infrastructure.Metadata.Effect
   )
 where
 
-import Control.Applicative ((<|>))
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Calendar (Year)
 import Data.Time.Calendar.Month qualified as Month
@@ -24,7 +21,6 @@ import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Error.Static (Error, throwError)
 import Effectful.TH (makeEffect)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle, parseBgmtvTitle)
 import Moe.Domain.Bangumi.Types (AirSeason)
 import Moe.Domain.Bangumi.Types qualified as BangumiTypes
@@ -33,13 +29,13 @@ import Moe.Error (MoeError (..), liftError)
 import Moe.Infrastructure.BangumiData.Effect (BangumiDataItem (..), TitleTranslate (..))
 import Moe.Infrastructure.BangumiData.Effect qualified as BangumiData
 import Moe.Infrastructure.Setting.Effect (Setting, getSetting)
+import Moe.Prelude
 import Network.HTTP.Client (Manager)
 import Network.Tmdb (MovieId, TvShowId)
 import Network.Tmdb qualified as Tmdb
 import Network.Tmdb.Types.Movie (MovieDetail)
 import Network.Tmdb.Types.Search (MultiSearchResult)
 import Network.Tmdb.Types.Tv (TvDetail)
-import Text.Read (readMaybe)
 import Web.Bgmtv.Client qualified as Bgmtv
 import Web.Bgmtv.Types (Subject, SubjectDetail, SubjectId)
 import Web.Bgmtv.Types qualified as Bgmtv
@@ -73,8 +69,6 @@ bgmtvUserAgent = "moe-bangumi/0.1.0"
 
 mkBgmtvClient :: Manager -> Bgmtv.BgmtvClient
 mkBgmtvClient = Bgmtv.newBgmtvClientWith ?? Bgmtv.defaultConfig bgmtvUserAgent
-  where
-    (??) = flip
 
 runMetadataHttp ::
   (IOE :> es, Error MoeError :> es, Setting :> es, BangumiData.BangumiData :> es) =>

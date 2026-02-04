@@ -5,7 +5,7 @@ module Moe.Domain.Bangumi.Internal.Metadata
   )
 where
 
-import Data.Word (Word32)
+import Moe.Prelude
 
 newtype TmdbId = TmdbId Word32
   deriving stock (Eq, Show)

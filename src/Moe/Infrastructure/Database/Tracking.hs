@@ -11,15 +11,13 @@ module Moe.Infrastructure.Database.Tracking
   )
 where
 
-import Data.Maybe (listToMaybe)
-import Data.String (fromString)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful
 import Effectful.Sqlite (FromRow (..), Only (..), SqliteTransaction, execute, field, query, query_)
 import Moe.Domain.Bangumi.Types qualified as Bangumi
 import Moe.Domain.Tracking.Types qualified as Types
 import Moe.Infrastructure.Database.Orphans ()
+import Moe.Prelude
 
 newtype TrackingBangumiRow = TrackingBangumiRow {unRow :: (Types.Tracking, Bangumi.Bangumi)}
 

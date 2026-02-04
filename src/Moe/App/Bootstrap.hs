@@ -9,6 +9,7 @@ import Effectful.Log qualified as Log
 import Effectful.Sqlite (SqliteDb (..), notransact, runMigrations, runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), mkMoeEnv, parseMoeConfig)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
+import Moe.Prelude
 import System.Directory (createDirectoryIfMissing)
 
 bootstrap :: (IOE :> es, Concurrent :> es) => Eff es MoeEnv

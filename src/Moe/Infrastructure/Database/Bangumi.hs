@@ -10,15 +10,12 @@ module Moe.Infrastructure.Database.Bangumi
   )
 where
 
-import Data.List (intercalate)
-import Data.Maybe (listToMaybe)
-import Data.String (fromString)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi.Types qualified as Types
 import Moe.Infrastructure.Database.Orphans ()
+import Moe.Prelude
 
 bangumiColumns :: Text
 bangumiColumns = "id, title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url"

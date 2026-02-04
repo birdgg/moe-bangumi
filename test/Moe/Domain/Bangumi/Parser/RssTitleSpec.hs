@@ -1,9 +1,9 @@
 module Moe.Domain.Bangumi.Parser.RssTitleSpec (tests) where
 
-import Data.Text (Text)
+import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleLang (..))
 import Moe.Domain.Bangumi.Parser.RssTitle
-import Moe.Domain.Bangumi.Subtitle.Types (SubtitleLang (..))
-import Moe.Domain.Bangumi.Episode.Types (EpisodeNumber (..))
+import Moe.Prelude
 import Test.Tasty
 import Test.Tasty.HUnit
 

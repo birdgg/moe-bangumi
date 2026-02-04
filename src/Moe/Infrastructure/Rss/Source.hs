@@ -15,14 +15,9 @@ module Moe.Infrastructure.Rss.Source
   )
 where
 
-import Control.Applicative ((<|>))
 import Data.Char (isHexDigit)
-import Data.List (find)
-import Data.Maybe (fromMaybe, listToMaybe)
-import Data.Proxy (Proxy (..))
-import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Moe.Prelude
 import Moe.Infrastructure.Rss.Types (RawItem (..))
 import Network.HTTP.Types (urlEncode)
 import Text.XML (Name (..))

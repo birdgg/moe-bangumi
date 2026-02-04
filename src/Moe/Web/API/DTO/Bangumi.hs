@@ -5,15 +5,11 @@ module Moe.Web.API.DTO.Bangumi
 where
 
 import Data.Aeson (ToJSON)
-import Data.Coerce (coerce)
-import Data.Int (Int64)
 import Data.OpenApi (ToSchema)
-import Data.Text (Text)
 import Data.Time.Calendar (Day)
-import Data.Word (Word32)
-import GHC.Generics (Generic)
 import Moe.Domain.Bangumi.Types (BangumiKind)
 import Moe.Domain.Bangumi.Types qualified as Types
+import Moe.Prelude
 
 data BangumiResponse = BangumiResponse
   { id :: Maybe Int64,

@@ -3,12 +3,14 @@ module Moe.App.Scheduler.Jobs.CalendarSync
   )
 where
 
-import Data.Text (Text)
+import Data.Text qualified as T
 import Effectful.Log (Logger)
 import Moe.App.CalendarSync (runMonthlySync)
 import Moe.App.Env (MoeEnv)
 import Moe.App.Scheduler (JobDefinition (..))
 import Moe.Domain.Scheduler.Types (JobResult (..), mkJobConfig)
+import Moe.Prelude
+import Prelude qualified
 
 defaultCron :: Text
 defaultCron = "0 6 1-10 * *"
@@ -16,7 +18,7 @@ defaultCron = "0 6 1-10 * *"
 calendarSyncJob :: MoeEnv -> Logger -> JobDefinition
 calendarSyncJob env logger =
   case mkJobConfig "calendar-sync" defaultCron of
-    Left err -> error $ "Invalid calendar-sync cron: " <> show err
+    Left err -> Prelude.error $ "Invalid calendar-sync cron: " <> T.unpack err
     Right config ->
       JobDefinition
         { jobConfig = config,

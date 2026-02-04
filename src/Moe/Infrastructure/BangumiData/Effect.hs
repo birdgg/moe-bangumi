@@ -8,7 +8,6 @@ module Moe.Infrastructure.BangumiData.Effect
 where
 
 import Control.Concurrent.Async (mapConcurrently)
-import Data.Text qualified as T
 import Data.Time.Calendar.Month (Month)
 import Data.Time.Calendar.Month qualified as Month
 import Effectful
@@ -19,7 +18,7 @@ import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.API (MonthFile (..))
 import Moe.Infrastructure.BangumiData.Client
 import Moe.Infrastructure.BangumiData.Types
-import Moe.Prelude (liftEither)
+import Moe.Prelude
 import Network.HTTP.Client (Manager)
 import Network.HTTP.Types.Status (statusCode)
 import Servant.Client (ClientError (..))
@@ -56,4 +55,4 @@ handleResult :: Either ClientError [BangumiDataItem] -> Either MoeError [Bangumi
 handleResult (Right items) = Right items
 handleResult (Left (FailureResponse _ Response{responseStatusCode}))
   | statusCode responseStatusCode == 404 = Right []
-handleResult (Left err) = Left $ ExternalApiError $ "BangumiData: " <> T.pack (show err)
+handleResult (Left err) = Left $ ExternalApiError $ "BangumiData: " <> show err

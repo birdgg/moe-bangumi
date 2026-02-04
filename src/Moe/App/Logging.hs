@@ -12,8 +12,7 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as KM
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy qualified as LBS
-import Data.Text (Text)
-import Data.Text qualified as T
+import Moe.Prelude
 import Data.Text.IO qualified as TIO
 import Data.Time.Clock (diffUTCTime, getCurrentTime, nominalDiffTimeToSeconds)
 import Effectful
@@ -21,7 +20,6 @@ import Effectful.Log (Log, LogLevel (..), Logger)
 import Effectful.Log qualified as Log
 import Log.Internal.Logger (withLogger)
 import Log.Logger (mkLogger)
-import System.IO (stdout)
 
 data LogDestination
   = PrettyStdOut
@@ -59,7 +57,7 @@ formatLogMessage val = case val of
         component = lookupText "component" obj
         message = lookupText "message" obj
      in "[" <> level <> "] [" <> component <> "] " <> message
-  _ -> T.pack (show val)
+  _ -> show val
   where
     lookupText key obj = case KM.lookup key obj of
       Just (Aeson.String t) -> t
@@ -81,5 +79,5 @@ timeAction label action = do
   result <- action
   end <- liftIO getCurrentTime
   let elapsed = realToFrac (nominalDiffTimeToSeconds (diffUTCTime end start)) * 1000 :: Double
-  Log.logInfo_ $ label <> " took " <> T.pack (show elapsed) <> "ms"
+  Log.logInfo_ $ label <> " took " <> show elapsed <> "ms"
   pure result

@@ -6,6 +6,7 @@ module Moe.Web.Scalar
 where
 
 import Data.ByteString.Lazy qualified as LBS
+import Moe.Prelude (($))
 import Data.ByteString.Lazy.Char8 qualified as LBS8
 import Network.HTTP.Media ((//), (/:))
 import Servant.API (Accept (..), MimeRender (..))

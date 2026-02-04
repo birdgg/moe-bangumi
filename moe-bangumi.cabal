@@ -12,6 +12,7 @@ extra-doc-files: CHANGELOG.md
 
 common common-extensions
   default-extensions:
+    NoImplicitPrelude
     DataKinds
     DeepSubsumption
     DeriveAnyClass
@@ -85,17 +86,23 @@ library
     Moe.App.Subscription.Pipeline
     Moe.App.Subscription.Types
     Moe.App.Subscription.Washing
-    Moe.Domain.Bangumi.Episode.Types
-    Moe.Domain.Bangumi.Group.Types
+    Moe.Domain.Bangumi.Episode
+    Moe.Domain.Bangumi.File
+    Moe.Domain.Bangumi.File.Naming
+    Moe.Domain.Bangumi.File.Types
+    Moe.Domain.Bangumi.Internal.Episode
+    Moe.Domain.Bangumi.Internal.Group
+    Moe.Domain.Bangumi.Internal.Metadata
+    Moe.Domain.Bangumi.Internal.Season
+    Moe.Domain.Bangumi.Internal.Subtitle
+    Moe.Domain.Bangumi.Metadata
     Moe.Domain.Bangumi.Parser
     Moe.Domain.Bangumi.Parser.Bgmtv
     Moe.Domain.Bangumi.Parser.File
     Moe.Domain.Bangumi.Parser.Internal.Pattern
     Moe.Domain.Bangumi.Parser.RssTitle
-    Moe.Domain.Bangumi.Subtitle.Types
+    Moe.Domain.Bangumi.Season
     Moe.Domain.Bangumi.Types
-    Moe.Domain.Bangumi.File.Naming
-    Moe.Domain.Bangumi.File.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.Setting.Types
     Moe.Domain.Tracking.Types

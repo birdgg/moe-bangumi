@@ -13,10 +13,7 @@ module Moe.App.Env
   )
 where
 
-import Control.Concurrent.STM (TVar, newTVarIO)
 import Data.Aeson (eitherDecodeFileStrict)
-import Data.Either (fromRight)
-import Data.Maybe (fromMaybe)
 import Data.Pool qualified as Pool
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
@@ -25,12 +22,11 @@ import Effectful.Sqlite (SqlitePool (..))
 import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
 import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
+import Moe.Prelude
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import System.Directory (doesFileExist)
-import System.Environment (lookupEnv)
 import System.FilePath ((</>))
-import Text.Read (readMaybe)
 
 data AppEnv
   = Development

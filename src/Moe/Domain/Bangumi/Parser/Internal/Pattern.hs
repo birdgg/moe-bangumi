@@ -28,15 +28,13 @@ module Moe.Domain.Bangumi.Parser.Internal.Pattern
   )
 where
 
-import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
-import Data.Text (Text)
+import Data.List (lookup)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
-import Data.Word (Word32)
+import Moe.Prelude
 import Regex.Rure (RureMatch (..), hsFind, hsIsMatch)
 import Regex.Rure.FFI (rureDefaultFlags)
-import Text.Read (readMaybe)
 
 newtype Pattern = Pattern {unPattern :: ByteString}
   deriving stock (Eq, Show)

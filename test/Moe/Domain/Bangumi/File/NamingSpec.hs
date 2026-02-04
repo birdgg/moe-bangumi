@@ -2,6 +2,7 @@ module Moe.Domain.Bangumi.File.NamingSpec (tests) where
 
 import Moe.Domain.Bangumi.File.Naming
 import Moe.Domain.Bangumi.File.Types
+import Moe.Prelude
 import Test.Tasty
 import Test.Tasty.HUnit
 

@@ -2,6 +2,7 @@ module Moe.Infrastructure.BangumiData.TypesSpec (tests) where
 
 import Moe.Domain.Bangumi.Types (TmdbId (..))
 import Moe.Infrastructure.BangumiData.Types
+import Moe.Prelude
 import Test.Tasty
 import Test.Tasty.HUnit
 

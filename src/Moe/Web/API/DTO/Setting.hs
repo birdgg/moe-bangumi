@@ -10,9 +10,8 @@ where
 
 import Data.Aeson (ToJSON)
 import Data.OpenApi (ToSchema)
-import Data.Text (Text)
-import GHC.Generics (Generic)
 import Moe.Domain.Setting.Types qualified as Setting
+import Moe.Prelude
 
 data SettingResponse = SettingResponse
   { downloader :: Maybe DownloaderConfigResponse,

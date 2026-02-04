@@ -2,9 +2,13 @@
 
 module Moe.Infrastructure.Database.Orphans () where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..), field)
+import Moe.Domain.Bangumi.Episode
+  ( Episode (..),
+    EpisodeId (..),
+    EpisodeNumber (..),
+  )
 import Moe.Domain.Bangumi.Types
   ( Bangumi (..),
     BangumiId (..),
@@ -13,17 +17,12 @@ import Moe.Domain.Bangumi.Types
     MikanId (..),
     TmdbId (..),
   )
-import Moe.Domain.Bangumi.Episode
-  ( Episode (..),
-    EpisodeId (..),
-    EpisodeNumber (..),
-  )
 import Moe.Domain.Tracking.Types
   ( Tracking (..),
     TrackingId (..),
     TrackingType (..),
   )
-import Relude (ToText (..))
+import Moe.Prelude
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField

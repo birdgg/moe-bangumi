@@ -18,13 +18,11 @@ module Moe.Domain.Bangumi.File.Types
   )
 where
 
-import Data.Text (Text)
 import Data.Time.Calendar (Year)
-import Data.Word (Word8)
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
 import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleExt (..), SubtitleLang (..), SubtitleList)
 import Moe.Domain.Bangumi.Types (SeasonNumber (..), TmdbId (..))
-import Relude (ToText (..))
+import Moe.Prelude
 
 newtype ExtraIndex = ExtraIndex Word8
   deriving stock (Eq, Show)
