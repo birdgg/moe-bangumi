@@ -84,6 +84,15 @@ runDownloadQBittorrent cfg = interpret $ \_ -> \case
               }
       QB.getTorrents (Just req)
 
+  GetTorrentFiles hash ->
+    runQB cfg $ QB.getTorrentFiles (QB.InfoHash hash)
+
+  RenameTorrentFile hash oldPath newPath ->
+    runQB cfg $ void $ QB.renameFile (QB.InfoHash hash) oldPath newPath
+
+  SetTorrentLocation hashes location ->
+    runQB cfg $ void $ QB.setLocation (map QB.InfoHash hashes) location
+
   StopTorrents hashes ->
     runQB cfg $ void $ QB.stopTorrents (map QB.InfoHash hashes)
 

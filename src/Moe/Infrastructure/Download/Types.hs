@@ -16,12 +16,13 @@ module Moe.Infrastructure.Download.Types
     -- * Re-exports from effectful-qbittorrent
     Tag (..),
     TorrentInfo (..),
+    TorrentFile (..),
     TorrentState (..),
     InfoHash (..),
   )
 where
 
-import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentInfo (..), TorrentState (..))
+import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentFile (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | URL for a torrent resource

@@ -3,6 +3,7 @@ module Moe.App.Job.Types
     MetadataJobEffects,
     RssJobEffects,
     SubscriptionJobEffects,
+    RenameJobEffects,
     JobAction,
   )
 where
@@ -17,6 +18,7 @@ import Moe.Error (MoeError)
 import Moe.Infrastructure.BangumiData.Effect (BangumiData)
 import Moe.Infrastructure.Download.Effect (Download)
 import Moe.Infrastructure.Metadata.Effect (Metadata)
+import Moe.Infrastructure.Notification.Effect (Notification)
 import Moe.Infrastructure.Rss.Effect (Rss)
 import Moe.Infrastructure.Setting.Effect (Setting)
 
@@ -55,6 +57,19 @@ type RssJobEffects =
 type SubscriptionJobEffects =
   '[ Download,
      Rss,
+     Error MoeError,
+     Setting,
+     FileSystem,
+     Log,
+     Sqlite,
+     Concurrent,
+     IOE
+   ]
+
+-- | Effect stack for rename job (Download + Notification)
+type RenameJobEffects =
+  '[ Notification,
+     Download,
      Error MoeError,
      Setting,
      FileSystem,

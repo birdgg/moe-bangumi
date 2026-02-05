@@ -23,7 +23,7 @@ import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
 import Moe.App.Bootstrap (bootstrap)
 import Moe.App.CalendarSync (runInitialSeasonSync)
-import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool, getSettingPath)
+import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.App.Scheduler (JobDefinition, startScheduler)
 import Moe.App.Scheduler.Jobs (defaultJobs)
@@ -31,7 +31,7 @@ import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
 import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
 import Effectful.FileSystem (runFileSystem)
-import Moe.Infrastructure.Setting.Effect (runSettingTVar)
+import Moe.Infrastructure.Setting.Effect (runSetting)
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
 import Moe.Web.Routers
@@ -137,7 +137,7 @@ naturalTransform env logger app = do
         <$> app
         & runMetadataHttp env.httpManager
         & runBangumiDataHttp env.httpManager
-        & runSettingTVar env.settingVar (getSettingPath env)
+        & runSetting env.settingEnv
         & runFileSystem
         & runErrorWith
           ( \_callstack moeErr -> do

@@ -8,7 +8,6 @@ module Moe.App.Env
     mkDbPool,
     destroyDbPool,
     getDatabasePath,
-    getSettingPath,
     getLogPath,
   )
 where
@@ -17,12 +16,12 @@ import Data.Pool qualified as Pool
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
 import Effectful
+import Effectful.Concurrent (Concurrent)
 import Effectful.FileSystem (FileSystem)
 import Effectful.Sqlite (SqlitePool (..))
 import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
-import Moe.Domain.Setting.Types (UserPreference)
-import Moe.Infrastructure.Setting.Effect (loadSettingFromFile)
+import Moe.Infrastructure.Setting.Effect (SettingEnv, initSettingEnv)
 import Moe.Prelude
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
@@ -47,7 +46,7 @@ data MoeConfig = MoeConfig
 
 data MoeEnv = MoeEnv
   { config :: MoeConfig,
-    settingVar :: TVar UserPreference,
+    settingEnv :: SettingEnv,
     httpManager :: Manager,
     dbPool :: SqlitePool
   }
@@ -85,14 +84,13 @@ parseMoeConfig = do
     parseLogDest folder (Just "file") = JsonFile (folder </> "moe-bangumi.log")
     parseLogDest _ _ = PrettyStdOut
 
-mkMoeEnv :: (IOE :> es, FileSystem :> es) => MoeConfig -> Eff es MoeEnv
+mkMoeEnv :: (IOE :> es, FileSystem :> es, Concurrent :> es) => MoeConfig -> Eff es MoeEnv
 mkMoeEnv config = do
   let settingPath = config.dataFolder </> "setting.json"
-  initialSetting <- loadSettingFromFile settingPath
-  settingVar <- liftIO $ newTVarIO initialSetting
+  settingEnv <- initSettingEnv settingPath
   httpManager <- liftIO $ newManager tlsManagerSettings
   dbPool <- mkDbPool (getDatabasePath' config)
-  pure MoeEnv {config, settingVar, httpManager, dbPool}
+  pure MoeEnv {config, settingEnv, httpManager, dbPool}
 
 mkDbPool :: (IOE :> es) => FilePath -> Eff es SqlitePool
 mkDbPool dbPath = liftIO $ do
@@ -120,9 +118,6 @@ getDatabasePath env = getDatabasePath' env.config
 
 getDatabasePath' :: MoeConfig -> FilePath
 getDatabasePath' cfg = cfg.dataFolder </> "moe-bangumi.db"
-
-getSettingPath :: MoeEnv -> FilePath
-getSettingPath env = env.config.dataFolder </> "setting.json"
 
 getLogPath :: MoeEnv -> FilePath
 getLogPath env = env.config.dataFolder </> "moe-bangumi.log"

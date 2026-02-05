@@ -2,13 +2,16 @@ module Moe.Infrastructure.Setting.Effect
   ( Setting (..),
     getSetting,
     saveSetting,
-    runSettingTVar,
-    loadSettingFromFile,
+    SettingEnv,
+    initSettingEnv,
+    runSetting,
   )
 where
 
 import Data.Aeson (eitherDecode, encode)
 import Effectful
+import Effectful.Concurrent (Concurrent)
+import Effectful.Concurrent.STM qualified as STM
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.FileSystem (FileSystem, doesFileExist)
 import Effectful.FileSystem.IO.ByteString.Lazy qualified as LBS
@@ -22,17 +25,30 @@ data Setting :: Effect where
 
 makeEffect ''Setting
 
-runSettingTVar ::
-  (FileSystem :> es, IOE :> es) =>
-  TVar UserPreference ->
-  FilePath ->
+-- | Opaque setting environment.
+data SettingEnv = SettingEnv
+  { var :: TVar UserPreference,
+    path :: FilePath
+  }
+
+-- | Initialize setting env by loading from file.
+initSettingEnv :: (FileSystem :> es, Concurrent :> es) => FilePath -> Eff es SettingEnv
+initSettingEnv path = do
+  initial <- loadSettingFromFile path
+  var <- STM.newTVarIO initial
+  pure SettingEnv {var, path}
+
+-- | Run Setting effect with pre-initialized env.
+runSetting ::
+  (FileSystem :> es, Concurrent :> es) =>
+  SettingEnv ->
   Eff (Setting : es) a ->
   Eff es a
-runSettingTVar settingVar settingPath = interpret $ \_ -> \case
-  GetSetting -> liftIO $ readTVarIO settingVar
+runSetting env = interpret $ \_ -> \case
+  GetSetting -> STM.readTVarIO env.var
   SaveSetting setting -> do
-    liftIO $ atomically $ writeTVar settingVar setting
-    LBS.writeFile settingPath (encode setting)
+    STM.atomically $ writeTVar env.var setting
+    LBS.writeFile env.path (encode setting)
 
 -- | Load user preference from file, falling back to default.
 loadSettingFromFile :: (FileSystem :> es) => FilePath -> Eff es UserPreference

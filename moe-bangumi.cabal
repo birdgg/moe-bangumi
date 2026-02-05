@@ -79,6 +79,7 @@ library
     Moe.App.Logging
     Moe.App.Monad
     Moe.App.Scheduler
+    Moe.App.Rename.Run
     Moe.App.Scheduler.Jobs
     Moe.App.Subscription.Filter
     Moe.App.Subscription.Run
@@ -142,6 +143,7 @@ library
 
   other-modules:
     Moe.App.Scheduler.Jobs.CalendarSync
+    Moe.App.Scheduler.Jobs.Rename
     Moe.App.Scheduler.Jobs.Subscription
     Moe.Infrastructure.Database.Orphans
     Moe.Orphans

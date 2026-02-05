@@ -11,6 +11,9 @@ module Moe.Infrastructure.Download.Effect
     getTorrentsByHashes,
     getTorrentsWithTag,
     getRenameTorrents,
+    getTorrentFiles,
+    renameTorrentFile,
+    setTorrentLocation,
     stopTorrents,
     deleteTorrents,
     addTagsToTorrents,
@@ -46,6 +49,12 @@ data Download :: Effect where
   GetTorrentsWithTag :: Tag -> Download m [TorrentInfo]
   -- | Get all torrents with the Rename tag.
   GetRenameTorrents :: Download m [TorrentInfo]
+  -- | Get files within a torrent by its hash.
+  GetTorrentFiles :: Text -> Download m [TorrentFile]
+  -- | Rename a file within a torrent (hash, oldPath, newPath).
+  RenameTorrentFile :: Text -> Text -> Text -> Download m ()
+  -- | Move torrents to a new location on disk.
+  SetTorrentLocation :: [Text] -> Text -> Download m ()
   -- | Stop (pause) torrents by their hashes.
   StopTorrents :: [Text] -> Download m ()
   -- | Delete torrents by their hashes, optionally deleting files.
