@@ -88,7 +88,7 @@ processNewEpisodes ::
 processNewEpisodes [] = pass
 processNewEpisodes episodes = do
   forM_ episodes $ \ep -> do
-    let tags = TagList [Subscription]
+    let tags = MoeTagList [Subscription]
     addTorrent ep.torrentUrl Nothing (Just tags)
 
   transact $ mapM_ EpisodeDB.upsertEpisode episodes
@@ -104,7 +104,7 @@ processUpgrades tasks = do
   deleteTorrents oldHashes True
 
   forM_ tasks $ \(newEp, _) -> do
-    let tags = TagList [Subscription]
+    let tags = MoeTagList [Subscription]
     addTorrent newEp.torrentUrl Nothing (Just tags)
 
   transact $ mapM_ (\(newEp, _) -> EpisodeDB.upsertEpisode newEp) tasks

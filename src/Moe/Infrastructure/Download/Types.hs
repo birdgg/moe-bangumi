@@ -1,44 +1,49 @@
 -- | Domain types for download/torrent management.
 module Moe.Infrastructure.Download.Types
   ( TorrentUrl,
-    Tag (..),
-    TagList (..),
+    MoeTag (..),
+    MoeTagList (..),
     fromTagText,
+    infoHashToText,
     isDownloading,
     isCompleted,
 
     -- * Re-exports from effectful-qbittorrent
     TorrentInfo (..),
     TorrentState (..),
+    InfoHash (..),
   )
 where
 
-import Data.Text qualified as T
-import Effectful.QBittorrent (TorrentInfo (..), TorrentState (..))
+import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentInfo (..), TorrentState (..), tagsToText)
 import Moe.Prelude
 
 -- | URL for a torrent resource
 type TorrentUrl = Text
 
 -- | Tags used for torrent management
-data Tag = Moe | Rename | Subscription | Collection | Deletion
+data MoeTag =  Rename | Subscription | Collection | Deletion
   deriving stock (Eq, Ord, Show, Bounded, Enum)
 
-instance ToText Tag where
-  toText Moe = "moe"
+instance ToText MoeTag where
   toText Rename = "rename"
   toText Subscription = "subscription"
   toText Collection = "collection"
   toText Deletion = "deletion"
 
-fromTagText :: Text -> Maybe Tag
+fromTagText :: Text -> Maybe MoeTag
 fromTagText = inverseMap toText
 
-newtype TagList = TagList [Tag]
-  deriving stock (Eq, Show)
+-- | Extract Text from InfoHash
+infoHashToText :: InfoHash -> Text
+infoHashToText = (.unInfoHash)
 
-instance ToText TagList where
-  toText (TagList ts) = T.intercalate "," $ map toText ts
+newtype MoeTagList = MoeTagList [MoeTag]
+  deriving stock (Eq, Show)
+  deriving newtype (Semigroup, Monoid)
+
+instance ToText MoeTagList where
+  toText (MoeTagList ts) = tagsToText $ map (Tag . toText) ts
 
 -- | Check if torrent is currently downloading
 isDownloading :: TorrentInfo -> Bool

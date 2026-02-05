@@ -10,6 +10,7 @@ module Moe.Infrastructure.Download.Effect
     addTorrent,
     getTorrentsByHashes,
     getTorrentsWithTag,
+    getRenameTorrents,
     stopTorrents,
     deleteTorrents,
     addTagsToTorrents,
@@ -38,19 +39,21 @@ data DownloadError
 -- | Abstract download effect for torrent management.
 data Download :: Effect where
   -- | Add a torrent with optional save path and tags.
-  AddTorrent :: TorrentUrl -> Maybe Text -> Maybe TagList -> Download m ()
+  AddTorrent :: TorrentUrl -> Maybe Text -> Maybe MoeTagList -> Download m ()
   -- | Get torrents by their info hashes.
   GetTorrentsByHashes :: [Text] -> Download m [TorrentInfo]
   -- | Get all torrents with a specific tag.
-  GetTorrentsWithTag :: Tag -> Download m [TorrentInfo]
+  GetTorrentsWithTag :: MoeTag -> Download m [TorrentInfo]
+  -- | Get all torrents with the Rename tag.
+  GetRenameTorrents :: Download m [TorrentInfo]
   -- | Stop (pause) torrents by their hashes.
   StopTorrents :: [Text] -> Download m ()
   -- | Delete torrents by their hashes, optionally deleting files.
   DeleteTorrents :: [Text] -> Bool -> Download m ()
   -- | Add tags to torrents.
-  AddTagsToTorrents :: [Text] -> TagList -> Download m ()
+  AddTagsToTorrents :: [Text] -> MoeTagList -> Download m ()
   -- | Remove tags from torrents.
-  RemoveTagsFromTorrents :: [Text] -> TagList -> Download m ()
+  RemoveTagsFromTorrents :: [Text] -> MoeTagList -> Download m ()
 
 type instance DispatchOf Download = 'Dynamic
 

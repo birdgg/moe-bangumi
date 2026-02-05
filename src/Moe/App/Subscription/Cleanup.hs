@@ -37,18 +37,19 @@ runCleanup = do
 
   unless (null deletionTorrents) $ do
     -- Get all episodes from database to find newer versions
-    let hashesToFind = map (.hash) deletionTorrents
+    let hashesToFind = map (infoHashToText . (.hash)) deletionTorrents
     episodes <- transact $ EpisodeDB.getEpisodesByInfoHashes hashesToFind
 
     let episodeMap = Map.fromList [(ep.infoHash, ep) | ep <- episodes]
 
     -- Process each deletion torrent
     forM_ deletionTorrents $ \torrent -> do
-      case Map.lookup torrent.hash episodeMap of
+      let torrentHash = infoHashToText torrent.hash
+      case Map.lookup torrentHash episodeMap of
         Nothing -> do
           -- No episode record found, delete torrent directly
           Log.logInfo_ $ "No episode record for torrent, deleting: " <> torrent.name
-          deleteTorrentAndCleanup torrent.hash
+          deleteTorrentAndCleanup torrentHash
 
         Just oldEp -> do
           -- Find newer episode (same bangumi, same episode number, different hash)
@@ -72,7 +73,7 @@ runCleanup = do
                     then do
                       -- Newer is completed, safe to delete old
                       Log.logInfo_ $ "Newer completed, deleting old: " <> torrent.name
-                      deleteTorrentAndCleanup torrent.hash
+                      deleteTorrentAndCleanup torrentHash
                       -- Also delete the old episode record
                       transact $ EpisodeDB.deleteEpisodeByInfoHash oldEp.infoHash
                     else

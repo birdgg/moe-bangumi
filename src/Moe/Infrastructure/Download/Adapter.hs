@@ -20,6 +20,7 @@ import Moe.Error (MoeError (..))
 import Moe.Infrastructure.Download.Effect
 import Moe.Infrastructure.Download.Types
 import Moe.Prelude
+import System.FilePath (takeDirectory, (</>))
 
 -- | Run Download effect using qBittorrent.
 --
@@ -33,15 +34,18 @@ runDownloadQBittorrent ::
 runDownloadQBittorrent cfg = interpret $ \_ -> \case
   AddTorrent url savePath mTags ->
     runQB cfg $ do
-      let allTags = case mTags of
-            Nothing -> TagList [Moe, Rename]
-            Just (TagList ts) -> TagList (ordNub $ [Moe, Rename] <> ts)
+      let baseTags = [QB.Tag "moe", moeTagToQBTag Rename]
+          allQBTags = case mTags of
+            Nothing -> baseTags
+            Just (MoeTagList ts) -> ordNub $ baseTags <> map moeTagToQBTag ts
+          tmpBase = takeDirectory (toString cfg.savePath) </> "tmp"
+          effectivePath = Just $ toText $ maybe tmpBase ((tmpBase </>) . toString) savePath
           req =
             QB.AddTorrentRequest
               { urls = Just url,
-                savepath = savePath,
+                savepath = effectivePath,
                 category = Nothing,
-                tags = Just $ toText allTags,
+                tags = Just allQBTags,
                 rename = Nothing,
                 stopped = Nothing
               }
@@ -49,13 +53,12 @@ runDownloadQBittorrent cfg = interpret $ \_ -> \case
 
   GetTorrentsByHashes hashes ->
     runQB cfg $ do
-      let hashesText = T.intercalate "|" hashes
-          req =
+      let req =
             QB.TorrentInfoRequest
               { filter_ = Nothing,
                 category = Nothing,
                 tag = Nothing,
-                hashes = if null hashes then Nothing else Just hashesText
+                hashes = if null hashes then Nothing else Just (map QB.InfoHash hashes)
               }
       QB.getTorrents (Just req)
 
@@ -65,26 +68,41 @@ runDownloadQBittorrent cfg = interpret $ \_ -> \case
             QB.TorrentInfoRequest
               { filter_ = Nothing,
                 category = Nothing,
-                tag = Just $ toText tag,
+                tag = Just $ moeTagToQBTag tag,
+                hashes = Nothing
+              }
+      QB.getTorrents (Just req)
+
+  GetRenameTorrents ->
+    runQB cfg $ do
+      let req =
+            QB.TorrentInfoRequest
+              { filter_ = Nothing,
+                category = Nothing,
+                tag = Just $ moeTagToQBTag Rename,
                 hashes = Nothing
               }
       QB.getTorrents (Just req)
 
   StopTorrents hashes ->
-    runQB cfg $ void $ QB.stopTorrents hashes
+    runQB cfg $ void $ QB.stopTorrents (map QB.InfoHash hashes)
 
   DeleteTorrents hashes deleteFiles ->
-    runQB cfg $ void $ QB.deleteTorrents hashes deleteFiles
+    runQB cfg $ void $ QB.deleteTorrents (map QB.InfoHash hashes) deleteFiles
 
-  AddTagsToTorrents hashes (TagList tags) ->
+  AddTagsToTorrents hashes (MoeTagList tags) ->
     runQB cfg $ do
-      let tagTexts = map toText tags
-      void $ QB.addTags hashes tagTexts
+      let qbTags = map moeTagToQBTag tags
+      void $ QB.addTags (map QB.InfoHash hashes) qbTags
 
-  RemoveTagsFromTorrents hashes (TagList tags) ->
+  RemoveTagsFromTorrents hashes (MoeTagList tags) ->
     runQB cfg $ do
-      let tagTexts = map toText tags
-      void $ QB.removeTags hashes tagTexts
+      let qbTags = map moeTagToQBTag tags
+      void $ QB.removeTags (map QB.InfoHash hashes) qbTags
+
+-- | Convert MoeTag to QB.Tag
+moeTagToQBTag :: MoeTag -> QB.Tag
+moeTagToQBTag = QB.Tag . toText
 
 -- | Run a qBittorrent action with login, converting errors to MoeError.
 runQB ::
