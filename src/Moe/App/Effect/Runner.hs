@@ -3,7 +3,6 @@ module Moe.App.Effect.Runner
     runMetadataEffects,
     runRssEffects,
     runSubscriptionEffects,
-    runCleanupEffects,
     runCalendarSyncEffects,
     BaseEffects,
     CalendarSyncEffects,
@@ -17,7 +16,7 @@ import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), getSettingPath)
-import Moe.App.Job.Types (CleanupJobEffects, MetadataJobEffects, RssJobEffects, SubscriptionJobEffects)
+import Moe.App.Job.Types (MetadataJobEffects, RssJobEffects, SubscriptionJobEffects)
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Domain.Scheduler.Types (JobResult (..))
 import Moe.Domain.Setting.Types (UserPreference (..))
@@ -123,21 +122,3 @@ runSubscriptionEffects env logger logPrefix action =
             Just cfg ->
               runDownloadQBittorrent cfg action
 
--- | Run cleanup job effects (Download only).
-runCleanupEffects ::
-  MoeEnv ->
-  Logger ->
-  Text ->
-  Eff CleanupJobEffects JobResult ->
-  IO JobResult
-runCleanupEffects env logger logPrefix action =
-  runBaseEffects env logger logPrefix $
-    runSettingTVar env.settingVar (getSettingPath env) $
-      runErrorWith (logMoeError logPrefix) $ do
-        pref <- getSetting
-        case pref.downloader of
-          Nothing -> do
-            Log.logAttention_ $ logPrefix <> " downloader config missing"
-            pure $ JobFailure "Downloader config missing"
-          Just cfg ->
-            runDownloadQBittorrent cfg action

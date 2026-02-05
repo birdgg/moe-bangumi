@@ -16,14 +16,16 @@ module Moe.Domain.Bangumi.File.Types
     BangumiContent (..),
     BangumiMeta (..),
     BangumiFile (..),
+    toBangumiFile,
   )
 where
 
 import Data.Time.Calendar (Year)
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Episode qualified as Ep
 import Moe.Domain.Bangumi.Internal.Group (GroupName (..))
 import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleExt (..), SubtitleLang (..), SubtitleList)
-import Moe.Domain.Bangumi.Types (SeasonNumber (..), TmdbId (..))
+import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..), SeasonNumber (..), TmdbId (..), extractYear)
 import Moe.Prelude
 
 newtype ExtraIndex = ExtraIndex Word8
@@ -87,3 +89,16 @@ data BangumiFile = BangumiFile
     group :: [GroupName]
   }
   deriving stock (Eq, Show)
+
+-- | Convert Bangumi and Episode to BangumiFile for media server storage
+toBangumiFile :: Bangumi -> Ep.Episode -> BangumiFile
+toBangumiFile bangumi ep =
+  let meta =
+        BangumiMeta
+          { name = bangumi.titleChs,
+            year = extractYear <$> bangumi.airDate,
+            tmdbId = bangumi.tmdbId
+          }
+      seasonNum = fromMaybe (SeasonNumber 1) bangumi.season
+      content = Episode (Regular seasonNum ep.episodeNumber)
+   in BangumiFile {meta, content, fileType = Video MKV, group = ep.group}

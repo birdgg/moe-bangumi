@@ -18,7 +18,7 @@ import Moe.Infrastructure.Database.Orphans ()
 import Moe.Prelude
 
 episodeColumns :: Text
-episodeColumns = "id, bangumi_id, episode_number, \"group\", resolution, info_hash, torrent_url, pub_date, created_at"
+episodeColumns = "id, bangumi_id, episode_number, \"group\", subtitle_list, resolution, info_hash, torrent_url, pub_date, created_at"
 
 getEpisode ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -48,10 +48,11 @@ upsertEpisode ::
 upsertEpisode ep = do
   results <-
     query
-      "INSERT INTO episode (bangumi_id, episode_number, \"group\", resolution, info_hash, torrent_url, pub_date) \
-      \VALUES (?, ?, ?, ?, ?, ?, ?) \
+      "INSERT INTO episode (bangumi_id, episode_number, \"group\", subtitle_list, resolution, info_hash, torrent_url, pub_date) \
+      \VALUES (?, ?, ?, ?, ?, ?, ?, ?) \
       \ON CONFLICT (bangumi_id, episode_number) DO UPDATE SET \
       \\"group\" = excluded.\"group\", \
+      \subtitle_list = excluded.subtitle_list, \
       \resolution = excluded.resolution, \
       \info_hash = excluded.info_hash, \
       \torrent_url = excluded.torrent_url, \
@@ -60,6 +61,7 @@ upsertEpisode ep = do
       ( ep.bangumiId,
         ep.episodeNumber,
         ep.group,
+        ep.subtitleList,
         ep.resolution,
         ep.infoHash,
         ep.torrentUrl,

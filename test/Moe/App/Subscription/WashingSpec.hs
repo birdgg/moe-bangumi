@@ -157,7 +157,8 @@ medalistTests =
       let washingConfig =
             WashingConfig
               { groupPriority =
-                  [Group (GroupName "LoliHouse") []]
+                  [Group (GroupName "LoliHouse") []],
+                subtitlePriority = []
               }
           filtered = filterItems (Just defaultFilterConfig) testContext medalistRssItems
           parsed = mapMaybe (parseRawItem testBangumi) filtered
@@ -169,6 +170,7 @@ medalistTests =
                   bangumiId = BangumiId 1,
                   episodeNumber = EpisodeNumber n,
                   group = [GroupName "喵萌奶茶屋"],
+                  subtitleList = [],
                   resolution = Just "1080P",
                   infoHash = "existing_hash_" <> show n,
                   torrentUrl = "existing_url",

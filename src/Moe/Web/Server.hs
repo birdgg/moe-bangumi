@@ -157,6 +157,7 @@ moeErrorToServerError = \case
   ValidationError msg -> err400 {errBody = LBS.fromStrict $ encodeUtf8 msg}
   ExternalApiError msg -> err502 {errBody = LBS.fromStrict $ encodeUtf8 msg}
   DownloaderError msg -> err502 {errBody = LBS.fromStrict $ encodeUtf8 msg}
+  NotificationError msg -> err502 {errBody = LBS.fromStrict $ encodeUtf8 msg}
 
 openApiHandler :: OpenApi
 openApiHandler =

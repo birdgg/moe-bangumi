@@ -19,9 +19,8 @@ import Moe.App.Subscription.Types
 import Moe.App.Subscription.Washing (buildEpisodeMap, parseRawItem, processWashing)
 import Moe.Domain.Bangumi.Episode (Episode (..))
 import Moe.Domain.Bangumi.File.Naming (generateBaseName, generatePath)
-import Moe.Domain.Bangumi.File.Types (BangumiFile (..), BangumiMeta (..), EpisodeType (..), FileType (..), VideoExt (..))
-import Moe.Domain.Bangumi.File.Types qualified as File (BangumiContent (..))
-import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..), SeasonNumber (..), extractYear)
+import Moe.Domain.Bangumi.File.Types (toBangumiFile)
+import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..))
 import Moe.Domain.Setting.Types (UserPreference (..))
 import Moe.Error (MoeError)
 import Moe.Infrastructure.Database.Episode qualified as EpisodeDB
@@ -63,38 +62,40 @@ runSingleRss ::
   Eff es ()
 runSingleRss pref ctx = do
   items <- runErrorNoCallStack @RssError (fetchRss ctx.rssUrl) >>= either throwIO pure
+
   let filtered = filterItems pref.filter ctx items
-  (toAdd, toDelete) <- transact $ do
-    let parsedEpisodes = mapMaybe (parseRawItem ctx.bangumi) filtered
-        bid = ctx.bangumi.id
-    episodes <- EpisodeDB.listEpisodesByBangumi bid
-    let episodeMap = buildEpisodeMap episodes
-    pure $ processWashing episodeMap pref.washing parsedEpisodes
+      parsedEpisodes = mapMaybe (parseRawItem ctx.bangumi) filtered
 
-  processDeletes toDelete
-  processDownloads ctx.bangumi toAdd
+  episodes <- transact $ EpisodeDB.listEpisodesByBangumi ctx.bangumi.id
 
--- | Download episodes and save to database
-processDownloads ::
+  let episodeMap = buildEpisodeMap episodes
+      (toAdd, toDelete) = processWashing episodeMap pref.washing parsedEpisodes
+
+  deleteReplacedTorrents toDelete
+  downloadAndSaveEpisodes ctx.bangumi toAdd
+
+-- | Download torrents and save episodes to database
+downloadAndSaveEpisodes ::
   (Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Bangumi ->
   [Episode] ->
   Eff es ()
-processDownloads _ [] = pass
-processDownloads bangumi episodes = do
+downloadAndSaveEpisodes _ [] = pass
+downloadAndSaveEpisodes bangumi episodes = do
   forM_ episodes $ addSubscriptionTorrent bangumi
   transact $ mapM_ EpisodeDB.upsertEpisode episodes
 
 -- | Delete old torrents that were replaced by upgrades
-processDeletes ::
+deleteReplacedTorrents ::
   (Download :> es, Log :> es, IOE :> es) =>
   [Episode] ->
   Eff es ()
-processDeletes [] = pass
-processDeletes episodes = do
+deleteReplacedTorrents [] = pass
+deleteReplacedTorrents episodes = do
   let hashes = map (.infoHash) episodes
   deleteTorrents hashes True
 
+-- | Add torrent for subscription download with media-server-compliant file structure
 addSubscriptionTorrent :: (Download :> es) => Bangumi -> Episode -> Eff es ()
 addSubscriptionTorrent bangumi ep = do
   let file = toBangumiFile bangumi ep
@@ -106,15 +107,3 @@ addSubscriptionTorrent bangumi ep = do
             tags = Just [subscriptionTag]
           }
   addTorrent params
-
-toBangumiFile :: Bangumi -> Episode -> BangumiFile
-toBangumiFile bangumi ep =
-  let meta =
-        BangumiMeta
-          { name = bangumi.titleChs,
-            year = extractYear <$> bangumi.airDate,
-            tmdbId = bangumi.tmdbId
-          }
-      seasonNum = fromMaybe (SeasonNumber 1) bangumi.season
-      content = File.Episode (Regular seasonNum ep.episodeNumber)
-   in BangumiFile {meta, content, fileType = Video MKV, group = ep.group}

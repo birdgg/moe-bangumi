@@ -80,7 +80,6 @@ library
     Moe.App.Monad
     Moe.App.Scheduler
     Moe.App.Scheduler.Jobs
-    Moe.App.Subscription.Cleanup
     Moe.App.Subscription.Filter
     Moe.App.Subscription.Run
     Moe.App.Subscription.Types
@@ -117,6 +116,9 @@ library
     Moe.Infrastructure.Download.Effect
     Moe.Infrastructure.Download.Types
     Moe.Infrastructure.Metadata.Effect
+    Moe.Infrastructure.Notification.Adapter
+    Moe.Infrastructure.Notification.Client
+    Moe.Infrastructure.Notification.Effect
     Moe.Infrastructure.Rss.Client
     Moe.Infrastructure.Rss.Effect
     Moe.Infrastructure.Rss.Source
@@ -140,7 +142,6 @@ library
 
   other-modules:
     Moe.App.Scheduler.Jobs.CalendarSync
-    Moe.App.Scheduler.Jobs.Cleanup
     Moe.App.Scheduler.Jobs.Subscription
     Moe.Infrastructure.Database.Orphans
     Moe.Orphans

@@ -3,7 +3,6 @@ module Moe.App.Job.Types
     MetadataJobEffects,
     RssJobEffects,
     SubscriptionJobEffects,
-    CleanupJobEffects,
     JobAction,
   )
 where
@@ -53,17 +52,6 @@ type RssJobEffects =
 type SubscriptionJobEffects =
   '[ Download,
      Rss,
-     Error MoeError,
-     Setting,
-     Log,
-     Sqlite,
-     Concurrent,
-     IOE
-   ]
-
--- | Effect stack for cleanup job (Download only)
-type CleanupJobEffects =
-  '[ Download,
      Error MoeError,
      Setting,
      Log,

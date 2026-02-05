@@ -15,6 +15,7 @@ where
 import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
 import Moe.Domain.Bangumi.Internal.Group (Group (..))
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleList, defaultSubtitlePriority)
 import Moe.Prelude
 
 type Regex = Text
@@ -35,7 +36,8 @@ data FilterConfig = FilterConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data WashingConfig = WashingConfig
-  { groupPriority :: [Group]
+  { groupPriority :: [Group],
+    subtitlePriority :: [SubtitleList]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -87,5 +89,6 @@ defaultFilterConfig =
 defaultWashingConfig :: WashingConfig
 defaultWashingConfig =
   WashingConfig
-    { groupPriority = []
+    { groupPriority = [],
+      subtitlePriority = defaultSubtitlePriority
     }

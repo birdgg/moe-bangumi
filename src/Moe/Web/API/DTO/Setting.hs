@@ -12,6 +12,7 @@ where
 import Data.Aeson (ToJSON)
 import Data.OpenApi (ToSchema)
 import Moe.Domain.Bangumi.Internal.Group (Group)
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleList)
 import Moe.Domain.Setting.Types qualified as Setting
 import Moe.Prelude
 
@@ -40,7 +41,8 @@ data FilterConfigResponse = FilterConfigResponse
   deriving anyclass (ToJSON, ToSchema)
 
 data WashingConfigResponse = WashingConfigResponse
-  { groupPriority :: [Group]
+  { groupPriority :: [Group],
+    subtitlePriority :: [SubtitleList]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)
@@ -84,7 +86,8 @@ toFilterResponse cfg =
 toWashingResponse :: Setting.WashingConfig -> WashingConfigResponse
 toWashingResponse cfg =
   WashingConfigResponse
-    { groupPriority = cfg.groupPriority
+    { groupPriority = cfg.groupPriority,
+      subtitlePriority = cfg.subtitlePriority
     }
 
 toNotificationResponse :: Setting.NotificationConfig -> NotificationConfigResponse

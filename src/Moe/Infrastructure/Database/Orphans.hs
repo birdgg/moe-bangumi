@@ -10,6 +10,7 @@ import Moe.Domain.Bangumi.Episode
     EpisodeNumber (..),
     GroupName (..),
   )
+import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleLang, parseSubtitleLang)
 import Moe.Domain.Bangumi.Types
   ( Bangumi,
     BangumiF (..),
@@ -198,10 +199,26 @@ instance FromField [GroupName] where
         | T.null t -> []
         | otherwise -> map (GroupName . T.strip) $ T.splitOn "," t
 
+-- | Serialize a list of SubtitleLang as comma-separated text
+instance ToField [SubtitleLang] where
+  toField [] = toField (Nothing @Text)
+  toField ls = toField $ T.intercalate "," (map toText ls)
+
+-- | Deserialize comma-separated text into a list of SubtitleLang
+instance FromField [SubtitleLang] where
+  fromField f = do
+    mText <- fromField @(Maybe Text) f
+    pure $ case mText of
+      Nothing -> []
+      Just t
+        | T.null t -> []
+        | otherwise -> mapMaybe (parseSubtitleLang . T.strip) $ T.splitOn "," t
+
 instance FromRow Episode where
   fromRow =
     Episode
       <$> field
+      <*> field
       <*> field
       <*> field
       <*> field
@@ -218,6 +235,7 @@ instance ToRow Episode where
         e.bangumiId,
         e.episodeNumber,
         e.group,
+        e.subtitleList,
         e.resolution,
         e.infoHash,
         e.torrentUrl,

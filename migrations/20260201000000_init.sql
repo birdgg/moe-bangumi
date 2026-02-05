@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS episode (
   bangumi_id INTEGER NOT NULL REFERENCES bangumi(id) ON DELETE CASCADE,
   episode_number INTEGER NOT NULL,
   "group" TEXT,
+  subtitle_list TEXT,
   resolution TEXT,
   info_hash TEXT NOT NULL,
   torrent_url TEXT NOT NULL,
