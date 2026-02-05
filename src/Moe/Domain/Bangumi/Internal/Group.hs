@@ -6,13 +6,18 @@ module Moe.Domain.Bangumi.Internal.Group
   )
 where
 
+import Data.Aeson (FromJSON (..), ToJSON (..), withText)
+import Data.OpenApi (ToSchema)
 import Data.Text qualified as T
 import Moe.Prelude
 
 -- | Subtitle group name
 newtype GroupName = GroupName Text
   deriving stock (Eq, Ord, Show)
-  deriving newtype (Hashable)
+  deriving newtype (Hashable, ToJSON, ToSchema)
+
+instance FromJSON GroupName where
+  parseJSON = withText "GroupName" (pure . GroupName)
 
 instance ToText GroupName where
   toText (GroupName t) = t
@@ -21,7 +26,8 @@ data Group = Group
   { name :: GroupName,
     aliases :: [Text]
   }
-  deriving stock (Show, Eq)
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 instance ToText Group where
   toText = toText . name

@@ -1,25 +1,23 @@
-module Moe.App.Subscription.Pipeline
-  ( runPipeline,
+module Moe.App.Subscription.Run
+  ( runSubscription,
     module Moe.App.Subscription.Types,
   )
 where
 
-import Data.List (nubBy)
-import Data.List qualified as List
 import Data.Map.Strict qualified as Map
 import Effectful
 import Effectful.Concurrent (Concurrent)
+import Effectful.Error.Static (Error)
 import Effectful.Log (Log)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, transact)
-import Effectful.Error.Static (Error)
 import Moe.App.Subscription.Fetch (fetchAll)
-import Moe.App.Subscription.Filter (filterFetchResults)
+import Moe.App.Subscription.Filter (filterItems)
 import Moe.App.Subscription.Types
-import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, processWashing)
+import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, parseFilteredItem, processWashing)
 import Moe.Domain.Bangumi.Episode (Episode (..))
-import Moe.Domain.Bangumi.Types (Bangumi (..), BangumiId)
-import Moe.Domain.Setting.Types (FilterConfig, UserPreference (..))
+import Moe.Domain.Bangumi.Types (Bangumi (..))
+import Moe.Domain.Setting.Types (UserPreference (..))
 import Moe.Error (MoeError)
 import Moe.Infrastructure.Database.Episode qualified as EpisodeDB
 import Moe.Infrastructure.Download.Effect
@@ -28,50 +26,35 @@ import Moe.Infrastructure.Setting.Effect (Setting, getSetting)
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
 
-runPipeline ::
+runSubscription ::
   (Rss :> es, Download :> es, Error MoeError :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Manager ->
   Eff es ()
-runPipeline manager = do
+runSubscription manager = do
   Log.logInfo_ "Starting RSS subscription"
 
   fetchResults <- fetchAll manager
-
   pref <- getSetting
-  let filterConfig = pref.filter
-  let filteredItems = filterFetchResults filterConfig fetchResults
-
-  let grouped = groupByBangumi filteredItems
-  washingResults <- processAllGroups filterConfig grouped
+  washingResults <- concat <$> mapM (processFetchResult pref) fetchResults
 
   let (newTasks, upgradeTasks) = partitionResults washingResults
   processNewEpisodes newTasks
   processUpgrades upgradeTasks
 
-groupByBangumi :: [FilteredItem] -> [(BangumiId, [FilteredItem])]
-groupByBangumi items =
-  let uniqueBids = mapMaybe (\fi -> fi.bangumi.id) $ nubBy (\a b -> a.bangumi.id == b.bangumi.id) items
-   in [(bid, List.filter (\i -> i.bangumi.id == Just bid) items) | bid <- uniqueBids]
-
-processAllGroups ::
+-- | Process a single FetchResult: filter items and run washing within one RSS URL scope
+processFetchResult ::
   (Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
-  Maybe FilterConfig ->
-  [(BangumiId, [FilteredItem])] ->
+  UserPreference ->
+  FetchResult ->
   Eff es [WashingResult]
-processAllGroups _ [] = pure []
-processAllGroups filterConfig groups = do
-  results <- mapM (processGroup filterConfig) groups
-  pure $ concat results
-
-processGroup ::
-  (Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
-  Maybe FilterConfig ->
-  (BangumiId, [FilteredItem]) ->
-  Eff es [WashingResult]
-processGroup filterConfig (bid, items) = transact $ do
-  episodes <- EpisodeDB.listEpisodesByBangumi bid
-  let episodeMap = buildEpisodeMap episodes
-  pure $ mapMaybe (processWashing episodeMap filterConfig) items
+processFetchResult pref fr = transact $ do
+  let parsedItems = mapMaybe parseFilteredItem $ filterItems pref.filter fr
+  case fr.bangumi.id of
+    Nothing -> pure []
+    Just bid -> do
+      episodes <- EpisodeDB.listEpisodesByBangumi bid
+      let episodeMap = buildEpisodeMap episodes
+      pure $ map (processWashing episodeMap pref.washing) parsedItems
 
 partitionResults :: [WashingResult] -> ([(DownloadTask, Episode)], [(DownloadTask, Episode, Episode)])
 partitionResults = foldr go ([], [])

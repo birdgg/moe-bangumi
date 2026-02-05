@@ -1,17 +1,20 @@
 module Moe.App.Subscription.Washing
   ( WashingResult (..),
+    parseFilteredItem,
     processWashing,
     buildEpisodeMap,
   )
 where
 
-import Data.List (elemIndex)
+import Data.List (findIndex)
 import Data.Map.Strict qualified as Map
-import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..))
-import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..), GroupName (..))
+import Data.Text qualified as T
+import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..), ParsedItem (..))
+import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Bangumi.Internal.Group (Group (..), GroupName (..))
 import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
 import Moe.Domain.Bangumi.Types (Bangumi (..))
-import Moe.Domain.Setting.Types (FilterConfig (..))
+import Moe.Domain.Setting.Types (WashingConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
 import Moe.Prelude
 
@@ -24,58 +27,80 @@ data WashingResult
 buildEpisodeMap :: [Episode] -> Map EpisodeNumber Episode
 buildEpisodeMap = Map.fromList . map (\e -> (e.episodeNumber, e))
 
-processWashing ::
-  Map EpisodeNumber Episode ->
-  Maybe FilterConfig ->
-  FilteredItem ->
-  Maybe WashingResult
-processWashing episodeMap mConfig fi = do
+-- | Parse a filtered item: validate required fields and parse RSS title
+parseFilteredItem :: FilteredItem -> Maybe ParsedItem
+parseFilteredItem fi = do
   title <- fi.item.title
   torrentUrl <- fi.item.torrentUrl
   infoHash <- fi.item.infoHash
   bangumiId <- fi.bangumi.id
-
   let parsed = parseRssTitle title
   epNum <- parsed.episode
+  pure
+    ParsedItem
+      { bangumi = fi.bangumi,
+        bangumiId = bangumiId,
+        torrentUrl = torrentUrl,
+        infoHash = infoHash,
+        pubDate = fi.parsedPubDate,
+        episodeNumber = epNum,
+        group = parsed.group,
+        resolution = parsed.resolution
+      }
 
+-- | Decide washing result for a parsed item against existing episodes
+processWashing ::
+  Map EpisodeNumber Episode ->
+  Maybe WashingConfig ->
+  ParsedItem ->
+  WashingResult
+processWashing episodeMap mConfig pi_ =
   let newEpisode =
         Episode
           { id = Nothing,
-            bangumiId = bangumiId,
-            episodeNumber = epNum,
-            group = parsed.group,
-            resolution = parsed.resolution,
-            infoHash = infoHash,
-            torrentUrl = torrentUrl,
-            pubDate = fi.parsedPubDate,
+            bangumiId = pi_.bangumiId,
+            episodeNumber = pi_.episodeNumber,
+            group = pi_.group,
+            resolution = pi_.resolution,
+            infoHash = pi_.infoHash,
+            torrentUrl = pi_.torrentUrl,
+            pubDate = pi_.pubDate,
             createdAt = Nothing
           }
 
-  let task =
+      task =
         DownloadTask
-          { bangumi = fi.bangumi,
-            torrentUrl = torrentUrl,
-            infoHash = Just infoHash,
-            pubDate = fi.parsedPubDate
+          { bangumi = pi_.bangumi,
+            torrentUrl = pi_.torrentUrl,
+            infoHash = Just pi_.infoHash,
+            pubDate = pi_.pubDate
           }
+   in case Map.lookup pi_.episodeNumber episodeMap of
+        Nothing -> NewEpisode task newEpisode
+        Just existingEp ->
+          let groups = maybe [] (.groupPriority) mConfig
+           in if shouldUpgrade groups existingEp.group pi_.group
+                then UpgradeEpisode task newEpisode existingEp
+                else SkipEpisode
 
-  case Map.lookup epNum episodeMap of
-    Nothing -> Just $ NewEpisode task newEpisode
-    Just existingEp ->
-      let priority = maybe [] (.subtitleGroupPriority) mConfig
-       in if shouldUpgrade priority existingEp.group parsed.group
-            then Just $ UpgradeEpisode task newEpisode existingEp
-            else Just SkipEpisode
-
-shouldUpgrade :: [Text] -> Maybe GroupName -> Maybe GroupName -> Bool
+shouldUpgrade :: [Group] -> Maybe GroupName -> Maybe GroupName -> Bool
 shouldUpgrade _ Nothing (Just _) = True
 shouldUpgrade _ _ Nothing = False
-shouldUpgrade priority (Just existing) (Just new)
+shouldUpgrade groups (Just existing) (Just new)
   | existing == new = False
   | otherwise =
-      let existingIdx = elemIndex (toText existing) priority
-          newIdx = elemIndex (toText new) priority
+      let existingIdx = findGroupIndex groups existing
+          newIdx = findGroupIndex groups new
        in case (existingIdx, newIdx) of
             (Nothing, Just _) -> True
             (Just ei, Just ni) -> ni < ei
             _ -> False
+
+-- | Find the index of a group name in the priority list, considering aliases
+findGroupIndex :: [Group] -> GroupName -> Maybe Int
+findGroupIndex groups gn =
+  findIndex (matchesGroup gn) groups
+  where
+    matchesGroup name g =
+      T.toLower (toText name) == T.toLower (toText g.name)
+        || any (\a -> T.toLower (toText name) == T.toLower a) g.aliases

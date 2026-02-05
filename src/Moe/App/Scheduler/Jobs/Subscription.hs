@@ -9,7 +9,7 @@ import Effectful.Log (Logger)
 import Moe.App.Env (MoeEnv (..))
 import Moe.App.Job (SubscriptionJobEffects, runSubscriptionJob)
 import Moe.App.Scheduler (JobDefinition (..))
-import Moe.App.Subscription.Pipeline (runPipeline)
+import Moe.App.Subscription.Run (runSubscription)
 import Moe.Domain.Scheduler.Types (JobResult (..), mkJobConfig)
 import Moe.Prelude
 import Prelude qualified
@@ -26,5 +26,5 @@ subscriptionJob cronExpr env logger =
 
 subscriptionAction :: MoeEnv -> Eff SubscriptionJobEffects JobResult
 subscriptionAction env = do
-  runPipeline env.httpManager
+  runSubscription env.httpManager
   pure JobSuccess

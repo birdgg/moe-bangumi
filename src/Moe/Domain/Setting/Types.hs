@@ -2,15 +2,18 @@ module Moe.Domain.Setting.Types
   ( UserPreference (..),
     DownloaderConfig (..),
     FilterConfig (..),
+    WashingConfig (..),
     NotificationConfig (..),
     TMDBConfig (..),
     defaultUserPreference,
     defaultFilterConfig,
+    defaultWashingConfig,
   )
 where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
+import Moe.Domain.Bangumi.Internal.Group (Group (..))
 import Moe.Prelude
 
 data DownloaderConfig = DownloaderConfig
@@ -23,8 +26,13 @@ data DownloaderConfig = DownloaderConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data FilterConfig = FilterConfig
-  { globalRssFilter :: [Text],
-    subtitleGroupPriority :: [Text]
+  { globalRssFilter :: [Text]
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON, ToSchema)
+
+data WashingConfig = WashingConfig
+  { groupPriority :: [Group]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -46,6 +54,7 @@ data TMDBConfig = TMDBConfig
 data UserPreference = UserPreference
   { downloader :: Maybe DownloaderConfig,
     filter :: Maybe FilterConfig,
+    washing :: Maybe WashingConfig,
     notification :: Maybe NotificationConfig,
     tmdb :: Maybe TMDBConfig
   }
@@ -57,6 +66,7 @@ defaultUserPreference =
   UserPreference
     { downloader = Nothing,
       filter = Just defaultFilterConfig,
+      washing = Just defaultWashingConfig,
       notification = Nothing,
       tmdb = Nothing
     }
@@ -68,6 +78,11 @@ defaultFilterConfig =
         [ "720[Pp]",
           "\\d-\\d",
           "合集"
-        ],
-      subtitleGroupPriority = []
+        ]
+    }
+
+defaultWashingConfig :: WashingConfig
+defaultWashingConfig =
+  WashingConfig
+    { groupPriority = []
     }
