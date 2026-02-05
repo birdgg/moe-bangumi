@@ -1,22 +1,27 @@
 -- | Domain types for download/torrent management.
 module Moe.Infrastructure.Download.Types
   ( TorrentUrl,
-    MoeTag (..),
-    MoeTagList (..),
     AddTorrentParams (..),
-    fromTagText,
     infoHashToText,
     isDownloading,
     isCompleted,
 
+    -- * Tags
+    moeTag,
+    renameTag,
+    subscriptionTag,
+    collectionTag,
+    deletionTag,
+
     -- * Re-exports from effectful-qbittorrent
+    Tag (..),
     TorrentInfo (..),
     TorrentState (..),
     InfoHash (..),
   )
 where
 
-import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentInfo (..), TorrentState (..), tagsToText)
+import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | URL for a torrent resource
@@ -27,35 +32,35 @@ data AddTorrentParams = AddTorrentParams
   { url :: TorrentUrl,
     savePath :: Maybe Text,
     rename :: Maybe Text,
-    tags :: Maybe MoeTagList
+    tags :: Maybe [Tag]
   }
   deriving stock (Eq, Show)
 
--- | Tags used for torrent management
-data MoeTag =  Rename | Subscription | Collection | Deletion
-  deriving stock (Eq, Ord, Show, Bounded, Enum)
+-- | Base tag applied to all managed torrents.
+moeTag :: Tag
+moeTag = "moe"
 
-instance ToText MoeTag where
-  toText Rename = "rename"
-  toText Subscription = "subscription"
-  toText Collection = "collection"
-  toText Deletion = "deletion"
+-- | Tag for torrents pending rename.
+renameTag :: Tag
+renameTag = "rename"
 
-fromTagText :: Text -> Maybe MoeTag
-fromTagText = inverseMap toText
+-- | Tag for torrents added via RSS subscription.
+subscriptionTag :: Tag
+subscriptionTag = "subscription"
 
--- | Extract Text from InfoHash
+-- | Tag for collected torrents.
+collectionTag :: Tag
+collectionTag = "collection"
+
+-- | Tag for torrents marked for deletion.
+deletionTag :: Tag
+deletionTag = "deletion"
+
+-- | Extract Text from InfoHash.
 infoHashToText :: InfoHash -> Text
 infoHashToText = (.unInfoHash)
 
-newtype MoeTagList = MoeTagList [MoeTag]
-  deriving stock (Eq, Show)
-  deriving newtype (Semigroup, Monoid)
-
-instance ToText MoeTagList where
-  toText (MoeTagList ts) = tagsToText $ map (Tag . toText) ts
-
--- | Check if torrent is currently downloading
+-- | Check if torrent is currently downloading.
 isDownloading :: TorrentInfo -> Bool
 isDownloading t = t.state `elem` downloadingStates
   where
@@ -69,7 +74,7 @@ isDownloading t = t.state `elem` downloadingStates
         Allocating
       ]
 
--- | Check if torrent download is completed
+-- | Check if torrent download is completed.
 isCompleted :: TorrentInfo -> Bool
 isCompleted t = t.state `elem` completedStates
   where

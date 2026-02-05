@@ -103,7 +103,7 @@ addSubscriptionTorrent bangumi ep = do
           { url = ep.torrentUrl,
             savePath = Just $ toText $ generatePath file,
             rename = Just $ toText $ generateBaseName file,
-            tags = Just $ MoeTagList [Subscription]
+            tags = Just [subscriptionTag]
           }
   addTorrent params
 

@@ -33,7 +33,7 @@ runCleanup = do
   Log.logInfo_ "Starting cleanup task"
 
   -- Get all torrents tagged for deletion
-  deletionTorrents <- getTorrentsWithTag Deletion
+  deletionTorrents <- getTorrentsWithTag deletionTag
 
   unless (null deletionTorrents) $ do
     -- Get all episodes from database to find newer versions

@@ -43,7 +43,7 @@ data Download :: Effect where
   -- | Get torrents by their info hashes.
   GetTorrentsByHashes :: [Text] -> Download m [TorrentInfo]
   -- | Get all torrents with a specific tag.
-  GetTorrentsWithTag :: MoeTag -> Download m [TorrentInfo]
+  GetTorrentsWithTag :: Tag -> Download m [TorrentInfo]
   -- | Get all torrents with the Rename tag.
   GetRenameTorrents :: Download m [TorrentInfo]
   -- | Stop (pause) torrents by their hashes.
@@ -51,9 +51,9 @@ data Download :: Effect where
   -- | Delete torrents by their hashes, optionally deleting files.
   DeleteTorrents :: [Text] -> Bool -> Download m ()
   -- | Add tags to torrents.
-  AddTagsToTorrents :: [Text] -> MoeTagList -> Download m ()
+  AddTagsToTorrents :: [Text] -> [Tag] -> Download m ()
   -- | Remove tags from torrents.
-  RemoveTagsFromTorrents :: [Text] -> MoeTagList -> Download m ()
+  RemoveTagsFromTorrents :: [Text] -> [Tag] -> Download m ()
 
 type instance DispatchOf Download = 'Dynamic
 
