@@ -2,6 +2,7 @@ module Moe.Domain.Bangumi.Internal.Group
   ( GroupName (..),
     Group (..),
     normalizeGroupName,
+    splitGroupNames,
     knownGroups,
   )
 where
@@ -56,3 +57,8 @@ normalizeGroupName raw =
     matchesGroup t g =
       T.toLower t == T.toLower (toText g.name)
         || any (\a -> T.toLower t == T.toLower a) g.aliases
+
+-- | Split a group string by @&@ and normalize each part.
+splitGroupNames :: Text -> [GroupName]
+splitGroupNames raw =
+  map (normalizeGroupName . T.strip) $ T.splitOn "&" raw

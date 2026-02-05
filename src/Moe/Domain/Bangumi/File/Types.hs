@@ -84,6 +84,6 @@ data BangumiFile = BangumiFile
   { meta :: BangumiMeta,
     content :: BangumiContent,
     fileType :: FileType,
-    group :: Maybe GroupName
+    group :: [GroupName]
   }
   deriving stock (Eq, Show)

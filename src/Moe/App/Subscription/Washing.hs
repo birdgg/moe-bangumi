@@ -5,7 +5,7 @@ module Moe.App.Subscription.Washing
   )
 where
 
-import Data.List (findIndex)
+import Data.List (findIndex, minimum)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
@@ -62,18 +62,26 @@ processWashing episodeMap mConfig = foldr go ([], [])
               (newEp : adds, existingEp : deletes)
           | otherwise -> (adds, deletes)
 
-shouldUpgrade :: [Group] -> Maybe GroupName -> Maybe GroupName -> Bool
-shouldUpgrade _ Nothing (Just _) = True
-shouldUpgrade _ _ Nothing = False
-shouldUpgrade groups (Just existing) (Just new)
+-- | Check if new groups should upgrade existing groups.
+-- Compares best priority index of each group list.
+shouldUpgrade :: [Group] -> [GroupName] -> [GroupName] -> Bool
+shouldUpgrade _ [] (_:_) = True
+shouldUpgrade _ _ [] = False
+shouldUpgrade groups existing new
   | existing == new = False
   | otherwise =
-      let existingIdx = findGroupIndex groups existing
-          newIdx = findGroupIndex groups new
-       in case (existingIdx, newIdx) of
+      let existingBest = bestGroupIndex groups existing
+          newBest = bestGroupIndex groups new
+       in case (existingBest, newBest) of
             (Nothing, Just _) -> True
             (Just ei, Just ni) -> ni < ei
             _ -> False
+
+-- | Find the best (lowest) priority index among a list of group names
+bestGroupIndex :: [Group] -> [GroupName] -> Maybe Int
+bestGroupIndex groups gns =
+  let indices = mapMaybe (findGroupIndex groups) gns
+   in if null indices then Nothing else Just (minimum indices)
 
 -- | Find the index of a group name in the priority list, considering aliases
 findGroupIndex :: [Group] -> GroupName -> Maybe Int

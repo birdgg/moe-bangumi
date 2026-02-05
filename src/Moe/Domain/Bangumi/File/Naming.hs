@@ -63,14 +63,14 @@ episodeDir = \case
   Regular (SeasonNumber s) _ -> T.unpack $ "Season " <> padded s
   Special _ -> "Season 00"
 
-episodeBaseName :: Text -> Maybe GroupName -> EpisodeType -> Text
-episodeBaseName name mGroup epType =
+episodeBaseName :: Text -> [GroupName] -> EpisodeType -> Text
+episodeBaseName name groups epType =
   let base = case epType of
         Regular (SeasonNumber s) ep ->
           sanitizeName name <> " - S" <> padded s <> "E" <> toText ep
         Special ep ->
           sanitizeName name <> " - S00E" <> toText ep
-      groupSuffix = maybe "" (\g -> " [" <> toText g <> "]") mGroup
+      groupSuffix = foldMap (\g -> " [" <> toText g <> "]") groups
    in base <> groupSuffix
 
 extraBaseName :: ExtraContent -> Text

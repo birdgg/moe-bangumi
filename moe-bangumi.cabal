@@ -208,16 +208,17 @@ test-suite moe-bangumi-test
   hs-source-dirs: test
   main-is: Main.hs
   other-modules:
+    Moe.App.Subscription.WashingSpec
     Moe.Domain.Bangumi.File.NamingSpec
     Moe.Domain.Bangumi.Parser.BgmtvSpec
     Moe.Domain.Bangumi.Parser.RssTitleSpec
     Moe.Infrastructure.BangumiData.TypesSpec
 
   build-depends:
-    base ^>=4.22.0.0,
     effectful-core,
     effectful-plugin,
     moe-bangumi,
     tasty,
     tasty-hunit,
     text,
+    time,

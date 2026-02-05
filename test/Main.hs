@@ -1,10 +1,11 @@
 module Main (main) where
 
+import Moe.App.Subscription.WashingSpec qualified as WashingSpec
 import Moe.Domain.Bangumi.File.NamingSpec qualified as NamingSpec
-import Moe.Prelude
 import Moe.Domain.Bangumi.Parser.BgmtvSpec qualified as BgmtvSpec
 import Moe.Domain.Bangumi.Parser.RssTitleSpec qualified as RssTitleSpec
 import Moe.Infrastructure.BangumiData.TypesSpec qualified as BangumiDataTypesSpec
+import Moe.Prelude
 import Test.Tasty
 
 main :: IO ()
@@ -17,5 +18,6 @@ tests =
     [ NamingSpec.tests,
       BgmtvSpec.tests,
       RssTitleSpec.tests,
-      BangumiDataTypesSpec.tests
+      BangumiDataTypesSpec.tests,
+      WashingSpec.tests
     ]

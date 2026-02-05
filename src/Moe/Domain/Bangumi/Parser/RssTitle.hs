@@ -8,7 +8,7 @@ import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
-import Moe.Domain.Bangumi.Internal.Group (GroupName, normalizeGroupName)
+import Moe.Domain.Bangumi.Internal.Group (GroupName, splitGroupNames)
 import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleLang (..), SubtitleList)
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
 import Moe.Prelude
@@ -17,7 +17,7 @@ import Regex.Rure.FFI (rureDefaultFlags)
 
 data RssTitleInfo = RssTitleInfo
   { episode :: Maybe EpisodeNumber,
-    group :: Maybe GroupName,
+    group :: [GroupName],
     resolution :: Maybe Text,
     subtitleList :: SubtitleList
   }
@@ -26,13 +26,13 @@ data RssTitleInfo = RssTitleInfo
 parseRssTitle :: Text -> RssTitleInfo
 parseRssTitle rawInput =
   let processed = preProcess rawInput
-      (rawGrp, grp) = extractSubtitleGroup processed
+      (rawGrp, grps) = extractSubtitleGroup processed
       withoutGroup = prefixProcess processed rawGrp
       episodeNum = extractEpisodeNumber withoutGroup
       (subs, res) = findTags processed
    in RssTitleInfo
         { episode = episodeNum,
-          group = grp,
+          group = grps,
           resolution = res,
           subtitleList = subs
         }
@@ -56,8 +56,8 @@ normalizeBrackets :: Text -> Text
 normalizeBrackets =
   T.replace "【" "[" . T.replace "】" "]" . T.replace "（" "(" . T.replace "）" ")"
 
--- | Extract subtitle group, returning both raw text (for prefix removal) and normalized GroupName
-extractSubtitleGroup :: Text -> (Maybe Text, Maybe GroupName)
+-- | Extract subtitle group, returning both raw text (for prefix removal) and split group names
+extractSubtitleGroup :: Text -> (Maybe Text, [GroupName])
 extractSubtitleGroup input =
   case hsFind rureDefaultFlags (unPattern groupPattern) (TE.encodeUtf8 input) of
     Right (Just m) ->
@@ -65,8 +65,8 @@ extractSubtitleGroup input =
           matched = BS.take (fromIntegral (end m - start m)) (BS.drop (fromIntegral (start m)) bs)
           txt = TE.decodeUtf8 matched
           raw = stripBrackets txt
-       in if T.null txt then (Nothing, Nothing) else (Just raw, Just (normalizeGroupName raw))
-    _ -> (Nothing, Nothing)
+       in if T.null txt then (Nothing, []) else (Just raw, splitGroupNames raw)
+    _ -> (Nothing, [])
   where
     stripBrackets t = fromMaybe t (T.stripPrefix "[" t >>= T.stripSuffix "]")
 

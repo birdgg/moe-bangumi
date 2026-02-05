@@ -183,6 +183,21 @@ instance FromField GroupName where
 instance ToField GroupName where
   toField (GroupName t) = toField t
 
+-- | Serialize a list of GroupName as comma-separated text
+instance ToField [GroupName] where
+  toField [] = toField (Nothing @Text)
+  toField gs = toField $ T.intercalate "," (map toText gs)
+
+-- | Deserialize comma-separated text into a list of GroupName
+instance FromField [GroupName] where
+  fromField f = do
+    mText <- fromField @(Maybe Text) f
+    pure $ case mText of
+      Nothing -> []
+      Just t
+        | T.null t -> []
+        | otherwise -> map (GroupName . T.strip) $ T.splitOn "," t
+
 instance FromRow Episode where
   fromRow =
     Episode

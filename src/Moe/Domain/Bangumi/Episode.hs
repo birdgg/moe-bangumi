@@ -21,7 +21,7 @@ data Episode = Episode
   { id :: Maybe EpisodeId,
     bangumiId :: BangumiId,
     episodeNumber :: EpisodeNumber,
-    group :: Maybe GroupName,
+    group :: [GroupName],
     resolution :: Maybe Text,
     infoHash :: Text,
     torrentUrl :: TorrentUrl,
