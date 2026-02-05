@@ -5,6 +5,7 @@ where
 
 import Effectful
 import Effectful.Concurrent (Concurrent)
+import Effectful.FileSystem (FileSystem)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (SqliteDb (..), notransact, runMigrations, runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), mkMoeEnv, parseMoeConfig)
@@ -12,7 +13,7 @@ import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.Prelude
 import System.Directory (createDirectoryIfMissing)
 
-bootstrap :: (IOE :> es, Concurrent :> es) => Eff es MoeEnv
+bootstrap :: (IOE :> es, Concurrent :> es, FileSystem :> es) => Eff es MoeEnv
 bootstrap = do
   config <- parseMoeConfig
   ensureDataFolder config.dataFolder

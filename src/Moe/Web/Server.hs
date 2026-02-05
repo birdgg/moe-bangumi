@@ -30,6 +30,7 @@ import Moe.App.Scheduler.Jobs (defaultJobs)
 import Moe.Error (MoeError (..))
 import Moe.Infrastructure.BangumiData.Effect (runBangumiDataHttp)
 import Moe.Infrastructure.Metadata.Effect (runMetadataHttp)
+import Effectful.FileSystem (runFileSystem)
 import Moe.Infrastructure.Setting.Effect (runSettingTVar)
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
@@ -60,7 +61,7 @@ runMoe :: IO ()
 runMoe = do
   setBacktraceMechanismState HasCallStackBacktrace True
   bracket
-    (bootstrap & runConcurrent & runEff)
+    (bootstrap & runFileSystem & runConcurrent & runEff)
     shutdownMoe
     ( \env ->
         runEff . withUnliftStrategy (ConcUnlift Ephemeral Unlimited) . runConcurrent $ do
@@ -137,6 +138,7 @@ naturalTransform env logger app = do
         & runMetadataHttp env.httpManager
         & runBangumiDataHttp env.httpManager
         & runSettingTVar env.settingVar (getSettingPath env)
+        & runFileSystem
         & runErrorWith
           ( \_callstack moeErr -> do
               Log.logAttention_ $ "Application error: " <> show moeErr

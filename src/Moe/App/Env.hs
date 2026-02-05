@@ -13,19 +13,19 @@ module Moe.App.Env
   )
 where
 
-import Data.Aeson (eitherDecodeFileStrict)
 import Data.Pool qualified as Pool
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
 import Effectful
+import Effectful.FileSystem (FileSystem)
 import Effectful.Sqlite (SqlitePool (..))
 import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
-import Moe.Domain.Setting.Types (UserPreference, defaultUserPreference)
+import Moe.Domain.Setting.Types (UserPreference)
+import Moe.Infrastructure.Setting.Effect (loadSettingFromFile)
 import Moe.Prelude
 import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import System.Directory (doesFileExist)
 import System.FilePath ((</>))
 
 data AppEnv
@@ -85,7 +85,7 @@ parseMoeConfig = do
     parseLogDest folder (Just "file") = JsonFile (folder </> "moe-bangumi.log")
     parseLogDest _ _ = PrettyStdOut
 
-mkMoeEnv :: (IOE :> es) => MoeConfig -> Eff es MoeEnv
+mkMoeEnv :: (IOE :> es, FileSystem :> es) => MoeConfig -> Eff es MoeEnv
 mkMoeEnv config = do
   let settingPath = config.dataFolder </> "setting.json"
   initialSetting <- loadSettingFromFile settingPath
@@ -114,12 +114,6 @@ openDb dbPath = do
 destroyDbPool :: MoeEnv -> IO ()
 destroyDbPool env = Pool.destroyAllResources (getPool env.dbPool)
 
-loadSettingFromFile :: (IOE :> es) => FilePath -> Eff es UserPreference
-loadSettingFromFile path = do
-  exists <- liftIO $ doesFileExist path
-  if exists
-    then fromRight defaultUserPreference <$> liftIO (eitherDecodeFileStrict path)
-    else pure defaultUserPreference
 
 getDatabasePath :: MoeEnv -> FilePath
 getDatabasePath env = getDatabasePath' env.config

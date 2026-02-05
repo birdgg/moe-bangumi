@@ -7,6 +7,7 @@ where
 import Effectful
 import Effectful.Concurrent (Concurrent)
 import Effectful.Error.Static (Error)
+import Effectful.FileSystem (FileSystem)
 import Effectful.Log (Log)
 import Effectful.Reader.Static qualified as Reader
 import Effectful.Sqlite (Sqlite)
@@ -23,6 +24,7 @@ type MoeEffects =
   '[ Metadata,
      BangumiData,
      Setting,
+     FileSystem,
      Error MoeError,
      Error ServerError,
      Log,

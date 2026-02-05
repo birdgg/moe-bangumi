@@ -12,6 +12,7 @@ where
 import Effectful
 import Effectful.Concurrent (Concurrent, runConcurrent)
 import Effectful.Error.Static (Error, runErrorWith)
+import Effectful.FileSystem (FileSystem, runFileSystem)
 import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, SqliteDb (..), runSqlite)
@@ -56,10 +57,11 @@ runMetadataEffects ::
   IO JobResult
 runMetadataEffects env logger logPrefix action =
   runBaseEffects env logger logPrefix $
-    runSettingTVar env.settingVar (getSettingPath env) $
-      runErrorWith (logMoeError logPrefix) $
-        runBangumiDataHttp env.httpManager $
-          runMetadataHttp env.httpManager action
+    runFileSystem $
+      runSettingTVar env.settingVar (getSettingPath env) $
+        runErrorWith (logMoeError logPrefix) $
+          runBangumiDataHttp env.httpManager $
+            runMetadataHttp env.httpManager action
 
 runRssEffects ::
   MoeEnv ->
@@ -69,9 +71,10 @@ runRssEffects ::
   IO JobResult
 runRssEffects env logger logPrefix action =
   runBaseEffects env logger logPrefix $
-    runErrorWith (logMoeError logPrefix) $
-      runSettingTVar env.settingVar (getSettingPath env) $
-        runRss env.httpManager action
+    runFileSystem $
+      runErrorWith (logMoeError logPrefix) $
+        runSettingTVar env.settingVar (getSettingPath env) $
+          runRss env.httpManager action
 
 logMoeError :: (Log :> es) => Text -> a -> MoeError -> Eff es JobResult
 logMoeError logPrefix _ err = do
@@ -83,6 +86,7 @@ type CalendarSyncEffects =
      BangumiData,
      Error MoeError,
      Setting,
+     FileSystem,
      Log,
      Sqlite,
      Concurrent,
@@ -97,10 +101,11 @@ runCalendarSyncEffects ::
   IO ()
 runCalendarSyncEffects env logger logPrefix action =
   runBaseEffects env logger logPrefix $
-    runSettingTVar env.settingVar (getSettingPath env) $
-      runErrorWith (\_ err -> Log.logAttention_ $ logPrefix <> " error: " <> show err) $
-        runBangumiDataHttp env.httpManager $
-          runMetadataHttp env.httpManager action
+    runFileSystem $
+      runSettingTVar env.settingVar (getSettingPath env) $
+        runErrorWith (\_ err -> Log.logAttention_ $ logPrefix <> " error: " <> show err) $
+          runBangumiDataHttp env.httpManager $
+            runMetadataHttp env.httpManager action
 
 -- | Run subscription job effects (RSS + Download).
 runSubscriptionEffects ::
@@ -111,14 +116,14 @@ runSubscriptionEffects ::
   IO JobResult
 runSubscriptionEffects env logger logPrefix action =
   runBaseEffects env logger logPrefix $
-    runSettingTVar env.settingVar (getSettingPath env) $
-      runErrorWith (logMoeError logPrefix) $
-        runRss env.httpManager $ do
-          pref <- getSetting
-          case pref.downloader of
-            Nothing -> do
-              Log.logAttention_ $ logPrefix <> " downloader config missing"
-              pure $ JobFailure "Downloader config missing"
-            Just cfg ->
-              runDownloadQBittorrent cfg action
-
+    runFileSystem $
+      runSettingTVar env.settingVar (getSettingPath env) $
+        runErrorWith (logMoeError logPrefix) $
+          runRss env.httpManager $ do
+            pref <- getSetting
+            case pref.downloader of
+              Nothing -> do
+                Log.logAttention_ $ logPrefix <> " downloader config missing"
+                pure $ JobFailure "Downloader config missing"
+              Just cfg ->
+                runDownloadQBittorrent cfg action

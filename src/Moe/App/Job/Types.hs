@@ -10,6 +10,7 @@ where
 import Effectful
 import Effectful.Concurrent (Concurrent)
 import Effectful.Error.Static (Error)
+import Effectful.FileSystem (FileSystem)
 import Effectful.Log (Log)
 import Effectful.Sqlite (Sqlite)
 import Moe.Error (MoeError)
@@ -32,6 +33,7 @@ type MetadataJobEffects =
      BangumiData,
      Error MoeError,
      Setting,
+     FileSystem,
      Log,
      Sqlite,
      Concurrent,
@@ -42,6 +44,7 @@ type RssJobEffects =
   '[ Rss,
      Setting,
      Error MoeError,
+     FileSystem,
      Log,
      Sqlite,
      Concurrent,
@@ -54,6 +57,7 @@ type SubscriptionJobEffects =
      Rss,
      Error MoeError,
      Setting,
+     FileSystem,
      Log,
      Sqlite,
      Concurrent,
