@@ -3,6 +3,7 @@ module Moe.Infrastructure.Download.Types
   ( TorrentUrl,
     MoeTag (..),
     MoeTagList (..),
+    AddTorrentParams (..),
     fromTagText,
     infoHashToText,
     isDownloading,
@@ -20,6 +21,15 @@ import Moe.Prelude
 
 -- | URL for a torrent resource
 type TorrentUrl = Text
+
+-- | Parameters for adding a torrent.
+data AddTorrentParams = AddTorrentParams
+  { url :: TorrentUrl,
+    savePath :: Maybe Text,
+    rename :: Maybe Text,
+    tags :: Maybe MoeTagList
+  }
+  deriving stock (Eq, Show)
 
 -- | Tags used for torrent management
 data MoeTag =  Rename | Subscription | Collection | Deletion

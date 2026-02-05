@@ -18,7 +18,10 @@ import Moe.App.Subscription.Filter (filterItems)
 import Moe.App.Subscription.Types
 import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, parseRawItem, processWashing)
 import Moe.Domain.Bangumi.Episode (Episode (..))
-import Moe.Domain.Bangumi.Types (BangumiF (..))
+import Moe.Domain.Bangumi.File.Naming (generateBaseName, generatePath)
+import Moe.Domain.Bangumi.File.Types (BangumiFile (..), BangumiMeta (..), EpisodeType (..), FileType (..), VideoExt (..))
+import Moe.Domain.Bangumi.File.Types qualified as File (BangumiContent (..))
+import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..), SeasonNumber (..), extractYear)
 import Moe.Domain.Setting.Types (UserPreference (..))
 import Moe.Error (MoeError)
 import Moe.Infrastructure.Database.Episode qualified as EpisodeDB
@@ -70,8 +73,8 @@ runSingleRss pref ctx = do
     pure $ map (processWashing episodeMap pref.washing) parsedEpisodes
 
   let (newEpisodes, upgradeEpisodes) = partitionResults washingResults
-  processNewEpisodes newEpisodes
-  processUpgrades upgradeEpisodes
+  processNewEpisodes ctx.bangumi newEpisodes
+  processUpgrades ctx.bangumi upgradeEpisodes
 
 partitionResults :: [WashingResult] -> ([Episode], [(Episode, Episode)])
 partitionResults = foldr go ([], [])
@@ -83,28 +86,51 @@ partitionResults = foldr go ([], [])
 -- | Process new episodes: add torrent and save to database
 processNewEpisodes ::
   (Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  Bangumi ->
   [Episode] ->
   Eff es ()
-processNewEpisodes [] = pass
-processNewEpisodes episodes = do
-  forM_ episodes $ \ep -> do
-    let tags = MoeTagList [Subscription]
-    addTorrent ep.torrentUrl Nothing (Just tags)
-
+processNewEpisodes _ [] = pass
+processNewEpisodes bangumi episodes = do
+  forM_ episodes $ addSubscriptionTorrent bangumi
   transact $ mapM_ EpisodeDB.upsertEpisode episodes
 
 -- | Process upgrades: delete old torrents and add new ones.
 processUpgrades ::
   (Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  Bangumi ->
   [(Episode, Episode)] ->
   Eff es ()
-processUpgrades [] = pass
-processUpgrades tasks = do
+processUpgrades _ [] = pass
+processUpgrades bangumi tasks = do
   let oldHashes = map (\(_, oldEp) -> oldEp.infoHash) tasks
   deleteTorrents oldHashes True
-
-  forM_ tasks $ \(newEp, _) -> do
-    let tags = MoeTagList [Subscription]
-    addTorrent newEp.torrentUrl Nothing (Just tags)
-
+  forM_ tasks $ addSubscriptionTorrent bangumi . fst
   transact $ mapM_ (\(newEp, _) -> EpisodeDB.upsertEpisode newEp) tasks
+
+addSubscriptionTorrent :: (Download :> es) => Bangumi -> Episode -> Eff es ()
+addSubscriptionTorrent bangumi ep = do
+  let file = toBangumiFile bangumi ep
+      params =
+        AddTorrentParams
+          { url = ep.torrentUrl,
+            savePath = Just $ toText $ generatePath file,
+            rename = Just $ toText $ generateBaseName file,
+            tags = Just $ MoeTagList [Subscription]
+          }
+  addTorrent params
+
+-- | Build a BangumiFile from Bangumi metadata and Episode info.
+--
+-- Used to generate media-server-compliant save paths and file names.
+-- The fileType is a placeholder since generatePath and generateBaseName don't use it.
+toBangumiFile :: Bangumi -> Episode -> BangumiFile
+toBangumiFile bangumi ep =
+  let meta =
+        BangumiMeta
+          { name = bangumi.titleChs,
+            year = extractYear <$> bangumi.airDate,
+            tmdbId = bangumi.tmdbId
+          }
+      seasonNum = fromMaybe (SeasonNumber 1) bangumi.season
+      content = File.Episode (Regular seasonNum ep.episodeNumber)
+   in BangumiFile {meta, content, fileType = Video MKV}

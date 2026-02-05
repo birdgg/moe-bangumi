@@ -1,5 +1,6 @@
 module Moe.Domain.Bangumi.File.Naming
   ( generatePath,
+    generateBaseName,
     generateFileName,
     generateFullPath,
     sanitizeName,
@@ -17,6 +18,14 @@ generatePath file = case file.content of
   Extra _ -> showBaseName file.meta </> "extras"
   TrailerItem _ -> showBaseName file.meta </> "trailers"
   Movie movieYear -> T.unpack $ nameWithYear file.meta.name movieYear
+
+-- | Generate file base name without extension.
+generateBaseName :: BangumiFile -> FilePath
+generateBaseName file = toString $ case file.content of
+  Episode epType -> episodeBaseName file.meta.name epType
+  Extra extra -> extraBaseName extra
+  TrailerItem trailer -> trailerBaseName trailer
+  Movie movieYear -> nameWithYear file.meta.name movieYear
 
 generateFileName :: BangumiFile -> FilePath
 generateFileName file = T.unpack $ baseName <> extension

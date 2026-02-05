@@ -19,6 +19,7 @@ module Moe.Domain.Bangumi.Types
     airSeasonToText,
     getCurrentAirSeason,
     getAirSeason,
+    extractYear,
   )
 where
 
@@ -26,7 +27,7 @@ import Data.Aeson (ToJSON (..))
 import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (..))
 import Data.Text.Display (Display (..))
 import Data.Time (UTCTime)
-import Data.Time.Calendar (Day)
+import Data.Time.Calendar (Day, Year, toGregorian)
 import Moe.Domain.Bangumi.Internal.Metadata
 import Moe.Domain.Bangumi.Internal.Season
 import Moe.Domain.Bangumi.Season
@@ -88,3 +89,7 @@ withId bid ts b = b {id = bid, createdAt = ts}
 
 getAirSeason :: BangumiF id ts -> Maybe AirSeason
 getAirSeason b = airDateToAirSeason <$> b.airDate
+
+-- | Extract year from a Day value.
+extractYear :: Day -> Year
+extractYear day = let (y, _, _) = toGregorian day in y

@@ -32,21 +32,21 @@ runDownloadQBittorrent ::
   Eff (Download : es) a ->
   Eff es a
 runDownloadQBittorrent cfg = interpret $ \_ -> \case
-  AddTorrent url savePath mTags ->
+  AddTorrent params ->
     runQB cfg $ do
       let baseTags = [QB.Tag "moe", moeTagToQBTag Rename]
-          allQBTags = case mTags of
+          allQBTags = case params.tags of
             Nothing -> baseTags
             Just (MoeTagList ts) -> ordNub $ baseTags <> map moeTagToQBTag ts
           tmpBase = takeDirectory (toString cfg.savePath) </> "tmp"
-          effectivePath = Just $ toText $ maybe tmpBase ((tmpBase </>) . toString) savePath
+          effectivePath = Just $ toText $ maybe tmpBase ((tmpBase </>) . toString) params.savePath
           req =
             QB.AddTorrentRequest
-              { urls = Just url,
+              { urls = Just params.url,
                 savepath = effectivePath,
                 category = Nothing,
                 tags = Just allQBTags,
-                rename = Nothing,
+                rename = params.rename,
                 stopped = Nothing
               }
       void $ QB.addTorrent req
