@@ -5,6 +5,7 @@ module Moe.Domain.Setting.Types
     WashingConfig (..),
     NotificationConfig (..),
     TMDBConfig (..),
+    Regex,
     defaultUserPreference,
     defaultFilterConfig,
     defaultWashingConfig,
@@ -16,6 +17,8 @@ import Data.OpenApi (ToSchema)
 import Moe.Domain.Bangumi.Internal.Group (Group (..))
 import Moe.Prelude
 
+type Regex = Text
+
 data DownloaderConfig = DownloaderConfig
   { url :: Text,
     username :: Text,
@@ -26,7 +29,7 @@ data DownloaderConfig = DownloaderConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data FilterConfig = FilterConfig
-  { globalRssFilter :: [Text]
+  { globalRssFilter :: [Regex]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)

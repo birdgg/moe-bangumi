@@ -81,10 +81,8 @@ library
     Moe.App.Scheduler
     Moe.App.Scheduler.Jobs
     Moe.App.Subscription.Cleanup
-    Moe.App.Subscription.Download
-    Moe.App.Subscription.Fetch
     Moe.App.Subscription.Filter
-    Moe.App.Subscription.Pipeline
+    Moe.App.Subscription.Run
     Moe.App.Subscription.Types
     Moe.App.Subscription.Washing
     Moe.Domain.Bangumi.Episode
@@ -105,6 +103,7 @@ library
     Moe.Domain.Bangumi.Types
     Moe.Domain.Scheduler.Types
     Moe.Domain.Setting.Types
+    Moe.Domain.Rss.Types
     Moe.Domain.Tracking.Types
     Moe.Error
     Moe.Infrastructure.BangumiData.API

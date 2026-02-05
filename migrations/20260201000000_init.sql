@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS bangumi (
   mikan_id INTEGER,
   tmdb_id INTEGER,
   bangumi_tv_id INTEGER UNIQUE,
-  poster_url TEXT
+  poster_url TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_bangumi_air_date ON bangumi(air_date);

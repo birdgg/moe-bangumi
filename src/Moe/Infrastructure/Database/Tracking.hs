@@ -4,6 +4,7 @@ module Moe.Infrastructure.Database.Tracking
     listTracking,
     listTrackingWithBangumi,
     listEnabledRssTracking,
+    listEnabledRssTrackingWithBangumi,
     createTracking,
     updateTracking,
     deleteTracking,
@@ -36,6 +37,7 @@ instance FromRow TrackingBangumiRow where
     bangumi <-
       Bangumi.Bangumi
         <$> field
+        <*> field
         <*> field
         <*> field
         <*> field
@@ -80,7 +82,7 @@ listTrackingWithBangumi = do
     query_
       "SELECT \
       \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.created_at, \
-      \b.id, b.title_chs, b.title_jap, b.air_date, b.season_number, b.kind, b.mikan_id, b.tmdb_id, b.bangumi_tv_id, b.poster_url \
+      \b.id, b.title_chs, b.title_jap, b.air_date, b.season, b.kind, b.mikan_id, b.tmdb_id, b.bangumi_tv_id, b.poster_url, b.created_at \
       \FROM tracking t \
       \INNER JOIN bangumi b ON t.bangumi_id = b.id"
   pure $ map unRow rows
@@ -91,6 +93,21 @@ listEnabledRssTracking ::
 listEnabledRssTracking =
   query_
     (fromString $ "SELECT " <> T.unpack trackingColumns <> " FROM tracking WHERE rss_enabled = 1 AND rss_url IS NOT NULL")
+
+-- | List enabled RSS trackings with their associated bangumi (JOIN query)
+listEnabledRssTrackingWithBangumi ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  Eff es [(Types.Tracking, Bangumi.Bangumi)]
+listEnabledRssTrackingWithBangumi = do
+  rows <-
+    query_
+      "SELECT \
+      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.created_at, \
+      \b.id, b.title_chs, b.title_jap, b.air_date, b.season, b.kind, b.mikan_id, b.tmdb_id, b.bangumi_tv_id, b.poster_url, b.created_at \
+      \FROM tracking t \
+      \INNER JOIN bangumi b ON t.bangumi_id = b.id \
+      \WHERE t.rss_enabled = 1 AND t.rss_url IS NOT NULL"
+  pure $ map unRow rows
 
 createTracking ::
   (SqliteTransaction :> es, IOE :> es) =>

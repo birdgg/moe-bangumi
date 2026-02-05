@@ -7,7 +7,7 @@ import Data.Map.Strict qualified as Map
 import Data.Time.Calendar (Day, Year)
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Effectful.Sqlite (notransact)
-import Moe.Domain.Bangumi.Types (AirSeason (..), Bangumi (..), Season)
+import Moe.Domain.Bangumi.Types (AirSeason (..), Bangumi, BangumiF (..), Season)
 import Moe.Infrastructure.Database.Bangumi qualified as DB
 import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (toBangumiResponse)

@@ -17,8 +17,9 @@ where
 
 import Data.Char (isHexDigit)
 import Data.Text qualified as T
-import Moe.Prelude
+import Moe.Domain.Rss.Types (parsePubDate)
 import Moe.Infrastructure.Rss.Types (RawItem (..))
+import Moe.Prelude
 import Network.HTTP.Types (urlEncode)
 import Text.XML (Name (..))
 import Text.XML.Cursor
@@ -57,7 +58,7 @@ parseStandardRssItem cursor =
   let url = getEnclosureUrl cursor <|> getChildText "link" cursor
    in RawItem
         { title = getChildText "title" cursor,
-          pubDate = getChildText "pubDate" cursor,
+          pubDate = getChildText "pubDate" cursor >>= parsePubDate,
           torrentUrl = url,
           infoHash = url >>= extractInfoHash
         }
@@ -67,7 +68,7 @@ instance RssSource Nyaa where
     let url = getEnclosureUrl cursor <|> getChildText "link" cursor
      in RawItem
           { title = getChildText "title" cursor,
-            pubDate = getChildText "pubDate" cursor,
+            pubDate = getChildText "pubDate" cursor >>= parsePubDate,
             torrentUrl = url,
             infoHash = getNyaaText "infoHash" cursor <|> (url >>= extractInfoHash)
           }

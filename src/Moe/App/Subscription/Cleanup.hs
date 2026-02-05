@@ -35,9 +35,6 @@ runCleanup = do
   -- Get all torrents tagged for deletion
   deletionTorrents <- getTorrentsWithTag Deletion
 
-  when (null deletionTorrents) $ do
-    Log.logInfo_ "No torrents to cleanup"
-
   unless (null deletionTorrents) $ do
     -- Get all episodes from database to find newer versions
     let hashesToFind = map (.hash) deletionTorrents

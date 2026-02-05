@@ -5,7 +5,7 @@ module Moe.Infrastructure.BangumiData.Types
     extractMikanId,
     extractBgmtvId,
     extractTmdbId,
-    toBangumi,
+    toNewBangumi,
   )
 where
 
@@ -93,10 +93,10 @@ parseAirDateFromISO8601 t = do
   localTime <- parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%S%Q%Z" (T.unpack t)
   pure $ localDay (localTime :: LocalTime)
 
-toBangumi :: BangumiDataItem -> Types.Bangumi
-toBangumi item =
+toNewBangumi :: BangumiDataItem -> Types.NewBangumi
+toNewBangumi item =
   Types.Bangumi
-    { id = Nothing,
+    { id = (),
       titleChs = selectChsName item,
       titleJap = Just item.title,
       airDate = parseAirDate item,
@@ -105,7 +105,8 @@ toBangumi item =
       mikanId = extractMikanId item.sites,
       tmdbId = extractTmdbId item.sites,
       bgmtvId = extractBgmtvId item.sites,
-      posterUrl = Nothing
+      posterUrl = Nothing,
+      createdAt = ()
     }
 
 selectChsName :: BangumiDataItem -> Text

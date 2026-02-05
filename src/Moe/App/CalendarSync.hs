@@ -20,9 +20,9 @@ import Effectful.Sqlite (Sqlite, notransact, transact)
 import Moe.App.Effect.Runner (runCalendarSyncEffects)
 import Moe.App.Env (MoeEnv)
 import Moe.Domain.Bangumi.Parser (BgmtvParsedTitle (..))
-import Moe.Domain.Bangumi.Types (AirSeason, Bangumi (..), BangumiKind (..), BgmtvId (..), TmdbId (..), airDateToAirSeason, getCurrentAirSeason)
+import Moe.Domain.Bangumi.Types (AirSeason, Bangumi, BangumiF (..), BangumiKind (..), BgmtvId (..), NewBangumi, SeasonNumber (..), TmdbId (..), airDateToAirSeason, getCurrentAirSeason, withId)
 import Moe.Error (MoeError (..))
-import Moe.Infrastructure.BangumiData.Effect (toBangumi)
+import Moe.Infrastructure.BangumiData.Effect (toNewBangumi)
 import Moe.Infrastructure.Database.Bangumi qualified as DB
 import Moe.Infrastructure.Metadata.Effect (BgmtvDetailResult (..), Metadata, fetchBangumiDataBySeason, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
 import Moe.Prelude
@@ -97,17 +97,17 @@ fetchAndStoreAirSeason ::
 fetchAndStoreAirSeason season = do
   Log.logInfo_ $ "Fetching bangumi-data for season: " <> toText season
   items <- fetchBangumiDataBySeason season
-  let basicBangumis = map toBangumi items
+  let basicBangumis = map toNewBangumi items
   enrichedBangumis <- mapM enrichWithDetails basicBangumis
   transact $ do
-    forM_ enrichedBangumis $ \b -> do
-      void $ DB.upsertBangumi b
-  pure enrichedBangumis
+    forM enrichedBangumis $ \nb -> do
+      (bid, ts) <- DB.upsertBangumi nb
+      pure $ withId bid ts nb
 
 enrichWithDetails ::
   (Metadata :> es, IOE :> es) =>
-  Bangumi ->
-  Eff es Bangumi
+  NewBangumi ->
+  Eff es NewBangumi
 enrichWithDetails bangumi = do
   result <- runMaybeT $ tryBgmtvEnrich <|> tryTmdbEnrich
   pure $ defaultTvSeasonNumber $ fromMaybe bangumi result
@@ -127,12 +127,12 @@ enrichWithDetails bangumi = do
           detail <- MaybeT $ getTmdbTvDetail (TvShowId (fromIntegral tid))
           pure $ applyTmdbTvDetail detail bangumi
 
-defaultTvSeasonNumber :: Bangumi -> Bangumi
+defaultTvSeasonNumber :: NewBangumi -> NewBangumi
 defaultTvSeasonNumber b = case (b.kind, b.season) of
-  (Tv, Nothing) -> b {season = Just 1}
+  (Tv, Nothing) -> b {season = Just (SeasonNumber 1)}
   _ -> b
 
-applyBgmtvDetail :: BgmtvDetailResult -> Bangumi -> Bangumi
+applyBgmtvDetail :: BgmtvDetailResult -> NewBangumi -> NewBangumi
 applyBgmtvDetail BgmtvDetailResult {detail, parsed} b =
   let BgmtvParsedTitle parsedChs parsedJap parsedSeason = parsed
       subjectDetail :: Bgmtv.SubjectDetail
@@ -144,14 +144,14 @@ applyBgmtvDetail BgmtvDetailResult {detail, parsed} b =
           season = parsedSeason <|> b.season
         }
 
-applyTmdbTvDetail :: TmdbTv.TvDetail -> Bangumi -> Bangumi
+applyTmdbTvDetail :: TmdbTv.TvDetail -> NewBangumi -> NewBangumi
 applyTmdbTvDetail detail b =
   b
     { posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> detail.posterPath,
-      season = Just $ fromIntegral detail.numberOfSeasons
+      season = Just $ SeasonNumber $ fromIntegral detail.numberOfSeasons
     }
 
-applyTmdbMovieDetail :: TmdbMovie.MovieDetail -> Bangumi -> Bangumi
+applyTmdbMovieDetail :: TmdbMovie.MovieDetail -> NewBangumi -> NewBangumi
 applyTmdbMovieDetail detail b =
   b
     { posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> detail.posterPath

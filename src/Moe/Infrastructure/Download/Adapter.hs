@@ -33,13 +33,15 @@ runDownloadQBittorrent ::
 runDownloadQBittorrent cfg = interpret $ \_ -> \case
   AddTorrent url savePath mTags ->
     runQB cfg $ do
-      let tagsText = toText <$> mTags
+      let allTags = case mTags of
+            Nothing -> TagList [Moe, Rename]
+            Just (TagList ts) -> TagList (ordNub $ [Moe, Rename] <> ts)
           req =
             QB.AddTorrentRequest
               { urls = Just url,
                 savepath = savePath,
                 category = Nothing,
-                tags = tagsText,
+                tags = Just $ toText allTags,
                 rename = Nothing,
                 stopped = Nothing
               }

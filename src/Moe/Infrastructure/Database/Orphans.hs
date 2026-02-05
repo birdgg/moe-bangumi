@@ -3,7 +3,7 @@
 module Moe.Infrastructure.Database.Orphans () where
 
 import Data.Text qualified as T
-import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..), field)
+import Effectful.Sqlite (FromField (..), FromRow (..), Only (..), ToField (..), ToRow (..), field)
 import Moe.Domain.Bangumi.Episode
   ( Episode (..),
     EpisodeId (..),
@@ -11,19 +11,29 @@ import Moe.Domain.Bangumi.Episode
     GroupName (..),
   )
 import Moe.Domain.Bangumi.Types
-  ( Bangumi (..),
+  ( Bangumi,
+    BangumiF (..),
     BangumiId (..),
     BangumiKind (..),
     BgmtvId (..),
     MikanId (..),
+    NewBangumi,
+    SeasonNumber (..),
     TmdbId (..),
   )
+import Moe.Domain.Rss.Types (PubDate (..))
 import Moe.Domain.Tracking.Types
   ( Tracking (..),
     TrackingId (..),
     TrackingType (..),
   )
 import Moe.Prelude
+
+instance FromField PubDate where
+  fromField = fmap PubDate . fromField
+
+instance ToField PubDate where
+  toField (PubDate t) = toField t
 
 instance FromField BangumiId where
   fromField = fmap BangumiId . fromField
@@ -75,6 +85,7 @@ instance FromRow Bangumi where
       <*> field
       <*> field
       <*> field
+      <*> field
 
 instance ToRow Bangumi where
   toRow b =
@@ -90,6 +101,27 @@ instance ToRow Bangumi where
         b.bgmtvId,
         b.posterUrl
       )
+      ++ toRow (Only b.createdAt)
+
+instance ToRow NewBangumi where
+  toRow b =
+    toRow
+      ( b.titleChs,
+        b.titleJap,
+        b.airDate,
+        b.season,
+        b.kind,
+        b.mikanId,
+        b.tmdbId,
+        b.bgmtvId,
+        b.posterUrl
+      )
+
+instance FromField SeasonNumber where
+  fromField = fmap SeasonNumber . fromField
+
+instance ToField SeasonNumber where
+  toField (SeasonNumber n) = toField n
 
 instance FromField TrackingId where
   fromField = fmap TrackingId . fromField

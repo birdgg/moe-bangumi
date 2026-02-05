@@ -11,6 +11,7 @@ module Moe.Infrastructure.Database.Bangumi
 where
 
 import Data.Text qualified as T
+import Data.Time (UTCTime)
 import Effectful
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi.Types qualified as Types
@@ -18,7 +19,7 @@ import Moe.Infrastructure.Database.Orphans ()
 import Moe.Prelude
 
 bangumiColumns :: Text
-bangumiColumns = "id, title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url"
+bangumiColumns = "id, title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url, created_at"
 
 getBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -63,12 +64,12 @@ listBangumiBySeason (Types.AirSeason year season) = do
 
 createBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
-  Types.Bangumi ->
-  Eff es Types.BangumiId
+  Types.NewBangumi ->
+  Eff es (Types.BangumiId, UTCTime)
 createBangumi bangumi = do
   results <-
     query
-      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bangumi_tv_id, poster_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, created_at"
       ( bangumi.titleChs,
         bangumi.titleJap,
         bangumi.airDate,
@@ -80,7 +81,7 @@ createBangumi bangumi = do
         bangumi.posterUrl
       )
   case results of
-    [Only bid] -> pure $ Types.BangumiId bid
+    [(bid, ts)] -> pure (Types.BangumiId bid, ts)
     _ -> error "createBangumi: unexpected result"
 
 updateBangumi ::
@@ -88,10 +89,8 @@ updateBangumi ::
   Types.Bangumi ->
   Eff es ()
 updateBangumi bangumi =
-  case bangumi.id of
-    Nothing -> pure ()
-    Just (Types.BangumiId bid) ->
-      execute
+  let Types.BangumiId bid = bangumi.id
+   in execute
         "UPDATE bangumi SET title_chs = ?, title_jap = ?, air_date = ?, season = ?, kind = ?, mikan_id = ?, tmdb_id = ?, bangumi_tv_id = ?, poster_url = ? WHERE id = ?"
         ( bangumi.titleChs,
           bangumi.titleJap,
@@ -107,8 +106,8 @@ updateBangumi bangumi =
 
 upsertBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
-  Types.Bangumi ->
-  Eff es Types.BangumiId
+  Types.NewBangumi ->
+  Eff es (Types.BangumiId, UTCTime)
 upsertBangumi bangumi = do
   results <-
     query
@@ -123,7 +122,7 @@ upsertBangumi bangumi = do
       \mikan_id = excluded.mikan_id, \
       \tmdb_id = excluded.tmdb_id, \
       \poster_url = excluded.poster_url \
-      \RETURNING id"
+      \RETURNING id, created_at"
       ( bangumi.titleChs,
         bangumi.titleJap,
         bangumi.airDate,
@@ -135,7 +134,7 @@ upsertBangumi bangumi = do
         bangumi.posterUrl
       )
   case results of
-    [Only bid] -> pure $ Types.BangumiId bid
+    [(bid, ts)] -> pure (Types.BangumiId bid, ts)
     _ -> error "upsertBangumi: unexpected result"
 
 deleteBangumi ::

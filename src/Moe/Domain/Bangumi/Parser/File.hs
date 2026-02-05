@@ -12,13 +12,14 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
 import Moe.Domain.Bangumi.Parser.Internal.Pattern
+import Moe.Domain.Bangumi.Types (SeasonNumber (..))
 import Moe.Prelude
 import Regex.Rure (RureMatch (..), hsFind)
 import Regex.Rure.FFI (rureDefaultFlags)
 
 data ParsedInfo = ParsedInfo
   { title :: Text,
-    season :: Maybe Word32,
+    season :: Maybe SeasonNumber,
     episodeNumber :: Maybe EpisodeNumber,
     group :: Maybe Text
   }
@@ -33,10 +34,10 @@ parseInfo input =
       group = extractGroup input
     }
 
-extractSeason :: Text -> Maybe Word32
+extractSeason :: Text -> Maybe SeasonNumber
 extractSeason input = do
   matched <- findPattern seasonPattern input
-  extractNumber matched
+  SeasonNumber . fromIntegral <$> extractNumber matched
 
 extractEpisode :: Text -> Maybe EpisodeNumber
 extractEpisode input = do

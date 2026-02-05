@@ -8,7 +8,10 @@ module Moe.Domain.Bangumi.Types
     SeasonNumber (..),
     BangumiKind (..),
     bangumiKindFromText,
-    Bangumi (..),
+    BangumiF (..),
+    NewBangumi,
+    Bangumi,
+    withId,
     airDateToAirSeason,
     seasonToMonths,
     seasonFromText,
@@ -22,6 +25,7 @@ where
 import Data.Aeson (ToJSON (..))
 import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (..))
 import Data.Text.Display (Display (..))
+import Data.Time (UTCTime)
 import Data.Time.Calendar (Day)
 import Moe.Domain.Bangumi.Internal.Metadata
 import Moe.Domain.Bangumi.Internal.Season
@@ -60,19 +64,27 @@ instance ToJSON BangumiKind where
 bangumiKindFromText :: Text -> Maybe BangumiKind
 bangumiKindFromText = inverseMap toText
 
-data Bangumi = Bangumi
-  { id :: Maybe BangumiId,
+data BangumiF id ts = Bangumi
+  { id :: id,
     titleChs :: Text,
     titleJap :: Maybe Text,
     airDate :: Maybe Day,
-    season :: Maybe Word32,
+    season :: Maybe SeasonNumber,
     kind :: BangumiKind,
     mikanId :: Maybe MikanId,
     tmdbId :: Maybe TmdbId,
     bgmtvId :: Maybe BgmtvId,
-    posterUrl :: Maybe Text
+    posterUrl :: Maybe Text,
+    createdAt :: ts
   }
   deriving stock (Eq, Show)
 
-getAirSeason :: Bangumi -> Maybe AirSeason
+type NewBangumi = BangumiF () ()
+
+type Bangumi = BangumiF BangumiId UTCTime
+
+withId :: BangumiId -> UTCTime -> NewBangumi -> Bangumi
+withId bid ts b = b {id = bid, createdAt = ts}
+
+getAirSeason :: BangumiF id ts -> Maybe AirSeason
 getAirSeason b = airDateToAirSeason <$> b.airDate

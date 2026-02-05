@@ -1,6 +1,7 @@
 -- | Domain types for download/torrent management.
 module Moe.Infrastructure.Download.Types
-  ( Tag (..),
+  ( TorrentUrl,
+    Tag (..),
     TagList (..),
     fromTagText,
     isDownloading,
@@ -16,9 +17,12 @@ import Data.Text qualified as T
 import Effectful.QBittorrent (TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
+-- | URL for a torrent resource
+type TorrentUrl = Text
+
 -- | Tags used for torrent management
 data Tag = Moe | Rename | Subscription | Collection | Deletion
-  deriving stock (Eq, Show, Bounded, Enum)
+  deriving stock (Eq, Ord, Show, Bounded, Enum)
 
 instance ToText Tag where
   toText Moe = "moe"

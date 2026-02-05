@@ -1,6 +1,6 @@
 module Moe.App.Subscription.Washing
   ( WashingResult (..),
-    parseFilteredItem,
+    parseRawItem,
     processWashing,
     buildEpisodeMap,
   )
@@ -9,79 +9,59 @@ where
 import Data.List (findIndex)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Moe.App.Subscription.Types (DownloadTask (..), FilteredItem (..), ParsedItem (..))
 import Moe.Domain.Bangumi.Episode (Episode (..), EpisodeNumber (..))
 import Moe.Domain.Bangumi.Internal.Group (Group (..), GroupName (..))
 import Moe.Domain.Bangumi.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
-import Moe.Domain.Bangumi.Types (Bangumi (..))
+import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..))
 import Moe.Domain.Setting.Types (WashingConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
 import Moe.Prelude
 
 data WashingResult
-  = NewEpisode DownloadTask Episode
-  | UpgradeEpisode DownloadTask Episode Episode
+  = NewEpisode Episode
+  | UpgradeEpisode Episode Episode
   | SkipEpisode
   deriving stock (Show, Eq)
 
 buildEpisodeMap :: [Episode] -> Map EpisodeNumber Episode
 buildEpisodeMap = Map.fromList . map (\e -> (e.episodeNumber, e))
 
--- | Parse a filtered item: validate required fields and parse RSS title
-parseFilteredItem :: FilteredItem -> Maybe ParsedItem
-parseFilteredItem fi = do
-  title <- fi.item.title
-  torrentUrl <- fi.item.torrentUrl
-  infoHash <- fi.item.infoHash
-  bangumiId <- fi.bangumi.id
+-- | Parse a raw item: validate required fields and parse RSS title into an Episode
+parseRawItem :: Bangumi -> RawItem -> Maybe Episode
+parseRawItem bangumi item = do
+  title <- item.title
+  torrentUrl <- item.torrentUrl
+  infoHash <- item.infoHash
+  pubDate <- item.pubDate
   let parsed = parseRssTitle title
   epNum <- parsed.episode
   pure
-    ParsedItem
-      { bangumi = fi.bangumi,
-        bangumiId = bangumiId,
-        torrentUrl = torrentUrl,
-        infoHash = infoHash,
-        pubDate = fi.parsedPubDate,
+    Episode
+      { id = Nothing,
+        bangumiId = bangumi.id,
         episodeNumber = epNum,
         group = parsed.group,
-        resolution = parsed.resolution
+        resolution = parsed.resolution,
+        infoHash = infoHash,
+        torrentUrl = torrentUrl,
+        pubDate = pubDate,
+        createdAt = Nothing
       }
 
--- | Decide washing result for a parsed item against existing episodes
+-- | Decide washing result for a parsed episode against existing episodes
 processWashing ::
   Map EpisodeNumber Episode ->
   Maybe WashingConfig ->
-  ParsedItem ->
+  Episode ->
   WashingResult
-processWashing episodeMap mConfig pi_ =
-  let newEpisode =
-        Episode
-          { id = Nothing,
-            bangumiId = pi_.bangumiId,
-            episodeNumber = pi_.episodeNumber,
-            group = pi_.group,
-            resolution = pi_.resolution,
-            infoHash = pi_.infoHash,
-            torrentUrl = pi_.torrentUrl,
-            pubDate = pi_.pubDate,
-            createdAt = Nothing
-          }
-
-      task =
-        DownloadTask
-          { bangumi = pi_.bangumi,
-            torrentUrl = pi_.torrentUrl,
-            infoHash = Just pi_.infoHash,
-            pubDate = pi_.pubDate
-          }
-   in case Map.lookup pi_.episodeNumber episodeMap of
-        Nothing -> NewEpisode task newEpisode
-        Just existingEp ->
-          let groups = maybe [] (.groupPriority) mConfig
-           in if shouldUpgrade groups existingEp.group pi_.group
-                then UpgradeEpisode task newEpisode existingEp
-                else SkipEpisode
+processWashing episodeMap mConfig newEp =
+  case Map.lookup newEp.episodeNumber episodeMap of
+    Nothing -> NewEpisode newEp
+    Just existingEp ->
+      let groups = maybe [] (.groupPriority) mConfig
+       in if shouldUpgrade groups existingEp.group newEp.group
+            then UpgradeEpisode newEp existingEp
+            else SkipEpisode
 
 shouldUpgrade :: [Group] -> Maybe GroupName -> Maybe GroupName -> Bool
 shouldUpgrade _ Nothing (Just _) = True

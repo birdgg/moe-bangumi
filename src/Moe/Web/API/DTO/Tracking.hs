@@ -15,6 +15,7 @@ import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Moe.Domain.Bangumi.Types (BangumiId (..))
 import Moe.Domain.Bangumi.Types qualified as Bangumi
+import Moe.Domain.Rss.Types (PubDate)
 import Moe.Domain.Tracking.Types (Tracking (..), TrackingId (..), TrackingType (..))
 import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
@@ -38,7 +39,7 @@ data TrackingResponse = TrackingResponse
     trackingType :: TrackingType,
     rssUrl :: Maybe Text,
     rssEnabled :: Bool,
-    lastPubdate :: Maybe UTCTime,
+    lastPubdate :: Maybe PubDate,
     currentEpisode :: Word32,
     createdAt :: Maybe UTCTime
   }

@@ -7,6 +7,7 @@ where
 
 import Data.Time (UTCTime)
 import Moe.Domain.Bangumi.Types (BangumiId)
+import Moe.Domain.Rss.Types (PubDate)
 import Moe.Prelude
 
 newtype TrackingId = TrackingId Int64
@@ -25,7 +26,7 @@ data Tracking = Tracking
     trackingType :: TrackingType,
     rssUrl :: Maybe Text,
     rssEnabled :: Bool,
-    lastPubdate :: Maybe UTCTime,
+    lastPubdate :: Maybe PubDate,
     currentEpisode :: Word32,
     createdAt :: Maybe UTCTime
   }

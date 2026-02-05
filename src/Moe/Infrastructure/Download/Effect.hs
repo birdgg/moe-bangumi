@@ -38,7 +38,7 @@ data DownloadError
 -- | Abstract download effect for torrent management.
 data Download :: Effect where
   -- | Add a torrent with optional save path and tags.
-  AddTorrent :: Text -> Maybe Text -> Maybe TagList -> Download m ()
+  AddTorrent :: TorrentUrl -> Maybe Text -> Maybe TagList -> Download m ()
   -- | Get torrents by their info hashes.
   GetTorrentsByHashes :: [Text] -> Download m [TorrentInfo]
   -- | Get all torrents with a specific tag.
