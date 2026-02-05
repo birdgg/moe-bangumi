@@ -9,6 +9,7 @@ module Moe.Domain.Bangumi.File.Types
     Year,
     TmdbId (..),
     SeasonNumber (..),
+    GroupName (..),
     EpisodeType (..),
     ExtraContent (..),
     TrailerContent (..),
@@ -20,6 +21,7 @@ where
 
 import Data.Time.Calendar (Year)
 import Moe.Domain.Bangumi.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi.Internal.Group (GroupName (..))
 import Moe.Domain.Bangumi.Internal.Subtitle (SubtitleExt (..), SubtitleLang (..), SubtitleList)
 import Moe.Domain.Bangumi.Types (SeasonNumber (..), TmdbId (..))
 import Moe.Prelude
@@ -81,6 +83,7 @@ data BangumiMeta = BangumiMeta
 data BangumiFile = BangumiFile
   { meta :: BangumiMeta,
     content :: BangumiContent,
-    fileType :: FileType
+    fileType :: FileType,
+    group :: Maybe GroupName
   }
   deriving stock (Eq, Show)

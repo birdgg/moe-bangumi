@@ -16,7 +16,7 @@ import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, transact)
 import Moe.App.Subscription.Filter (filterItems)
 import Moe.App.Subscription.Types
-import Moe.App.Subscription.Washing (WashingResult (..), buildEpisodeMap, parseRawItem, processWashing)
+import Moe.App.Subscription.Washing (buildEpisodeMap, parseRawItem, processWashing)
 import Moe.Domain.Bangumi.Episode (Episode (..))
 import Moe.Domain.Bangumi.File.Naming (generateBaseName, generatePath)
 import Moe.Domain.Bangumi.File.Types (BangumiFile (..), BangumiMeta (..), EpisodeType (..), FileType (..), VideoExt (..))
@@ -56,7 +56,6 @@ runSubscription = do
             ]
       Right () -> pass
 
--- | Process a single RSS source: fetch -> filter -> wash -> download -> save
 runSingleRss ::
   (Rss :> es, Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   UserPreference ->
@@ -65,47 +64,36 @@ runSingleRss ::
 runSingleRss pref ctx = do
   items <- runErrorNoCallStack @RssError (fetchRss ctx.rssUrl) >>= either throwIO pure
   let filtered = filterItems pref.filter ctx items
-  washingResults <- transact $ do
+  (toAdd, toDelete) <- transact $ do
     let parsedEpisodes = mapMaybe (parseRawItem ctx.bangumi) filtered
         bid = ctx.bangumi.id
     episodes <- EpisodeDB.listEpisodesByBangumi bid
     let episodeMap = buildEpisodeMap episodes
-    pure $ map (processWashing episodeMap pref.washing) parsedEpisodes
+    pure $ processWashing episodeMap pref.washing parsedEpisodes
 
-  let (newEpisodes, upgradeEpisodes) = partitionResults washingResults
-  processNewEpisodes ctx.bangumi newEpisodes
-  processUpgrades ctx.bangumi upgradeEpisodes
+  processDeletes toDelete
+  processDownloads ctx.bangumi toAdd
 
-partitionResults :: [WashingResult] -> ([Episode], [(Episode, Episode)])
-partitionResults = foldr go ([], [])
-  where
-    go SkipEpisode acc = acc
-    go (NewEpisode ep) (news, ups) = (ep : news, ups)
-    go (UpgradeEpisode newEp oldEp) (news, ups) = (news, (newEp, oldEp) : ups)
-
--- | Process new episodes: add torrent and save to database
-processNewEpisodes ::
+-- | Download episodes and save to database
+processDownloads ::
   (Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Bangumi ->
   [Episode] ->
   Eff es ()
-processNewEpisodes _ [] = pass
-processNewEpisodes bangumi episodes = do
+processDownloads _ [] = pass
+processDownloads bangumi episodes = do
   forM_ episodes $ addSubscriptionTorrent bangumi
   transact $ mapM_ EpisodeDB.upsertEpisode episodes
 
--- | Process upgrades: delete old torrents and add new ones.
-processUpgrades ::
-  (Download :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
-  Bangumi ->
-  [(Episode, Episode)] ->
+-- | Delete old torrents that were replaced by upgrades
+processDeletes ::
+  (Download :> es, Log :> es, IOE :> es) =>
+  [Episode] ->
   Eff es ()
-processUpgrades _ [] = pass
-processUpgrades bangumi tasks = do
-  let oldHashes = map (\(_, oldEp) -> oldEp.infoHash) tasks
-  deleteTorrents oldHashes True
-  forM_ tasks $ addSubscriptionTorrent bangumi . fst
-  transact $ mapM_ (\(newEp, _) -> EpisodeDB.upsertEpisode newEp) tasks
+processDeletes [] = pass
+processDeletes episodes = do
+  let hashes = map (.infoHash) episodes
+  deleteTorrents hashes True
 
 addSubscriptionTorrent :: (Download :> es) => Bangumi -> Episode -> Eff es ()
 addSubscriptionTorrent bangumi ep = do
@@ -119,10 +107,6 @@ addSubscriptionTorrent bangumi ep = do
           }
   addTorrent params
 
--- | Build a BangumiFile from Bangumi metadata and Episode info.
---
--- Used to generate media-server-compliant save paths and file names.
--- The fileType is a placeholder since generatePath and generateBaseName don't use it.
 toBangumiFile :: Bangumi -> Episode -> BangumiFile
 toBangumiFile bangumi ep =
   let meta =
@@ -133,4 +117,4 @@ toBangumiFile bangumi ep =
           }
       seasonNum = fromMaybe (SeasonNumber 1) bangumi.season
       content = File.Episode (Regular seasonNum ep.episodeNumber)
-   in BangumiFile {meta, content, fileType = Video MKV}
+   in BangumiFile {meta, content, fileType = Video MKV, group = ep.group}

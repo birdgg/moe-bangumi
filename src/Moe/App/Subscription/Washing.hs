@@ -1,6 +1,5 @@
 module Moe.App.Subscription.Washing
-  ( WashingResult (..),
-    parseRawItem,
+  ( parseRawItem,
     processWashing,
     buildEpisodeMap,
   )
@@ -16,12 +15,6 @@ import Moe.Domain.Bangumi.Types (Bangumi, BangumiF (..))
 import Moe.Domain.Setting.Types (WashingConfig (..))
 import Moe.Infrastructure.Rss.Types (RawItem (..))
 import Moe.Prelude
-
-data WashingResult
-  = NewEpisode Episode
-  | UpgradeEpisode Episode Episode
-  | SkipEpisode
-  deriving stock (Show, Eq)
 
 buildEpisodeMap :: [Episode] -> Map EpisodeNumber Episode
 buildEpisodeMap = Map.fromList . map (\e -> (e.episodeNumber, e))
@@ -48,20 +41,26 @@ parseRawItem bangumi item = do
         createdAt = Nothing
       }
 
--- | Decide washing result for a parsed episode against existing episodes
+-- | Process washing for a list of parsed episodes against existing episodes.
+--
+-- Returns (toAdd, toDelete):
+-- - toAdd: episodes to download (new episodes + upgraded new versions)
+-- - toDelete: old episodes to remove (replaced by upgrades)
 processWashing ::
   Map EpisodeNumber Episode ->
   Maybe WashingConfig ->
-  Episode ->
-  WashingResult
-processWashing episodeMap mConfig newEp =
-  case Map.lookup newEp.episodeNumber episodeMap of
-    Nothing -> NewEpisode newEp
-    Just existingEp ->
-      let groups = maybe [] (.groupPriority) mConfig
-       in if shouldUpgrade groups existingEp.group newEp.group
-            then UpgradeEpisode newEp existingEp
-            else SkipEpisode
+  [Episode] ->
+  ([Episode], [Episode])
+processWashing episodeMap mConfig = foldr go ([], [])
+  where
+    groups = maybe [] (.groupPriority) mConfig
+    go newEp (adds, deletes) =
+      case Map.lookup newEp.episodeNumber episodeMap of
+        Nothing -> (newEp : adds, deletes)
+        Just existingEp
+          | shouldUpgrade groups existingEp.group newEp.group ->
+              (newEp : adds, existingEp : deletes)
+          | otherwise -> (adds, deletes)
 
 shouldUpgrade :: [Group] -> Maybe GroupName -> Maybe GroupName -> Bool
 shouldUpgrade _ Nothing (Just _) = True

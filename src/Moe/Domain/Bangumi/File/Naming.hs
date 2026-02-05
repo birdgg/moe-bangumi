@@ -22,7 +22,7 @@ generatePath file = case file.content of
 -- | Generate file base name without extension.
 generateBaseName :: BangumiFile -> FilePath
 generateBaseName file = toString $ case file.content of
-  Episode epType -> episodeBaseName file.meta.name epType
+  Episode epType -> episodeBaseName file.meta.name file.group epType
   Extra extra -> extraBaseName extra
   TrailerItem trailer -> trailerBaseName trailer
   Movie movieYear -> nameWithYear file.meta.name movieYear
@@ -31,7 +31,7 @@ generateFileName :: BangumiFile -> FilePath
 generateFileName file = T.unpack $ baseName <> extension
   where
     baseName = case file.content of
-      Episode epType -> episodeBaseName file.meta.name epType
+      Episode epType -> episodeBaseName file.meta.name file.group epType
       Extra extra -> extraBaseName extra
       TrailerItem trailer -> trailerBaseName trailer
       Movie movieYear -> nameWithYear file.meta.name movieYear
@@ -63,12 +63,15 @@ episodeDir = \case
   Regular (SeasonNumber s) _ -> T.unpack $ "Season " <> padded s
   Special _ -> "Season 00"
 
-episodeBaseName :: Text -> EpisodeType -> Text
-episodeBaseName name = \case
-  Regular (SeasonNumber s) ep ->
-    sanitizeName name <> " - S" <> padded s <> "E" <> toText ep
-  Special ep ->
-    sanitizeName name <> " - S00E" <> toText ep
+episodeBaseName :: Text -> Maybe GroupName -> EpisodeType -> Text
+episodeBaseName name mGroup epType =
+  let base = case epType of
+        Regular (SeasonNumber s) ep ->
+          sanitizeName name <> " - S" <> padded s <> "E" <> toText ep
+        Special ep ->
+          sanitizeName name <> " - S00E" <> toText ep
+      groupSuffix = maybe "" (\g -> " [" <> toText g <> "]") mGroup
+   in base <> groupSuffix
 
 extraBaseName :: ExtraContent -> Text
 extraBaseName = \case
