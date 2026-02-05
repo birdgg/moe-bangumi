@@ -13,10 +13,6 @@
 
 - ignore:
     name: Redundant id
-    within:
-      - Moe.Adapter.Database.Bangumi
-      - Moe.Adapter.Database.Orphans
-      - Moe.Web.API.Types
 
 - ignore:
     name: Use head
