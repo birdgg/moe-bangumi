@@ -7,6 +7,7 @@ module Moe.Domain.Setting.Types
     TMDBConfig (..),
     Regex,
     defaultUserPreference,
+    defaultDownloaderConfig,
     defaultFilterConfig,
     defaultWashingConfig,
   )
@@ -57,7 +58,7 @@ data TMDBConfig = TMDBConfig
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
 data UserPreference = UserPreference
-  { downloader :: Maybe DownloaderConfig,
+  { downloader :: DownloaderConfig,
     filter :: Maybe FilterConfig,
     washing :: Maybe WashingConfig,
     notification :: Maybe NotificationConfig,
@@ -69,11 +70,21 @@ data UserPreference = UserPreference
 defaultUserPreference :: UserPreference
 defaultUserPreference =
   UserPreference
-    { downloader = Nothing,
+    { downloader = defaultDownloaderConfig,
       filter = Just defaultFilterConfig,
       washing = Just defaultWashingConfig,
       notification = Nothing,
       tmdb = Nothing
+    }
+
+-- | Default downloader config with empty fields.
+defaultDownloaderConfig :: DownloaderConfig
+defaultDownloaderConfig =
+  DownloaderConfig
+    { url = "",
+      username = "",
+      password = "",
+      savePath = ""
     }
 
 defaultFilterConfig :: FilterConfig

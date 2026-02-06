@@ -1,7 +1,6 @@
 module Moe.App.Effect.Runner
   ( runBaseEffects,
     runMetadataEffects,
-    runRssEffects,
     runSubscriptionEffects,
     runRenameEffects,
     runCalendarSyncEffects,
@@ -18,7 +17,7 @@ import Effectful.Log (Log, Logger)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (Sqlite, SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
-import Moe.App.Job.Types (MetadataJobEffects, RenameJobEffects, RssJobEffects, SubscriptionJobEffects)
+import Moe.App.Job.Types (MetadataJobEffects, RenameJobEffects, SubscriptionJobEffects)
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Domain.Scheduler.Types (JobResult (..))
 import Moe.Domain.Setting.Types (UserPreference (..))
@@ -65,19 +64,6 @@ runMetadataEffects env logger logPrefix action =
           runBangumiDataHttp env.httpManager $
             runMetadataHttp env.httpManager action
 
-runRssEffects ::
-  MoeEnv ->
-  Logger ->
-  Text ->
-  Eff RssJobEffects JobResult ->
-  IO JobResult
-runRssEffects env logger logPrefix action =
-  runBaseEffects env logger logPrefix $
-    runFileSystem $
-      runErrorWith (logMoeError logPrefix) $
-        runSetting env.settingEnv $
-          runRss env.httpManager action
-
 logMoeError :: (Log :> es) => Text -> a -> MoeError -> Eff es JobResult
 logMoeError logPrefix _ err = do
   Log.logAttention_ $ logPrefix <> " error: " <> show err
@@ -122,13 +108,8 @@ runRenameEffects env logger logPrefix action =
       runSetting env.settingEnv $
         runErrorWith (logMoeError logPrefix) $ do
         pref <- getSetting
-        case pref.downloader of
-          Nothing -> do
-            Log.logAttention_ $ logPrefix <> " downloader config missing"
-            pure $ JobFailure "Downloader config missing"
-          Just dlCfg ->
-            runDownloadQBittorrent dlCfg $
-              runNotificationDynamic env.httpManager action
+        runDownloadQBittorrent env.downloadEnv env.httpManager pref.downloader $
+          runNotificationDynamic env.httpManager action
 
 -- | Run subscription job effects (RSS + Download).
 runSubscriptionEffects ::
@@ -144,10 +125,5 @@ runSubscriptionEffects env logger logPrefix action =
         runErrorWith (logMoeError logPrefix) $
         runRss env.httpManager $ do
           pref <- getSetting
-          case pref.downloader of
-            Nothing -> do
-              Log.logAttention_ $ logPrefix <> " downloader config missing"
-              pure $ JobFailure "Downloader config missing"
-            Just cfg ->
-              runDownloadQBittorrent cfg action
+          runDownloadQBittorrent env.downloadEnv env.httpManager pref.downloader action
 

@@ -160,7 +160,7 @@ library
     effectful,
     effectful-core,
     effectful-plugin,
-    effectful-qbittorrent,
+    qbittorrent,
     effectful-sqlite,
     effectful-th,
     filepath,

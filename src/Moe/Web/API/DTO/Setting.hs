@@ -62,7 +62,7 @@ data TMDBConfigResponse = TMDBConfigResponse
 toSettingResponse :: Setting.UserPreference -> SettingResponse
 toSettingResponse pref =
   SettingResponse
-    { downloader = toDownloaderResponse <$> pref.downloader,
+    { downloader = Just $ toDownloaderResponse pref.downloader,
       filter = toFilterResponse <$> pref.filter,
       washing = toWashingResponse <$> pref.washing,
       notification = toNotificationResponse <$> pref.notification,

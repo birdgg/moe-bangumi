@@ -24,19 +24,17 @@ runRename = do
   torrents <- getRenameTorrents
   let completed = filter isCompleted torrents
   pref <- getSetting
-  case pref.downloader of
-    Nothing -> Log.logAttention_ "rename: downloader config missing"
-    Just dlCfg ->
-      forM_ completed $ \torrent -> do
-        let hash = infoHashToText torrent.hash
-            tags = torrent.tags
-        when (subscriptionTag `elem` tags) $ do
-          result <- try @SomeException $ renameSubscription dlCfg torrent hash
-          case result of
-            Left ex ->
-              Log.logAttention_ $
-                "rename: failed for " <> torrent.name <> " - " <> toText (displayException ex)
-            Right () -> pass
+  let dlCfg = pref.downloader
+  forM_ completed $ \torrent -> do
+    let hash = torrent.hash.unInfoHash
+        tags = torrent.tags
+    when (subscriptionTag `elem` tags) $ do
+      result <- try @SomeException $ renameSubscription dlCfg torrent hash
+      case result of
+        Left ex ->
+          Log.logAttention_ $
+            "rename: failed for " <> torrent.name <> " - " <> toText (displayException ex)
+        Right () -> pass
 
 -- | Rename and move a subscription torrent from tmp to save path.
 renameSubscription ::

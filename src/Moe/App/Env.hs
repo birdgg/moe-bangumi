@@ -21,6 +21,7 @@ import Effectful.FileSystem (FileSystem)
 import Effectful.Sqlite (SqlitePool (..))
 import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), LogDestination (..), defaultLogConfig)
+import Moe.Infrastructure.Download.Adapter (DownloadEnv, initDownloadEnv)
 import Moe.Infrastructure.Setting.Effect (SettingEnv, initSettingEnv)
 import Moe.Prelude
 import Network.HTTP.Client (Manager, newManager)
@@ -48,7 +49,8 @@ data MoeEnv = MoeEnv
   { config :: MoeConfig,
     settingEnv :: SettingEnv,
     httpManager :: Manager,
-    dbPool :: SqlitePool
+    dbPool :: SqlitePool,
+    downloadEnv :: DownloadEnv
   }
 
 defaultMoeConfig :: MoeConfig
@@ -90,7 +92,8 @@ mkMoeEnv config = do
   settingEnv <- initSettingEnv settingPath
   httpManager <- liftIO $ newManager tlsManagerSettings
   dbPool <- mkDbPool (getDatabasePath' config)
-  pure MoeEnv {config, settingEnv, httpManager, dbPool}
+  downloadEnv <- initDownloadEnv
+  pure MoeEnv {config, settingEnv, httpManager, dbPool, downloadEnv}
 
 mkDbPool :: (IOE :> es) => FilePath -> Eff es SqlitePool
 mkDbPool dbPath = liftIO $ do

@@ -1,7 +1,6 @@
 module Moe.App.Job.Types
   ( BaseJobEffects,
     MetadataJobEffects,
-    RssJobEffects,
     SubscriptionJobEffects,
     RenameJobEffects,
     JobAction,
@@ -35,17 +34,6 @@ type MetadataJobEffects =
      BangumiData,
      Error MoeError,
      Setting,
-     FileSystem,
-     Log,
-     Sqlite,
-     Concurrent,
-     IOE
-   ]
-
-type RssJobEffects =
-  '[ Rss,
-     Setting,
-     Error MoeError,
      FileSystem,
      Log,
      Sqlite,

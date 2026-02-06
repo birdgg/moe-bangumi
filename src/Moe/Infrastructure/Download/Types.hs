@@ -2,8 +2,6 @@
 module Moe.Infrastructure.Download.Types
   ( TorrentUrl,
     AddTorrentParams (..),
-    infoHashToText,
-    isDownloading,
     isCompleted,
 
     -- * Tags
@@ -13,7 +11,7 @@ module Moe.Infrastructure.Download.Types
     collectionTag,
     deletionTag,
 
-    -- * Re-exports from effectful-qbittorrent
+    -- * Re-exports from qbittorrent
     Tag (..),
     TorrentInfo (..),
     TorrentFile (..),
@@ -22,7 +20,7 @@ module Moe.Infrastructure.Download.Types
   )
 where
 
-import Effectful.QBittorrent (InfoHash (..), Tag (..), TorrentFile (..), TorrentInfo (..), TorrentState (..))
+import Network.QBittorrent.Types (InfoHash (..), Tag (..), TorrentFile (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | URL for a torrent resource
@@ -56,24 +54,6 @@ collectionTag = "collection"
 -- | Tag for torrents marked for deletion.
 deletionTag :: Tag
 deletionTag = "deletion"
-
--- | Extract Text from InfoHash.
-infoHashToText :: InfoHash -> Text
-infoHashToText = (.unInfoHash)
-
--- | Check if torrent is currently downloading.
-isDownloading :: TorrentInfo -> Bool
-isDownloading t = t.state `elem` downloadingStates
-  where
-    downloadingStates =
-      [ Downloading,
-        StalledDL,
-        MetaDL,
-        ForcedDL,
-        QueuedDL,
-        CheckingDL,
-        Allocating
-      ]
 
 -- | Check if torrent download is completed.
 isCompleted :: TorrentInfo -> Bool

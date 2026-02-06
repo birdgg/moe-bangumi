@@ -1,6 +1,5 @@
 module Moe.App.Job.Runner
   ( runMetadataJob,
-    runRssJob,
     runSubscriptionJob,
     runRenameJob,
   )
@@ -11,11 +10,10 @@ import Effectful.Log (Logger)
 import Moe.App.Effect.Runner
   ( runMetadataEffects,
     runRenameEffects,
-    runRssEffects,
     runSubscriptionEffects,
   )
 import Moe.App.Env (MoeEnv)
-import Moe.App.Job.Types (MetadataJobEffects, RenameJobEffects, RssJobEffects, SubscriptionJobEffects)
+import Moe.App.Job.Types (MetadataJobEffects, RenameJobEffects, SubscriptionJobEffects)
 import Moe.Domain.Scheduler.Types (JobResult)
 import Moe.Prelude
 
@@ -26,14 +24,6 @@ runMetadataJob ::
   Eff MetadataJobEffects JobResult ->
   IO JobResult
 runMetadataJob logPrefix logger env = runMetadataEffects env logger logPrefix
-
-runRssJob ::
-  Text ->
-  Logger ->
-  MoeEnv ->
-  Eff RssJobEffects JobResult ->
-  IO JobResult
-runRssJob logPrefix logger env = runRssEffects env logger logPrefix
 
 runSubscriptionJob ::
   Text ->

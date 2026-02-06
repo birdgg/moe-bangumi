@@ -9,7 +9,6 @@ module Moe.Infrastructure.Download.Effect
     -- * Operations
     addTorrent,
     getTorrentsByHashes,
-    getTorrentsWithTag,
     getRenameTorrents,
     getTorrentFiles,
     renameTorrentFile,
@@ -18,9 +17,6 @@ module Moe.Infrastructure.Download.Effect
     deleteTorrents,
     addTagsToTorrents,
     removeTagsFromTorrents,
-
-    -- * Error
-    DownloadError (..),
 
     -- * Re-exports from Types
     module Moe.Infrastructure.Download.Types,
@@ -32,21 +28,12 @@ import Effectful.TH (makeEffect)
 import Moe.Infrastructure.Download.Types
 import Moe.Prelude
 
--- | Download error types.
-data DownloadError
-  = ConnectionFailed Text
-  | AuthenticationFailed Text
-  | OperationFailed Text
-  deriving stock (Eq, Show)
-
 -- | Abstract download effect for torrent management.
 data Download :: Effect where
   -- | Add a torrent with configurable save path, rename, and tags.
   AddTorrent :: AddTorrentParams -> Download m ()
   -- | Get torrents by their info hashes.
   GetTorrentsByHashes :: [Text] -> Download m [TorrentInfo]
-  -- | Get all torrents with a specific tag.
-  GetTorrentsWithTag :: Tag -> Download m [TorrentInfo]
   -- | Get all torrents with the Rename tag.
   GetRenameTorrents :: Download m [TorrentInfo]
   -- | Get files within a torrent by its hash.

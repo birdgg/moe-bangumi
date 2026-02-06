@@ -54,6 +54,5 @@
       "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\n\nmatchPattern subChsPattern \"简体中文\"\nmatchPattern subChsPattern \"CHS\"\nmatchPattern subChtPattern \"繁體\"\nmatchPattern subJpnPattern \"日本語\"\nmatchPattern subEngPattern \"英语\"\nmatchPattern subEngPattern \"ENG\"\nEOF)",
       "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nmatchPattern seasonPattern \"第二季\"\nEOF)"
     ]
-  },
-  "plansDirectory": "./plans"
+  }
 }
