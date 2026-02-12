@@ -10,6 +10,7 @@ type ServerRoutes = NamedRoutes Routes
 
 data Routes mode = Routes
   { api :: mode :- API.Routes,
-    doc :: mode :- ScalarUI "docs" "openapi.json"
+    doc :: mode :- ScalarUI "docs" "openapi.json",
+    spa :: mode :- Raw
   }
   deriving stock (Generic)

@@ -54,6 +54,7 @@ import Servant
   )
 import Servant.OpenApi
 import Servant.Scalar (scalarUIServer')
+import Servant.Server.StaticFiles (serveDirectoryFileServer)
 import Servant.Server.Generic (AsServerT)
 
 runServer :: (RequireCallStack, IOE :> es) => Logger -> MoeEnv -> Eff es ()
@@ -73,7 +74,8 @@ moeServer :: (RequireCallStack) => Routes (AsServerT ServerEff)
 moeServer =
   Routes
     { api = API.apiServer,
-      doc = scalarUIServer' (pure openApiHandler)
+      doc = scalarUIServer' (pure openApiHandler),
+      spa = serveDirectoryFileServer "web/dist"
     }
 
 naturalTransform :: (RequireCallStack) => MoeEnv -> Logger -> ServerEff a -> Handler a
