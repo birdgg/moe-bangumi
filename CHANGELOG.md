@@ -1,5 +1,13 @@
 # Revision history for moe-bangumi
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 1.0.0 -- 2026-02-12
 
-* First version. Released on an unsuspecting world.
+* Initial release
+* Bangumi subscription and automatic downloading via RSS
+* File renaming and organization for media servers (Plex, Emby, Jellyfin)
+* Collection and subscription rename strategies
+* Calendar sync
+* Web API with Servant
+* Metadata integration (TMDB, Bangumi.tv, BangumiData)
+* Notification support
+* qBittorrent downloader integration
