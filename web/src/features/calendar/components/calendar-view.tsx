@@ -71,7 +71,8 @@ export function CalendarView() {
 
   const labelToSeason = new Map(SEASONS.map((s) => [s.label, s.value]))
 
-  const handleSeasonChange = (value: string) => {
+  const handleSeasonChange = (value: string | null) => {
+    if (!value) return
     const [y, label] = value.split("-")
     setYear(Number(y))
     setSeason(labelToSeason.get(label) ?? season)

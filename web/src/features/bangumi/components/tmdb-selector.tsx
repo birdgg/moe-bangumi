@@ -12,7 +12,6 @@ import {
   IconSearch,
   IconX,
   IconCheck,
-  IconExternalLink,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 

@@ -179,6 +179,7 @@ export function MediaLibrarySection({ form }: MediaLibrarySectionProps) {
                   <Select
                     value={field.state.value || null}
                     onValueChange={(val) => {
+                      if (!val) return;
                       field.handleChange(val);
                       const lib = libraries.find((l) => l.libraryId === val);
                       form.setFieldValue("emby.libraryName", lib?.libraryName ?? "");

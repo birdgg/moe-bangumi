@@ -61,7 +61,7 @@ export function useSettingsForm() {
   });
 
   const defaultValues = serverData
-    ? fromUserPreference(serverData as ApiUserPreference)
+    ? fromUserPreference(serverData as unknown as ApiUserPreference)
     : getDefaultFormData();
 
   const form = useForm({
@@ -75,7 +75,7 @@ export function useSettingsForm() {
   useEffect(() => {
     if (serverData && !hasReset.current) {
       hasReset.current = true;
-      form.reset(fromUserPreference(serverData as ApiUserPreference));
+      form.reset(fromUserPreference(serverData as unknown as ApiUserPreference));
     }
   }, [serverData, form]);
 
