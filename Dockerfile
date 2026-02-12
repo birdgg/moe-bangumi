@@ -22,8 +22,8 @@ RUN apk add --no-cache \
     sqlite-dev \
     sqlite-static
 
-# Copy only the cabal file first (for dependency caching)
-COPY moe-bangumi.cabal ./
+# Copy cabal files (cabal.project has source-repository-package deps)
+COPY moe-bangumi.cabal cabal.project ./
 
 # Update cabal index and build dependencies only
 RUN cabal update && \
