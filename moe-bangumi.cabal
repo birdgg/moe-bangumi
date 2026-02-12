@@ -1,0 +1,259 @@
+cabal-version: 3.4
+name: moe-bangumi
+version: 0.1.0.0
+description: A Bangumi Management Tool
+homepage: https://github.com/birdgg/moe-bangumi
+license: MIT
+license-file: LICENSE
+author: birdgg
+maintainer: birdeggegg@gmail.com
+build-type: Simple
+extra-doc-files: CHANGELOG.md
+
+common common-extensions
+  default-extensions:
+    DataKinds
+    DeepSubsumption
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    GADTs
+    LambdaCase
+    NoImplicitPrelude
+    NoStarIsType
+    NumericUnderscores
+    OverloadedLabels
+    OverloadedRecordDot
+    OverloadedStrings
+    PackageImports
+    PolyKinds
+    StrictData
+    TemplateHaskell
+    TypeFamilies
+    UndecidableInstances
+    ViewPatterns
+
+  default-language: GHC2024
+
+common common-ghc-options
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -fhide-source-paths
+    -Wno-unused-do-bind
+    -fshow-hole-constraints
+    -Wno-unticked-promoted-constructors
+    -Werror=unused-imports
+    -fdicts-strict
+    -fmax-worker-args=16
+    -fspec-constr-recursive=16
+    -Wunused-packages
+    -flate-specialise
+    -funbox-strict-fields
+    -finline-generics-aggressively
+    -fexpose-all-unfoldings
+    -fplugin=Effectful.Plugin
+
+common common-rts-options
+  ghc-options:
+    -rtsopts
+    -threaded
+    "-with-rtsopts=-N -T"
+
+library
+  import: common-extensions, common-ghc-options
+  hs-source-dirs: src
+  exposed-modules:
+    Moe.App.Bootstrap
+    Moe.App.Calendar
+    Moe.Job.Effect
+    Moe.App.Env
+    Moe.App.Logging
+    Moe.App.Monad
+    Moe.Job.Rename
+    Moe.Job.Rename.Process
+    Moe.Job.Rename.Strategy.Collection
+    Moe.Job.Rename.Strategy.Subscription
+    Moe.Job.Rename.Util
+    Moe.Job.Rename.Worker
+    Moe.Job.Subscription
+    Moe.Job.Subscription.Download
+    Moe.Job.Subscription.Filter
+    Moe.Job.Subscription.Process
+    Moe.Job.Subscription.Types
+    Moe.Job.Subscription.Washing
+    Moe.Job.Subscription.Worker
+    Moe.Domain.File
+    Moe.Domain.Episode
+    Moe.Domain.Shared
+    Moe.Domain.Shared.Group
+    Moe.Domain.Shared.Metadata
+    Moe.Domain.Shared.Numbering
+    Moe.Domain.Parser
+    Moe.Domain.Parser.OriginalTitle
+    Moe.Domain.Parser.Collection
+    Moe.Domain.Parser.Internal.Pattern
+    Moe.Domain.Parser.RssTitle
+    Moe.Domain.Bangumi.Language
+    Moe.Domain.Bangumi.Season
+    Moe.Domain.Bangumi
+    Moe.Domain.Setting
+    Moe.Domain.Rss
+    Moe.Domain.Shared.Subtitle
+    Moe.Domain.Shared.Entity
+    Moe.Domain.Tracking
+    Moe.Error
+    Moe.Infra.Metadata
+    Moe.Infra.Metadata.BangumiData
+    Moe.Infra.Metadata.BangumiData.API
+    Moe.Infra.Metadata.BangumiData.Types
+    Moe.Infra.Database
+    Moe.Infra.Database.Bangumi
+    Moe.Infra.Database.Episode
+    Moe.Infra.Database.Tracking
+    Moe.Infra.Database.Types
+    Moe.Infra.Downloader
+    Moe.Infra.Downloader.Adapter
+    Moe.Infra.Downloader.Effect
+    Moe.Infra.Downloader.Types
+    Moe.Infra.Media
+    Moe.Infra.Media.Adapter
+    Moe.Infra.Media.Client
+    Moe.Infra.Media.Effect
+    Moe.Infra.Media.Types
+    Moe.Infra.Metadata.Bgmtv
+    Moe.Infra.Metadata.Effect
+    Moe.Infra.Metadata.Tmdb
+    Moe.Infra.Metadata.Types
+    Moe.Infra.Notification
+    Moe.Infra.Notification.API
+    Moe.Infra.Notification.Adapter
+    Moe.Infra.Notification.Client
+    Moe.Infra.Notification.Effect
+    Moe.Infra.Notification.Types
+    Moe.Infra.Rss
+    Moe.Infra.Rss.Client
+    Moe.Infra.Rss.Effect
+    Moe.Infra.Rss.Source
+    Moe.Infra.Rss.Types
+    Moe.Infra.Setting
+    Moe.Infra.Setting.Effect
+    Moe.Prelude
+    Moe.Web.API.Calendar.Handler
+    Moe.Web.API.DTO.Bangumi
+    Moe.Web.API.DTO.Calendar
+    Moe.Web.API.DTO.Downloader
+    Moe.Web.API.DTO.Log
+    Moe.Web.API.DTO.Media
+    Moe.Web.API.DTO.Notification
+    Moe.Web.API.DTO.Rss
+    Moe.Web.API.DTO.Setting
+    Moe.Web.API.DTO.Tracking
+    Moe.Web.API.Bangumi.Handler
+    Moe.Web.API.Downloader.Handler
+    Moe.Web.API.Log.Handler
+    Moe.Web.API.Media.Handler
+    Moe.Web.API.Notification.Handler
+    Moe.Web.API.Routes
+    Moe.Web.API.Rss.Handler
+    Moe.Web.API.Server
+    Moe.Web.API.Setting.Handler
+    Moe.Web.API.Tracking.Handler
+    Moe.Web.Routers
+    Moe.Web.Server
+    Moe.Web.Types
+    Moe.Job.CalendarSync
+    Moe.Job.CalendarSync.Process
+    Moe.Job.CalendarSync.Worker
+
+  other-modules:
+    Moe.Orphans
+
+  build-depends:
+    aeson ^>=2.2,
+    base ^>=4.22.0.0,
+    bgmtv,
+    bytestring,
+    containers,
+    directory,
+    effectful,
+    effectful-core,
+    effectful-plugin,
+    qbittorrent,
+    effectful-sqlite,
+    effectful-th,
+    filepath,
+    http-api-data >= 0.7,
+    http-client,
+    http-client-tls,
+    http-media,
+    http-types,
+    log-base,
+    log-effectful,
+    mtl,
+    openapi3,
+    pcre2,
+    relude,
+    require-callstack,
+    resource-pool,
+    safe-exceptions,
+    servant,
+    servant-client,
+    servant-client-core,
+    servant-openapi3,
+    servant-scalar,
+    servant-server,
+    sqlite-simple,
+    text,
+    text-display,
+    validation-selective,
+    time,
+    tmdb,
+    warp,
+    xml-conduit,
+
+executable moe-cli
+  import: common-extensions, common-ghc-options, common-rts-options
+  main-is: Main.hs
+  hs-source-dirs: app
+  build-depends:
+    base ^>=4.22.0.0,
+    effectful,
+    effectful-core,
+    effectful-plugin,
+    moe-bangumi,
+    require-callstack,
+    text-display,
+
+test-suite moe-bangumi-test
+  import: common-extensions, common-ghc-options
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  other-modules:
+    Moe.Job.Subscription.WashingSpec
+    Moe.Domain.FileSpec
+    Moe.Domain.Parser.OriginalTitleSpec
+    Moe.Domain.Parser.RssTitleSpec
+    Moe.Infra.Metadata.BangumiData.TypesSpec
+    Moe.Job.Rename.Strategy.CollectionSpec
+
+  build-depends:
+    base ^>=4.22.0.0,
+    containers,
+    directory,
+    effectful,
+    effectful-core,
+    effectful-plugin,
+    http-client-tls,
+    log-effectful,
+    moe-bangumi,
+    tasty,
+    tasty-hunit,
+    text,
+    time,

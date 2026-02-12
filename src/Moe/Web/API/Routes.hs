@@ -1,0 +1,131 @@
+module Moe.Web.API.Routes where
+
+import Data.Time.Calendar (Day, Year)
+import Moe.Domain.Bangumi (Season)
+import Moe.Domain.Setting (UserPreference)
+import Moe.Prelude
+import Moe.Web.API.DTO.Calendar (CalendarEntry)
+import Moe.Infra.Media.Types (MediaLibrary)
+import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
+import Moe.Web.API.DTO.Log (LogsResponse)
+import Moe.Web.API.DTO.Media (ImportLibraryRequest, ImportResult, TestMediaRequest, TestMediaResponse)
+import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationResponse)
+import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
+import Moe.Web.API.DTO.Bangumi (TmdbSearchResult, UpdateBangumiTmdbIdRequest)
+import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, TrackingWithBangumiResponse, UpdateTrackingRequest)
+import Servant
+
+type Routes = "api" :> NamedRoutes Routes'
+
+data Routes' mode = Routes'
+  { health :: mode :- "health" :> Get '[JSON] Text,
+    calendar ::
+      mode
+        :- "calendar"
+          :> QueryParam' '[Required, Strict] "year" Year
+          :> QueryParam' '[Required, Strict] "season" Season
+          :> Get '[JSON] [CalendarEntry],
+    getSetting ::
+      mode
+        :- "settings"
+          :> Get '[JSON] UserPreference,
+    updateSetting ::
+      mode
+        :- "settings"
+          :> ReqBody '[JSON] UserPreference
+          :> Put '[JSON] UserPreference,
+    listTracking ::
+      mode
+        :- "tracking"
+          :> Get '[JSON] [TrackingResponse],
+    listTrackingWithBangumi ::
+      mode
+        :- "tracking"
+          :> "bangumis"
+          :> Get '[JSON] [TrackingWithBangumiResponse],
+    getTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> Get '[JSON] TrackingResponse,
+    createTracking ::
+      mode
+        :- "tracking"
+          :> ReqBody '[JSON] CreateTrackingRequest
+          :> Post '[JSON] TrackingResponse,
+    updateTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> ReqBody '[JSON] UpdateTrackingRequest
+          :> Put '[JSON] TrackingResponse,
+    deleteTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> Delete '[JSON] NoContent,
+    searchRss ::
+      mode
+        :- "rss"
+          :> "search"
+          :> QueryParam' '[Required, Strict] "keyword" Text
+          :> Get '[JSON] [RssSearchResult],
+    downloadTorrent ::
+      mode
+        :- "rss"
+          :> "download"
+          :> ReqBody '[JSON] DownloadTorrentRequest
+          :> Post '[JSON] NoContent,
+    testDownloader ::
+      mode
+        :- "downloader"
+          :> "test"
+          :> ReqBody '[JSON] TestDownloaderRequest
+          :> Post '[JSON] TestDownloaderResponse,
+    testNotification ::
+      mode
+        :- "notification"
+          :> "test"
+          :> ReqBody '[JSON] TestNotificationRequest
+          :> Post '[JSON] TestNotificationResponse,
+    testMedia ::
+      mode
+        :- "media"
+          :> "test"
+          :> ReqBody '[JSON] TestMediaRequest
+          :> Post '[JSON] TestMediaResponse,
+    listLibraries ::
+      mode
+        :- "media"
+          :> "libraries"
+          :> ReqBody '[JSON] TestMediaRequest
+          :> Post '[JSON] [MediaLibrary],
+    importLibrary ::
+      mode
+        :- "media"
+          :> "import"
+          :> ReqBody '[JSON] ImportLibraryRequest
+          :> Post '[JSON] ImportResult,
+    searchTmdb ::
+      mode
+        :- "bangumi"
+          :> "search-tmdb"
+          :> QueryParam' '[Required, Strict] "keyword" Text
+          :> QueryParam "year" Year
+          :> Get '[JSON] [TmdbSearchResult],
+    updateBangumiTmdbId ::
+      mode
+        :- "bangumi"
+          :> Capture "id" Int64
+          :> "tmdb-id"
+          :> ReqBody '[JSON] UpdateBangumiTmdbIdRequest
+          :> Put '[JSON] NoContent,
+    getLogs ::
+      mode
+        :- "logs"
+          :> QueryParam' '[Required, Strict] "date" Day
+          :> QueryParam "page" Word32
+          :> QueryParam "pageSize" Word32
+          :> Get '[JSON] LogsResponse
+  }
+  deriving stock (Generic)
