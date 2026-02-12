@@ -27,7 +27,7 @@ COPY moe-bangumi.cabal cabal.project ./
 
 # Update cabal index and build dependencies only
 RUN cabal update && \
-    cabal build --only-dependencies exe:moe-cli \
+    cabal build --only-dependencies \
         --disable-tests --disable-benchmarks \
         --enable-executable-static \
         --ghc-options='-optl-static -optl-pthread'
