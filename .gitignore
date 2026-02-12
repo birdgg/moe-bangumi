@@ -75,3 +75,5 @@ coverage/
 .cache/
 
 data/
+
+frontend-dist/

@@ -29,7 +29,7 @@ COPY moe-bangumi.cabal cabal.project ./
 RUN cabal update && \
     cabal build --only-dependencies \
         --enable-executable-static \
-        --ghc-options='-optl-static -optl-pthread'
+        --ghc-options='-optl-pthread'
 
 # ============================================================================
 # Stage 2: Application Builder
@@ -47,7 +47,7 @@ COPY LICENSE CHANGELOG.md ./
 # Build the application with static linking
 RUN cabal build exe:moe-cli \
         --enable-executable-static \
-        --ghc-options='-optl-static -optl-pthread -split-sections' && \
+        --ghc-options='-optl-pthread -split-sections' && \
     # Find and copy the binary to a known location
     find dist-newstyle -type f -name moe-cli -executable \
         -exec cp {} /build/moe-bangumi \; && \
@@ -55,8 +55,7 @@ RUN cabal build exe:moe-cli \
     strip /build/moe-bangumi
 
 # Verify static linking
-RUN file /build/moe-bangumi && \
-    ldd /build/moe-bangumi 2>&1 | grep -q "statically linked\|not a dynamic executable" || \
+RUN file /build/moe-bangumi | tee /dev/stderr | grep -q "statically linked" || \
     (echo "ERROR: Binary is not statically linked!" && exit 1)
 
 # ============================================================================
