@@ -12,6 +12,9 @@ allow-newer:
   *:time,
   *:http-api-data
 
+tests: False
+benchmarks: False
+
 source-repository-package
   type: git
   location: https://github.com/birdgg/effectful-sqlite.git
