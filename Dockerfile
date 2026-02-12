@@ -46,11 +46,11 @@ COPY migrations ./migrations
 COPY LICENSE CHANGELOG.md ./
 
 # Build the application with static linking
-RUN cabal build exe:moe-bangumi \
+RUN cabal build exe:moe-cli \
         --enable-executable-static \
         --ghc-options='-optl-static -optl-pthread -split-sections' && \
     # Find and copy the binary to a known location
-    find dist-newstyle -type f -name moe-bangumi -executable \
+    find dist-newstyle -type f -name moe-cli -executable \
         -exec cp {} /build/moe-bangumi \; && \
     # Strip debug symbols to reduce binary size
     strip /build/moe-bangumi
