@@ -84,13 +84,13 @@ export function BangumiCard({ bangumi }: BangumiCardProps) {
         {bangumi.posterUrl ? (
           <PosterImage url={bangumi.posterUrl} alt={bangumi.titleChs} />
         ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <div className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/50">
             <span className="text-muted-foreground text-xs">No Image</span>
           </div>
         )}
 
         {/* Cinematic gradient scrim */}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
 
         {/* Hover vignette */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />

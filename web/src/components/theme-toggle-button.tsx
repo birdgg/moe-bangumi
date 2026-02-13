@@ -59,7 +59,7 @@ export function ThemeToggleButton() {
       ref={buttonRef}
       onClick={toggleTheme}
       disabled={isAnimating}
-      className="group relative flex size-10 cursor-pointer items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 hover:bg-foreground/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-chart-1/50"
+      className="group relative flex size-10 cursor-pointer items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 hover:bg-foreground/5 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-chart-1/50"
       title={isDark ? "切换到亮色模式" : "切换到暗色模式"}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >

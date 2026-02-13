@@ -12,8 +12,10 @@ import Data.Text qualified as T
 import Data.Time.Calendar (Day)
 import Data.Time.Format (defaultTimeLocale, parseTimeM)
 import Effectful.Sqlite (transact)
-import Moe.Domain.Bangumi (Bangumi (..))
+import Moe.Domain.Bangumi (Bangumi (..), getAirSeason, getCurrentAirSeason)
 import Moe.Domain.Shared.Entity (Entity (..))
+import Moe.Domain.Shared.Metadata (MikanId (..))
+import Moe.Web.API.DTO.Tracking (mikanIdToRssUrl)
 import Moe.Domain.Tracking (Tracking (..), TrackingType (..))
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Database.Tracking qualified as DB
@@ -60,7 +62,11 @@ handleListLibraries req = do
 handleImportLibrary :: ImportLibraryRequest -> ServerEff ImportResult
 handleImportLibrary req = do
   env <- Reader.ask @MoeEnv
-  result <- liftIO $ Client.getItems env.httpManager req.url req.apiKey req.libraryId
+  userResult <- liftIO $ Client.getUsers env.httpManager req.url req.apiKey
+  userId <- case userResult of
+    Left err -> throwError $ MediaError err
+    Right uid -> pure uid
+  result <- liftIO $ Client.getItems env.httpManager req.url req.apiKey userId req.libraryId
   items <- case result of
     Left err -> throwError $ MediaError err
     Right xs -> pure xs
@@ -77,6 +83,7 @@ importItem item = do
     case mBangumi of
       Nothing -> pure False
       Just bangumi -> do
+        currentSeason <- liftIO getCurrentAirSeason
         transact $ do
           bangumiId <- case bangumi.tmdbId of
             Just tid -> do
@@ -91,15 +98,24 @@ importItem item = do
             Nothing -> do
               (bid, _, _) <- DB.upsertBangumi bangumi
               pure bid
+          -- Auto-set Mikan RSS for current season bangumi
+          mBangumiEntity <- DB.getBangumi bangumiId
+          let (tType, mRssUrl, rssOn) = case mBangumiEntity of
+                Just entity
+                  | let b = entity.entityVal,
+                    Just (MikanId mid) <- b.mikanId,
+                    getAirSeason b == currentSeason ->
+                      (Subscription, Just (mikanIdToRssUrl mid), True)
+                _ -> (Collection, Nothing, False)
           void $
             DB.upsertTracking
               Tracking
                 { bangumiId = bangumiId,
-                  trackingType = Collection,
-                  rssUrl = Nothing,
-                  rssEnabled = False,
+                  trackingType = tType,
+                  rssUrl = mRssUrl,
+                  rssEnabled = rssOn,
                   lastPubdate = Nothing,
-                  currentEpisode = fromMaybe 0 item.episodeCount,
+                  currentEpisode = fromMaybe 0 item.playedCount,
                   episodeOffset = 0,
                   isBDrip = False,
                   autoComplete = True

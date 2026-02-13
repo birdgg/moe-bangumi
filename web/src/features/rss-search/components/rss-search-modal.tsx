@@ -165,7 +165,7 @@ export function RssSearchModal({ open, onOpenChange }: RssSearchModalProps) {
         "max-h-[90vh] overflow-hidden",
         "rounded-2xl",
         "glass-search",
-        "outline-none",
+        "outline-hidden",
       ].join(" ")}
     >
       <div className="relative flex flex-col max-h-[70vh]">
@@ -179,7 +179,7 @@ export function RssSearchModal({ open, onOpenChange }: RssSearchModalProps) {
             placeholder="Search Nyaa, AcgRip..."
             value={keyword}
             onValueChange={setKeyword}
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-foreground/25 outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-foreground/25 outline-hidden"
             autoFocus
           />
           {isFetching && debouncedKeyword.length > 0 && (
@@ -217,7 +217,7 @@ export function RssSearchModal({ open, onOpenChange }: RssSearchModalProps) {
         {/* Divider */}
         <div className="relative h-px mx-4">
           <div className="absolute inset-0 bg-foreground/[0.06]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-foreground/10 to-transparent" />
         </div>
 
         {/* Results */}

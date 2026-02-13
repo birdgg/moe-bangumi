@@ -201,7 +201,7 @@ function TrackingForm({
               alt=""
               className="size-full object-cover scale-110 blur-xl opacity-30 dark:opacity-20"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+            <div className="absolute inset-0 bg-linear-to-b from-background/60 via-background/80 to-background" />
           </div>
         )}
 
@@ -221,7 +221,7 @@ function TrackingForm({
               }}
             />
           ) : (
-            <div className="w-16 sm:w-18 aspect-[2/3] rounded-lg shrink-0 bg-gradient-to-br from-chart-3/20 via-chart-1/10 to-chart-5/15 flex items-center justify-center border border-border/50">
+            <div className="w-16 sm:w-18 aspect-[2/3] rounded-lg shrink-0 bg-linear-to-br from-chart-3/20 via-chart-1/10 to-chart-5/15 flex items-center justify-center border border-border/50">
               <IconMovie className="size-6 text-muted-foreground/20" />
             </div>
           )}
@@ -258,7 +258,7 @@ function TrackingForm({
       </motion.div>
 
       {/* Accent gradient line */}
-      <div className="h-px bg-gradient-to-r from-transparent via-chart-1/30 to-transparent" />
+      <div className="h-px bg-linear-to-r from-transparent via-chart-1/30 to-transparent" />
 
       {/* Form fields */}
       <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto max-h-[50vh]">
@@ -377,7 +377,7 @@ function TrackingForm({
       </div>
 
       {/* Footer */}
-      <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+      <div className="h-px bg-linear-to-r from-transparent via-border/40 to-transparent" />
       <motion.div
         custom={4}
         variants={fadeUp}
@@ -389,7 +389,7 @@ function TrackingForm({
           size="sm"
           disabled={isPending}
           onClick={handleSubmit}
-          className="bg-gradient-to-r from-chart-1 to-chart-3 text-white border-chart-1/20 shadow-lg shadow-chart-1/15 hover:shadow-chart-1/25 hover:brightness-110 transition-all"
+          className="bg-linear-to-r from-chart-1 to-chart-3 text-white border-chart-1/20 shadow-lg shadow-chart-1/15 hover:shadow-chart-1/25 hover:brightness-110 transition-all"
         >
           {isPending ? (
             <>

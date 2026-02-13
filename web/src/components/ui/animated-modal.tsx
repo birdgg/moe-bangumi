@@ -59,7 +59,7 @@ export function AnimatedModal({
                 "border border-chart-3/30 dark:border-chart-1/30",
                 "shadow-2xl shadow-chart-3/20 dark:shadow-chart-1/50",
                 "backdrop-blur-xl",
-                "outline-none",
+                "outline-hidden",
                 className
               )}
             />

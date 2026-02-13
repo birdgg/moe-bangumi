@@ -69,7 +69,7 @@ function NavItem({
                 data-active={isActive || undefined}
                 className={cn(
                   "relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-                  "transition-all duration-200 outline-none overflow-hidden",
+                  "transition-all duration-200 outline-hidden overflow-hidden",
                   "focus-visible:ring-2 focus-visible:ring-foreground/10",
                   "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center",
                   isActive

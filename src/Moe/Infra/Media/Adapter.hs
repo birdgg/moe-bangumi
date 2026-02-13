@@ -52,5 +52,6 @@ handleMedia manager cfg = \case
     liftEitherWith MediaError result
   GetLibraryItems libraryId -> do
     validateConfig cfg
-    result <- liftIO $ Client.getItems manager cfg.url cfg.apiKey libraryId
+    userId <- liftIO (Client.getUsers manager cfg.url cfg.apiKey) >>= liftEitherWith MediaError
+    result <- liftIO $ Client.getItems manager cfg.url cfg.apiKey userId libraryId
     liftEitherWith MediaError result

@@ -96,7 +96,7 @@ export function TmdbPanel({
                 "shadow-2xl shadow-chart-1/20 dark:shadow-chart-3/50",
                 "backdrop-blur-xl",
                 "flex flex-col",
-                "outline-none"
+                "outline-hidden"
               )}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -106,7 +106,7 @@ export function TmdbPanel({
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-gradient-to-br from-chart-1/20 to-chart-3/20 flex items-center justify-center">
+                  <div className="size-7 rounded-lg bg-linear-to-br from-chart-1/20 to-chart-3/20 flex items-center justify-center">
                     <IconMovie className="size-3.5 text-chart-1" />
                   </div>
                   <div>
@@ -142,7 +142,7 @@ export function TmdbPanel({
               </div>
 
               {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-chart-1/30 to-transparent" />
+              <div className="h-px bg-linear-to-r from-transparent via-chart-1/30 to-transparent" />
 
               {/* Results */}
               <div className="overflow-y-auto flex-1 p-3 min-h-0">
@@ -184,7 +184,7 @@ export function TmdbPanel({
                           <img
                             src={result.posterUrl}
                             alt={result.title}
-                            className="w-11 h-16 object-cover rounded-lg shrink-0 shadow-sm"
+                            className="w-11 h-16 object-cover rounded-lg shrink-0 shadow-xs"
                           />
                         ) : (
                           <div className="w-11 h-16 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
@@ -214,7 +214,7 @@ export function TmdbPanel({
 
                         {/* Selection indicator */}
                         {isSelected(result.tmdbId) ? (
-                          <div className="size-6 rounded-full bg-chart-1 flex items-center justify-center shrink-0 shadow-sm shadow-chart-1/30">
+                          <div className="size-6 rounded-full bg-chart-1 flex items-center justify-center shrink-0 shadow-xs shadow-chart-1/30">
                             <IconCheck className="size-3.5 text-white" />
                           </div>
                         ) : null

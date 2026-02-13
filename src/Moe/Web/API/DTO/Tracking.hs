@@ -7,6 +7,7 @@ module Moe.Web.API.DTO.Tracking
     toTrackingWithBangumiResponse,
     fromCreateRequest,
     applyUpdateRequest,
+    mikanIdToRssUrl,
   )
 where
 

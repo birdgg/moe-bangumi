@@ -2,6 +2,7 @@
 module Moe.Infra.Media.Client
   ( getSystemInfo,
     getVirtualFolders,
+    getUsers,
     getItems,
   )
 where
@@ -87,11 +88,38 @@ parseLibrary = Aeson.parseMaybe $ Aeson.withObject "Library" $ \obj -> do
   collectionType <- obj .:? "CollectionType"
   pure MediaLibrary {libraryId, libraryName, collectionType}
 
--- | Get items from a specific library.
-getItems :: Manager -> Text -> Text -> Text -> IO (Either MediaClientError [MediaItem])
-getItems manager baseUrl apiKey libraryId = do
+-- | Get the first Emby user ID.
+getUsers :: Manager -> Text -> Text -> IO (Either MediaClientError Text)
+getUsers manager baseUrl apiKey = do
+  mReq <- mkRequest baseUrl apiKey "/emby/Users"
+  case mReq of
+    Nothing -> pure $ Left (MediaInvalidUrl baseUrl)
+    Just req -> do
+      result <- try @HttpException $ httpLbs req manager
+      pure $ case result of
+        Left ex -> Left (MediaNetworkError (show ex))
+        Right resp
+          | statusIsSuccessful (responseStatus resp) ->
+              case Aeson.decode (responseBody resp) >>= parseFirstUserId of
+                Just uid -> Right uid
+                Nothing -> Left (MediaParseError "failed to parse users response")
+          | otherwise ->
+              Left $ MediaHttpError (statusCode (responseStatus resp))
+
+-- | Parse the first user ID from Emby Users response.
+parseFirstUserId :: Aeson.Value -> Maybe Text
+parseFirstUserId = Aeson.parseMaybe $ Aeson.withArray "Users" $ \arr ->
+  case toList arr of
+    [] -> fail "no users found"
+    (first_ : _) -> Aeson.withObject "User" (.: "Id") first_
+
+-- | Get items from a specific library with user watch data.
+getItems :: Manager -> Text -> Text -> Text -> Text -> IO (Either MediaClientError [MediaItem])
+getItems manager baseUrl apiKey userId libraryId = do
   let path =
-        "/emby/Items?ParentId="
+        "/emby/Users/"
+          <> userId
+          <> "/Items?ParentId="
           <> libraryId
           <> "&Recursive=true&IncludeItemTypes=Series,Movie&Fields=ProviderIds,PremiereDate,RecursiveItemCount"
   mReq <- mkRequest baseUrl apiKey path
@@ -115,7 +143,7 @@ parseItemsResponse = Aeson.parseMaybe $ Aeson.withObject "ItemsResponse" $ \obj 
   items <- obj .: "Items"
   mapM parseItem items
 
--- | Parse a single media item.
+-- | Parse a single media item with user watch data.
 parseItem :: Aeson.Value -> Aeson.Parser MediaItem
 parseItem = Aeson.withObject "MediaItem" $ \obj -> do
   itemName <- obj .: "Name"
@@ -123,5 +151,27 @@ parseItem = Aeson.withObject "MediaItem" $ \obj -> do
   premiereDate <- obj .:? "PremiereDate"
   providerIdsVal <- obj .:? "ProviderIds"
   episodeCount <- obj .:? "RecursiveItemCount"
+  userData <- obj .:? "UserData"
   let providerIds = fromMaybe Map.empty providerIdsVal
-  pure MediaItem {itemName, itemType, premiereDate, providerIds, episodeCount}
+      playedCount = calcPlayedCount itemType episodeCount userData
+  pure MediaItem {itemName, itemType, premiereDate, providerIds, episodeCount, playedCount}
+
+-- | Calculate played episode count from Emby UserData.
+-- For Series: RecursiveItemCount - UnplayedItemCount
+-- For Movie: 1 if played, 0 otherwise
+calcPlayedCount :: Text -> Maybe Word32 -> Maybe Aeson.Value -> Maybe Word32
+calcPlayedCount itemType mEpisodeCount mUserData = case mUserData of
+  Nothing -> Nothing
+  Just ud -> Aeson.parseMaybe (parsePlayedCount itemType mEpisodeCount) ud
+
+parsePlayedCount :: Text -> Maybe Word32 -> Aeson.Value -> Aeson.Parser Word32
+parsePlayedCount itemType mEpisodeCount = Aeson.withObject "UserData" $ \obj ->
+  case itemType of
+    "Movie" -> do
+      played <- obj .:? "Played"
+      pure $ if fromMaybe False played then 1 else 0
+    _ -> do
+      unplayed <- obj .:? "UnplayedItemCount"
+      case (mEpisodeCount, unplayed) of
+        (Just total, Just unp) -> pure $ if total >= unp then total - unp else 0
+        _ -> fail "missing episode count or unplayed count"

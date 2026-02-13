@@ -44,7 +44,8 @@ data MediaItem = MediaItem
     itemType :: Text,
     premiereDate :: Maybe Text,
     providerIds :: Map Text Text,
-    episodeCount :: Maybe Word32
+    episodeCount :: Maybe Word32,
+    playedCount :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)

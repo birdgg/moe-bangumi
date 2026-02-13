@@ -18,7 +18,7 @@ function ColorDot({ theme }: { theme: ThemeColor }) {
   return (
     <span
       className={cn(
-        "size-4 rounded-full shadow-sm",
+        "size-4 rounded-full shadow-xs",
         theme.preview
       )}
     />
@@ -68,7 +68,7 @@ export function ThemeColorSelector() {
         className={cn(
           "group relative flex size-10 cursor-pointer items-center justify-center rounded-xl",
           "transition-all duration-300 hover:scale-110 hover:bg-foreground/5",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-chart-1/50"
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-chart-1/50"
         )}
         title="Choose theme color"
       >

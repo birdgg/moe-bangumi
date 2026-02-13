@@ -121,7 +121,7 @@ function GroupReorderItem({ group, index, onRemove, onAddAlias, onRemoveAlias }:
               onRemoveAlias(group.aliases.length - 1);
             }
           }}
-          className="h-5 min-w-20 flex-1 bg-transparent text-xs text-muted-foreground outline-none placeholder:text-muted-foreground/40"
+          className="h-5 min-w-20 flex-1 bg-transparent text-xs text-muted-foreground outline-hidden placeholder:text-muted-foreground/40"
         />
       </div>
     </Reorder.Item>
