@@ -43,7 +43,7 @@ data Downloader :: Effect where
   -- | Get all torrents with the Rename tag.
   GetRenameTorrents :: Downloader m [TorrentInfo]
   -- | Get files within a torrent by its hash.
-  GetTorrentFiles :: Text -> Downloader m [TorrentFile]
+  GetTorrentFiles :: Text -> Downloader m [TorrentContent]
   -- | Rename a file within a torrent (hash, oldPath, newPath).
   RenameTorrentFile :: Text -> Text -> Text -> Downloader m ()
   -- | Rename a folder within a torrent (hash, oldPath, newPath).

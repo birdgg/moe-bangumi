@@ -23,17 +23,17 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/tmdb-hs.git
-  tag: 29b8ee33a0a9e2b44e4933def90393d9e0bb475c
+  tag: d3ab18ffd9e6b6d65d902983e9adc82eb0badc66
 
 source-repository-package
   type: git
   location: https://github.com/birdgg/bgmtv-hs.git
-  tag: e25f84db95b59ab2612b296120a1a802202f5bf9
+  tag: 794f94b9c0880ecf19f04aff79ebb17df36cdc3d
 
 source-repository-package
   type: git
   location: https://github.com/birdgg/qbittorrent-hs.git
-  tag: 4c7696e1e1b36ada7bb40a425c52436be350fca4
+  tag: 3e0dc2e5867e62b76dee887c93c9ae3657ea54e5
   subdir:
     qbittorrent
 

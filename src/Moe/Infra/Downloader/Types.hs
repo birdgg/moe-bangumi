@@ -14,7 +14,7 @@ module Moe.Infra.Downloader.Types
     -- * Re-exports from qbittorrent
     Tag (..),
     TorrentInfo (..),
-    TorrentFile (..),
+    TorrentContent (..),
     TorrentState (..),
     InfoHash (..),
   )
@@ -22,7 +22,7 @@ where
 
 import Data.Text.Display (Display (..))
 import Moe.Domain.Rss (TorrentUrl)
-import Network.QBittorrent.Types (InfoHash (..), Tag (..), TorrentFile (..), TorrentInfo (..), TorrentState (..))
+import Network.QBittorrent.Types (InfoHash (..), Tag (..), TorrentContent (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | Structured downloader client errors.

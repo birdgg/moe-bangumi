@@ -37,13 +37,12 @@ initDownloaderEnv = do
   pure DownloaderEnv {cachedClient}
 
 -- | Classify qBittorrent error into structured error type.
-classifyQBError :: QB.QBError -> DownloaderClientError
+classifyQBError :: QB.QBClientError -> DownloaderClientError
 classifyQBError = \case
-  QB.NetworkError msg -> DlNetworkError msg
-  QB.AuthError msg -> DlAuthError msg
-  QB.ApiError code msg -> DlApiError code msg
-  QB.ParseError msg -> DlParseError msg
-  QB.InvalidTorrent msg -> DlInvalidTorrent msg
+  QB.ServantError err -> DlNetworkError (show err)
+  QB.QBApiError err
+    | err.statusCode == 403 -> DlAuthError "IP is banned for too many failed login attempts"
+    | otherwise -> DlApiError err.statusCode err.responseBody
 
 -- | Run Downloader effect using qBittorrent, reading config from Setting.
 --
@@ -123,12 +122,12 @@ handleTestConnection ::
   Eff es (Either Text Text)
 handleTestConnection manager url username password = do
   let qbConfig = mkQBConfig url username password
-      toErr = Left . show . QB.clientErrorToQBError
+      toErr = Left . show . QB.clientErrorToQBClientError
   result <- liftIO $ tryAny $ do
     tmpClient <- QB.initQBClientWith manager qbConfig
     QB.runQB tmpClient (QB.login qbConfig) >>= \case
       Left e -> pure $ toErr e
-      Right _ -> QB.runQB tmpClient QB.getVersion <&> first (show . QB.clientErrorToQBError)
+      Right _ -> QB.runQB tmpClient QB.getVersion <&> first (show . QB.clientErrorToQBClientError)
   pure $ case result of
     Left ex -> Left (show ex)
     Right r -> r
@@ -181,7 +180,7 @@ handleDownloader cfg client = \case
               }
       QB.getTorrents (Just req)
   GetTorrentFiles hash ->
-    runQBAction client $ QB.getTorrentFiles (QB.InfoHash hash)
+    runQBAction client $ QB.getTorrentContents (QB.InfoHash hash)
   RenameTorrentFile hash oldPath newPath ->
     runQBAction client $ void $ QB.renameFile (QB.InfoHash hash) oldPath newPath
   RenameTorrentFolder hash oldPath newPath ->
@@ -208,7 +207,7 @@ runQBAction ::
 runQBAction client action = do
   result <- liftIO $ QB.runQB client action
   case result of
-    Left e -> throwError $ DownloaderError $ classifyQBError (QB.clientErrorToQBError e)
+    Left e -> throwError $ DownloaderError $ classifyQBError (QB.clientErrorToQBClientError e)
     Right a -> pure a
 
 -- | Convert DownloaderConfig to QBConfig.
