@@ -214,6 +214,8 @@ library
     validation-selective,
     time,
     tmdb,
+    wai,
+    wai-app-static,
     warp,
     xml-conduit,
 

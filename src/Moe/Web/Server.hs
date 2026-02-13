@@ -54,7 +54,11 @@ import Servant
   )
 import Servant.OpenApi
 import Servant.Scalar (scalarUIServer')
-import Servant.Server.StaticFiles (serveDirectoryFileServer)
+import Servant.Server.StaticFiles (serveDirectoryWith)
+import Network.Wai (responseFile)
+import Network.HTTP.Types (status200)
+import WaiAppStatic.Storage.Filesystem (defaultFileServerSettings)
+import WaiAppStatic.Types (StaticSettings (..))
 import Servant.Server.Generic (AsServerT)
 
 runServer :: (RequireCallStack, IOE :> es) => Logger -> MoeEnv -> Eff es ()
@@ -75,8 +79,17 @@ moeServer =
   Routes
     { api = API.apiServer,
       doc = scalarUIServer' (pure openApiHandler),
-      spa = serveDirectoryFileServer "web/dist"
+      spa = serveDirectoryWith spaSettings
     }
+
+spaSettings :: StaticSettings
+spaSettings =
+  let baseSettings = defaultFileServerSettings "web/dist"
+   in baseSettings{ss404Handler = Just spaFallback}
+
+spaFallback :: Application
+spaFallback _request respond =
+  respond $ responseFile status200 [("Content-Type", "text/html")] "web/dist/index.html" Nothing
 
 naturalTransform :: (RequireCallStack) => MoeEnv -> Logger -> ServerEff a -> Handler a
 naturalTransform env logger app = do
