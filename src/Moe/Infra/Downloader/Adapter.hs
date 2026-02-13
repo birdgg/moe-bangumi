@@ -48,6 +48,8 @@ classifyQBError = \case
 -- | Run Downloader effect using qBittorrent, reading config from Setting.
 --
 -- Validates config, reuses a cached QBClient across job runs.
+-- 'TestConnection' is handled independently of saved config since it
+-- provides its own credentials.
 runDownloaderQBittorrent ::
   (Setting :> es, Error AppError :> es, IOE :> es) =>
   DownloaderEnv ->
@@ -55,13 +57,16 @@ runDownloaderQBittorrent ::
   Eff (Downloader : es) a ->
   Eff es a
 runDownloaderQBittorrent dlEnv manager =
-  interpret $ \_ op -> do
-    cfg <- (.downloader) <$> getSetting
-    case validateConfig cfg of
-      Just err -> handleUnconfigured err op
-      Nothing -> do
-        client <- getOrCreateClient dlEnv manager cfg
-        handleDownloader manager cfg client op
+  interpret $ \_ -> \case
+    TestConnection url username password ->
+      handleTestConnection manager url username password
+    op -> do
+      cfg <- (.downloader) <$> getSetting
+      case validateConfig cfg of
+        Just err -> handleUnconfigured err op
+        Nothing -> do
+          client <- getOrCreateClient dlEnv manager cfg
+          handleDownloader cfg client op
 
 -- | Handle operations when downloader is not configured.
 -- Query operations return empty defaults; mutations still throw.
@@ -106,33 +111,37 @@ getOrCreateClient dlEnv manager cfg = do
       atomically $ writeTVar dlEnv.cachedClient (Just (client, cfg))
       pure client
 
+-- | Test a qBittorrent connection using the provided credentials.
+--
+-- Creates a temporary client independent of any saved config.
+handleTestConnection ::
+  (IOE :> es) =>
+  Manager ->
+  Text ->
+  Text ->
+  Text ->
+  Eff es (Either Text Text)
+handleTestConnection manager url username password = do
+  let qbConfig = mkQBConfig url username password
+      toErr = Left . show . QB.clientErrorToQBError
+  result <- liftIO $ tryAny $ do
+    tmpClient <- QB.initQBClientWith manager qbConfig
+    QB.runQB tmpClient (QB.login qbConfig) >>= \case
+      Left e -> pure $ toErr e
+      Right _ -> QB.runQB tmpClient QB.getVersion <&> first (show . QB.clientErrorToQBError)
+  pure $ case result of
+    Left ex -> Left (show ex)
+    Right r -> r
+
 -- | Handle a single Downloader operation using a pre-authenticated client.
 handleDownloader ::
   (Error AppError :> es, IOE :> es) =>
-  Manager ->
   DownloaderConfig ->
   QB.QBClient ->
   Downloader (Eff localEs) a ->
   Eff es a
-handleDownloader manager cfg client = \case
-  TestConnection url username password -> do
-    let (host, port, useTLS) = parseUrl url
-        qbConfig =
-          QB.QBConfig
-            { host = host,
-              port = port,
-              credential = QB.Credential username password,
-              useTLS = useTLS
-            }
-        toErr e = Left $ show (QB.clientErrorToQBError e)
-    result <- liftIO $ tryAny $ do
-      tmpClient <- QB.initQBClientWith manager qbConfig
-      QB.runQB tmpClient (QB.login qbConfig) >>= \case
-        Left e -> pure $ toErr e
-        Right _ -> QB.runQB tmpClient QB.getVersion <&> first (show . QB.clientErrorToQBError)
-    pure $ case result of
-      Left ex -> Left (show ex)
-      Right r -> r
+handleDownloader cfg client = \case
+  TestConnection {} -> error "unreachable: handled in runDownloaderQBittorrent"
   AddTorrent params ->
     runQBAction client $ do
       let baseTags = [moeTag, renameTag]
@@ -204,14 +213,13 @@ runQBAction client action = do
 
 -- | Convert DownloaderConfig to QBConfig.
 toQBConfig :: DownloaderConfig -> QB.QBConfig
-toQBConfig cfg =
-  let (host, port, useTLS) = parseUrl cfg.url
-   in QB.QBConfig
-        { host = host,
-          port = port,
-          credential = QB.Credential cfg.username cfg.password,
-          useTLS = useTLS
-        }
+toQBConfig cfg = mkQBConfig cfg.url cfg.username cfg.password
+
+-- | Build a QBConfig from URL, username, and password.
+mkQBConfig :: Text -> Text -> Text -> QB.QBConfig
+mkQBConfig url username password =
+  let (host, port, useTLS) = parseUrl url
+   in QB.QBConfig {host, port, credential = QB.Credential username password, useTLS}
 
 -- | Parse URL to extract host, port, and TLS setting.
 parseUrl :: Text -> (Text, Int, Bool)
