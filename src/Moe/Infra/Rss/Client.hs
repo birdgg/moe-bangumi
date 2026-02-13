@@ -42,7 +42,7 @@ fetchRssXml manager url = do
     pure (Status.statusCode (responseStatus response), responseBody response)
   case result of
     Left (e :: HttpException) ->
-      pure $ Left $ RssNetworkError (show e)
+      pure $ Left $ RssNetworkError (fmtHttpException e)
     Right (status, body)
       | status >= 200 && status < 300 ->
           pure $ Right $ LBS.toStrict body
@@ -60,3 +60,25 @@ parseRssItems source xml =
 
 parseItemWith :: SomeRssSource -> Cursor -> RawItem
 parseItemWith (SomeRssSource proxy) = parseItemFor proxy
+
+-- | Format HttpException concisely, omitting verbose Request details.
+fmtHttpException :: HttpException -> Text
+fmtHttpException = \case
+  HttpExceptionRequest req exc ->
+    fmtRequestUrl req <> " " <> fmtHttpContent exc
+  InvalidUrlException url reason ->
+    toText url <> " " <> toText reason
+
+fmtRequestUrl :: Request -> Text
+fmtRequestUrl req =
+  let scheme = if secure req then "https://" else "http://"
+   in scheme <> decodeUtf8 (host req) <> decodeUtf8 (path req) <> decodeUtf8 (queryString req)
+
+fmtHttpContent :: HttpExceptionContent -> Text
+fmtHttpContent = \case
+  ConnectionTimeout -> "connection timeout"
+  ResponseTimeout -> "response timeout"
+  ConnectionFailure _ -> "connection failed"
+  ConnectionClosed -> "connection closed"
+  TooManyRedirects _ -> "too many redirects"
+  other -> show other
