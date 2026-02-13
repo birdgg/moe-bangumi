@@ -33,6 +33,8 @@ RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/build/dist-newstyle \
     cabal update && \
     cabal build --only-dependencies \
+        --disable-tests \
+        --disable-benchmarks \
         --enable-executable-static \
         --ghc-options='-optl-pthread'
 
@@ -47,6 +49,8 @@ RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
     --mount=type=cache,target=/build/dist-newstyle \
     cabal build exe:moe-cli \
+        --disable-tests \
+        --disable-benchmarks \
         --enable-executable-static \
         --ghc-options='-optl-pthread -split-sections' && \
     # Find and copy the binary to a known location
