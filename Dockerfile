@@ -5,38 +5,36 @@
 # ============================================================================
 
 # ============================================================================
-# Stage 1: Dependencies Builder
-# Purpose: Build and cache all Haskell dependencies
-# Cache strategy: Only rebuilds when .cabal file changes
+# Stage 1: Builder
+# Purpose: Build dependencies and application with BuildKit cache mounts
+# Cache strategy: cabal store and dist-newstyle persist across builds
 # ============================================================================
-FROM quay.io/benz0li/ghc-musl:9.14.1 AS dependencies
+FROM quay.io/benz0li/ghc-musl:9.14.1 AS builder
 
 WORKDIR /build
 
 # Install system dependencies for static linking
 # - zlib-static: compression (tar, zlib packages)
 # - sqlite-static: database (sqlite-simple)
+# - pcre2-dev: regex (pcre2 package)
 RUN apk add --no-cache \
     zlib-dev \
     zlib-static \
     sqlite-dev \
-    sqlite-static
+    sqlite-static \
+    pcre2-dev
 
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
-# Update cabal index and build dependencies only
-RUN cabal update && \
+# Build dependencies only (cached separately from source)
+RUN --mount=type=cache,target=/root/.cabal/store \
+    --mount=type=cache,target=/root/.cabal/packages \
+    --mount=type=cache,target=/build/dist-newstyle \
+    cabal update && \
     cabal build --only-dependencies \
         --enable-executable-static \
         --ghc-options='-optl-pthread'
-
-# ============================================================================
-# Stage 2: Application Builder
-# Purpose: Compile the application source code
-# Cache strategy: Reuses Stage 1 dependency cache, rebuilds only on source changes
-# ============================================================================
-FROM dependencies AS builder
 
 # Copy source code
 COPY app ./app
@@ -45,7 +43,10 @@ COPY migrations ./migrations
 COPY LICENSE CHANGELOG.md ./
 
 # Build the application with static linking
-RUN cabal build exe:moe-cli \
+RUN --mount=type=cache,target=/root/.cabal/store \
+    --mount=type=cache,target=/root/.cabal/packages \
+    --mount=type=cache,target=/build/dist-newstyle \
+    cabal build exe:moe-cli \
         --enable-executable-static \
         --ghc-options='-optl-pthread -split-sections' && \
     # Find and copy the binary to a known location
@@ -59,7 +60,7 @@ RUN file /build/moe-bangumi | tee /dev/stderr | grep -q "statically linked" || \
     (echo "ERROR: Binary is not statically linked!" && exit 1)
 
 # ============================================================================
-# Stage 3: Runtime Image
+# Stage 2: Runtime Image
 # Purpose: Minimal production image
 # Size: ~10-20 MB (Alpine base + static binary)
 # ============================================================================

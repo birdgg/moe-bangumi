@@ -1,0 +1,9 @@
+dist-newstyle/
+.git/
+node_modules/
+web/
+.claude/
+.env*
+.vscode/
+.zed/
+result

@@ -29,3 +29,8 @@ release version:
     git tag "$tag"
     git push origin main "$tag"
     echo "Pushed $tag — CI will build Docker image and create GitHub Release"
+
+# Build and run local Docker image
+docker-run:
+    docker build --load -t moe-bangumi .
+    docker run --rm -p 3000:3000 -v moe-bangumi-data:/app/data moe-bangumi
