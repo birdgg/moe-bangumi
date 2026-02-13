@@ -15,7 +15,7 @@ import Effectful.Sqlite (transact)
 import Moe.Domain.Bangumi (Bangumi (..), getAirSeason, getCurrentAirSeason)
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Domain.Shared.Metadata (MikanId (..))
-import Moe.Web.API.DTO.Tracking (mikanIdToRssUrl)
+import Moe.Infra.Rss.Source (mikanIdToRssUrl)
 import Moe.Domain.Tracking (Tracking (..), TrackingType (..))
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Database.Tracking qualified as DB
@@ -115,7 +115,7 @@ importItem item = do
                   rssUrl = mRssUrl,
                   rssEnabled = rssOn,
                   lastPubdate = Nothing,
-                  currentEpisode = fromMaybe 0 item.playedCount,
+                  currentEpisode = fromMaybe 0 item.episodeCount,
                   episodeOffset = 0,
                   isBDrip = False,
                   autoComplete = True

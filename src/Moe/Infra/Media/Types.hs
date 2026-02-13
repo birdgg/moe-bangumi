@@ -4,6 +4,9 @@ module Moe.Infra.Media.Types
     MediaLibrary (..),
     MediaItem (..),
     MediaClientError (..),
+
+    -- * Error classification
+    classifyMediaClientError,
   )
 where
 
@@ -11,6 +14,9 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
 import Data.Text.Display (Display (..))
 import Moe.Prelude
+import Network.HTTP.Types.Status (statusCode)
+import Servant.Client (ClientError (..))
+import Servant.Client.Core (ResponseF (..))
 
 -- | Structured media client errors.
 data MediaClientError
@@ -37,6 +43,14 @@ data MediaLibrary = MediaLibrary
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
+
+-- | Classify Servant ClientError to MediaClientError.
+classifyMediaClientError :: ClientError -> MediaClientError
+classifyMediaClientError = \case
+  FailureResponse _ Response {responseStatusCode} -> MediaHttpError (statusCode responseStatusCode)
+  ConnectionError ex -> MediaNetworkError (show @Text ex)
+  DecodeFailure msg _ -> MediaParseError (toText msg)
+  other -> MediaNetworkError (show @Text other)
 
 -- | A media item from the server.
 data MediaItem = MediaItem

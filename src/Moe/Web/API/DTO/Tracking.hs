@@ -7,7 +7,6 @@ module Moe.Web.API.DTO.Tracking
     toTrackingWithBangumiResponse,
     fromCreateRequest,
     applyUpdateRequest,
-    mikanIdToRssUrl,
   )
 where
 
@@ -18,6 +17,7 @@ import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Rss (PubDate)
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Tracking (Tracking (..), TrackingType (..))
+import Moe.Infra.Rss.Source (mikanIdToRssUrl)
 import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi (BangumiResponse, toBangumiResponse)
 
@@ -93,9 +93,6 @@ fromCreateRequest autoOffset req =
       isBDrip = False,
       autoComplete = True
     }
-
-mikanIdToRssUrl :: Word32 -> Text
-mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> show mid
 
 applyUpdateRequest :: UpdateTrackingRequest -> Entity Tracking -> Entity Tracking
 applyUpdateRequest req entity =

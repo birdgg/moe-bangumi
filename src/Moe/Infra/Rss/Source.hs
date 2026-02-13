@@ -8,7 +8,9 @@ module Moe.Infra.Rss.Source
     Mikan,
     StandardRss,
     selectRssSource,
+    getBaseUrl,
     generateSearchUrl,
+    mikanIdToRssUrl,
     getChildText,
     extractInfoHashFromUrl,
     extractInfoHashFromMagnet,
@@ -26,6 +28,9 @@ import Text.XML (Name (..))
 import Text.XML.Cursor
 
 class RssSource s where
+  -- | Base URL of the RSS source site.
+  baseUrlFor :: proxy s -> Maybe Text
+  baseUrlFor _ = Nothing
   parseItemFor :: proxy s -> Cursor -> RawItem
   searchUrlFor :: proxy s -> Text -> Maybe Text
   searchUrlFor _ _ = Nothing
@@ -47,15 +52,25 @@ selectRssSource url
   | "mikanani.me" `T.isInfixOf` url = SomeRssSource (Proxy @Mikan)
   | otherwise = SomeRssSource (Proxy @StandardRss)
 
+getBaseUrl :: SomeRssSource -> Maybe Text
+getBaseUrl (SomeRssSource proxy) = baseUrlFor proxy
+
 generateSearchUrl :: SomeRssSource -> Text -> Maybe Text
 generateSearchUrl (SomeRssSource proxy) = searchUrlFor proxy
+
+-- | Build a Mikan RSS feed URL from a bangumi ID.
+mikanIdToRssUrl :: Word32 -> Text
+mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> show mid
 
 instance RssSource StandardRss where
   parseItemFor _ = parseStandardRssItem
 
 instance RssSource AcgRip where
+  baseUrlFor _ = Just "https://acg.rip"
   parseItemFor _ = parseStandardRssItem
-  searchUrlFor _ keyword = Just $ "https://acg.rip/.xml?term=" <> encodeUrlParam keyword
+  searchUrlFor p keyword = do
+    base <- baseUrlFor p
+    Just $ base <> "/.xml?term=" <> encodeUrlParam keyword
 
 parseStandardRssItem :: Cursor -> RawItem
 parseStandardRssItem cursor =
@@ -68,6 +83,7 @@ parseStandardRssItem cursor =
         }
 
 instance RssSource Mikan where
+  baseUrlFor _ = Just "https://mikanani.me"
   parseItemFor _ cursor =
     let url = getEnclosureUrl cursor
      in RawItem
@@ -93,6 +109,7 @@ instance RssSource Mikan where
     mikanTorrentName = mikanName "torrent"
 
 instance RssSource Nyaa where
+  baseUrlFor _ = Just "https://nyaa.si"
   parseItemFor _ cursor =
     let url = getEnclosureUrl cursor <|> getChildText "link" cursor
      in RawItem
@@ -114,7 +131,9 @@ instance RssSource Nyaa where
       nyaaName :: Name
       nyaaName = Name localName nyaaNs Nothing
 
-  searchUrlFor _ keyword = Just $ "https://nyaa.si/?page=rss&q=" <> encodeUrlParam keyword
+  searchUrlFor p keyword = do
+    base <- baseUrlFor p
+    Just $ base <> "/?page=rss&q=" <> encodeUrlParam keyword
 
 getChildText :: Text -> Cursor -> Maybe Text
 getChildText name cursor =

@@ -125,6 +125,8 @@ library
     Moe.Infra.Media.Adapter
     Moe.Infra.Media.Client
     Moe.Infra.Media.Effect
+    Moe.Infra.Media.Emby.API
+    Moe.Infra.Media.Emby.Types
     Moe.Infra.Media.Types
     Moe.Infra.Metadata.Bgmtv
     Moe.Infra.Metadata.Effect
