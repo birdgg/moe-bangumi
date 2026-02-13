@@ -25,6 +25,7 @@ module Moe.Domain.File
     extrasDir,
     trailersDir,
     isVideoExt,
+    isSubtitleExt,
   )
 where
 
@@ -217,3 +218,10 @@ isVideoExt ext = T.toLower ext `Set.member` videoExtensions
 
 videoExtensions :: Set Text
 videoExtensions = Set.fromList ["mkv", "mka", "mp4", "avi", "wmv", "flv", "webm", "rmvb", "ts", "m2ts"]
+
+-- | Check if a file extension is a known subtitle format.
+isSubtitleExt :: Text -> Bool
+isSubtitleExt ext = T.toLower ext `Set.member` subtitleExtensions
+
+subtitleExtensions :: Set Text
+subtitleExtensions = Set.fromList ["ass", "ssa", "srt", "sub", "sup", "idx"]

@@ -150,6 +150,7 @@ parseSpContent input =
       matchPv input,
       ExtraContent (Trailer Nothing) <$ findPattern trailerPat input,
       matchPreview input,
+      matchMiniAnime input,
       matchSp input
     ]
 
@@ -222,6 +223,15 @@ matchSp input = do
           EpisodeNumber (v * 100 + t)
     _ -> EpisodeNumber (fromMaybe 1 (readDigits rest))
 
+-- | Match Mini Anime bracket tag for special bonus episodes.
+matchMiniAnime :: Text -> Maybe ParsedSpContent
+matchMiniAnime input = do
+  matched <- findPattern miniAnimePat input
+  let inner = stripBrackets matched
+      digits = T.takeWhileEnd isDigit inner
+  ep <- readMaybe (toString digits)
+  pure $ SpecialEpisode (EpisodeNumber ep)
+
 -- | Parse leading digits as an ExtraIndex.
 parseLeadingIndex :: Text -> Maybe ExtraIndex
 parseLeadingIndex t =
@@ -263,3 +273,6 @@ previewPat = mkPattern "\\[(?:Web )?Preview[^\\]]*\\]"
 
 spPat :: Pattern
 spPat = mkPattern "\\[SP\\d*[^\\]]*\\]"
+
+miniAnimePat :: Pattern
+miniAnimePat = mkPattern "\\[Mini Anime \\d+\\]"

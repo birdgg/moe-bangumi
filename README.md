@@ -6,6 +6,11 @@ Avoid success $ at all cost
 
 ![preview](images/preview.png)
 
+## Why
+- Haskell 练手
+- Ani-rss 过于复杂
+- 有一些自己需要的功能
+
 ## 功能
 
 ### 订阅

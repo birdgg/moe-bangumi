@@ -82,6 +82,9 @@ root = "[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu"
 s2 :: Text
 s2 = "[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [Ma10p_1080p]"
 
+s3 :: Text
+s3 = "[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [Ma10p_1080p]"
+
 movie :: Text
 movie = "[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Hyouketsu no Kizuna [Ma10p_1080p]"
 
@@ -94,19 +97,19 @@ testCases =
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [26][Ma10p_1080p][x265_flac_aac].mkv",
       Just "Re：从零开始的异世界生活 (2016)/Season 02/Re：从零开始的异世界生活 - S02E26 [VCB-Studio][BDRip].mkv"
     ),
-    ( "CD",
+    ( "CD (skipped)",
       True,
       [GroupName "VCB-Studio"],
       root <> "/" <> s2
         <> "/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/Scans/02.webp",
-      Just "Re：从零开始的异世界生活 (2016)/Season 02/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/Scans/02.webp"
+      Nothing
     ),
-    ( "CM",
+    ( "CM in Sps (skipped)",
       True,
       [GroupName "VCB-Studio"],
       root <> "/" <> s2
         <> "/Sps/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [CM01][Ma10p_1080p][x265_flac].mkv",
-      Just "Re：从零开始的异世界生活 (2016)/Season 02/trailers/CM1.mkv"
+      Nothing
     ),
     ( "SP",
       True,
@@ -121,6 +124,34 @@ testCases =
       root <> "/" <> movie
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Hyouketsu no Kizuna [Ma10p_1080p][x265_flac].mka",
       Just "Re：从零开始的异世界生活 冰结之绊 (2019)/Re：从零开始的异世界生活 冰结之绊 (2019) [VCB-Studio][BDRip].mka"
+    ),
+    ( "Movie 2",
+      True,
+      [GroupName "VCB-Studio"],
+      root <> "/" <> "[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Memory Snow [Ma10p_1080p]"
+        <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Memory Snow [Ma10p_1080p][x265_flac_aac].mkv",
+      Just "Re：从零开始的异世界生活 雪之回忆 (2018)/Re：从零开始的异世界生活 雪之回忆 (2018) [VCB-Studio][BDRip].mkv"
+    ), 
+    ( "Subtitle",
+      True,
+      [GroupName "VCB-Studio"],
+      s3
+        <> "/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [51][Ma10p_1080p][x265_flac_aac].CHS.ass",
+      Just "Re：从零开始的异世界生活 (2016)/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].chs.ass"
+    ),
+    ( "CD under torrent root (skipped)",
+      True,
+      [GroupName "VCB-Studio"],
+      s3
+        <> "/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp",
+      Nothing
+    ),
+    ( "Mini Anime in SPs (skipped)",
+      True,
+      [GroupName "VCB-Studio"],
+      s3
+        <> "/SPs/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [Mini Anime 60][Ma10p_1080p][x265_flac].CHT.ass",
+      Nothing
     )
   ]
 

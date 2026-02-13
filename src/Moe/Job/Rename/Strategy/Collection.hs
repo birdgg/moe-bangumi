@@ -17,18 +17,21 @@ import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Effectful
+import Effectful.Exception (try)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (transact)
 import Moe.Domain.File
-  ( BangumiContent (Episode),
+  ( BangumiContent (Episode, EpisodeSub, MovieSub),
     BangumiFile (..),
     BangumiMeta (..),
     GroupName (..),
     Year,
     generateFullPath,
+    isSubtitleExt,
     isVideoExt,
     toBangumiMeta,
   )
+import Moe.Domain.Shared.Subtitle (Subtitle)
 import Moe.Domain.File qualified as File
 import Moe.Domain.Parser.Collection (ParsedDirName (..), ParsedInfo (..), ParsedSpContent (..), extractGroup, parseCollectionDirName, parseInfo, parseSpContent)
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonNumber (..))
@@ -57,11 +60,13 @@ renameCollection torrent hash = do
   let bdrip = T.isInfixOf "bdrip" (T.toLower torrent.name)
       grp = maybeToList $ GroupName <$> extractGroup torrent.name
   files <- getTorrentFiles hash
-  -- NOTE: foldM will abort on first error; a single file rename failure stops all remaining files.
   bmap <- foldM (\bmap file -> do
     (bmap', mNewPath) <- processFile bdrip grp bmap file.name
     forM_ mNewPath $ \newPath -> do
-      renameTorrentFile hash file.name newPath
+      result <- try @SomeException $ renameTorrentFile hash file.name newPath
+      case result of
+        Left ex -> Log.logAttention_ $ "rename: failed " <> file.name <> " -> " <> newPath <> " - " <> toText (displayException ex)
+        Right () -> pass
     pure bmap'
     ) Map.empty files
   when (Map.null bmap) $
@@ -85,8 +90,9 @@ processFile ::
   BangumiMap ->
   Text ->
   Eff es (BangumiMap, Maybe Text)
-processFile bdrip grp bmap fileName =
-  case findBangumiDir fileName of
+processFile bdrip grp bmap fileName
+  | containsSpecialDir fileName = pure (bmap, Nothing)
+  | otherwise = case findBangumiDir fileName of
     Nothing -> pure (bmap, Nothing)
     Just dirName -> do
       let parsed = parseCollectionDirName dirName
@@ -155,9 +161,12 @@ fallbackMeta parsed grp bdrip =
 computeNewPath :: BangumiMeta -> Maybe Year -> Text -> Text -> Text
 computeNewPath meta movieYear dirName fileName =
   let relPath = fileRelativePath dirName fileName
-   in if isVideoExt (T.takeWhileEnd (/= '.') fileName)
+      lastExt = T.toLower $ T.takeWhileEnd (/= '.') fileName
+   in if isVideoExt lastExt
         then buildVideoPath meta movieYear fileName
-        else buildNonVideoPath meta relPath
+        else case extractSubtitleInfo fileName of
+          Just (sub, subExt) -> buildSubtitlePath meta movieYear fileName sub subExt
+          Nothing -> buildNonVideoPath meta relPath
 
 buildVideoPath :: BangumiMeta -> Maybe Year -> Text -> Text
 buildVideoPath baseMeta movieYear fileName =
@@ -179,6 +188,38 @@ buildVideoPath baseMeta movieYear fileName =
                   meta = baseMeta {File.season = seasonNum} :: BangumiMeta
                in mkPath meta (Episode (fromMaybe 1 parsed.episodeNumber))
 
+-- | Extract subtitle language and extension from a filename (e.g. "xxx.CHS.ass" -> Just (CHS, "ass")).
+extractSubtitleInfo :: Text -> Maybe (Subtitle, Text)
+extractSubtitleInfo fileName =
+  let baseName = T.takeWhileEnd (/= '/') fileName
+      ext = T.toLower $ T.takeWhileEnd (/= '.') baseName
+   in if isSubtitleExt ext
+        then
+          let withoutExt = T.dropEnd (T.length ext + 1) baseName
+              langTag = T.takeWhileEnd (/= '.') withoutExt
+           in (,ext) <$> fromText langTag
+        else Nothing
+
+-- | Build new path for a subtitle file, mirroring video file naming with language tag.
+buildSubtitlePath :: BangumiMeta -> Maybe Year -> Text -> Subtitle -> Text -> Text
+buildSubtitlePath baseMeta movieYear fileName sub subExt =
+  let baseName = T.takeWhileEnd (/= '/') fileName
+      mkFile meta content = BangumiFile {bangumi = meta, content, ext = subExt}
+      mkPath meta content = toText $ generateFullPath (mkFile meta content)
+   in case parseSpContent baseName of
+        Just (SpecialEpisode ep) ->
+          let meta = baseMeta {File.season = Just (SeasonNumber 0)} :: BangumiMeta
+           in mkPath meta (EpisodeSub ep sub)
+        Nothing
+          | Just year <- movieYear ->
+              mkPath baseMeta (MovieSub year sub)
+          | otherwise ->
+              let parsed = parseInfo baseName
+                  seasonNum = baseMeta.season <|> parsed.season <|> Just (SeasonNumber 1)
+                  meta = baseMeta {File.season = seasonNum} :: BangumiMeta
+               in mkPath meta (EpisodeSub (fromMaybe 1 parsed.episodeNumber) sub)
+        _ -> buildNonVideoPath baseMeta (fileRelativePath (fromMaybe "" (findBangumiDir fileName)) fileName)
+
 -- | Build new path for a non-video file, preserving relative structure under season directory.
 buildNonVideoPath :: BangumiMeta -> Text -> Text
 buildNonVideoPath meta relPath =
@@ -188,19 +229,22 @@ buildNonVideoPath meta relPath =
         Just s -> base <> "/" <> toText (File.seasonDir s) <> "/" <> relPath
 
 -- | Find the bangumi directory for a file.
+--
+-- For 3+ segments (root/dir/file), returns the second segment (skipping season dirs).
+-- For 2+ segments, returns the first segment (torrent root IS the bangumi dir).
 findBangumiDir :: Text -> Maybe Text
 findBangumiDir fileName =
   let segments = T.splitOn "/" fileName
    in case segments of
-        (_ : dir : _)
-          | not (isSpecialDir dir) -> Just dir
+        (_ : dir : _ : _)
+          | not (isSeasonDir (T.toLower dir)) -> Just dir
+        (dir : _ : _) -> Just dir
         _ -> Nothing
 
--- | Check if a directory name is a special media directory or a season directory.
-isSpecialDir :: Text -> Bool
-isSpecialDir dir =
-  let lower = T.toLower dir
-   in lower `Set.member` specialDirNames || isSeasonDir lower
+-- | Check if any path segment is a known special media directory.
+containsSpecialDir :: Text -> Bool
+containsSpecialDir fileName =
+  any (\s -> T.toLower s `Set.member` specialDirNames) (T.splitOn "/" fileName)
 
 -- | Check if a directory name is a season directory (e.g. "season 01", "season01").
 isSeasonDir :: Text -> Bool
@@ -224,6 +268,8 @@ fileRelativePath bangumiDir fileName =
   let segments = T.splitOn "/" fileName
    in case segments of
         (_ : dir : rest)
+          | dir == bangumiDir -> T.intercalate "/" rest
+        (dir : rest)
           | dir == bangumiDir -> T.intercalate "/" rest
         _ -> fileName
 
