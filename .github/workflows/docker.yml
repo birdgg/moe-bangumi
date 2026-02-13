@@ -98,7 +98,7 @@ jobs:
           build-args: |
             APP_VERSION=${{ github.ref_name }}
           cache-from: type=gha,scope=build-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=build-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=build-${{ matrix.arch }},ignore-error=true
 
       - name: Extract binary from Docker image
         run: |

@@ -23,12 +23,12 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/tmdb-hs.git
-  tag: 51e55e243c13029fd604c5bd93a9af2c2fbb7217
+  tag: c50379c0ab054535cdc140224eea53bd2aa01a4f
 
 source-repository-package
   type: git
   location: https://github.com/birdgg/bgmtv-hs.git
-  tag: a13c6e311505b1346e5449b1b2ed7e284725e92f
+  tag: e25f84db95b59ab2612b296120a1a802202f5bf9
 
 source-repository-package
   type: git
