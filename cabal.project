@@ -23,7 +23,7 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/tmdb-hs.git
-  tag: c50379c0ab054535cdc140224eea53bd2aa01a4f
+  tag: 29b8ee33a0a9e2b44e4933def90393d9e0bb475c
 
 source-repository-package
   type: git

@@ -4,6 +4,8 @@ Core Stack: Haskell, React, Claude Code with Opus 4.6
 
 Avoid success $ at all cost
 
+![preview](images/preview.png)
+
 ## 功能
 
 ### 订阅

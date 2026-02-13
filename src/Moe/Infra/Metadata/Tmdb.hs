@@ -8,7 +8,6 @@ module Moe.Infra.Metadata.Tmdb
   )
 where
 
-import Data.Text qualified as T
 import Effectful ((:>))
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonNumber (..), TmdbId (..))
 import Moe.Domain.Setting qualified as Setting
@@ -37,7 +36,7 @@ withTmdbClient manager fallback action = do
 
 -- | Create a TMDB API client.
 mkTmdbApi :: Setting.TMDBConfig -> Manager -> Tmdb.TmdbApi
-mkTmdbApi cfg = Tmdb.mkTmdbClient (Tmdb.TmdbConfig cfg.apiKey (parseLocale cfg.language))
+mkTmdbApi cfg = Tmdb.mkTmdbClient (Tmdb.TmdbConfig cfg.apiKey (Tmdb.TmdbLocale cfg.language))
 
 -- | Convert a TMDB MultiSearchResult to Bangumi.
 tmdbResultToBangumi :: MultiSearchResult -> Maybe Bangumi
@@ -96,22 +95,5 @@ tmdbMovieDetailToBangumi detail = do
       totalEpisodes = Nothing
     }
 
--- | Parse locale text (e.g. "zh-CN") to TmdbLocale, defaulting to zh-CN.
-parseLocale :: Text -> Tmdb.TmdbLocale
-parseLocale t = case T.toLower t of
-  "zh-cn" -> Tmdb.zhCN
-  "zh-tw" -> Tmdb.zhTW
-  "en-us" -> Tmdb.enUS
-  "en-gb" -> Tmdb.enGB
-  "ja-jp" -> Tmdb.jaJP
-  "ko-kr" -> Tmdb.koKR
-  "fr-fr" -> Tmdb.frFR
-  "de-de" -> Tmdb.deDE
-  "es-es" -> Tmdb.esES
-  "es-mx" -> Tmdb.esMX
-  "pt-br" -> Tmdb.ptBR
-  "pt-pt" -> Tmdb.ptPT
-  "it-it" -> Tmdb.itIT
-  "ru-ru" -> Tmdb.ruRU
-  _ -> Tmdb.zhCN
+
 
