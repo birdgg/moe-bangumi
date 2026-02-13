@@ -58,10 +58,23 @@ runDownloaderQBittorrent dlEnv manager =
   interpret $ \_ op -> do
     cfg <- (.downloader) <$> getSetting
     case validateConfig cfg of
-      Just err -> throwError (DownloaderError err)
+      Just err -> handleUnconfigured err op
       Nothing -> do
         client <- getOrCreateClient dlEnv manager cfg
         handleDownloader manager cfg client op
+
+-- | Handle operations when downloader is not configured.
+-- Query operations return empty defaults; mutations still throw.
+handleUnconfigured ::
+  (Error AppError :> es) =>
+  DownloaderClientError ->
+  Downloader (Eff localEs) a ->
+  Eff es a
+handleUnconfigured err = \case
+  GetRenameTorrents -> pure []
+  GetTorrentsByHashes _ -> pure []
+  GetTorrentFiles _ -> pure []
+  _ -> throwError (DownloaderError err)
 
 -- | Validate that all required fields in DownloaderConfig are non-empty.
 validateConfig :: DownloaderConfig -> Maybe DownloaderClientError

@@ -58,7 +58,7 @@ runMetadataHttp manager = interpret $ \_ -> \case
     pure $ mapMaybe bgmtvSubjectToBangumi filtered
     where
       getDate s = s.date
-  SearchTmdb keyword maybeYear -> withTmdbClient manager $ \client -> do
+  SearchTmdb keyword maybeYear -> withTmdbClient manager [] $ \client -> do
     result <- liftIO $ client.searchMulti keyword
     resp <- liftEitherWith (MetadataError . classifyProviderError) result
     let filtered = filterByAirDate maybeYear getDate resp.results
@@ -74,11 +74,11 @@ runMetadataHttp manager = interpret $ \_ -> \case
       Right resp | (firstEp : _) <- (resp :: EpisodesResponse).data_ -> firstEp.sort - fromMaybe 0 firstEp.ep
       _ -> 0
   GetTmdbTvDetail tvShowId ->
-    withTmdbClient manager $ \client -> do
+    withTmdbClient manager Nothing $ \client -> do
       result <- liftIO $ client.getTvDetail tvShowId
       pure $ rightToMaybe result >>= tmdbTvDetailToBangumi
   GetTmdbMovieDetail movieId ->
-    withTmdbClient manager $ \client -> do
+    withTmdbClient manager Nothing $ \client -> do
       result <- liftIO $ client.getMovieDetail movieId
       pure $ rightToMaybe result >>= tmdbMovieDetailToBangumi
   FetchBangumiDataByMonth month -> do

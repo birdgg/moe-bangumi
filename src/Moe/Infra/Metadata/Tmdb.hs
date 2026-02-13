@@ -12,8 +12,6 @@ import Data.Text qualified as T
 import Effectful ((:>))
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonNumber (..), TmdbId (..))
 import Moe.Domain.Setting qualified as Setting
-import Moe.Error (AppError (..))
-import Moe.Infra.Metadata.Types (MetadataFetchError (..))
 import Moe.Infra.Setting.Effect (Setting, getSetting)
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
@@ -23,17 +21,18 @@ import Network.Tmdb.Types.Movie (MovieDetail (..))
 import Network.Tmdb.Types.Search (MediaType (..), MultiSearchResult (..))
 import Network.Tmdb.Types.Tv (TvDetail (..))
 
--- | Run a TMDB action with a configured client, throwing 'TmdbNotConfigured' if API key is empty.
+-- | Run a TMDB action with a configured client, returning fallback if API key is empty.
 withTmdbClient ::
-  (Setting :> es, Error AppError :> es) =>
+  (Setting :> es) =>
   Manager ->
+  a ->
   (Tmdb.TmdbApi -> Eff es a) ->
   Eff es a
-withTmdbClient manager action = do
+withTmdbClient manager fallback action = do
   pref <- getSetting
   let cfg = Setting.tmdb pref
   if cfg.apiKey == ""
-    then throwError (MetadataError (MetaConfigError "TMDB API key not configured"))
+    then pure fallback
     else action (mkTmdbApi cfg manager)
 
 -- | Create a TMDB API client.
