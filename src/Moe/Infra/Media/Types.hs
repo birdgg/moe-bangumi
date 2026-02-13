@@ -23,11 +23,11 @@ data MediaClientError
 
 instance Display MediaClientError where
   displayBuilder = \case
-    MediaNetworkError msg -> "Media: network error: " <> displayBuilder msg
-    MediaHttpError code -> "Media: HTTP " <> displayBuilder (show @Text code)
-    MediaParseError msg -> "Media: parse error: " <> displayBuilder msg
-    MediaInvalidUrl url -> "Media: invalid URL: " <> displayBuilder url
-    MediaConfigError msg -> "Media: config error: " <> displayBuilder msg
+    MediaNetworkError msg -> "Media network error: " <> displayBuilder msg
+    MediaHttpError code -> "Media HTTP " <> displayBuilder (show @Text code)
+    MediaParseError msg -> "Media parse error: " <> displayBuilder msg
+    MediaInvalidUrl url -> "Media invalid URL: " <> displayBuilder url
+    MediaConfigError msg -> "Media: " <> displayBuilder msg
 
 -- | A media library from the server.
 data MediaLibrary = MediaLibrary

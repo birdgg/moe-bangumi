@@ -6,8 +6,6 @@ module Moe.Job.Effect
     -- * Effect runners
     runBaseEffects,
 
-    -- * Helpers
-    logAppError,
   )
 where
 
@@ -39,13 +37,10 @@ runBaseEffects ::
   IO ()
 runBaseEffects env logger jobName action =
   action
-    & runErrorWith (logAppError jobName)
+    & runErrorWith (\_ err -> Log.logAttention_ $ display err)
     & runLog jobName logger env.config.logConfig.logLevel
     & runSqlite (DbPool env.dbPool)
     & runConcurrent
     & withUnliftStrategy (ConcUnlift Ephemeral Unlimited)
     & runEff
 
-logAppError :: (Log :> es) => Text -> a -> AppError -> Eff es ()
-logAppError jobName _ err =
-  Log.logAttention_ $ jobName <> display err

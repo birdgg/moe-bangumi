@@ -25,10 +25,10 @@ data MetadataFetchError
 
 instance Display MetadataFetchError where
   displayBuilder = \case
-    MetaNetworkError msg -> "Metadata: network error: " <> displayBuilder msg
-    MetaHttpError code -> "Metadata: HTTP " <> displayBuilder (show @Text code)
-    MetaParseError msg -> "Metadata: parse error: " <> displayBuilder msg
-    MetaConfigError msg -> "Metadata: config error: " <> displayBuilder msg
+    MetaNetworkError msg -> "Metadata network error: " <> displayBuilder msg
+    MetaHttpError code -> "Metadata HTTP " <> displayBuilder (show @Text code)
+    MetaParseError msg -> "Metadata parse error: " <> displayBuilder msg
+    MetaConfigError msg -> "Metadata: " <> displayBuilder msg
 
 -- | Classify a Servant ClientError into MetadataFetchError.
 classifyClientError :: ClientError -> MetadataFetchError

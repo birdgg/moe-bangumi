@@ -15,5 +15,5 @@ data DatabaseExecError
 
 instance Display DatabaseExecError where
   displayBuilder = \case
-    DbUnexpectedResult msg -> "Database: unexpected result: " <> displayBuilder msg
-    DbQueryError msg -> "Database: query error: " <> displayBuilder msg
+    DbUnexpectedResult msg -> "Database unexpected result: " <> displayBuilder msg
+    DbQueryError msg -> "Database query error: " <> displayBuilder msg

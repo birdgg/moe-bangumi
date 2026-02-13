@@ -15,7 +15,7 @@ where
 import Control.Exception.Safe (tryAny)
 import Data.Text qualified as T
 import Data.Text.Read qualified as TR
-import Effectful (inject, (:>))
+import Effectful ((:>))
 import Effectful.Dispatch.Dynamic (interpret)
 import Moe.Domain.Setting (DownloaderConfig (..), UserPreference (..))
 import Moe.Error (AppError (..))
@@ -54,13 +54,14 @@ runDownloaderQBittorrent ::
   Manager ->
   Eff (Downloader : es) a ->
   Eff es a
-runDownloaderQBittorrent dlEnv manager action = do
-  cfg <- (.downloader) <$> getSetting
-  case validateConfig cfg of
-    Just err -> throwError (DownloaderError err)
-    Nothing -> do
-      client <- getOrCreateClient dlEnv manager cfg
-      interpret (\_ -> handleDownloader manager cfg client) (inject action)
+runDownloaderQBittorrent dlEnv manager =
+  interpret $ \_ op -> do
+    cfg <- (.downloader) <$> getSetting
+    case validateConfig cfg of
+      Just err -> throwError (DownloaderError err)
+      Nothing -> do
+        client <- getOrCreateClient dlEnv manager cfg
+        handleDownloader manager cfg client op
 
 -- | Validate that all required fields in DownloaderConfig are non-empty.
 validateConfig :: DownloaderConfig -> Maybe DownloaderClientError

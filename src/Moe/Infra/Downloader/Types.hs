@@ -37,12 +37,12 @@ data DownloaderClientError
 
 instance Display DownloaderClientError where
   displayBuilder = \case
-    DlNetworkError msg -> "Downloader: connection failed: " <> displayBuilder msg
-    DlAuthError msg -> "Downloader: auth failed: " <> displayBuilder msg
-    DlApiError code msg -> "Downloader: API error " <> displayBuilder (show @Text code) <> ": " <> displayBuilder msg
-    DlParseError msg -> "Downloader: parse error: " <> displayBuilder msg
-    DlInvalidTorrent msg -> "Downloader: invalid torrent: " <> displayBuilder msg
-    DlConfigError msg -> "Downloader: config error: " <> displayBuilder msg
+    DlNetworkError msg -> "Downloader connection failed: " <> displayBuilder msg
+    DlAuthError msg -> "Downloader auth failed: " <> displayBuilder msg
+    DlApiError code msg -> "Downloader API error " <> displayBuilder (show @Text code) <> ": " <> displayBuilder msg
+    DlParseError msg -> "Downloader parse error: " <> displayBuilder msg
+    DlInvalidTorrent msg -> "Downloader invalid torrent: " <> displayBuilder msg
+    DlConfigError msg -> "Downloader: " <> displayBuilder msg
 
 -- | Parameters for adding a torrent.
 data AddTorrentParams = AddTorrentParams

@@ -31,6 +31,6 @@ data RssFetchError
 
 instance Display RssFetchError where
   displayBuilder = \case
-    RssNetworkError msg -> "Rss: network error: " <> displayBuilder msg
-    RssHttpError code -> "Rss: HTTP " <> displayBuilder (show @Text code)
-    RssParseError msg -> "Rss: parse error: " <> displayBuilder msg
+    RssNetworkError msg -> "Rss network error: " <> displayBuilder msg
+    RssHttpError code -> "Rss HTTP " <> displayBuilder (show @Text code)
+    RssParseError msg -> "Rss parse error: " <> displayBuilder msg

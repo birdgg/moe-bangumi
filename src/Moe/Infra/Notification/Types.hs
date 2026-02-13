@@ -16,6 +16,6 @@ data NotificationSendError
 
 instance Display NotificationSendError where
   displayBuilder = \case
-    NtfNetworkError msg -> "Notification: network error: " <> displayBuilder msg
-    NtfHttpError code -> "Notification: HTTP " <> displayBuilder (show @Text code)
-    NtfConfigError msg -> "Notification: config error: " <> displayBuilder msg
+    NtfNetworkError msg -> "Notification network error: " <> displayBuilder msg
+    NtfHttpError code -> "Notification HTTP " <> displayBuilder (show @Text code)
+    NtfConfigError msg -> "Notification: " <> displayBuilder msg
