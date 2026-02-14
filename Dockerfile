@@ -27,6 +27,9 @@ RUN apk add --no-cache \
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
+# Remove test-suite from cabal file to avoid test dependencies
+RUN sed -i '/^test-suite/,$d' moe-bangumi.cabal
+
 # Copy source code (needed for cabal to resolve library modules during dependency build)
 COPY app ./app
 COPY src ./src
