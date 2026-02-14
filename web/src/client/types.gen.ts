@@ -120,7 +120,7 @@ export type UpdateTrackingRequest = {
 
 export type RssSearchResult = {
     infoHash?: string;
-    pubDate?: string;
+    pubDate?: UtcTime;
     source: string;
     title: string;
     torrentUrl?: string;
@@ -190,6 +190,20 @@ export type TmdbSearchResult = {
 
 export type UpdateBangumiTmdbIdRequest = {
     tmdbId?: number;
+};
+
+export type LogsResponse = {
+    entries: Array<LogEntry>;
+    page: number;
+    pageSize: number;
+    total: number;
+};
+
+export type LogEntry = {
+    component: string;
+    level: string;
+    message: string;
+    time: UtcTime;
 };
 
 export type GetApiHealthData = {
@@ -561,3 +575,49 @@ export type PutApiBangumiByIdTmdbIdErrors = {
 export type PutApiBangumiByIdTmdbIdResponses = {
     200: unknown;
 };
+
+export type GetApiBangumiByIdEpisodeOffsetData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/bangumi/{id}/episode-offset';
+};
+
+export type GetApiBangumiByIdEpisodeOffsetErrors = {
+    /**
+     * `id` not found
+     */
+    404: unknown;
+};
+
+export type GetApiBangumiByIdEpisodeOffsetResponses = {
+    200: number;
+};
+
+export type GetApiBangumiByIdEpisodeOffsetResponse = GetApiBangumiByIdEpisodeOffsetResponses[keyof GetApiBangumiByIdEpisodeOffsetResponses];
+
+export type GetApiLogsData = {
+    body?: never;
+    path?: never;
+    query: {
+        date: string;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/logs';
+};
+
+export type GetApiLogsErrors = {
+    /**
+     * Invalid `pageSize` or `page` or `date`
+     */
+    400: unknown;
+};
+
+export type GetApiLogsResponses = {
+    200: LogsResponse;
+};
+
+export type GetApiLogsResponse = GetApiLogsResponses[keyof GetApiLogsResponses];

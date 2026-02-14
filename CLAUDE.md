@@ -53,12 +53,14 @@ cabal repl               # Start GHCi with project loaded
 - Effect definitions go in `src/Moe/Effect/`
 - Effect interpreters (implementations) go in `src/Moe/Adapter/`
 
-## Frontend (TanStack Form)
+## Frontend
+
+- Uses **bun** as package manager and runtime (`bun install`, `bun run dev`, `bun run gen:api`)
+- API client is auto-generated via `@hey-api/openapi-ts` from the backend OpenAPI spec
+
+### TanStack Form
 
 - `form` is passed as a prop (`SettingsFormInstance`), not created in the component
 - Reading `form.state.values` directly does NOT trigger re-renders
 - Use `form.Subscribe` with `selector` to reactively read form values outside of `form.Field`
 - `form.Field` already handles subscriptions for its own field value
-
-## Other
-- **database** since application not deployed, just modify init sql

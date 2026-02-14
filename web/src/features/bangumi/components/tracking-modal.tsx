@@ -19,7 +19,14 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { IconRss, IconHash, IconMovie, IconSearch } from "@tabler/icons-react";
+import {
+  IconRss,
+  IconHash,
+  IconMovie,
+  IconSearch,
+  IconRefresh,
+} from "@tabler/icons-react";
+import { client } from "@/client/client.gen";
 import { TmdbPanel } from "./tmdb-selector";
 
 interface TrackingModalProps {
@@ -90,10 +97,14 @@ function TrackingForm({
   const [episodeOffset, setEpisodeOffset] = useState(
     String(tracking?.episodeOffset ?? 0)
   );
+  const [offsetLoading, setOffsetLoading] = useState(false);
   const [rssUrl, setRssUrl] = useState(tracking?.rssUrl ?? "");
   const [autoComplete, setAutoComplete] = useState(
     tracking?.autoComplete ?? true
   );
+  const isMikanUrl = rssUrl.includes("mikanani.me");
+  const isMikanValid =
+    !isMikanUrl || /mikanani\.me\/RSS\/Bangumi\?bangumiId=/.test(rssUrl);
   const tmdbChanged = tmdbId !== bangumi.tmdbId;
 
   const invalidateTracking = useCallback(() => {
@@ -239,19 +250,47 @@ function TrackingForm({
         <div>
           <Label
             htmlFor="ep-offset"
-            className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5"
+            className="text-[10px] tracking-widest uppercase text-muted-foreground mb-1.5"
           >
             <IconHash className="size-3" />
             集数偏移量
           </Label>
-          <Input
-            id="ep-offset"
-            type="number"
-            min={0}
-            value={episodeOffset}
-            onChange={(e) => setEpisodeOffset(e.target.value)}
-            placeholder="0"
-          />
+          <div className="flex gap-1.5">
+            <Input
+              id="ep-offset"
+              type="number"
+              min={0}
+              value={episodeOffset}
+              onChange={(e) => setEpisodeOffset(e.target.value)}
+              placeholder="0"
+            />
+            <button
+              type="button"
+              disabled={offsetLoading}
+              onClick={async () => {
+                setOffsetLoading(true);
+                try {
+                  const { data } = await client.get<number>({
+                    url: "/api/bangumi/{id}/episode-offset",
+                    path: { id: bangumi.id },
+                  });
+                  setEpisodeOffset(String(data ?? 0));
+                } catch {
+                  toast.error("获取集数偏移量失败");
+                } finally {
+                  setOffsetLoading(false);
+                }
+              }}
+              className="inline-flex items-center justify-center shrink-0 size-8 rounded-lg border border-input text-muted-foreground cursor-pointer hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              title="从 Bangumi.tv 获取"
+            >
+              {offsetLoading ? (
+                <Spinner className="size-3.5" />
+              ) : (
+                <IconRefresh className="size-3.5" />
+              )}
+            </button>
+          </div>
           <p className="text-[10px] text-muted-foreground/40 mt-1 tracking-wide">
             文件命名时的集数起始偏移量
           </p>
@@ -259,7 +298,7 @@ function TrackingForm({
 
         {/* TMDB Selector trigger */}
         <div>
-          <Label className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5">
+          <Label className="text-[10px] tracking-widest uppercase text-muted-foreground mb-1.5">
             <IconMovie className="size-3" />
             TMDB
           </Label>
@@ -279,7 +318,6 @@ function TrackingForm({
                 ? tmdbId
                 : "选择 TMDB 匹配"}
             </span>
-            <IconSearch className="size-3.5 text-muted-foreground/40" />
           </button>
         </div>
 
@@ -287,26 +325,35 @@ function TrackingForm({
         <div>
           <Label
             htmlFor="rss-url"
-            className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5"
+            className="text-[10px] tracking-widest uppercase text-muted-foreground mb-1.5"
           >
             <IconRss className="size-3" />
-            RSS Feed
+            RSS
           </Label>
-          <Input
-            id="rss-url"
-            type="url"
-            value={rssUrl}
-            onChange={(e) => setRssUrl(e.target.value)}
-            placeholder={
-              bangumi.mikanId
-                ? "留空则自动使用 Mikan 订阅"
-                : "自定义 RSS 订阅地址"
-            }
-          />
-          {bangumi.mikanId && !rssUrl && (
-            <p className="flex items-center gap-1.5 text-[10px] text-chart-1/60 mt-1 tracking-wide">
-              <span className="size-1 rounded-full bg-chart-1/50 animate-pulse" />
-              将自动使用 Mikan RSS 订阅
+          <div className="flex gap-1.5">
+            <Input
+              id="rss-url"
+              type="text"
+              aria-invalid={!isMikanValid}
+              value={rssUrl.replace(/^https?:\/\//, "")}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                setRssUrl(v ? `https://${v.replace(/^https?:\/\//, "")}` : "");
+              }}
+            />
+            <a
+              href={`https://mikanani.me/Home/Search?searchstr=${encodeURIComponent(bangumi.titleChs)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center shrink-0 size-8 rounded-lg border border-input text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
+              title="在 Mikan 搜索"
+            >
+              <IconSearch className="size-3.5" />
+            </a>
+          </div>
+          {!isMikanValid && (
+            <p className="text-[10px] text-destructive mt-1 tracking-wide">
+              Mikan RSS 格式应为 mikanani.me/RSS/Bangumi?bangumiId=...
             </p>
           )}
         </div>
@@ -314,7 +361,7 @@ function TrackingForm({
         {/* Auto Complete */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-[10px] tracking-widest uppercase text-muted-foreground/60">
+            <Label className="text-[10px] tracking-widest uppercase text-muted-foreground">
               自动补全
             </Label>
             <p className="text-[10px] text-muted-foreground/40 tracking-wide">
@@ -333,7 +380,7 @@ function TrackingForm({
       <div className="flex items-center justify-end gap-2 px-4 py-3 sm:px-5">
         <Button
           size="sm"
-          disabled={isPending}
+          disabled={isPending || !isMikanValid}
           onClick={handleSubmit}
           className="bg-linear-to-r from-chart-1 to-chart-3 text-white border-chart-1/20 shadow-lg shadow-chart-1/15 hover:shadow-chart-1/25 hover:brightness-110 transition-all"
         >
