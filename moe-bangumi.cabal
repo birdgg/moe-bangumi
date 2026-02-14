@@ -46,6 +46,7 @@ common common-ghc-options
     -Wpartial-fields
     -fhide-source-paths
     -Wno-unused-do-bind
+    -Wno-ambiguous-fields
     -fshow-hole-constraints
     -Wno-unticked-promoted-constructors
     -Werror=unused-imports

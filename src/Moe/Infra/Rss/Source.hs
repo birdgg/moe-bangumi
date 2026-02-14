@@ -137,12 +137,12 @@ instance RssSource Nyaa where
 
 getChildText :: Text -> Cursor -> Maybe Text
 getChildText name cursor =
-  case cursor $/ element (fromText name) &/ content of
+  case cursor $/ element (textToName name) &/ content of
     [] -> Nothing
     (t : _) -> Just t
  where
-  fromText :: Text -> Name
-  fromText t = Name t Nothing Nothing
+  textToName :: Text -> Name
+  textToName t = Name t Nothing Nothing
 
 getEnclosureUrl :: Cursor -> Maybe Text
 getEnclosureUrl cursor =
