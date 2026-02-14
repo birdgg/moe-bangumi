@@ -34,6 +34,10 @@ RUN echo "tests: False" > cabal.project.local && \
     echo "  tests: False" >> cabal.project.local && \
     echo "  benchmarks: False" >> cabal.project.local
 
+# Create placeholder directories and files for cabal configuration checks
+# These will be replaced with actual source code in the next layer
+RUN mkdir -p app src test && touch LICENSE
+
 # Build dependencies only (cached separately from source)
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
