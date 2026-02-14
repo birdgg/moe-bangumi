@@ -27,10 +27,16 @@ RUN apk add --no-cache \
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
+# Explicitly disable tests and benchmarks for Docker build
+RUN echo "tests: False" > cabal.project.local && \
+    echo "benchmarks: False" >> cabal.project.local && \
+    echo "package moe-bangumi" >> cabal.project.local && \
+    echo "  tests: False" >> cabal.project.local && \
+    echo "  benchmarks: False" >> cabal.project.local
+
 # Build dependencies only (cached separately from source)
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
-    --mount=type=cache,target=/build/dist-newstyle \
     cabal update && \
     cabal build exe:moe-cli --only-dependencies \
         --disable-tests \
@@ -45,9 +51,9 @@ COPY migrations ./migrations
 COPY LICENSE CHANGELOG.md ./
 
 # Build the application with static linking
+# Note: dist-newstyle is NOT cache-mounted to avoid binary not found issues
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
-    --mount=type=cache,target=/build/dist-newstyle \
     cabal build exe:moe-cli \
         --disable-tests \
         --disable-benchmarks \
