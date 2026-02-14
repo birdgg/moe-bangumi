@@ -1,0 +1,19 @@
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY moe-bangumi /app/moe-bangumi
+COPY migrations /app/migrations
+COPY frontend-dist /app/web/dist
+
+RUN mkdir -p /app/data
+
+EXPOSE 3000
+
+ENV DATA_FOLDER=/app/data \
+    PORT=3000 \
+    ENV=production
+
+ENTRYPOINT ["/app/moe-bangumi"]
