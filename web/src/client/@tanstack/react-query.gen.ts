@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteApiTrackingById, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiHealth, getApiLogs, getApiRssSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiDownloaderTest, postApiNotificationTest, postApiRssDownload, postApiTracking, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
-import type { DeleteApiTrackingByIdData, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiRssSearchData, GetApiRssSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiRssDownloadData, PostApiTrackingData, PostApiTrackingResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
+import { deleteApiTrackingById, getApiAbout, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiHealth, getApiLogs, getApiRssSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiDownloaderTest, postApiNotificationTest, postApiRssDownload, postApiTracking, postApiUpdate, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
+import type { DeleteApiTrackingByIdData, GetApiAboutData, GetApiAboutResponse, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiRssSearchData, GetApiRssSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiRssDownloadData, PostApiTrackingData, PostApiTrackingResponse, PostApiUpdateData, PostApiUpdateResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -53,6 +53,35 @@ export const getApiHealthOptions = (options?: Options<GetApiHealthData>) => quer
     },
     queryKey: getApiHealthQueryKey(options)
 });
+
+export const getApiAboutQueryKey = (options?: Options<GetApiAboutData>) => createQueryKey('getApiAbout', options);
+
+export const getApiAboutOptions = (options?: Options<GetApiAboutData>) => queryOptions<GetApiAboutResponse, DefaultError, GetApiAboutResponse, ReturnType<typeof getApiAboutQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiAbout({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiAboutQueryKey(options)
+});
+
+export const postApiUpdateMutation = (options?: Partial<Options<PostApiUpdateData>>): UseMutationOptions<PostApiUpdateResponse, DefaultError, Options<PostApiUpdateData>> => {
+    const mutationOptions: UseMutationOptions<PostApiUpdateResponse, DefaultError, Options<PostApiUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const getApiCalendarQueryKey = (options: Options<GetApiCalendarData>) => createQueryKey('getApiCalendar', options);
 

@@ -11,12 +11,21 @@ import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationRe
 import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
 import Moe.Web.API.DTO.Bangumi (MikanSearchResultDTO, TmdbSearchResult, UpdateBangumiTmdbIdRequest)
 import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, TrackingWithBangumiResponse, UpdateTrackingRequest)
+import Moe.Web.API.DTO.Update (AboutResponse, UpdateResponse)
 import Servant
 
 type Routes = "api" :> NamedRoutes Routes'
 
 data Routes' mode = Routes'
   { health :: mode :- "health" :> Get '[JSON] Text,
+    about ::
+      mode
+        :- "about"
+          :> Get '[JSON] AboutResponse,
+    update ::
+      mode
+        :- "update"
+          :> Post '[JSON] UpdateResponse,
     calendar ::
       mode
         :- "calendar"

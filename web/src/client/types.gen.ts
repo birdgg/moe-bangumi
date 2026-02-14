@@ -4,6 +4,24 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:3000' | (string & {});
 };
 
+export type AboutResponse = {
+    arch: string;
+    autoUpdate: boolean;
+    changelog: string;
+    latest: string;
+    needUpdate: boolean;
+    platform: string;
+    publishedAt?: UtcTime;
+    version: string;
+};
+
+export type UtcTime = string;
+
+export type UpdateResponse = {
+    message: string;
+    success: boolean;
+};
+
 export type CalendarEntry = {
     bangumis: Array<BangumiResponse>;
     weekday: number;
@@ -27,8 +45,6 @@ export type BangumiResponse = {
 export type Day = string;
 
 export type BangumiKind = 'tv' | 'web' | 'movie' | 'ova';
-
-export type UtcTime = string;
 
 export type UserPreference = {
     downloader: DownloaderConfig;
@@ -188,6 +204,32 @@ export type GetApiHealthResponses = {
 };
 
 export type GetApiHealthResponse = GetApiHealthResponses[keyof GetApiHealthResponses];
+
+export type GetApiAboutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/about';
+};
+
+export type GetApiAboutResponses = {
+    200: AboutResponse;
+};
+
+export type GetApiAboutResponse = GetApiAboutResponses[keyof GetApiAboutResponses];
+
+export type PostApiUpdateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/update';
+};
+
+export type PostApiUpdateResponses = {
+    200: UpdateResponse;
+};
+
+export type PostApiUpdateResponse = PostApiUpdateResponses[keyof PostApiUpdateResponses];
 
 export type GetApiCalendarData = {
     body?: never;

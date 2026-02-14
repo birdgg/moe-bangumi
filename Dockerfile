@@ -36,6 +36,9 @@ COPY src ./src
 COPY migrations ./migrations
 COPY LICENSE CHANGELOG.md ./
 
+# Copy frontend build output (needed at compile time for file-embed TH)
+COPY web/dist ./web/dist
+
 # Explicitly disable tests and benchmarks for Docker build
 RUN echo "tests: False" > cabal.project.local && \
     echo "benchmarks: False" >> cabal.project.local && \
@@ -94,9 +97,6 @@ COPY --from=builder /build/moe-bangumi /app/moe-bangumi
 
 # Copy migrations directory (needed at runtime for database setup)
 COPY --from=builder /build/migrations /app/migrations
-
-# Copy frontend build output (pre-built by CI, downloaded to ./frontend-dist)
-COPY frontend-dist /app/web/dist
 
 # Create data directory for SQLite database
 RUN mkdir -p /app/data

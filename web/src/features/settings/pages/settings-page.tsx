@@ -107,28 +107,30 @@ export function SettingsPage() {
                   {renderContent()}
                 </div>
 
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={mutation.isPending || isLoading}
-                    className="cursor-pointer relative gap-2 overflow-hidden bg-linear-to-r from-chart-1 to-chart-3 px-5 text-white shadow-md shadow-chart-1/20 transition-all duration-300 hover:shadow-lg hover:shadow-chart-1/30 disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:shadow-none"
-                  >
-                    <span className="absolute -top-0.5 left-3 text-[8px] opacity-70 transition-opacity group-hover/button:opacity-100">
-                      *
-                    </span>
-                    <span className="absolute -bottom-0.5 right-4 text-[8px] opacity-70 transition-opacity group-hover/button:opacity-100">
-                      *
-                    </span>
-                    {mutation.isPending ? (
-                      <IconLoader2 className="size-4 animate-spin" />
-                    ) : (
-                      <IconDeviceFloppy className="size-4" />
-                    )}
-                    <span className="font-medium">
-                      {mutation.isPending ? "保存中..." : "保存"}
-                    </span>
-                  </Button>
-                </div>
+                {activeSection !== "system" && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={mutation.isPending || isLoading}
+                      className="cursor-pointer relative gap-2 overflow-hidden bg-linear-to-r from-chart-1 to-chart-3 px-5 text-white shadow-md shadow-chart-1/20 transition-all duration-300 hover:shadow-lg hover:shadow-chart-1/30 disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:shadow-none"
+                    >
+                      <span className="absolute -top-0.5 left-3 text-[8px] opacity-70 transition-opacity group-hover/button:opacity-100">
+                        *
+                      </span>
+                      <span className="absolute -bottom-0.5 right-4 text-[8px] opacity-70 transition-opacity group-hover/button:opacity-100">
+                        *
+                      </span>
+                      {mutation.isPending ? (
+                        <IconLoader2 className="size-4 animate-spin" />
+                      ) : (
+                        <IconDeviceFloppy className="size-4" />
+                      )}
+                      <span className="font-medium">
+                        {mutation.isPending ? "保存中..." : "保存"}
+                      </span>
+                    </Button>
+                  </div>
+                )}
               </form>
             </div>
           </div>

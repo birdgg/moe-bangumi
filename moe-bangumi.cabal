@@ -122,6 +122,10 @@ library
     Moe.Infra.Downloader.Adapter
     Moe.Infra.Downloader.Effect
     Moe.Infra.Downloader.Types
+    Moe.Infra.Update
+    Moe.Infra.Update.Adapter
+    Moe.Infra.Update.Effect
+    Moe.Infra.Update.Types
     Moe.Infra.Metadata.Bgmtv
     Moe.Infra.Metadata.Effect
     Moe.Infra.Metadata.Mikan
@@ -151,15 +155,18 @@ library
     Moe.Web.API.DTO.Rss
     Moe.Web.API.DTO.Setting
     Moe.Web.API.DTO.Tracking
+    Moe.Web.API.DTO.Update
     Moe.Web.API.Bangumi.Handler
     Moe.Web.API.Downloader.Handler
     Moe.Web.API.Log.Handler
     Moe.Web.API.Notification.Handler
+    Moe.Web.API.Update.Handler
     Moe.Web.API.Routes
     Moe.Web.API.Rss.Handler
     Moe.Web.API.Server
     Moe.Web.API.Setting.Handler
     Moe.Web.API.Tracking.Handler
+    Moe.Web.Embedded
     Moe.Web.Routers
     Moe.Web.Server
     Moe.Web.Types
@@ -169,6 +176,7 @@ library
 
   other-modules:
     Moe.Orphans
+    Paths_moe_bangumi
 
   build-depends:
     aeson ^>=2.2,
@@ -176,10 +184,12 @@ library
     bgmtv,
     bytestring,
     containers,
+    crypton,
     directory,
     effectful,
     effectful-core,
     effectful-plugin,
+    file-embed,
     qbittorrent,
     effectful-sqlite,
     effectful-th,
@@ -189,11 +199,13 @@ library
     http-client-tls,
     http-media,
     http-types,
+    mime-types,
     log-base,
     log-effectful,
     mtl,
     openapi3,
     pcre2,
+    process,
     relude,
     require-callstack,
     resource-pool,
@@ -205,13 +217,13 @@ library
     servant-scalar,
     servant-server,
     sqlite-simple,
+    tagged,
     text,
     text-display,
     validation-selective,
     time,
     tmdb,
     wai,
-    wai-app-static,
     warp,
     html-conduit,
     xml-conduit,
@@ -219,6 +231,7 @@ library
 executable moe-cli
   import: common-extensions, common-ghc-options, common-rts-options
   main-is: Main.hs
+  other-modules: Supervisor
   hs-source-dirs: app
   build-depends:
     base ^>=4.22.0.0,
@@ -226,8 +239,10 @@ executable moe-cli
     effectful-core,
     effectful-plugin,
     moe-bangumi,
+    process,
     require-callstack,
     text-display,
+    unix,
 
 test-suite moe-bangumi-test
   import: common-extensions, common-ghc-options
