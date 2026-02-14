@@ -5,6 +5,5 @@ export { FilterSection, type FilterSectionProps } from "./filter-section";
 export { ProxySection, type ProxySectionProps } from "./proxy-section";
 export { NotificationSection, type NotificationSectionProps } from "./notification-section";
 export { PrioritySection, type PrioritySectionProps } from "./priority-section";
-export { MediaLibrarySection, type MediaLibrarySectionProps } from "./media-library-section";
 export { SystemSection } from "./system-section";
 export { SettingsSidebar, type SettingsSection } from "./settings-sidebar";

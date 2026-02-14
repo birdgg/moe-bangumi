@@ -6,7 +6,6 @@ where
 import Data.Text.Display (Display (..))
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Types (DownloaderClientError)
-import Moe.Infra.Media.Types (MediaClientError)
 import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Prelude
@@ -16,7 +15,6 @@ data AppError
   = RssError RssFetchError
   | DownloaderError DownloaderClientError
   | MetadataError MetadataFetchError
-  | MediaError MediaClientError
   | DatabaseError DatabaseExecError
   | NotFound Text
   | ValidationError Text
@@ -28,7 +26,6 @@ instance Display AppError where
     RssError err -> displayBuilder err
     DownloaderError err -> displayBuilder err
     MetadataError err -> displayBuilder err
-    MediaError err -> displayBuilder err
     DatabaseError err -> displayBuilder err
     NotFound msg -> "NotFound: " <> displayBuilder msg
     ValidationError msg -> "ValidationError: " <> displayBuilder msg

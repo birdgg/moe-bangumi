@@ -24,7 +24,6 @@ import Moe.App.Logging (LogConfig (..), runLog)
 import Data.Text.Display (display)
 import Moe.Error (AppError (..))
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
-import Moe.Infra.Media.Adapter (runMediaEmby)
 import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Setting.Effect (runSetting, runSettingWriter)
@@ -97,7 +96,6 @@ naturalTransform env logger app = do
     liftIO $
       Right
         <$> app
-        & runMediaEmby env.httpManager
         & runDownloaderQBittorrent env.downloaderEnv env.httpManager
         & runRss env.httpManager
         & runMetadataHttp env.httpManager
@@ -127,7 +125,6 @@ appErrorToServerError :: AppError -> ServerError
 appErrorToServerError = \case
   RssError err -> jsonError err502 (display err)
   DownloaderError err -> jsonError err502 (display err)
-  MediaError err -> jsonError err400 (display err)
   MetadataError err -> jsonError err502 (display err)
   DatabaseError err -> jsonError err500 (display err)
   NotFound msg -> jsonError err404 msg

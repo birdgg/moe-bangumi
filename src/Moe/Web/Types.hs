@@ -14,7 +14,6 @@ import Effectful.Sqlite (Sqlite)
 import Moe.App.Env (MoeEnv)
 import Moe.Error (AppError)
 import Moe.Infra.Downloader.Effect (Downloader)
-import Moe.Infra.Media.Effect (Media)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Rss.Effect (Rss)
 import Moe.Infra.Setting.Effect (Setting, SettingWriter)
@@ -22,8 +21,7 @@ import Moe.Infra.Setting.Effect (Setting, SettingWriter)
 type ServerEff = Eff ServerEffects
 
 type ServerEffects =
-  '[ Media,
-     Downloader,
+  '[ Downloader,
      Rss,
      Metadata,
      Setting,

@@ -5,7 +5,6 @@ module Moe.Domain.Setting
     WashingConfig (..),
     NotificationConfig (..),
     TMDBConfig (..),
-    EmbyConfig (..),
     Regex,
     defaultUserPreference,
     defaultDownloaderConfig,
@@ -13,7 +12,6 @@ module Moe.Domain.Setting
     defaultWashingConfig,
     defaultNotificationConfig,
     defaultTMDBConfig,
-    defaultEmbyConfig,
     defaultSubtitlePriority,
     defaultGroupPriority,
   )
@@ -123,32 +121,12 @@ defaultTMDBConfig =
       language = "zh-CN"
     }
 
-data EmbyConfig = EmbyConfig
-  { url :: Text,
-    apiKey :: Text,
-    libraryId :: Text,
-    libraryName :: Text
-  }
-  deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
-
--- | Default Emby config with empty fields.
-defaultEmbyConfig :: EmbyConfig
-defaultEmbyConfig =
-  EmbyConfig
-    { url = "",
-      apiKey = "",
-      libraryId = "",
-      libraryName = ""
-    }
-
 data UserPreference = UserPreference
   { downloader :: DownloaderConfig,
     filter :: FilterConfig,
     washing :: WashingConfig,
     notification :: NotificationConfig,
-    tmdb :: TMDBConfig,
-    emby :: EmbyConfig
+    tmdb :: TMDBConfig
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
@@ -160,6 +138,5 @@ defaultUserPreference =
       filter = defaultFilterConfig,
       washing = defaultWashingConfig,
       notification = defaultNotificationConfig,
-      tmdb = defaultTMDBConfig,
-      emby = defaultEmbyConfig
+      tmdb = defaultTMDBConfig
     }

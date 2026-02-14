@@ -95,13 +95,6 @@ export const tmdbSchema = z.object({
   apiKey: z.string(),
 });
 
-export const embySchema = z.object({
-  url: z.string(),
-  apiKey: z.string(),
-  libraryId: z.string(),
-  libraryName: z.string(),
-});
-
 export const aiSchema = z.object({
   apiKey: z.string(),
   model: z.string(),
@@ -114,7 +107,6 @@ export const settingsFormSchema = z.object({
   notification: notificationSchema,
   priority: prioritySchema,
   tmdb: tmdbSchema,
-  emby: embySchema,
   ai: aiSchema,
 });
 
@@ -125,7 +117,6 @@ export type NotificationFormData = z.infer<typeof notificationSchema>;
 export type GroupFormData = z.infer<typeof groupSchema>;
 export type PriorityFormData = z.infer<typeof prioritySchema>;
 export type TmdbFormData = z.infer<typeof tmdbSchema>;
-export type EmbyFormData = z.infer<typeof embySchema>;
 export type AiFormData = z.infer<typeof aiSchema>;
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
@@ -137,7 +128,6 @@ export interface ApiUserPreference {
   washing?: { groupPriority: GroupFormData[]; subtitlePriority: SubtitlePattern[] };
   notification?: { botToken: string; chatId: string };
   tmdb?: { apiKey: string; language?: string };
-  emby?: { url: string; apiKey: string; libraryId: string; libraryName: string };
 }
 
 /** Convert API UserPreference to form data. */
@@ -166,12 +156,6 @@ export function fromUserPreference(pref: ApiUserPreference): SettingsFormData {
     },
     tmdb: {
       apiKey: pref.tmdb?.apiKey ?? "",
-    },
-    emby: {
-      url: pref.emby?.url ?? "",
-      apiKey: pref.emby?.apiKey ?? "",
-      libraryId: pref.emby?.libraryId ?? "",
-      libraryName: pref.emby?.libraryName ?? "",
     },
     ai: {
       apiKey: "",
@@ -204,12 +188,6 @@ export function toUserPreference(data: SettingsFormData): ApiUserPreference {
     tmdb: {
       apiKey: data.tmdb.apiKey,
       language: "zh-CN",
-    },
-    emby: {
-      url: data.emby.url,
-      apiKey: data.emby.apiKey,
-      libraryId: data.emby.libraryId,
-      libraryName: data.emby.libraryName,
     },
   };
 }

@@ -5,7 +5,6 @@ import Moe.Web.API.Bangumi.Handler qualified as Bangumi
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Downloader.Handler (handleTestDownloader)
 import Moe.Web.API.Log.Handler (handleGetLogs)
-import Moe.Web.API.Media.Handler qualified as Media
 import Moe.Web.API.Notification.Handler (handleTestNotification)
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Rss.Handler (handleDownloadTorrent, handleSearchRss)
@@ -31,10 +30,8 @@ apiServer =
       downloadTorrent = handleDownloadTorrent,
       testDownloader = handleTestDownloader,
       testNotification = handleTestNotification,
-      testMedia = Media.handleTestMedia,
-      listLibraries = Media.handleListLibraries,
-      importLibrary = Media.handleImportLibrary,
       searchTmdb = Bangumi.handleSearchTmdb,
       updateBangumiTmdbId = \bid req -> Bangumi.handleUpdateBangumiTmdbId bid req >> pure NoContent,
+      getBangumiEpisodeOffset = Bangumi.handleGetEpisodeOffset,
       getLogs = handleGetLogs
     }

@@ -121,13 +121,6 @@ library
     Moe.Infra.Downloader.Adapter
     Moe.Infra.Downloader.Effect
     Moe.Infra.Downloader.Types
-    Moe.Infra.Media
-    Moe.Infra.Media.Adapter
-    Moe.Infra.Media.Client
-    Moe.Infra.Media.Effect
-    Moe.Infra.Media.Emby.API
-    Moe.Infra.Media.Emby.Types
-    Moe.Infra.Media.Types
     Moe.Infra.Metadata.Bgmtv
     Moe.Infra.Metadata.Effect
     Moe.Infra.Metadata.Tmdb
@@ -151,7 +144,6 @@ library
     Moe.Web.API.DTO.Calendar
     Moe.Web.API.DTO.Downloader
     Moe.Web.API.DTO.Log
-    Moe.Web.API.DTO.Media
     Moe.Web.API.DTO.Notification
     Moe.Web.API.DTO.Rss
     Moe.Web.API.DTO.Setting
@@ -159,7 +151,6 @@ library
     Moe.Web.API.Bangumi.Handler
     Moe.Web.API.Downloader.Handler
     Moe.Web.API.Log.Handler
-    Moe.Web.API.Media.Handler
     Moe.Web.API.Notification.Handler
     Moe.Web.API.Routes
     Moe.Web.API.Rss.Handler

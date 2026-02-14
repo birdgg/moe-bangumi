@@ -9,7 +9,6 @@ import {
   ProxySection,
   NotificationSection,
   PrioritySection,
-  MediaLibrarySection,
   SystemSection,
   SettingsSidebar,
   type SettingsSection,
@@ -71,8 +70,6 @@ export function SettingsPage() {
         return <ProxySection form={form} />
       case "notification":
         return <NotificationSection form={form} />
-      case "media-library":
-        return <MediaLibrarySection form={form} />
       case "system":
         return <SystemSection />
       default:

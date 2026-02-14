@@ -35,12 +35,6 @@ function getDefaultFormData(): SettingsFormData {
     tmdb: {
       apiKey: "",
     },
-    emby: {
-      url: "",
-      apiKey: "",
-      libraryId: "",
-      libraryName: "",
-    },
     ai: {
       apiKey: "",
       model: "xiaomi/mimo-v2-flash:free",

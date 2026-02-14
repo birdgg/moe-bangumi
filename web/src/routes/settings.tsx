@@ -9,7 +9,6 @@ const searchSchema = z.object({
     "proxy",
     "notification",
     "priority",
-    "media-library",
     "system",
   ]).optional().default("general"),
 })

@@ -5,10 +5,8 @@ import Moe.Domain.Bangumi (Season)
 import Moe.Domain.Setting (UserPreference)
 import Moe.Prelude
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
-import Moe.Infra.Media.Types (MediaLibrary)
 import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
 import Moe.Web.API.DTO.Log (LogsResponse)
-import Moe.Web.API.DTO.Media (ImportLibraryRequest, ImportResult, TestMediaRequest, TestMediaResponse)
 import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationResponse)
 import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
 import Moe.Web.API.DTO.Bangumi (TmdbSearchResult, UpdateBangumiTmdbIdRequest)
@@ -88,24 +86,6 @@ data Routes' mode = Routes'
           :> "test"
           :> ReqBody '[JSON] TestNotificationRequest
           :> Post '[JSON] TestNotificationResponse,
-    testMedia ::
-      mode
-        :- "media"
-          :> "test"
-          :> ReqBody '[JSON] TestMediaRequest
-          :> Post '[JSON] TestMediaResponse,
-    listLibraries ::
-      mode
-        :- "media"
-          :> "libraries"
-          :> ReqBody '[JSON] TestMediaRequest
-          :> Post '[JSON] [MediaLibrary],
-    importLibrary ::
-      mode
-        :- "media"
-          :> "import"
-          :> ReqBody '[JSON] ImportLibraryRequest
-          :> Post '[JSON] ImportResult,
     searchTmdb ::
       mode
         :- "bangumi"
@@ -120,6 +100,12 @@ data Routes' mode = Routes'
           :> "tmdb-id"
           :> ReqBody '[JSON] UpdateBangumiTmdbIdRequest
           :> Put '[JSON] NoContent,
+    getBangumiEpisodeOffset ::
+      mode
+        :- "bangumi"
+          :> Capture "id" Int64
+          :> "episode-offset"
+          :> Get '[JSON] Word32,
     getLogs ::
       mode
         :- "logs"
