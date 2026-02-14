@@ -28,15 +28,21 @@ RUN apk add --no-cache \
     sqlite-static \
     pcre2-dev
 
-# ============================================================================
-# Layer 1: Cabal configuration (cached unless .cabal or cabal.project changes)
-# ============================================================================
-
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
 # Remove test-suite from cabal file to avoid test dependencies
 RUN sed -i '/^test-suite/,$d' moe-bangumi.cabal
+
+# Copy source code (needed for cabal to resolve library modules during dependency build)
+COPY app ./app
+COPY src ./src
+COPY migrations ./migrations
+COPY LICENSE CHANGELOG.md ./
+
+# Copy frontend build output (needed at compile time for file-embed TH)
+# This must exist before docker build (built by GitHub Actions or locally via `bun run build`)
+COPY web/dist ./web/dist
 
 # Explicitly disable tests and benchmarks for Docker build
 RUN echo "tests: False" > cabal.project.local && \
@@ -45,11 +51,7 @@ RUN echo "tests: False" > cabal.project.local && \
     echo "  tests: False" >> cabal.project.local && \
     echo "  benchmarks: False" >> cabal.project.local
 
-# ============================================================================
-# Layer 2: Build dependencies (cached unless dependencies change)
-# ============================================================================
-
-# Build dependencies without source code
+# Build dependencies (source code is needed to configure the library)
 # Note: BuildKit cache mount on ~/.cabal/store ensures dependencies are not rebuilt
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
@@ -60,26 +62,7 @@ RUN --mount=type=cache,target=/root/.cabal/store \
         --enable-executable-static \
         --ghc-options='-optl-pthread'
 
-# ============================================================================
-# Layer 3: Copy source code (invalidated on any code change)
-# ============================================================================
-
-# Copy application source code
-COPY app ./app
-COPY src ./src
-COPY migrations ./migrations
-COPY LICENSE CHANGELOG.md ./
-
-# Copy frontend build output (needed at compile time for file-embed TH)
-# This must exist before docker build (built by GitHub Actions or locally via `bun run build`)
-COPY web/dist ./web/dist
-
-# ============================================================================
-# Layer 4: Build application (only rebuilds when source code changes)
-# ============================================================================
-
 # Build the application with static linking
-# Dependencies are already built and cached, only app code is compiled here
 # Note: dist-newstyle is NOT cache-mounted to avoid binary not found issues
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
