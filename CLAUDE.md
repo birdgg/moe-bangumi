@@ -64,3 +64,54 @@ cabal repl               # Start GHCi with project loaded
 - Reading `form.state.values` directly does NOT trigger re-renders
 - Use `form.Subscribe` with `selector` to reactively read form values outside of `form.Field`
 - `form.Field` already handles subscriptions for its own field value
+
+## Release Workflow
+
+### Version Bump Process
+
+1. **Update version in `moe-bangumi.cabal`** (CRITICAL - must be done before tagging)
+   ```cabal
+   version: X.Y.Z
+   ```
+
+2. **Commit version bump**
+   ```bash
+   git add moe-bangumi.cabal
+   git commit -m "chore: bump version to X.Y.Z"
+   git push
+   ```
+
+3. **Create and push git tag**
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z
+
+   New Features:
+   - Feature 1
+   - Feature 2
+
+   Bug Fixes:
+   - Fix 1
+   "
+   git push origin vX.Y.Z
+   ```
+
+### Versioning Scheme
+
+Follow semantic versioning (semver):
+- **Major (X.0.0)**: Breaking changes
+- **Minor (X.Y.0)**: New features, backward compatible
+- **Patch (X.Y.Z)**: Bug fixes only
+
+### GitHub Actions
+
+Pushing a tag (`vX.Y.Z`) automatically triggers:
+- `.github/workflows/release.yml` - Builds Linux binary and creates GitHub release
+- Frontend assets are embedded in the binary via `web/dist/`
+
+### Pre-release Checklist
+
+- [ ] Version number updated in `moe-bangumi.cabal`
+- [ ] All tests passing locally (`cabal test`)
+- [ ] Frontend builds successfully (`cd web && bun run build`)
+- [ ] All changes committed and pushed to main
+- [ ] Tag message includes clear changelog

@@ -2,6 +2,10 @@
 # moe-bangumi Dockerfile
 # Multi-stage build for static Haskell binary using ghc-musl
 # Supports: linux/amd64, linux/arm64
+#
+# NOTE: Requires web/dist to exist before building
+# In GitHub Actions: frontend is built separately in build-frontend job
+# For local builds: run `cd web && bun run build` first
 # ============================================================================
 
 # ============================================================================
@@ -37,6 +41,7 @@ COPY migrations ./migrations
 COPY LICENSE CHANGELOG.md ./
 
 # Copy frontend build output (needed at compile time for file-embed TH)
+# This must exist before docker build (built by GitHub Actions or locally via `bun run build`)
 COPY web/dist ./web/dist
 
 # Explicitly disable tests and benchmarks for Docker build
