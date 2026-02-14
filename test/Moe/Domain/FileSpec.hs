@@ -50,55 +50,55 @@ namingTests =
     testCase "NCOP without index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (NCOP Nothing Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/NCOP.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Featurettes/NCOP.mkv",
     testCase "NCOP with index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (NCOP (Just 2) Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/NCOP2.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Featurettes/NCOP2.mkv",
     testCase "NCED without index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (NCED Nothing Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/NCED.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Featurettes/NCED.mkv",
     testCase "NCED with index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (NCED (Just 3) Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/NCED3.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Featurettes/NCED3.mkv",
     testCase "NCED with index and episode" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (NCED (Just 2) (Just 47)) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/NCED2_EP47.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Featurettes/NCED2_EP47.mkv",
     testCase "Menu without volume" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Menu Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/Menu.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Other/Menu.mkv",
     testCase "Menu with volume" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Menu (Just 1)) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/extras/Menu1.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Other/Menu1.mkv",
     testCase "PV trailer" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (PV 1) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/PV1.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Trailers/PV1.mkv",
     testCase "Preview without episode" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Preview Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/Preview.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Trailers/Preview.mkv",
     testCase "Preview with episode" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Preview (Just 27)) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/Preview_EP27.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Trailers/Preview_EP27.mkv",
     testCase "Trailer" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Trailer Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/Trailer.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Trailers/Trailer.mkv",
     testCase "CM without index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (CM Nothing) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/CM.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Other/CM.mkv",
     testCase "CM with index" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (CM (Just 2)) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/trailers/CM2.mkv",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Other/CM2.mkv",
     testCase "movie" $ do
       let meta = mkBangumi "Frieren Movie" Nothing Nothing
           file = BangumiFile meta (Movie 2025) "mkv"

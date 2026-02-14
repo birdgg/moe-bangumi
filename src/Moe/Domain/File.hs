@@ -22,8 +22,9 @@ module Moe.Domain.File
     showBaseName,
     sanitizeName,
     seasonDir,
-    extrasDir,
+    featurettesDir,
     trailersDir,
+    otherDir,
     isVideoExt,
     isSubtitleExt,
   )
@@ -114,19 +115,19 @@ toBangumiFile b ep =
 -- "Frieren Movie (2025)"
 generatePath :: BangumiFile -> FilePath
 generatePath file = case file.content of
-  Movie movieYear -> moviePath movieYear
-  MovieSub movieYear _ -> moviePath movieYear
-  content -> showBaseName file.bangumi </> contentDir content
+  Movie y -> toString $ nameWithYear file.bangumi.title y
+  MovieSub y _ -> toString $ nameWithYear file.bangumi.title y
+  Episode {} -> showBaseName file.bangumi </> seasonDir s
+  EpisodeSub {} -> showBaseName file.bangumi </> seasonDir s
+  NCOP {} -> showBaseName file.bangumi </> withSeason featurettesDir
+  NCED {} -> showBaseName file.bangumi </> withSeason featurettesDir
+  PV {} -> showBaseName file.bangumi </> withSeason trailersDir
+  Preview {} -> showBaseName file.bangumi </> withSeason trailersDir
+  Trailer {} -> showBaseName file.bangumi </> withSeason trailersDir
+  _ -> showBaseName file.bangumi </> withSeason otherDir
   where
-    moviePath y = toString $ nameWithYear file.bangumi.title y
     s = fromMaybe (SeasonNumber 1) file.bangumi.season
-    contentDir = \case
-      Episode {} -> seasonDir s
-      EpisodeSub {} -> seasonDir s
-      NCOP {} -> seasonDir s </> extrasDir
-      NCED {} -> seasonDir s </> extrasDir
-      Menu {} -> seasonDir s </> extrasDir
-      _ -> seasonDir s </> trailersDir
+    withSeason dir = maybe dir (\sn -> seasonDir sn </> dir) file.bangumi.season
 
 -- | Generate file base name without extension.
 --
@@ -155,16 +156,18 @@ generateFileName file = generateBaseName file <> toString extension
 --
 -- >>> generateFullPath (BangumiFile meta (Episode 1 1) "mkv")
 -- "Frieren (2023)/Season 01/Frieren - S01E01.mkv"
--- >>> generateFullPath (BangumiFile meta (NCOP Nothing) "mkv")
--- "Frieren (2023)/extras/NCOP.mkv"
+-- >>> generateFullPath (BangumiFile meta (NCOP Nothing Nothing) "mkv")
+-- "Frieren (2023)/Season 01/Featurettes/NCOP.mkv"
 generateFullPath :: BangumiFile -> FilePath
 generateFullPath file = generatePath file </> generateFileName file
+
+-- | Characters forbidden in file names.
+forbiddenChars :: [Char]
+forbiddenChars = "<>|?*\""
 
 sanitizeName :: Text -> Text
 sanitizeName = T.map replaceChar . T.filter (`notElem` forbiddenChars)
   where
-    forbiddenChars :: [Char]
-    forbiddenChars = "<>|?*\""
     replaceChar ':' = '-'
     replaceChar '/' = '-'
     replaceChar '\\' = '-'
@@ -179,38 +182,40 @@ nameWithYear name y = sanitizeName name <> " (" <> toText y <> ")"
 seasonDir :: SeasonNumber -> FilePath
 seasonDir s = toString $ "Season " <> toText s
 
--- | Media server extras directory for credit-less content (NCOP, NCED, Menu).
-extrasDir :: FilePath
-extrasDir = "extras"
+-- | Plex extras directory for credit-less content (NCOP, NCED).
+featurettesDir :: FilePath
+featurettesDir = "Featurettes"
 
--- | Media server trailers directory for promotional content (PV, Preview, Trailer, CM).
+-- | Plex extras directory for promotional content (PV, Preview, Trailer).
 trailersDir :: FilePath
-trailersDir = "trailers"
+trailersDir = "Trailers"
+
+-- | Plex extras directory for miscellaneous content (CM, Menu).
+otherDir :: FilePath
+otherDir = "Other"
 
 contentBaseName :: BangumiMeta -> BangumiContent -> Text
 contentBaseName meta = \case
   Episode ep -> epBase ep
   EpisodeSub ep _ -> epBase ep
-  NCOP idx mEp -> extraBaseWithEp "NCOP" idx mEp
-  NCED idx mEp -> extraBaseWithEp "NCED" idx mEp
-  Menu idx -> extraBase "Menu" idx
+  NCOP idx mEp -> extraWithEp "NCOP" idx mEp
+  NCED idx mEp -> extraWithEp "NCED" idx mEp
+  Menu idx -> extraIdx "Menu" idx
   PV (ExtraIndex i) -> "PV" <> show i
-  Preview mEp -> "Preview" <> foldMap (\ep -> "_EP" <> toText ep) mEp
-  Trailer mEp -> "Trailer" <> foldMap (\ep -> "_EP" <> toText ep) mEp
-  CM idx -> extraBase "CM" idx
+  Preview mEp -> "Preview" <> epSuffix mEp
+  Trailer mEp -> "Trailer" <> epSuffix mEp
+  CM idx -> extraIdx "CM" idx
   Movie y -> withSuffixes $ nameWithYear meta.title y
   MovieSub y _ -> withSuffixes $ nameWithYear meta.title y
   where
     s = fromMaybe (SeasonNumber 1) meta.season
-    withSuffixes base =
-      base <> foldMap (\g -> " [" <> toText g <> "]") meta.group
-        <> if meta.isBDrip then "[BDRip]" else ""
+    groupSuffix = foldMap (\g -> " [" <> toText g <> "]") meta.group
+    bdripSuffix = if meta.isBDrip then "[BDRip]" else ""
+    withSuffixes base = base <> groupSuffix <> bdripSuffix
     epBase ep = withSuffixes $ sanitizeName meta.title <> " - S" <> toText s <> "E" <> toText ep
-    extraBase label = \case
-      Nothing -> label
-      Just (ExtraIndex i) -> label <> show i
-    extraBaseWithEp label idx mEp =
-      extraBase label idx <> foldMap (\ep -> "_EP" <> toText ep) mEp
+    extraIdx label idx = label <> foldMap (\(ExtraIndex i) -> show i) idx
+    epSuffix = foldMap (\ep -> "_EP" <> toText ep)
+    extraWithEp label idx mEp = extraIdx label idx <> epSuffix mEp
 
 -- | Check if a file extension is a known video format.
 isVideoExt :: Text -> Bool
