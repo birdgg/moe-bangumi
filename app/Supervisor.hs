@@ -64,6 +64,12 @@ loop exePath args childRef shutdownFlag = do
     (\(_, _, _, ph) -> cleanupProcess (Nothing, Nothing, Nothing, ph))
     $ \(_, _, _, ph) -> do
       atomicModifyIORef' childRef (const (Just ph, ()))
+
+      -- Double-check: if shutdown happened after createProcess but before here,
+      -- terminate the new process immediately to avoid leaking it
+      isShuttingDown <- readIORef shutdownFlag
+      when isShuttingDown $ terminateProcess ph
+
       exitCode <- waitForProcess ph
       atomicModifyIORef' childRef (const (Nothing, ()))
       pure exitCode
