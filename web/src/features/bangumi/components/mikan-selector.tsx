@@ -158,13 +158,13 @@ export function MikanPanel({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate leading-snug">
                         {result.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {result.season && (
-                          <span className="text-[10px] px-1.5 py-px rounded-md bg-chart-1/10 text-chart-1 font-semibold tracking-wider">
-                            S{result.season}
+                        {result.season && result.season > 1 && (
+                          <span className="ml-1 font-normal opacity-50">
+                            第{result.season}季
                           </span>
                         )}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] text-muted-foreground/30 tabular-nums">
                           #{result.mikanId}
                         </span>

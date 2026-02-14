@@ -8,6 +8,7 @@ import {
   postApiTrackingMutation,
 } from "@/client/@tanstack/react-query.gen";
 import type { BangumiResponse } from "@/client/types.gen";
+import { SeasonTag } from "@/features/bangumi/components/season-tag";
 import { toast } from "sonner";
 
 interface CalendarCardProps {
@@ -77,11 +78,6 @@ export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps
     }
   };
 
-  const seasonText =
-    bangumi.kind === "tv" && bangumi.season && bangumi.season > 1
-      ? ` 第${bangumi.season}季`
-      : "";
-
   return (
     <div
       className="group relative w-full transition-transform duration-200 ease-out hover:-translate-y-1.5 active:scale-[0.97]"
@@ -148,9 +144,7 @@ export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps
         <div className="absolute inset-x-0 bottom-0 p-3 pb-3.5">
           <h3 className="line-clamp-2 text-xs font-semibold leading-snug text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
             {bangumi.titleChs}
-            {seasonText && (
-              <span className="text-white/50 font-normal">{seasonText}</span>
-            )}
+            <SeasonTag season={bangumi.season} kind={bangumi.kind} />
           </h3>
         </div>
       </div>

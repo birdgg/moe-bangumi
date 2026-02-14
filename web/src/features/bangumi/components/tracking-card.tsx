@@ -1,4 +1,5 @@
 import type { TrackingWithBangumiResponse } from "@/client/types.gen";
+import { SeasonTag } from "./season-tag";
 
 export function TrackingCard({
   item,
@@ -9,11 +10,6 @@ export function TrackingCard({
   onClick: () => void;
 }) {
   const { bangumi, tracking } = item;
-
-  const seasonText =
-    bangumi.kind === "tv" && bangumi.season && bangumi.season > 1
-      ? ` 第${bangumi.season}季`
-      : "";
 
   const progress =
     bangumi.totalEpisodes && bangumi.totalEpisodes > 0
@@ -57,9 +53,7 @@ export function TrackingCard({
         <div className="absolute inset-x-0 bottom-0 p-3 pb-3.5">
           <h3 className="line-clamp-2 text-xs font-semibold leading-snug text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
             {bangumi.titleChs}
-            {seasonText && (
-              <span className="text-white/50 font-normal">{seasonText}</span>
-            )}
+            <SeasonTag season={bangumi.season} kind={bangumi.kind} />
           </h3>
 
           <div className="flex items-center gap-2 mt-1.5 translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">

@@ -29,6 +29,7 @@ import {
 import { client } from "@/client/client.gen";
 import { TmdbPanel } from "./tmdb-selector";
 import { MikanPanel } from "./mikan-selector";
+import { SeasonTag } from "./season-tag";
 
 interface TrackingModalProps {
   open: boolean;
@@ -197,11 +198,6 @@ function TrackingForm({
     }
   };
 
-  const seasonText =
-    bangumi.kind === "tv" && bangumi.season && bangumi.season > 1
-      ? `第${bangumi.season}季`
-      : null;
-
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Header: Cinematic poster banner */}
@@ -237,6 +233,7 @@ function TrackingForm({
             <div>
               <AnimatedModalTitle className="text-sm font-bold leading-snug line-clamp-2">
                 {bangumi.titleChs}
+                <SeasonTag season={bangumi.season} kind={bangumi.kind} />
               </AnimatedModalTitle>
 
               {bangumi.titleJap && (
@@ -247,11 +244,6 @@ function TrackingForm({
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-              {seasonText && (
-                <span className="inline-flex items-center px-1.5 py-px rounded-md bg-chart-1/10 text-chart-1 text-[10px] font-semibold tracking-wider">
-                  {seasonText}
-                </span>
-              )}
               <span className="inline-flex items-center px-1.5 py-px rounded-md bg-muted text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
                 {bangumi.kind}
               </span>
@@ -408,10 +400,10 @@ function TrackingForm({
           {isPending ? (
             <>
               <Spinner className="size-3.5" />
-              <span>{isEditing ? "保存中..." : "追番中..."}</span>
+              <span>保存中...</span>
             </>
           ) : (
-            <span>{isEditing ? "保存" : "追番"}</span>
+            <span>保存</span>
           )}
         </Button>
       </div>
