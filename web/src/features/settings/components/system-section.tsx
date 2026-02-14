@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { getApiAbout, postApiUpdate } from "@/client/sdk.gen";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 
 export function SystemSection() {
   const [expandedChangelog, setExpandedChangelog] = React.useState(false);
-  const queryClient = useQueryClient();
 
   // 查询版本信息
   const aboutQuery = useQuery({
