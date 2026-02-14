@@ -28,13 +28,43 @@ RUN apk add --no-cache \
     sqlite-static \
     pcre2-dev
 
+# ============================================================================
+# Layer 1: Cabal configuration (cached unless .cabal or cabal.project changes)
+# ============================================================================
+
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
 # Remove test-suite from cabal file to avoid test dependencies
 RUN sed -i '/^test-suite/,$d' moe-bangumi.cabal
 
-# Copy source code (needed for cabal to resolve library modules during dependency build)
+# Explicitly disable tests and benchmarks for Docker build
+RUN echo "tests: False" > cabal.project.local && \
+    echo "benchmarks: False" >> cabal.project.local && \
+    echo "package moe-bangumi" >> cabal.project.local && \
+    echo "  tests: False" >> cabal.project.local && \
+    echo "  benchmarks: False" >> cabal.project.local
+
+# ============================================================================
+# Layer 2: Build dependencies WITHOUT specifying target (cached unless dependencies change)
+# ============================================================================
+
+# Build all dependencies without target specification to avoid library configuration
+# Note: BuildKit cache mount on ~/.cabal/store ensures dependencies are not rebuilt
+RUN --mount=type=cache,target=/root/.cabal/store \
+    --mount=type=cache,target=/root/.cabal/packages \
+    cabal update && \
+    cabal build --only-dependencies \
+        --disable-tests \
+        --disable-benchmarks \
+        --enable-executable-static \
+        --ghc-options='-optl-pthread'
+
+# ============================================================================
+# Layer 3: Copy source code (invalidated on any code change)
+# ============================================================================
+
+# Copy application source code
 COPY app ./app
 COPY src ./src
 COPY migrations ./migrations
@@ -44,25 +74,12 @@ COPY LICENSE CHANGELOG.md ./
 # This must exist before docker build (built by GitHub Actions or locally via `bun run build`)
 COPY web/dist ./web/dist
 
-# Explicitly disable tests and benchmarks for Docker build
-RUN echo "tests: False" > cabal.project.local && \
-    echo "benchmarks: False" >> cabal.project.local && \
-    echo "package moe-bangumi" >> cabal.project.local && \
-    echo "  tests: False" >> cabal.project.local && \
-    echo "  benchmarks: False" >> cabal.project.local
-
-# Build dependencies (source code is needed to configure the library)
-# Note: BuildKit cache mount on ~/.cabal/store ensures dependencies are not rebuilt
-RUN --mount=type=cache,target=/root/.cabal/store \
-    --mount=type=cache,target=/root/.cabal/packages \
-    cabal update && \
-    cabal build exe:moe-cli --only-dependencies \
-        --disable-tests \
-        --disable-benchmarks \
-        --enable-executable-static \
-        --ghc-options='-optl-pthread'
+# ============================================================================
+# Layer 4: Build application (only rebuilds when source code changes)
+# ============================================================================
 
 # Build the application with static linking
+# Dependencies are already built and cached, only app code is compiled here
 # Note: dist-newstyle is NOT cache-mounted to avoid binary not found issues
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
