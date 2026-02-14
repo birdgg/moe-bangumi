@@ -5,7 +5,7 @@ import {
   IconWorld,
   IconBrandTelegram,
   IconSortDescending,
-  IconSettings,
+  IconMovie,
   IconInfoCircle,
 } from "@tabler/icons-react";
 
@@ -21,8 +21,8 @@ interface SettingsSidebarItem {
 const sidebarItems: SettingsSidebarItem[] = [
   {
     id: "general",
-    label: "常规",
-    icon: <IconSettings className="size-4" />,
+    label: "元数据",
+    icon: <IconMovie className="size-4" />,
   },
   {
     id: "downloader",

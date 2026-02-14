@@ -3,7 +3,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { IconDeviceFloppy, IconLoader2 } from "@tabler/icons-react"
 import {
-  GeneralSection,
+  MetadataSection,
   DownloaderSection,
   FilterSection,
   ProxySection,
@@ -59,7 +59,7 @@ export function SettingsPage() {
 
     switch (activeSection) {
       case "general":
-        return <GeneralSection form={form} />
+        return <MetadataSection form={form} />
       case "downloader":
         return <DownloaderSection form={form} />
       case "priority":
@@ -73,7 +73,7 @@ export function SettingsPage() {
       case "system":
         return <SystemSection />
       default:
-        return <GeneralSection form={form} />
+        return <MetadataSection form={form} />
     }
   }
 

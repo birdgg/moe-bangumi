@@ -1,5 +1,5 @@
 export { SectionHeader, FormField } from "./shared";
-export { GeneralSection, type GeneralSectionProps } from "./general-section";
+export { MetadataSection, type MetadataSectionProps } from "./metadata-section";
 export { DownloaderSection, type DownloaderSectionProps } from "./downloader-section";
 export { FilterSection, type FilterSectionProps } from "./filter-section";
 export { ProxySection, type ProxySectionProps } from "./proxy-section";

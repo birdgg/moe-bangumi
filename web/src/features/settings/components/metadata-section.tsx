@@ -9,11 +9,11 @@ import {
 import { FormField } from "./shared";
 import { type SettingsFormInstance } from "../hooks";
 
-export interface GeneralSectionProps {
+export interface MetadataSectionProps {
   form: SettingsFormInstance;
 }
 
-export function GeneralSection({ form }: GeneralSectionProps) {
+export function MetadataSection({ form }: MetadataSectionProps) {
   const [showTmdbApiKey, setShowTmdbApiKey] = React.useState(false);
 
   return (
