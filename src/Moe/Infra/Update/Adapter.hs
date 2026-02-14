@@ -10,7 +10,7 @@ module Moe.Infra.Update.Adapter
 where
 
 import "crypton" Crypto.Hash (Digest, SHA256, hash)
-import Control.Exception.Safe (tryAny)
+import Control.Exception.Safe (finally, try, tryAny)
 import Data.Aeson qualified as Aeson
 import Data.Aeson ((.:), (.:?), (.!=))
 import Data.Text qualified as T
@@ -24,21 +24,28 @@ import Moe.Prelude
 import Network.HTTP.Client
   ( Manager,
     Request (..),
+    brRead,
     httpLbs,
     parseRequest,
     responseBody,
     responseStatus,
+    withResponse,
   )
 import Network.HTTP.Types.Status (statusCode)
 import System.Directory
-  ( createDirectoryIfMissing,
+  ( copyFileWithMetadata,
+    createDirectoryIfMissing,
+    doesFileExist,
     getPermissions,
+    removeFile,
     removePathForcibly,
     renameFile,
     setOwnerExecutable,
     setPermissions,
   )
 import System.FilePath (takeDirectory, (</>))
+import Data.ByteString qualified as BS
+import System.IO (hClose, openBinaryFile)
 import System.Process (callProcess)
 
 -- -------------------------------------------------------------------
@@ -105,7 +112,7 @@ githubRepo :: Text
 githubRepo = "moe-bangumi"
 
 cacheTTL :: NominalDiffTime
-cacheTTL = 60
+cacheTTL = 1200
 
 -- -------------------------------------------------------------------
 -- Interpreter
@@ -252,11 +259,8 @@ performUpdateImpl env manager = do
         perms <- getPermissions extractedBinary
         setPermissions extractedBinary (setOwnerExecutable True perms)
 
-      -- Replace binary (renameFile may fail across filesystems)
-      renameResult <- liftIO $ tryAny $ renameFile extractedBinary targetPath
-      case renameResult of
-        Left err -> throwError $ UpdateError $ UpdateFileError $ "Failed to replace binary: " <> show err
-        Right () -> pass
+      -- Replace binary using safe atomic replacement with backup and rollback
+      safeReplaceFile extractedBinary targetPath
 
       -- Cleanup
       liftIO $ removePathForcibly tmpDir
@@ -272,7 +276,7 @@ performUpdateImpl env manager = do
 buildAssetName :: PlatformInfo -> Text
 buildAssetName p = "moe-bangumi-" <> toText p.platform <> "-" <> toText p.arch <> ".tar.gz"
 
--- | Download a file from URL to local path.
+-- | Download a file from URL to local path using streaming to avoid memory spikes.
 downloadFile ::
   (Error AppError :> es, IOE :> es) =>
   Text ->
@@ -283,11 +287,17 @@ downloadFile url dest manager = do
   result <- liftIO $ tryAny $ do
     req <- parseRequest (toString url)
     let req' = req {requestHeaders = [("User-Agent", "moe-bangumi")]}
-    resp <- httpLbs req' manager
-    let status = statusCode (responseStatus resp)
-    when (status /= 200) $
-      fail $ "HTTP " <> show status <> " downloading " <> toString url
-    writeFileLBS dest (responseBody resp)
+    withResponse req' manager $ \resp -> do
+      let status = statusCode (responseStatus resp)
+      when (status /= 200) $
+        fail $ "HTTP " <> show status <> " downloading " <> toString url
+      h <- openBinaryFile dest WriteMode
+      let loop = do
+            chunk <- brRead (responseBody resp)
+            unless (BS.null chunk) $ do
+              BS.hPut h chunk
+              loop
+      loop `finally` hClose h
   case result of
     Left err -> throwError $ UpdateError $ UpdateNetworkError $ "Download failed: " <> show err
     Right () -> pass
@@ -334,3 +344,65 @@ sha256File path = do
   content <- readFileBS path
   let digest = hash content :: Digest SHA256
   pure $ show digest
+
+-- | Atomic rename with copy fallback for cross-filesystem compatibility.
+--
+-- First tries renameFile (atomic on same filesystem).
+-- If that fails, falls back to copyFileWithMetadata + removeFile.
+atomicRenameOrCopy :: FilePath -> FilePath -> IO ()
+atomicRenameOrCopy src dst = do
+  renameResult <- try (renameFile src dst) :: IO (Either SomeException ())
+  case renameResult of
+    Right () -> pass
+    Left _ -> do
+      copyFileWithMetadata src dst
+      removeFile src
+
+-- | Safe atomic file replacement with backup and rollback.
+--
+-- Steps:
+-- 1. Backup: target → target.backup
+-- 2. Prepare: source → target.new
+-- 3. Replace: target.new → target (atomic)
+-- 4. Cleanup: remove target.backup
+--
+-- On failure, automatically rollback using backup.
+safeReplaceFile ::
+  (IOE :> es, Error AppError :> es, Log :> es) =>
+  FilePath -> -- ^ Source file (new binary)
+  FilePath -> -- ^ Target file (current binary)
+  Eff es ()
+safeReplaceFile source target = do
+  let backupPath = target <> ".backup"
+      newPath = target <> ".new"
+
+  result <- liftIO $ tryAny $ do
+    -- Step 1: Backup current binary
+    atomicRenameOrCopy target backupPath
+
+    -- Step 2: Move new binary to .new location
+    atomicRenameOrCopy source newPath
+
+    -- Step 3: Atomic replace
+    atomicRenameOrCopy newPath target
+
+    -- Step 4: Remove backup
+    removePathForcibly backupPath
+
+  case result of
+    Left err -> do
+      Log.logAttention_ $ "Binary replacement failed, attempting rollback: " <> show err
+      rollbackResult <- liftIO $ tryAny $ do
+        backupExists <- doesFileExist backupPath
+        when backupExists $ do
+          whenM (doesFileExist target) $ removeFile target
+          whenM (doesFileExist newPath) $ removeFile newPath
+          atomicRenameOrCopy backupPath target
+      case rollbackResult of
+        Left rollbackErr ->
+          throwError $ UpdateError $ UpdateFileError $
+            "Failed to replace binary and rollback failed: " <> show err <> ", rollback: " <> show rollbackErr
+        Right () ->
+          throwError $ UpdateError $ UpdateFileError $
+            "Failed to replace binary (rolled back): " <> show err
+    Right () -> pass
