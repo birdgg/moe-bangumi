@@ -1,5 +1,18 @@
 # Revision history for moe-bangumi
 
+## 1.2.0 -- 2026-02-14
+
+* Add Mikan search API with in-app RSS URL selector
+* Enhance tracking modal with RSS search and episode offset configuration
+* Allow subscribing bangumi without mikanId
+* Improve frontend UI with prettier, tailwindcss plugin, and tracking card badges
+* Simplify File.hs and adopt Plex directory naming convention
+* Improve special directory handling in collection rename strategy
+* Separate binary build from Docker image build in release workflow
+* Remove Emby media server integration (Plex-focused)
+* Fix subtitle file naming to use Plex-compatible language codes
+* Refactor frontend with lazy loading and responsive grid layout
+
 ## 1.1.0 -- 2026-02-13
 
 * Import Emby watch progress and auto-subscribe current season RSS
