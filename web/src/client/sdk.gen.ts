@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiTrackingByIdData, DeleteApiTrackingByIdErrors, DeleteApiTrackingByIdResponses, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetErrors, GetApiBangumiByIdEpisodeOffsetResponses, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbErrors, GetApiBangumiSearchTmdbResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiHealthData, GetApiHealthResponses, GetApiLogsData, GetApiLogsErrors, GetApiLogsResponses, GetApiRssSearchData, GetApiRssSearchErrors, GetApiRssSearchResponses, GetApiSettingsData, GetApiSettingsResponses, GetApiTrackingBangumisData, GetApiTrackingBangumisResponses, GetApiTrackingByIdData, GetApiTrackingByIdErrors, GetApiTrackingByIdResponses, GetApiTrackingData, GetApiTrackingResponses, PostApiDownloaderTestData, PostApiDownloaderTestErrors, PostApiDownloaderTestResponses, PostApiMediaImportData, PostApiMediaImportErrors, PostApiMediaImportResponses, PostApiMediaLibrariesData, PostApiMediaLibrariesErrors, PostApiMediaLibrariesResponses, PostApiMediaTestData, PostApiMediaTestErrors, PostApiMediaTestResponses, PostApiNotificationTestData, PostApiNotificationTestErrors, PostApiNotificationTestResponses, PostApiRssDownloadData, PostApiRssDownloadErrors, PostApiRssDownloadResponses, PostApiTrackingData, PostApiTrackingErrors, PostApiTrackingResponses, PutApiBangumiByIdTmdbIdData, PutApiBangumiByIdTmdbIdErrors, PutApiBangumiByIdTmdbIdResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses, PutApiTrackingByIdData, PutApiTrackingByIdErrors, PutApiTrackingByIdResponses } from './types.gen';
+import type { DeleteApiTrackingByIdData, DeleteApiTrackingByIdErrors, DeleteApiTrackingByIdResponses, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetErrors, GetApiBangumiByIdEpisodeOffsetResponses, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanErrors, GetApiBangumiSearchMikanResponses, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbErrors, GetApiBangumiSearchTmdbResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiHealthData, GetApiHealthResponses, GetApiLogsData, GetApiLogsErrors, GetApiLogsResponses, GetApiRssSearchData, GetApiRssSearchErrors, GetApiRssSearchResponses, GetApiSettingsData, GetApiSettingsResponses, GetApiTrackingBangumisData, GetApiTrackingBangumisResponses, GetApiTrackingByIdData, GetApiTrackingByIdErrors, GetApiTrackingByIdResponses, GetApiTrackingData, GetApiTrackingResponses, PostApiDownloaderTestData, PostApiDownloaderTestErrors, PostApiDownloaderTestResponses, PostApiNotificationTestData, PostApiNotificationTestErrors, PostApiNotificationTestResponses, PostApiRssDownloadData, PostApiRssDownloadErrors, PostApiRssDownloadResponses, PostApiTrackingData, PostApiTrackingErrors, PostApiTrackingResponses, PutApiBangumiByIdTmdbIdData, PutApiBangumiByIdTmdbIdErrors, PutApiBangumiByIdTmdbIdResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses, PutApiTrackingByIdData, PutApiTrackingByIdErrors, PutApiTrackingByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -88,34 +88,9 @@ export const postApiNotificationTest = <ThrowOnError extends boolean = false>(op
     }
 });
 
-export const postApiMediaTest = <ThrowOnError extends boolean = false>(options?: Options<PostApiMediaTestData, ThrowOnError>) => (options?.client ?? client).post<PostApiMediaTestResponses, PostApiMediaTestErrors, ThrowOnError>({
-    url: '/api/media/test',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-        ...options?.headers
-    }
-});
-
-export const postApiMediaLibraries = <ThrowOnError extends boolean = false>(options?: Options<PostApiMediaLibrariesData, ThrowOnError>) => (options?.client ?? client).post<PostApiMediaLibrariesResponses, PostApiMediaLibrariesErrors, ThrowOnError>({
-    url: '/api/media/libraries',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-        ...options?.headers
-    }
-});
-
-export const postApiMediaImport = <ThrowOnError extends boolean = false>(options?: Options<PostApiMediaImportData, ThrowOnError>) => (options?.client ?? client).post<PostApiMediaImportResponses, PostApiMediaImportErrors, ThrowOnError>({
-    url: '/api/media/import',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-        ...options?.headers
-    }
-});
-
 export const getApiBangumiSearchTmdb = <ThrowOnError extends boolean = false>(options: Options<GetApiBangumiSearchTmdbData, ThrowOnError>) => (options.client ?? client).get<GetApiBangumiSearchTmdbResponses, GetApiBangumiSearchTmdbErrors, ThrowOnError>({ url: '/api/bangumi/search-tmdb', ...options });
+
+export const getApiBangumiSearchMikan = <ThrowOnError extends boolean = false>(options: Options<GetApiBangumiSearchMikanData, ThrowOnError>) => (options.client ?? client).get<GetApiBangumiSearchMikanResponses, GetApiBangumiSearchMikanErrors, ThrowOnError>({ url: '/api/bangumi/search-mikan', ...options });
 
 export const putApiBangumiByIdTmdbId = <ThrowOnError extends boolean = false>(options: Options<PutApiBangumiByIdTmdbIdData, ThrowOnError>) => (options.client ?? client).put<PutApiBangumiByIdTmdbIdResponses, PutApiBangumiByIdTmdbIdErrors, ThrowOnError>({
     url: '/api/bangumi/{id}/tmdb-id',

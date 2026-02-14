@@ -123,6 +123,8 @@ library
     Moe.Infra.Downloader.Types
     Moe.Infra.Metadata.Bgmtv
     Moe.Infra.Metadata.Effect
+    Moe.Infra.Metadata.Mikan
+    Moe.Infra.Metadata.Mikan.Types
     Moe.Infra.Metadata.Tmdb
     Moe.Infra.Metadata.Types
     Moe.Infra.Notification
@@ -210,6 +212,7 @@ library
     wai,
     wai-app-static,
     warp,
+    html-conduit,
     xml-conduit,
 
 executable moe-cli
@@ -236,6 +239,7 @@ test-suite moe-bangumi-test
     Moe.Domain.Parser.OriginalTitleSpec
     Moe.Domain.Parser.RssTitleSpec
     Moe.Infra.Metadata.BangumiData.TypesSpec
+    Moe.Infra.Metadata.MikanSpec
     Moe.Job.Rename.Strategy.CollectionSpec
 
   build-depends:

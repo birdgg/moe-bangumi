@@ -9,7 +9,7 @@ import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse
 import Moe.Web.API.DTO.Log (LogsResponse)
 import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationResponse)
 import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
-import Moe.Web.API.DTO.Bangumi (TmdbSearchResult, UpdateBangumiTmdbIdRequest)
+import Moe.Web.API.DTO.Bangumi (MikanSearchResultDTO, TmdbSearchResult, UpdateBangumiTmdbIdRequest)
 import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, TrackingWithBangumiResponse, UpdateTrackingRequest)
 import Servant
 
@@ -93,6 +93,12 @@ data Routes' mode = Routes'
           :> QueryParam' '[Required, Strict] "keyword" Text
           :> QueryParam "year" Year
           :> Get '[JSON] [TmdbSearchResult],
+    searchMikan ::
+      mode
+        :- "bangumi"
+          :> "search-mikan"
+          :> QueryParam' '[Required, Strict] "keyword" Text
+          :> Get '[JSON] [MikanSearchResultDTO],
     updateBangumiTmdbId ::
       mode
         :- "bangumi"

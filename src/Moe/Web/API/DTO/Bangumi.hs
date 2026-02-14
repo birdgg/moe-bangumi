@@ -1,9 +1,11 @@
 module Moe.Web.API.DTO.Bangumi
   ( BangumiResponse (..),
     TmdbSearchResult (..),
+    MikanSearchResultDTO (..),
     UpdateBangumiTmdbIdRequest (..),
     toBangumiResponse,
     toTmdbSearchResult,
+    toMikanSearchResultDTO,
   )
 where
 
@@ -14,6 +16,7 @@ import Data.Time.Calendar (Day)
 import Moe.Domain.Bangumi (BangumiKind, SeasonNumber, extractYear)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
+import Moe.Infra.Metadata.Mikan.Types qualified as Mikan
 import Moe.Prelude
 
 data BangumiResponse = BangumiResponse
@@ -75,6 +78,24 @@ toTmdbSearchResult b = do
         mediaType = toText b.kind,
         posterUrl = b.posterUrl
       }
+
+-- | Lightweight Mikan search result for the selector dropdown.
+data MikanSearchResultDTO = MikanSearchResultDTO
+  { mikanId :: Word32,
+    title :: Text,
+    season :: Maybe SeasonNumber
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (ToJSON, ToSchema)
+
+-- | Convert domain MikanSearchResult to DTO.
+toMikanSearchResultDTO :: Mikan.MikanSearchResult -> MikanSearchResultDTO
+toMikanSearchResultDTO r =
+  MikanSearchResultDTO
+    { mikanId = coerce r.mikanId,
+      title = r.title,
+      season = r.season
+    }
 
 -- | Request to update a bangumi's TMDB ID.
 data UpdateBangumiTmdbIdRequest = UpdateBangumiTmdbIdRequest

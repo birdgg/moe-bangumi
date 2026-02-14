@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteApiTrackingById, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchTmdb, getApiCalendar, getApiHealth, getApiLogs, getApiRssSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiDownloaderTest, postApiMediaImport, postApiMediaLibraries, postApiMediaTest, postApiNotificationTest, postApiRssDownload, postApiTracking, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
-import type { DeleteApiTrackingByIdData, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiRssSearchData, GetApiRssSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiMediaImportData, PostApiMediaImportResponse, PostApiMediaLibrariesData, PostApiMediaLibrariesResponse, PostApiMediaTestData, PostApiMediaTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiRssDownloadData, PostApiTrackingData, PostApiTrackingResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
+import { deleteApiTrackingById, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiHealth, getApiLogs, getApiRssSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiDownloaderTest, postApiNotificationTest, postApiRssDownload, postApiTracking, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
+import type { DeleteApiTrackingByIdData, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiRssSearchData, GetApiRssSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiRssDownloadData, PostApiTrackingData, PostApiTrackingResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -242,48 +242,6 @@ export const postApiNotificationTestMutation = (options?: Partial<Options<PostAp
     return mutationOptions;
 };
 
-export const postApiMediaTestMutation = (options?: Partial<Options<PostApiMediaTestData>>): UseMutationOptions<PostApiMediaTestResponse, DefaultError, Options<PostApiMediaTestData>> => {
-    const mutationOptions: UseMutationOptions<PostApiMediaTestResponse, DefaultError, Options<PostApiMediaTestData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postApiMediaTest({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const postApiMediaLibrariesMutation = (options?: Partial<Options<PostApiMediaLibrariesData>>): UseMutationOptions<PostApiMediaLibrariesResponse, DefaultError, Options<PostApiMediaLibrariesData>> => {
-    const mutationOptions: UseMutationOptions<PostApiMediaLibrariesResponse, DefaultError, Options<PostApiMediaLibrariesData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postApiMediaLibraries({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const postApiMediaImportMutation = (options?: Partial<Options<PostApiMediaImportData>>): UseMutationOptions<PostApiMediaImportResponse, DefaultError, Options<PostApiMediaImportData>> => {
-    const mutationOptions: UseMutationOptions<PostApiMediaImportResponse, DefaultError, Options<PostApiMediaImportData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postApiMediaImport({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const getApiBangumiSearchTmdbQueryKey = (options: Options<GetApiBangumiSearchTmdbData>) => createQueryKey('getApiBangumiSearchTmdb', options);
 
 export const getApiBangumiSearchTmdbOptions = (options: Options<GetApiBangumiSearchTmdbData>) => queryOptions<GetApiBangumiSearchTmdbResponse, DefaultError, GetApiBangumiSearchTmdbResponse, ReturnType<typeof getApiBangumiSearchTmdbQueryKey>>({
@@ -297,6 +255,21 @@ export const getApiBangumiSearchTmdbOptions = (options: Options<GetApiBangumiSea
         return data;
     },
     queryKey: getApiBangumiSearchTmdbQueryKey(options)
+});
+
+export const getApiBangumiSearchMikanQueryKey = (options: Options<GetApiBangumiSearchMikanData>) => createQueryKey('getApiBangumiSearchMikan', options);
+
+export const getApiBangumiSearchMikanOptions = (options: Options<GetApiBangumiSearchMikanData>) => queryOptions<GetApiBangumiSearchMikanResponse, DefaultError, GetApiBangumiSearchMikanResponse, ReturnType<typeof getApiBangumiSearchMikanQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiBangumiSearchMikan({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiBangumiSearchMikanQueryKey(options)
 });
 
 export const putApiBangumiByIdTmdbIdMutation = (options?: Partial<Options<PutApiBangumiByIdTmdbIdData>>): UseMutationOptions<unknown, DefaultError, Options<PutApiBangumiByIdTmdbIdData>> => {

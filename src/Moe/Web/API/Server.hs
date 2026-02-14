@@ -31,6 +31,7 @@ apiServer =
       testDownloader = handleTestDownloader,
       testNotification = handleTestNotification,
       searchTmdb = Bangumi.handleSearchTmdb,
+      searchMikan = Bangumi.handleSearchMikan,
       updateBangumiTmdbId = \bid req -> Bangumi.handleUpdateBangumiTmdbId bid req >> pure NoContent,
       getBangumiEpisodeOffset = Bangumi.handleGetEpisodeOffset,
       getLogs = handleGetLogs

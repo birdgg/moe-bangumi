@@ -1,5 +1,6 @@
 module Moe.Web.API.Bangumi.Handler
   ( handleSearchTmdb,
+    handleSearchMikan,
     handleUpdateBangumiTmdbId,
     handleGetEpisodeOffset,
   )
@@ -12,11 +13,13 @@ import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (BgmtvId (..), TmdbId (..))
 import Moe.Error (AppError (..))
 import Moe.Infra.Database.Bangumi qualified as DB
-import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset, searchTmdb)
+import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset, searchMikan, searchTmdb)
 import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi
-  ( TmdbSearchResult,
+  ( MikanSearchResultDTO,
+    TmdbSearchResult,
     UpdateBangumiTmdbIdRequest (..),
+    toMikanSearchResultDTO,
     toTmdbSearchResult,
   )
 import Moe.Web.Types (ServerEff)
@@ -29,6 +32,12 @@ handleSearchTmdb :: Text -> Maybe Year -> ServerEff [TmdbSearchResult]
 handleSearchTmdb keyword _maybeYear = do
   results <- searchTmdb keyword Nothing
   pure $ mapMaybe toTmdbSearchResult results
+
+-- | Search Mikan by keyword.
+handleSearchMikan :: Text -> ServerEff [MikanSearchResultDTO]
+handleSearchMikan keyword = do
+  results <- searchMikan keyword
+  pure $ map toMikanSearchResultDTO results
 
 -- | Update a bangumi's TMDB ID.
 handleUpdateBangumiTmdbId :: Int64 -> UpdateBangumiTmdbIdRequest -> ServerEff ()

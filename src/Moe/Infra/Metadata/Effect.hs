@@ -2,6 +2,7 @@ module Moe.Infra.Metadata.Effect
   ( Metadata (..),
     searchBgmtv,
     searchTmdb,
+    searchMikan,
     getBgmtvDetail,
     getBangumiEpisodeOffset,
     getTmdbTvDetail,
@@ -19,6 +20,8 @@ import Moe.Domain.Bangumi (AirDate, Bangumi (..))
 import Moe.Error (AppError (..))
 import Moe.Infra.Metadata.BangumiData
 import Moe.Infra.Metadata.Bgmtv
+import Moe.Infra.Metadata.Mikan qualified as Mikan
+import Moe.Infra.Metadata.Mikan.Types (MikanSearchResult)
 import Moe.Infra.Metadata.Types (Keyword, classifyProviderError)
 import Moe.Infra.Metadata.Tmdb
 import Moe.Infra.Setting.Effect (Setting)
@@ -36,6 +39,7 @@ import Web.Bgmtv.Types.Subject (Subject (..))
 data Metadata :: Effect where
   SearchBgmtv :: Keyword -> Maybe AirDate -> Metadata m [Bangumi]
   SearchTmdb :: Keyword -> Maybe AirDate -> Metadata m [Bangumi]
+  SearchMikan :: Keyword -> Metadata m [MikanSearchResult]
   GetBgmtvDetail :: SubjectId -> Metadata m (Maybe Bangumi)
   GetBangumiEpisodeOffset :: SubjectId -> Metadata m Double
   GetTmdbTvDetail :: TvShowId -> Metadata m (Maybe Bangumi)
@@ -58,6 +62,9 @@ runMetadataHttp manager = interpret $ \_ -> \case
     pure $ mapMaybe bgmtvSubjectToBangumi filtered
     where
       getDate s = s.date
+  SearchMikan keyword -> do
+    result <- liftIO $ Mikan.searchMikan manager keyword
+    liftEitherWith MetadataError result
   SearchTmdb keyword maybeYear -> withTmdbClient manager [] $ \client -> do
     result <- liftIO $ client.searchMulti keyword
     resp <- liftEitherWith (MetadataError . classifyProviderError) result

@@ -32,7 +32,6 @@ export type UtcTime = string;
 
 export type UserPreference = {
     downloader: DownloaderConfig;
-    emby: EmbyConfig;
     filter: FilterConfig;
     notification: NotificationConfig;
     tmdb: TmdbConfig;
@@ -70,13 +69,6 @@ export type NotificationConfig = {
 export type TmdbConfig = {
     apiKey: string;
     language: string;
-};
-
-export type EmbyConfig = {
-    apiKey: string;
-    libraryId: string;
-    libraryName: string;
-    url: string;
 };
 
 export type TrackingResponse = {
@@ -152,40 +144,18 @@ export type TestNotificationRequest = {
     chatId: string;
 };
 
-export type TestMediaResponse = {
-    message: string;
-    serverName?: string;
-    success: boolean;
-};
-
-export type TestMediaRequest = {
-    apiKey: string;
-    url: string;
-};
-
-export type MediaLibrary = {
-    collectionType?: string;
-    libraryId: string;
-    libraryName: string;
-};
-
-export type ImportResult = {
-    failed: number;
-    imported: number;
-};
-
-export type ImportLibraryRequest = {
-    apiKey: string;
-    libraryId: string;
-    url: string;
-};
-
 export type TmdbSearchResult = {
     mediaType: string;
     posterUrl?: string;
     title: string;
     tmdbId: number;
     year?: number;
+};
+
+export type MikanSearchResultDto = {
+    mikanId: number;
+    season?: number;
+    title: string;
 };
 
 export type UpdateBangumiTmdbIdRequest = {
@@ -469,66 +439,6 @@ export type PostApiNotificationTestResponses = {
 
 export type PostApiNotificationTestResponse = PostApiNotificationTestResponses[keyof PostApiNotificationTestResponses];
 
-export type PostApiMediaTestData = {
-    body?: TestMediaRequest;
-    path?: never;
-    query?: never;
-    url: '/api/media/test';
-};
-
-export type PostApiMediaTestErrors = {
-    /**
-     * Invalid `body`
-     */
-    400: unknown;
-};
-
-export type PostApiMediaTestResponses = {
-    200: TestMediaResponse;
-};
-
-export type PostApiMediaTestResponse = PostApiMediaTestResponses[keyof PostApiMediaTestResponses];
-
-export type PostApiMediaLibrariesData = {
-    body?: TestMediaRequest;
-    path?: never;
-    query?: never;
-    url: '/api/media/libraries';
-};
-
-export type PostApiMediaLibrariesErrors = {
-    /**
-     * Invalid `body`
-     */
-    400: unknown;
-};
-
-export type PostApiMediaLibrariesResponses = {
-    200: Array<MediaLibrary>;
-};
-
-export type PostApiMediaLibrariesResponse = PostApiMediaLibrariesResponses[keyof PostApiMediaLibrariesResponses];
-
-export type PostApiMediaImportData = {
-    body?: ImportLibraryRequest;
-    path?: never;
-    query?: never;
-    url: '/api/media/import';
-};
-
-export type PostApiMediaImportErrors = {
-    /**
-     * Invalid `body`
-     */
-    400: unknown;
-};
-
-export type PostApiMediaImportResponses = {
-    200: ImportResult;
-};
-
-export type PostApiMediaImportResponse = PostApiMediaImportResponses[keyof PostApiMediaImportResponses];
-
 export type GetApiBangumiSearchTmdbData = {
     body?: never;
     path?: never;
@@ -551,6 +461,28 @@ export type GetApiBangumiSearchTmdbResponses = {
 };
 
 export type GetApiBangumiSearchTmdbResponse = GetApiBangumiSearchTmdbResponses[keyof GetApiBangumiSearchTmdbResponses];
+
+export type GetApiBangumiSearchMikanData = {
+    body?: never;
+    path?: never;
+    query: {
+        keyword: string;
+    };
+    url: '/api/bangumi/search-mikan';
+};
+
+export type GetApiBangumiSearchMikanErrors = {
+    /**
+     * Invalid `keyword`
+     */
+    400: unknown;
+};
+
+export type GetApiBangumiSearchMikanResponses = {
+    200: Array<MikanSearchResultDto>;
+};
+
+export type GetApiBangumiSearchMikanResponse = GetApiBangumiSearchMikanResponses[keyof GetApiBangumiSearchMikanResponses];
 
 export type PutApiBangumiByIdTmdbIdData = {
     body?: UpdateBangumiTmdbIdRequest;

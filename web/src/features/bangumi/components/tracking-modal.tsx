@@ -28,6 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { client } from "@/client/client.gen";
 import { TmdbPanel } from "./tmdb-selector";
+import { MikanPanel } from "./mikan-selector";
 
 interface TrackingModalProps {
   open: boolean;
@@ -44,10 +45,15 @@ export function TrackingModal({
   tracking,
 }: TrackingModalProps) {
   const [tmdbOpen, setTmdbOpen] = useState(false);
+  const [mikanOpen, setMikanOpen] = useState(false);
   const [tmdbId, setTmdbId] = useState(bangumi.tmdbId);
+  const [rssUrl, setRssUrl] = useState(tracking?.rssUrl ?? "");
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) setTmdbOpen(false);
+    if (!newOpen) {
+      setTmdbOpen(false);
+      setMikanOpen(false);
+    }
     onOpenChange(newOpen);
   };
 
@@ -63,8 +69,11 @@ export function TrackingModal({
           bangumi={bangumi}
           tracking={tracking}
           tmdbId={tmdbId}
+          rssUrl={rssUrl}
+          onRssUrlChange={setRssUrl}
           onClose={() => handleOpenChange(false)}
           onOpenTmdb={() => setTmdbOpen(true)}
+          onOpenMikan={() => setMikanOpen(true)}
         />
       </AnimatedModal>
       <TmdbPanel
@@ -74,6 +83,14 @@ export function TrackingModal({
         selectedTmdbId={tmdbId}
         onSelect={setTmdbId}
       />
+      <MikanPanel
+        open={open && mikanOpen}
+        onClose={() => setMikanOpen(false)}
+        bangumi={bangumi}
+        onSelect={(mikanId) => {
+          setRssUrl(`https://mikanani.me/RSS/Bangumi?bangumiId=${mikanId}`);
+        }}
+      />
     </>
   );
 }
@@ -82,14 +99,20 @@ function TrackingForm({
   bangumi,
   tracking,
   tmdbId,
+  rssUrl,
+  onRssUrlChange,
   onClose,
   onOpenTmdb,
+  onOpenMikan,
 }: {
   bangumi: BangumiResponse;
   tracking?: TrackingResponse;
   tmdbId?: number;
+  rssUrl: string;
+  onRssUrlChange: (url: string) => void;
   onClose: () => void;
   onOpenTmdb: () => void;
+  onOpenMikan: () => void;
 }) {
   const isEditing = !!tracking;
   const queryClient = useQueryClient();
@@ -98,7 +121,6 @@ function TrackingForm({
     String(tracking?.episodeOffset ?? 0)
   );
   const [offsetLoading, setOffsetLoading] = useState(false);
-  const [rssUrl, setRssUrl] = useState(tracking?.rssUrl ?? "");
   const [autoComplete, setAutoComplete] = useState(
     tracking?.autoComplete ?? true
   );
@@ -338,18 +360,17 @@ function TrackingForm({
               value={rssUrl.replace(/^https?:\/\//, "")}
               onChange={(e) => {
                 const v = e.target.value.trim();
-                setRssUrl(v ? `https://${v.replace(/^https?:\/\//, "")}` : "");
+                onRssUrlChange(v ? `https://${v.replace(/^https?:\/\//, "")}` : "");
               }}
             />
-            <a
-              href={`https://mikanani.me/Home/Search?searchstr=${encodeURIComponent(bangumi.titleChs)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center shrink-0 size-8 rounded-lg border border-input text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
+            <button
+              type="button"
+              onClick={onOpenMikan}
+              className="inline-flex items-center justify-center shrink-0 size-8 rounded-lg border border-input text-muted-foreground cursor-pointer hover:text-foreground hover:bg-muted/50 active:scale-95 transition-all"
               title="在 Mikan 搜索"
             >
               <IconSearch className="size-3.5" />
-            </a>
+            </button>
           </div>
           {!isMikanValid && (
             <p className="text-[10px] text-destructive mt-1 tracking-wide">

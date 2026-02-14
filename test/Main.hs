@@ -6,6 +6,7 @@ import Moe.Domain.FileSpec qualified as FileSpec
 import Moe.Domain.Parser.OriginalTitleSpec qualified as OriginalTitleSpec
 import Moe.Domain.Parser.RssTitleSpec qualified as RssTitleSpec
 import Moe.Infra.Metadata.BangumiData.TypesSpec qualified as BangumiDataTypesSpec
+import Moe.Infra.Metadata.MikanSpec qualified as MikanSpec
 import Moe.Prelude
 import Test.Tasty
 
@@ -20,6 +21,7 @@ tests =
       OriginalTitleSpec.tests,
       RssTitleSpec.tests,
       BangumiDataTypesSpec.tests,
+      MikanSpec.tests,
       WashingSpec.tests,
       CollectionSpec.tests
     ]
