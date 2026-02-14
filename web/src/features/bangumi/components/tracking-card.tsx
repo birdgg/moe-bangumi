@@ -1,23 +1,7 @@
-import { motion } from "framer-motion";
 import type { TrackingWithBangumiResponse } from "@/client/types.gen";
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.96 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: i * 0.04,
-      duration: 0.4,
-      ease: [0.33, 1, 0.68, 1] as const,
-    },
-  }),
-};
 
 export function TrackingCard({
   item,
-  index,
   onClick,
 }: {
   item: TrackingWithBangumiResponse;
@@ -37,23 +21,16 @@ export function TrackingCard({
       : null;
 
   return (
-    <motion.div
-      className="group relative w-[13rem] cursor-pointer"
+    <div
+      className="group relative w-[13rem] cursor-pointer transition-transform duration-200 ease-out hover:-translate-y-1.5 active:scale-[0.97]"
       onClick={onClick}
-      custom={index}
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover={{ y: -6 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 300, damping: 22 }}
     >
       <div className="poster-card relative aspect-[2/3] overflow-hidden rounded-xl">
         {bangumi.posterUrl ? (
           <img
             src={bangumi.posterUrl}
             alt={bangumi.titleChs}
-            className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+            className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/50">
@@ -74,7 +51,7 @@ export function TrackingCard({
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
 
         {/* Hover vignette */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
 
         {/* Title + meta */}
         <div className="absolute inset-x-0 bottom-0 p-3 pb-3.5">
@@ -85,7 +62,7 @@ export function TrackingCard({
             )}
           </h3>
 
-          <div className="flex items-center gap-2 mt-1.5 translate-y-1 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="flex items-center gap-2 mt-1.5 translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
             {progress !== null && (
               <span className="text-[11px] font-medium tabular-nums text-white/70">
                 EP {tracking.currentEpisode}
@@ -105,19 +82,13 @@ export function TrackingCard({
         {/* Progress bar */}
         {progress !== null && (
           <div className="absolute inset-x-0 bottom-0 h-0.75 bg-white/5">
-            <motion.div
-              className="h-full bg-linear-to-r from-chart-1 to-chart-2"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress * 100}%` }}
-              transition={{
-                duration: 0.6,
-                ease: [0.33, 1, 0.68, 1],
-                delay: 0.15 + index * 0.04,
-              }}
+            <div
+              className="h-full bg-linear-to-r from-chart-1 to-chart-2 transition-[width] duration-500 ease-out"
+              style={{ width: `${progress * 100}%` }}
             />
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

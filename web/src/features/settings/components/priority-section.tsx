@@ -9,7 +9,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { type SettingsFormInstance } from "../hooks";
-import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
+import { Reorder, useDragControls } from "framer-motion";
 import {
   type SubtitlePattern,
   type GroupFormData,
@@ -85,15 +85,9 @@ function GroupReorderItem({ group, index, onRemove, onAddAlias, onRemoveAlias }:
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 border-t border-border/30 px-2.5 pb-2 pt-1.5">
-        <AnimatePresence mode="popLayout">
           {group.aliases.map((alias, aliasIdx) => (
-            <motion.span
+            <span
               key={alias}
-              layout
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: "spring", bounce: 0.3, duration: 0.3 }}
               className="inline-flex items-center gap-1 rounded-md border border-border/40 bg-muted px-2 py-0.5 text-xs text-muted-foreground"
             >
               {alias}
@@ -104,9 +98,8 @@ function GroupReorderItem({ group, index, onRemove, onAddAlias, onRemoveAlias }:
               >
                 <IconX className="size-3" />
               </button>
-            </motion.span>
+            </span>
           ))}
-        </AnimatePresence>
         <input
           type="text"
           placeholder="+ 别名"

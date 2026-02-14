@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion, type Variants } from "framer-motion";
 import {
   postApiTrackingMutation,
   putApiTrackingByIdMutation,
@@ -30,20 +29,6 @@ interface TrackingModalProps {
   /** Pass existing tracking for edit mode */
   tracking?: TrackingResponse;
 }
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 8, filter: "blur(3px)" },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      delay: 0.12 + i * 0.06,
-      duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
-    },
-  }),
-};
 
 export function TrackingModal({
   open,
@@ -187,12 +172,7 @@ function TrackingForm({
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Header: Cinematic poster banner */}
-      <motion.div
-        className="relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      >
+      <div className="relative overflow-hidden">
         {/* Blurred poster background */}
         {bangumi.posterUrl && (
           <div className="absolute inset-0">
@@ -208,17 +188,10 @@ function TrackingForm({
         <div className="relative flex gap-3 p-3 sm:p-4">
           {/* Poster thumbnail */}
           {bangumi.posterUrl ? (
-            <motion.img
+            <img
               src={bangumi.posterUrl}
               alt={bangumi.titleChs}
               className="poster-card w-16 sm:w-18 aspect-[2/3] object-cover rounded-lg shrink-0"
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.05,
-              }}
             />
           ) : (
             <div className="w-16 sm:w-18 aspect-[2/3] rounded-lg shrink-0 bg-linear-to-br from-chart-3/20 via-chart-1/10 to-chart-5/15 flex items-center justify-center border border-border/50">
@@ -255,7 +228,7 @@ function TrackingForm({
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Accent gradient line */}
       <div className="h-px bg-linear-to-r from-transparent via-chart-1/30 to-transparent" />
@@ -263,12 +236,7 @@ function TrackingForm({
       {/* Form fields */}
       <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto max-h-[50vh]">
         {/* Episode offset */}
-        <motion.div
-          custom={0}
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-        >
+        <div>
           <Label
             htmlFor="ep-offset"
             className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5"
@@ -287,15 +255,10 @@ function TrackingForm({
           <p className="text-[10px] text-muted-foreground/40 mt-1 tracking-wide">
             文件命名时的集数起始偏移量
           </p>
-        </motion.div>
+        </div>
 
         {/* TMDB Selector trigger */}
-        <motion.div
-          custom={1}
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-        >
+        <div>
           <Label className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5">
             <IconMovie className="size-3" />
             TMDB
@@ -318,15 +281,10 @@ function TrackingForm({
             </span>
             <IconSearch className="size-3.5 text-muted-foreground/40" />
           </button>
-        </motion.div>
+        </div>
 
         {/* RSS URL */}
-        <motion.div
-          custom={2}
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-        >
+        <div>
           <Label
             htmlFor="rss-url"
             className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mb-1.5"
@@ -351,16 +309,10 @@ function TrackingForm({
               将自动使用 Mikan RSS 订阅
             </p>
           )}
-        </motion.div>
+        </div>
 
         {/* Auto Complete */}
-        <motion.div
-          custom={3}
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          className="flex items-center justify-between"
-        >
+        <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label className="text-[10px] tracking-widest uppercase text-muted-foreground/60">
               自动补全
@@ -373,18 +325,12 @@ function TrackingForm({
             checked={autoComplete}
             onCheckedChange={setAutoComplete}
           />
-        </motion.div>
+        </div>
       </div>
 
       {/* Footer */}
       <div className="h-px bg-linear-to-r from-transparent via-border/40 to-transparent" />
-      <motion.div
-        custom={4}
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        className="flex items-center justify-end gap-2 px-4 py-3 sm:px-5"
-      >
+      <div className="flex items-center justify-end gap-2 px-4 py-3 sm:px-5">
         <Button
           size="sm"
           disabled={isPending}
@@ -400,7 +346,7 @@ function TrackingForm({
             <span>{isEditing ? "保存" : "追番"}</span>
           )}
         </Button>
-      </motion.div>
+      </div>
     </div>
   );
 }

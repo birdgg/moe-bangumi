@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils"
 import { IconPointFilled } from "@tabler/icons-react"
-import { motion } from "framer-motion"
 import type { LogEntry } from "../types"
 import { formatTime, isAttentionLevel } from "../utils/format"
 
@@ -8,24 +7,17 @@ export function LogEntryList({ entries }: { entries: LogEntry[] }) {
   return (
     <div className="divide-y divide-border/50">
       {entries.map((entry, i) => (
-        <LogRow key={i} entry={entry} index={i} />
+        <LogRow key={i} entry={entry} />
       ))}
     </div>
   )
 }
 
-function LogRow({ entry, index }: { entry: LogEntry; index: number }) {
+function LogRow({ entry }: { entry: LogEntry }) {
   const warn = isAttentionLevel(entry.level)
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        duration: 0.25,
-        delay: Math.min(index * 0.02, 0.6),
-        ease: "easeOut",
-      }}
+    <div
       className={cn(
         "group grid grid-cols-[3.5rem_auto_1fr_4.5rem] items-baseline gap-x-3",
         "px-4 py-2 text-[13px] leading-relaxed",
@@ -73,6 +65,6 @@ function LogRow({ entry, index }: { entry: LogEntry; index: number }) {
       >
         {warn ? "WARN" : "INFO"}
       </span>
-    </motion.div>
+    </div>
   )
 }

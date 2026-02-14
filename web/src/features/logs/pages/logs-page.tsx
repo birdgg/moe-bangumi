@@ -1,5 +1,4 @@
 import { useNavigate, useSearch } from "@tanstack/react-router"
-import { motion } from "framer-motion"
 import { useLogs } from "../hooks/use-logs"
 import { isAttentionLevel } from "../utils/format"
 import { DateNavigation } from "../components/date-navigation"
@@ -35,14 +34,7 @@ export function LogsPage() {
             warnCount={warnCount}
           />
 
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.5,
-              delay: 0.1,
-              ease: [0.33, 1, 0.68, 1],
-            }}
+          <div
             className="liquid-glass-card rounded-2xl overflow-hidden relative"
           >
             <div className="liquid-glass-refraction" />
@@ -57,7 +49,7 @@ export function LogsPage() {
                 <LogEntryList entries={data.entries} />
               )}
             </div>
-          </motion.div>
+          </div>
 
           {data && (
             <Pagination

@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteApiTrackingByIdMutation,
@@ -84,11 +83,8 @@ export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps
       : "";
 
   return (
-    <motion.div
-      className="group relative w-full"
-      whileHover={{ y: -6 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+    <div
+      className="group relative w-full transition-transform duration-200 ease-out hover:-translate-y-1.5 active:scale-[0.97]"
     >
       <div className="poster-card relative aspect-2/3 overflow-hidden rounded-xl">
         {bangumi.posterUrl ? (
@@ -158,7 +154,7 @@ export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps
           </h3>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -173,7 +169,7 @@ function PosterImage({ url, alt }: { url: string; alt: string }) {
       loading="lazy"
       decoding="async"
       onLoad={onLoad}
-      className={`size-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.06] ${
+      className={`size-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.04] ${
         loaded ? "opacity-100" : "opacity-0"
       }`}
     />

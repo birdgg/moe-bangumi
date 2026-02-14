@@ -21,7 +21,7 @@ function Switch({
       disabled={disabled}
       className={cn(
         "group relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full",
-        "border-2 border-transparent shadow-xs transition-all duration-300 ease-out",
+        "shadow-xs transition-all duration-300 ease-out",
         "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-chart-1/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "bg-muted data-checked:bg-linear-to-r data-checked:from-chart-1 data-checked:to-chart-3/80",
