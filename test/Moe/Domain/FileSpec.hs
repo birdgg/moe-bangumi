@@ -106,7 +106,7 @@ namingTests =
     testCase "subtitle file CHS" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (EpisodeSub 1 CHS) "ass"
-      generateFullPath file @?= "Frieren (2023)/Season 01/Frieren - S01E01.chs.ass",
+      generateFullPath file @?= "Frieren (2023)/Season 01/Frieren - S01E01.zh-Hans.ass",
     testCase "subtitle file JPN" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (EpisodeSub 1 JPN) "srt"

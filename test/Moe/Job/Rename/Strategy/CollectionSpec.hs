@@ -137,7 +137,7 @@ testCases =
       [GroupName "VCB-Studio"],
       s3
         <> "/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [51][Ma10p_1080p][x265_flac_aac].CHS.ass",
-      Just "Re：从零开始的异世界生活 (2016)/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].chs.ass"
+      Just "Re：从零开始的异世界生活 (2016)/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].zh-Hans.ass"
     ),
     ( "CD under torrent root (skipped)",
       True,

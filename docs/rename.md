@@ -142,7 +142,7 @@ Rename output follows media server conventions (Plex/Emby/Jellyfin):
 | Trailer         | `/trailers`     | `Trailer.mkv`                     | `Trailer.mkv`                         |
 | CM              | `/trailers`     | `CMx.mkv`                         | `CM1.mkv`                             |
 | Movie           | `/Title (Year)` | `Title (Year).mkv`                | `Frieren Movie (2024).mkv`            |
-| Subtitle        | Same as video   | `Title - SxxExx [Group].lang.ext` | `Frieren - S01E01 [SubGroup].chs.srt` |
+| Subtitle        | Same as video   | `Title - SxxExx [Group].lang.ext` | `Frieren - S01E01 [SubGroup].zh-Hans.srt` |
 
 Cds, Scans 等非视频目录不处理，直接移动。
 

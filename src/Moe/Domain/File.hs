@@ -36,7 +36,7 @@ import Moe.Domain.Bangumi (Bangumi (..), SeasonNumber (..), TmdbId (..), extract
 import Moe.Domain.Episode (EpisodeNumber (..))
 import Moe.Domain.Episode qualified as Ep
 import Moe.Domain.Shared.Group (GroupName (..))
-import Moe.Domain.Shared.Subtitle (Subtitle (..), SubtitleList)
+import Moe.Domain.Shared.Subtitle (Subtitle (..), SubtitleList, toMediaCode)
 import Moe.Prelude
 import System.FilePath ((</>))
 
@@ -147,8 +147,8 @@ generateFileName :: BangumiFile -> FilePath
 generateFileName file = generateBaseName file <> toString extension
   where
     extension = case file.content of
-      EpisodeSub _ sub -> "." <> toText sub <> "." <> file.ext
-      MovieSub _ sub -> "." <> toText sub <> "." <> file.ext
+      EpisodeSub _ sub -> "." <> toMediaCode sub <> "." <> file.ext
+      MovieSub _ sub -> "." <> toMediaCode sub <> "." <> file.ext
       _ -> "." <> file.ext
 
 -- | Generate complete path including directory and file name.

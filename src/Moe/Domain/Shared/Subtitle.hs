@@ -2,6 +2,7 @@
 module Moe.Domain.Shared.Subtitle
   ( Subtitle (..),
     SubtitleList,
+    toMediaCode,
   )
 where
 
@@ -32,8 +33,22 @@ instance ToText Subtitle where
   toText JPN = "jpn"
   toText ENG = "eng"
 
+-- | Media server compatible language code (IETF BCP 47 / ISO 639-2/B).
+toMediaCode :: Subtitle -> Text
+toMediaCode CHS = "zh-Hans"
+toMediaCode CHT = "zh-Hant"
+toMediaCode JPN = "jpn"
+toMediaCode ENG = "eng"
+
 instance FromText Subtitle where
-  fromText = inverseMap toText . T.toLower . T.strip
+  fromText t = case T.toLower (T.strip t) of
+    "chs" -> Just CHS
+    "cht" -> Just CHT
+    "jpn" -> Just JPN
+    "eng" -> Just ENG
+    "zh-hans" -> Just CHS
+    "zh-hant" -> Just CHT
+    _ -> Nothing
 
 instance FromJSON Subtitle where
   parseJSON = withText "Subtitle" $ \t ->
