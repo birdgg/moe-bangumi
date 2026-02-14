@@ -5,7 +5,7 @@ import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
 import { RssSearchModal } from "@/features/rss-search/components/rss-search-modal";
-import { IconSearch } from "@tabler/icons-react";
+import { IconSearch, IconBrandGithub } from "@tabler/icons-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -49,6 +49,16 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <span className="text-[9px]">&#8984;</span>K
               </kbd>
             </button>
+            <a
+              href="https://github.com/birdgg/moe-bangumi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative flex size-10 items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 hover:bg-foreground/5 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-chart-1/50"
+              title="GitHub"
+              aria-label="GitHub"
+            >
+              <IconBrandGithub className="size-5" />
+            </a>
             <ThemeColorSelector />
             <ThemeToggleButton />
           </div>
