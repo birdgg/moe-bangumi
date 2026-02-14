@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { CalendarEntry } from "@/client/types.gen"
+import type { BangumiResponse, CalendarEntry } from "@/client/types.gen"
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import { getOrderedWeekdays } from "../utils/weekday"
 import { WeekdayRow } from "./weekday-column"
 import { type Season, getCurrentSeason, useCalendar } from "../hooks/use-calendar"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TrackingModal } from "@/features/bangumi/components/tracking-modal"
 
 const SEASONS: { value: Season; label: string }[] = [
   { value: "Winter", label: "冬" },
@@ -110,6 +111,8 @@ export function CalendarView() {
 }
 
 function CalendarContent({ entries }: { entries: CalendarEntry[] }) {
+  const [selectedBangumi, setSelectedBangumi] = useState<BangumiResponse | null>(null)
+
   const calendarMap = new Map<number, CalendarEntry>()
   entries.forEach((entry) => {
     calendarMap.set(entry.weekday, entry)
@@ -126,9 +129,20 @@ function CalendarContent({ entries }: { entries: CalendarEntry[] }) {
             key={weekday}
             weekday={weekday}
             bangumis={entry?.bangumis ?? []}
+            onSelectBangumi={setSelectedBangumi}
           />
         )
       })}
+
+      {selectedBangumi && (
+        <TrackingModal
+          open={!!selectedBangumi}
+          onOpenChange={(open) => {
+            if (!open) setSelectedBangumi(null)
+          }}
+          bangumi={selectedBangumi}
+        />
+      )}
     </>
   )
 }

@@ -5,9 +5,10 @@ import { CalendarCard } from "./calendar-card"
 interface WeekdayRowProps {
   weekday: number
   bangumis: BangumiResponse[]
+  onSelectBangumi?: (bangumi: BangumiResponse) => void
 }
 
-export function WeekdayRow({ weekday, bangumis }: WeekdayRowProps) {
+export function WeekdayRow({ weekday, bangumis, onSelectBangumi }: WeekdayRowProps) {
   const jsDay = new Date().getDay()
   const isoDay = jsDay === 0 ? 7 : jsDay
   const isToday = isoDay === weekday
@@ -30,7 +31,15 @@ export function WeekdayRow({ weekday, bangumis }: WeekdayRowProps) {
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 sm:gap-4">
         {bangumis.map((bangumi) => (
-          <CalendarCard key={bangumi.id ?? bangumi.titleChs} bangumi={bangumi} />
+          <CalendarCard
+            key={bangumi.id ?? bangumi.titleChs}
+            bangumi={bangumi}
+            onOpenTrackingModal={
+              !bangumi.mikanId && onSelectBangumi
+                ? () => onSelectBangumi(bangumi)
+                : undefined
+            }
+          />
         ))}
         {bangumis.length === 0 && (
           <div className="col-span-full flex h-72 items-center justify-center rounded-2xl bg-muted/20 text-sm text-muted-foreground backdrop-blur-sm">

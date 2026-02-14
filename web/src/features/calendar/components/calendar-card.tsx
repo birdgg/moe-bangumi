@@ -13,9 +13,10 @@ import { toast } from "sonner";
 
 interface CalendarCardProps {
   bangumi: BangumiResponse;
+  onOpenTrackingModal?: () => void;
 }
 
-export function CalendarCard({ bangumi }: CalendarCardProps) {
+export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps) {
   const queryClient = useQueryClient();
 
   const { data: trackings } = useQuery(getApiTrackingOptions());
@@ -68,6 +69,15 @@ export function CalendarCard({ bangumi }: CalendarCardProps) {
     }
   };
 
+  const handleSubscribeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (bangumi.mikanId) {
+      handleSubscribe(e);
+    } else {
+      onOpenTrackingModal?.();
+    }
+  };
+
   const seasonText =
     bangumi.kind === "tv" && bangumi.season && bangumi.season > 1
       ? ` 第${bangumi.season}季`
@@ -103,11 +113,11 @@ export function CalendarCard({ bangumi }: CalendarCardProps) {
         )}
 
         {/* Subscribe button */}
-        {!isSubscribed && bangumi.mikanId && (
+        {!isSubscribed && (bangumi.mikanId || onOpenTrackingModal) && (
           <div className="absolute top-2 right-2 z-10">
             <button
               type="button"
-              onClick={handleSubscribe}
+              onClick={handleSubscribeClick}
               disabled={isPending}
               className="subscribe-btn-corner transition-all duration-300"
             >
