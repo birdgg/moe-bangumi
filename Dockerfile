@@ -27,6 +27,12 @@ RUN apk add --no-cache \
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
+# Copy source code (needed for cabal to resolve library modules during dependency build)
+COPY app ./app
+COPY src ./src
+COPY migrations ./migrations
+COPY LICENSE CHANGELOG.md ./
+
 # Explicitly disable tests and benchmarks for Docker build
 RUN echo "tests: False" > cabal.project.local && \
     echo "benchmarks: False" >> cabal.project.local && \
@@ -34,11 +40,8 @@ RUN echo "tests: False" > cabal.project.local && \
     echo "  tests: False" >> cabal.project.local && \
     echo "  benchmarks: False" >> cabal.project.local
 
-# Create placeholder directories and files for cabal configuration checks
-# These will be replaced with actual source code in the next layer
-RUN mkdir -p app src test && touch LICENSE
-
-# Build dependencies only (cached separately from source)
+# Build dependencies (source code is needed to configure the library)
+# Note: BuildKit cache mount on ~/.cabal/store ensures dependencies are not rebuilt
 RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
     cabal update && \
@@ -47,12 +50,6 @@ RUN --mount=type=cache,target=/root/.cabal/store \
         --disable-benchmarks \
         --enable-executable-static \
         --ghc-options='-optl-pthread'
-
-# Copy source code
-COPY app ./app
-COPY src ./src
-COPY migrations ./migrations
-COPY LICENSE CHANGELOG.md ./
 
 # Build the application with static linking
 # Note: dist-newstyle is NOT cache-mounted to avoid binary not found issues
