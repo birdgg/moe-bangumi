@@ -38,10 +38,10 @@ data DownloaderConfig = DownloaderConfig
 defaultDownloaderConfig :: DownloaderConfig
 defaultDownloaderConfig =
   DownloaderConfig
-    { url = "",
-      username = "",
+    { url = "http://localhost:8080",
+      username = "admin",
       password = "",
-      savePath = ""
+      savePath = "/Media/番剧"
     }
 
 data FilterConfig = FilterConfig

@@ -134,21 +134,21 @@ Rename output follows media server conventions (Plex/Emby/Jellyfin):
 | --------------- | --------------- | --------------------------------- | ------------------------------------- |
 | Regular Episode | `/Season XX`    | `Title - SxxExx [Group].mkv`      | `Frieren - S01E01 [SubGroup].mkv`     |
 | Special         | `/Season 00`    | `Title - S00Exx [Group].mkv`      | `Frieren - S00E01 [SubGroup].mkv`     |
-| NCOP            | `/extras`       | `NCOPx.mkv`                       | `NCOP1.mkv`                           |
-| NCED            | `/extras`       | `NCEDx.mkv`                       | `NCED1.mkv`                           |
-| Menu            | `/extras`       | `Menu.mkv`                        | `Menu.mkv`, `Menu Vol.1.mkv`          |
-| PV              | `/trailers`     | `PVx.mkv`                         | `PV1.mkv`                             |
-| Preview         | `/trailers`     | `Preview.mkv`                     | `Preview.mkv`                         |
-| Trailer         | `/trailers`     | `Trailer.mkv`                     | `Trailer.mkv`                         |
-| CM              | `/trailers`     | `CMx.mkv`                         | `CM1.mkv`                             |
+| NCOP            | `/Featurettes`  | `NCOPx.mkv`                       | `NCOP1.mkv`                           |
+| NCED            | `/Featurettes`  | `NCEDx.mkv`                       | `NCED1.mkv`                           |
+| PV              | `/Trailers`     | `PVx.mkv`                         | `PV1.mkv`                             |
+| Preview         | `/Trailers`     | `Preview.mkv`                     | `Preview.mkv`                         |
+| Trailer         | `/Trailers`     | `Trailer.mkv`                     | `Trailer.mkv`                         |
+| CM              | `/Other`        | `CMx.mkv`                         | `CM1.mkv`                             |
+| Menu            | `/Other`        | `Menu.mkv`                        | `Menu.mkv`, `Menu Vol.1.mkv`          |
 | Movie           | `/Title (Year)` | `Title (Year).mkv`                | `Frieren Movie (2024).mkv`            |
 | Subtitle        | Same as video   | `Title - SxxExx [Group].lang.ext` | `Frieren - S01E01 [SubGroup].zh-Hans.srt` |
 
 Cds, Scans 等非视频目录不处理，直接移动。
 
-### Special Directories (Skipped)
+### Special Directories
 
-Files in these directories are not treated as bangumi content:
+Files in these directories preserve their original sub-directory structure under the season folder:
 
 `cds` `cd` `sps` `sp` `scans` `scan` `menu` `menus` `fonts` `font` `extras` `extra` `trailers` `trailer` `pvs` `pv` `specials` `special` `bonus` `ost` `soundtrack` `soundtracks`
 
