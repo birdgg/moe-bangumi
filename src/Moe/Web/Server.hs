@@ -27,6 +27,7 @@ import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
 import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Setting.Effect (runSetting, runSettingWriter)
+import Moe.Infra.Update.Adapter (runUpdateGitHub)
 import Moe.Prelude
 import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
@@ -53,12 +54,14 @@ import Servant
   )
 import Servant.OpenApi
 import Servant.Scalar (scalarUIServer')
-import Servant.Server.StaticFiles (serveDirectoryWith)
-import Network.Wai (responseFile)
+import Data.Map.Strict qualified as Map
+import Data.Text qualified as T
+import Moe.Web.Embedded (embeddedFiles, indexHtml)
 import Network.HTTP.Types (status200)
-import WaiAppStatic.Storage.Filesystem (defaultFileServerSettings)
-import WaiAppStatic.Types (StaticSettings (..))
+import Network.Mime (defaultMimeLookup)
+import Network.Wai (pathInfo, responseLBS)
 import Servant.Server.Generic (AsServerT)
+import Data.Tagged (Tagged (..))
 
 runServer :: (RequireCallStack, IOE :> es) => Logger -> MoeEnv -> Eff es ()
 runServer logger env = do
@@ -78,17 +81,20 @@ moeServer =
   Routes
     { api = API.apiServer,
       doc = scalarUIServer' (pure openApiHandler),
-      spa = serveDirectoryWith spaSettings
+      spa = Tagged embeddedSpa
     }
 
-spaSettings :: StaticSettings
-spaSettings =
-  let baseSettings = defaultFileServerSettings "web/dist"
-   in baseSettings{ss404Handler = Just spaFallback}
-
-spaFallback :: Application
-spaFallback _request respond =
-  respond $ responseFile status200 [("Content-Type", "text/html")] "web/dist/index.html" Nothing
+-- | Serve embedded frontend files from memory with SPA fallback.
+embeddedSpa :: Application
+embeddedSpa request respond = do
+  let path = T.intercalate "/" (pathInfo request)
+      filePath = toString path
+      contentType = defaultMimeLookup (toText filePath)
+  case Map.lookup filePath embeddedFiles of
+    Just content ->
+      respond $ responseLBS status200 [("Content-Type", contentType)] (fromStrict content)
+    Nothing ->
+      respond $ responseLBS status200 [("Content-Type", "text/html")] (fromStrict indexHtml)
 
 naturalTransform :: (RequireCallStack) => MoeEnv -> Logger -> ServerEff a -> Handler a
 naturalTransform env logger app = do
@@ -96,6 +102,7 @@ naturalTransform env logger app = do
     liftIO $
       Right
         <$> app
+        & runUpdateGitHub env.updateEnv env.httpManager
         & runDownloaderQBittorrent env.downloaderEnv env.httpManager
         & runRss env.httpManager
         & runMetadataHttp env.httpManager
@@ -127,6 +134,7 @@ appErrorToServerError = \case
   DownloaderError err -> jsonError err502 (display err)
   MetadataError err -> jsonError err502 (display err)
   DatabaseError err -> jsonError err500 (display err)
+  UpdateError err -> jsonError err500 (display err)
   NotFound msg -> jsonError err404 msg
   ValidationError msg -> jsonError err400 msg
 

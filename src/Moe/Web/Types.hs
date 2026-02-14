@@ -17,11 +17,13 @@ import Moe.Infra.Downloader.Effect (Downloader)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Rss.Effect (Rss)
 import Moe.Infra.Setting.Effect (Setting, SettingWriter)
+import Moe.Infra.Update.Effect (Update)
 
 type ServerEff = Eff ServerEffects
 
 type ServerEffects =
-  '[ Downloader,
+  '[ Update,
+     Downloader,
      Rss,
      Metadata,
      Setting,

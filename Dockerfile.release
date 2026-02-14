@@ -6,7 +6,6 @@ WORKDIR /app
 
 COPY moe-bangumi /app/moe-bangumi
 COPY migrations /app/migrations
-COPY frontend-dist /app/web/dist
 
 RUN mkdir -p /app/data
 

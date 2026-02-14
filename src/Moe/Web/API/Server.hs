@@ -10,6 +10,7 @@ import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Rss.Handler (handleDownloadTorrent, handleSearchRss)
 import Moe.Web.API.Setting.Handler (handleGetSetting, handleUpdateSetting)
 import Moe.Web.API.Tracking.Handler qualified as Tracking
+import Moe.Web.API.Update.Handler qualified as Update
 import Moe.Web.Types (ServerEff)
 import Servant (NoContent (..), ServerT)
 
@@ -17,6 +18,8 @@ apiServer :: ServerT API.Routes ServerEff
 apiServer =
   API.Routes'
     { health = pure "ok",
+      about = Update.handleGetAbout,
+      update = Update.handlePostUpdate,
       calendar = handleCalendar,
       getSetting = handleGetSetting,
       updateSetting = handleUpdateSetting,

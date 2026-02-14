@@ -17,10 +17,18 @@ import Moe.Job.Subscription (rssWorkerThread)
 import Moe.Prelude
 import Moe.Web.Server (runServer)
 import RequireCallStack (provideCallStack)
+import Supervisor (supervise)
 
 main :: IO ()
 main = do
   setBacktraceMechanismState HasCallStackBacktrace True
+  args <- getArgs
+  if "--supervised" `elem` args
+    then runApp
+    else supervise
+
+runApp :: IO ()
+runApp =
   bracket
     (bootstrap & runFileSystem & runConcurrent & runEff)
     shutdownMoe
