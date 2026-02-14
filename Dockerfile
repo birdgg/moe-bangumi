@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.cabal/store \
     --mount=type=cache,target=/root/.cabal/packages \
     --mount=type=cache,target=/build/dist-newstyle \
     cabal update && \
-    cabal build --only-dependencies \
+    cabal build exe:moe-cli --only-dependencies \
         --disable-tests \
         --disable-benchmarks \
         --enable-executable-static \

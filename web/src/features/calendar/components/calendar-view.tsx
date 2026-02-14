@@ -48,9 +48,9 @@ function CalendarSkeleton() {
       {Array.from({ length: 7 }).map((_, i) => (
         <div key={i} className="flex flex-col gap-3">
           <Skeleton className="h-9 w-20 rounded-lg" />
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 sm:gap-4">
             {Array.from({ length: 5 }).map((_, j) => (
-              <Skeleton key={j} className="aspect-[2/3] w-[13rem] rounded-xl" />
+              <Skeleton key={j} className="aspect-[2/3] w-full rounded-xl" />
             ))}
           </div>
         </div>

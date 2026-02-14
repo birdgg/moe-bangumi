@@ -1,6 +1,6 @@
 import type { BangumiResponse } from "@/client/types.gen"
 import { getWeekdayName } from "../utils/weekday"
-import { BangumiCard } from "./bangumi-card"
+import { CalendarCard } from "./calendar-card"
 
 interface WeekdayRowProps {
   weekday: number
@@ -28,12 +28,12 @@ export function WeekdayRow({ weekday, bangumis }: WeekdayRowProps) {
           {bangumis.length} 部
         </span>
       </div>
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 sm:gap-4">
         {bangumis.map((bangumi) => (
-          <BangumiCard key={bangumi.id ?? bangumi.titleChs} bangumi={bangumi} />
+          <CalendarCard key={bangumi.id ?? bangumi.titleChs} bangumi={bangumi} />
         ))}
         {bangumis.length === 0 && (
-          <div className="flex h-72 w-full items-center justify-center rounded-2xl bg-muted/20 text-sm text-muted-foreground backdrop-blur-sm">
+          <div className="col-span-full flex h-72 items-center justify-center rounded-2xl bg-muted/20 text-sm text-muted-foreground backdrop-blur-sm">
             暂无番剧
           </div>
         )}

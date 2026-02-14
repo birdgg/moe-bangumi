@@ -11,11 +11,11 @@ import {
 import type { BangumiResponse } from "@/client/types.gen";
 import { toast } from "sonner";
 
-interface BangumiCardProps {
+interface CalendarCardProps {
   bangumi: BangumiResponse;
 }
 
-export function BangumiCard({ bangumi }: BangumiCardProps) {
+export function CalendarCard({ bangumi }: CalendarCardProps) {
   const queryClient = useQueryClient();
 
   const { data: trackings } = useQuery(getApiTrackingOptions());
@@ -75,12 +75,12 @@ export function BangumiCard({ bangumi }: BangumiCardProps) {
 
   return (
     <motion.div
-      className="group relative w-[13rem]"
+      className="group relative w-full"
       whileHover={{ y: -6 }}
       whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
     >
-      <div className="poster-card relative aspect-[2/3] overflow-hidden rounded-xl">
+      <div className="poster-card relative aspect-2/3 overflow-hidden rounded-xl">
         {bangumi.posterUrl ? (
           <PosterImage url={bangumi.posterUrl} alt={bangumi.titleChs} />
         ) : (
@@ -109,7 +109,7 @@ export function BangumiCard({ bangumi }: BangumiCardProps) {
               type="button"
               onClick={handleSubscribe}
               disabled={isPending}
-              className="subscribe-btn-corner opacity-0 group-hover:opacity-100 transition-all duration-300"
+              className="subscribe-btn-corner transition-all duration-300"
             >
               {isPending ? (
                 <svg
