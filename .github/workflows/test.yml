@@ -25,6 +25,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cabal-
 
+      - name: Create placeholder web/dist for compilation
+        run: |
+          mkdir -p web/dist
+          echo '<!DOCTYPE html><html><head><title>Test</title></head><body></body></html>' > web/dist/index.html
+
       - name: Build dependencies
         run: cabal build --only-dependencies --enable-tests
 
