@@ -1,4 +1,30 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$CLAUDE_FILE_PATH\" ] && echo \"$CLAUDE_FILE_PATH\" | grep -qE '\\.hs$'; then cd /Users/birdgg/Projects/moe-bangumi && cabal build 2>&1 | tail -30; fi",
+            "timeout": 120,
+            "statusMessage": "Building Haskell..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$CLAUDE_FILE_PATH\" ] && echo \"$CLAUDE_FILE_PATH\" | grep -qE 'migrations/.*\\.sql$'; then echo 'MIGRATION EDIT: Review ALL queries in src/Moe/Infra/Database/ for column list consistency. Check JOIN queries in Tracking.hs, use bangumiColumnsAs for bangumi columns. Touch src/Moe/Infra/Database/Embedded.hs to trigger recompilation.' >&2; fi"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(bun create:*)",
@@ -8,51 +34,23 @@
       "WebFetch(domain:wiki.haskell.org)",
       "mcp__acp__Bash",
       "mcp__plugin_context7_context7__resolve-library-id",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi/dist-newstyle/src/effectful_-d7d65bccea33fabfc54abbeb699dfa7cfce72a8f16fed295c45d1202bdc7af0d rev-parse:*)",
       "mcp__plugin_context7_context7__query-docs",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.parsonsmatt.org)",
       "Bash(cabal repl:*)",
-      "Bash(1 <<'EOF'\n:browse Effectful.Sqlite\n:quit\nEOF)",
       "Bash(cabal info:*)",
       "Bash(cabal freeze:*)",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi status)",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi diff --stat)",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi log --oneline -5)",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi add moe-bangumi.cabal test/Main.hs src/Moe/App/ src/Moe/Core/ src/Moe/Effect/ src/Moe/Infra/ docs/ARCHITECTURE.md src/Moe/Bangumi/ src/Moe/Model/)",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi commit -m \"$\\(cat <<''EOF''\nRefactor to Three Layer Cake + Effectful architecture\n\nRestructure the codebase to follow the Three Layer Cake pattern with\nEffectful for type-safe effect management:\n\n- Layer 3 \\(Core\\): Pure business logic in Moe.Core.*\n  - Move Moe.Bangumi.* to Moe.Core.Bangumi.*\n  - Move Moe.Model.* to Moe.Core.Model.* \\(without serialization\\)\n\n- Layer 2 \\(Effect\\): Effect definitions in Moe.Effect.*\n  - Add Bangumi Effect with CRUD operations\n\n- Layer 1 \\(Infra\\): Effect interpreters in Moe.Infra.*\n  - Add SQLite interpreter for Bangumi Effect\n  - Move FromRow/ToRow instances to Persistence.Schema\n\n- Layer 1 \\(App\\): Application entry in Moe.App.*\n  - Add Env, Error, Monad, and Run modules\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git -C /Users/birdgg/Projects/moe-bangumi log -1 --stat)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(cabal clean:*)",
       "Bash(gh repo view:*)",
       "Bash(gh api:*)",
       "Bash(git rm:*)",
       "Bash(ghci:*)",
-      "Bash(ghc-pkg-9.12.2 describe:*)",
-      "Bash(cabal exec:*)",
-      "Bash(ghc-pkg-9.12.2 field:*)",
       "Bash(ghc-pkg describe:*)",
-      "Bash(exit 0)",
-      "Bash(export MOE_SCHEDULER_ENABLED=false)",
-      "Bash(MOE_SCHEDULER_ENABLED=false timeout 3 cabal run:*)",
-      "Bash(bash -c:*)",
-      "Bash(MOE_SCHEDULER_ENABLED=false timeout 3 ./dist-newstyle/build/aarch64-osx/ghc-9.12.2/moe-bangumi-0.1.0.0/x/moe-cli/build/moe-cli/moe-cli:*)",
+      "Bash(cabal exec:*)",
       "Bash(cabal update:*)",
-      "Bash(cd:*)",
-      "Bash(git push)",
       "Bash(brew search:*)",
-      "Bash(brew install:*)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nextractSeason \"葬送的芙莉莲 第二季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nparseBgmtvTitle \"葬送的芙莉莲 第十二季\"\nparseBgmtvTitle \"葬送的芙莉莲 S02\"\nparseBgmtvTitle \"葬送的芙莉莲 Season 3\"\nparseBgmtvTitle \"葬送的芙莉莲\"\nchineseToNumber \"第二季\"\nchineseToNumber \"第十季\"\nchineseToNumber \"第十二季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nimport Data.Text qualified as T\nfindPattern bgmtvSeasonPattern \"葬送的芙莉莲 第二季\"\nfindPattern seasonPattern \"葬送的芙莉莲 第二季\"\nmatchPattern seasonPattern \"第二季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nimport Data.Text qualified as T\nfindPattern seasonPattern \"test S01 test\"\nfindPattern seasonPattern \"Season 02\"\nmatchPattern seasonPattern \"S01\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nparseBgmtvTitle \"葬送的芙莉莲 第十季\"\nparseBgmtvTitle \"葬送的芙莉莲 第十二季\"\nparseBgmtvTitle \"葬送的芙莉莲 S02\"\nparseBgmtvTitle \"葬送的芙莉莲 Season 3\"\nparseBgmtvTitle \"葬送的芙莉莲\"\nparseBgmtvTitle \"无职转生 第2季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nparseInfo \"[Sakurato] Sword Art Online - 01 [1080p][HEVC]\"\nmatchPattern resolution1080Pattern \"1080p\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser.Pattern\nimport Data.Text.Encoding qualified as TE\n\n-- Test current pattern\nfindPattern seasonPattern \"葬送的芙莉莲 第二季\"\n\n-- Check what the pattern bytes look like\nunPattern seasonPattern\n\n-- Try matching just Chinese part\nmatchPattern seasonPattern \"第二季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser.Pattern\n\nfindPattern seasonPattern \"葬送的芙莉莲 第二季\"\nfindPattern seasonPattern \"葬送的芙莉莲 第十二季\"\nfindPattern seasonPattern \"葬送的芙莉莲 第2季\"\nfindPattern seasonPattern \"葬送的芙莉莲 S02\"\nmatchPattern seasonPattern \"第二季\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\n\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nparseBgmtvTitle \"葬送的芙莉莲 第十二季\"\nparseBgmtvTitle \"无职转生 第2季\"\nparseBgmtvTitle \"葬送的芙莉莲 S02\"\nparseBgmtvTitle \"葬送的芙莉莲 Season 3\"\nparseBgmtvTitle \"葬送的芙莉莲\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\n\nmatchPattern subChsPattern \"简体中文\"\nmatchPattern subChsPattern \"CHS\"\nmatchPattern subChtPattern \"繁體\"\nmatchPattern subJpnPattern \"日本語\"\nmatchPattern subEngPattern \"英语\"\nmatchPattern subEngPattern \"ENG\"\nEOF)",
-      "Bash(/dev/null <<'EOF'\nimport Moe.Domain.Bangumi.Parser\nparseBgmtvTitle \"葬送的芙莉莲 第二季\"\nmatchPattern seasonPattern \"第二季\"\nEOF)"
+      "Bash(brew install:*)"
     ]
   }
 }
