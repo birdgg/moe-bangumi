@@ -1,6 +1,6 @@
 cabal-version: 3.4
 name: moe-bangumi
-version: 1.3.3
+version: 1.3.4
 description: A Bangumi Management Tool
 homepage: https://github.com/birdgg/moe-bangumi
 license: MIT
