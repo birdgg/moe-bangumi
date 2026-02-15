@@ -249,7 +249,7 @@ performUpdateImpl env manager = do
 
       -- Extract binary from tarball
       extractResult <- liftIO $ tryAny $
-        callProcess "tar" ["xzf", tarballPath, "-C", tmpDir, "--no-absolute-names"]
+        callProcess "tar" ["xzf", tarballPath, "-C", tmpDir]
       case extractResult of
         Left err -> throwError $ UpdateError $ UpdateExtractionFailed $ "tar extraction failed: " <> show err
         Right () -> pass

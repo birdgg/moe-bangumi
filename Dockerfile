@@ -10,8 +10,8 @@
 
 # ============================================================================
 # Stage 1: Builder
-# Purpose: Build dependencies and application with BuildKit cache mounts
-# Cache strategy: cabal store and dist-newstyle persist across builds
+# Purpose: Build dependencies and application
+# Cache strategy: registry layer cache via docker/build-push-action
 # ============================================================================
 FROM quay.io/benz0li/ghc-musl:9.14.1 AS builder
 
@@ -46,14 +46,12 @@ RUN echo "tests: False" > cabal.project.local && \
     echo "  benchmarks: False" >> cabal.project.local
 
 # ============================================================================
-# Layer 2: Build dependencies WITHOUT specifying target (cached unless dependencies change)
+# Layer 2: Build dependencies (cached unless .cabal or cabal.project changes)
 # ============================================================================
 
-# Build all dependencies without target specification to avoid library configuration
-# Note: BuildKit cache mount on ~/.cabal/store ensures dependencies are not rebuilt
-RUN --mount=type=cache,target=/root/.cabal/store \
-    --mount=type=cache,target=/root/.cabal/packages \
-    cabal update && \
+# Dependencies are baked into this layer so registry cache can reuse them.
+# This layer is only rebuilt when .cabal or cabal.project changes.
+RUN cabal update && \
     cabal build --only-dependencies \
         --disable-tests \
         --disable-benchmarks \
@@ -79,11 +77,8 @@ COPY web/dist ./web/dist
 # ============================================================================
 
 # Build the application with static linking
-# Dependencies are already built and cached, only app code is compiled here
-# Note: dist-newstyle is NOT cache-mounted to avoid binary not found issues
-RUN --mount=type=cache,target=/root/.cabal/store \
-    --mount=type=cache,target=/root/.cabal/packages \
-    cabal build exe:moe-cli \
+# Dependencies are already in the layer from step above, only app code is compiled here
+RUN cabal build exe:moe-cli \
         --disable-tests \
         --disable-benchmarks \
         --enable-executable-static \
