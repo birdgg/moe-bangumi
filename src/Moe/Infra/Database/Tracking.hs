@@ -20,6 +20,7 @@ import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Tracking qualified as Types
 import Moe.Error (AppError (..))
+import Moe.Infra.Database.Bangumi (bangumiColumnsAs)
 import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
 
@@ -60,11 +61,11 @@ listTrackingWithBangumi ::
 listTrackingWithBangumi = do
   rows <-
     query_
-      "SELECT \
-      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, \
-      \b.id, b.title_chs, b.title_jap, b.air_date, b.season, b.kind, b.mikan_id, b.tmdb_id, b.bgmtv_id, b.poster_url, b.total_episodes, b.created_at, b.updated_at \
-      \FROM tracking t \
-      \INNER JOIN bangumi b ON t.bangumi_id = b.id"
+      ( fromString $
+          "SELECT t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, "
+            <> toString (bangumiColumnsAs "b")
+            <> " FROM tracking t INNER JOIN bangumi b ON t.bangumi_id = b.id"
+      )
   pure $ map unRow rows
 
 listEnabledRssTracking ::
@@ -81,12 +82,12 @@ listEnabledRssTrackingWithBangumi ::
 listEnabledRssTrackingWithBangumi = do
   rows <-
     query_
-      "SELECT \
-      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, \
-      \b.id, b.title_chs, b.title_jap, b.air_date, b.season, b.kind, b.mikan_id, b.tmdb_id, b.bgmtv_id, b.poster_url, b.total_episodes, b.created_at, b.updated_at \
-      \FROM tracking t \
-      \INNER JOIN bangumi b ON t.bangumi_id = b.id \
-      \WHERE t.rss_enabled = 1 AND t.rss_url IS NOT NULL"
+      ( fromString $
+          "SELECT t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, "
+            <> toString (bangumiColumnsAs "b")
+            <> " FROM tracking t INNER JOIN bangumi b ON t.bangumi_id = b.id"
+            <> " WHERE t.rss_enabled = 1 AND t.rss_url IS NOT NULL"
+      )
   pure $ map unRow rows
 
 -- | List enabled RSS trackings filtered by bangumi air weekday.
@@ -98,13 +99,13 @@ listEnabledRssTrackingWithBangumiByWeekday ::
 listEnabledRssTrackingWithBangumiByWeekday weekday = do
   rows <-
     query
-      "SELECT \
-      \t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, \
-      \b.id, b.title_chs, b.title_jap, b.air_date, b.season, b.kind, b.mikan_id, b.tmdb_id, b.bgmtv_id, b.poster_url, b.total_episodes, b.created_at, b.updated_at \
-      \FROM tracking t \
-      \INNER JOIN bangumi b ON t.bangumi_id = b.id \
-      \WHERE t.rss_enabled = 1 AND t.rss_url IS NOT NULL \
-      \AND CAST(strftime('%w', b.air_date) AS INTEGER) = ?"
+      ( fromString $
+          "SELECT t.id, t.bangumi_id, t.tracking_type, t.rss_url, t.rss_enabled, t.last_pubdate, t.current_episode, t.episode_offset, t.is_bdrip, t.auto_complete, t.created_at, t.updated_at, "
+            <> toString (bangumiColumnsAs "b")
+            <> " FROM tracking t INNER JOIN bangumi b ON t.bangumi_id = b.id"
+            <> " WHERE t.rss_enabled = 1 AND t.rss_url IS NOT NULL"
+            <> " AND CAST(strftime('%w', b.air_date) AS INTEGER) = ?"
+      )
       (Only weekday)
   pure $ map unRow rows
 

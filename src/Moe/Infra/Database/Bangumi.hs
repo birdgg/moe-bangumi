@@ -8,9 +8,11 @@ module Moe.Infra.Database.Bangumi
     updateBangumi,
     deleteBangumi,
     upsertBangumi,
+    bangumiColumnsAs,
   )
 where
 
+import Data.Text qualified as T
 import Data.Time (UTCTime)
 import Effectful
 import Effectful.Exception (throwIO)
@@ -22,8 +24,16 @@ import Moe.Error (AppError (..))
 import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
 
+-- | Column names for the bangumi table, shared across all queries.
+bangumiColumnList :: [Text]
+bangumiColumnList = ["id", "title_chs", "title_jap", "air_date", "first_air_year", "season", "kind", "mikan_id", "tmdb_id", "bgmtv_id", "poster_url", "total_episodes", "created_at", "updated_at"]
+
 bangumiColumns :: Text
-bangumiColumns = "id, title_chs, title_jap, air_date, first_air_year, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes, created_at, updated_at"
+bangumiColumns = T.intercalate ", " bangumiColumnList
+
+-- | Bangumi columns with a table alias prefix, for use in JOIN queries.
+bangumiColumnsAs :: Text -> Text
+bangumiColumnsAs prefix = T.intercalate ", " $ map (\c -> prefix <> "." <> c) bangumiColumnList
 
 getBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>

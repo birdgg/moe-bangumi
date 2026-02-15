@@ -24,6 +24,12 @@ cabal repl               # Start GHCi with project loaded
 - Do not add statistical/counting logs (e.g., "Found N items", "Processed N records")
 - Regex patterns (`Pattern` from `Moe.Domain.Parser.Internal.Pattern`) should be defined as top-level constants via `mkPattern`; for dynamic patterns (e.g., user config), build them once before iteration (see `filterItems` in `Subscription.hs`)
 
+## Database Migrations
+
+- After adding or modifying a migration SQL file, review ALL queries in `src/Moe/Infra/Database/` to ensure column lists match the updated schema
+- Pay special attention to JOIN queries that hardcode column names (e.g., in `Tracking.hs`) — they must include any new columns in the correct position
+- Use `bangumiColumnsAs` for bangumi columns in JOIN queries to avoid column drift
+
 ## Testing
 
 - Keep tests minimal - test only essential behavior
