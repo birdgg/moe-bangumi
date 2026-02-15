@@ -30,6 +30,36 @@ release version:
     git push origin main "$tag"
     echo "Pushed $tag — CI will build Docker image and create GitHub Release"
 
+# Run backend and frontend in tmux split panes
+dev:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$(pwd)"
+    session="moe-dev"
+    tmux kill-session -t "$session" 2>/dev/null || true
+    tmux new-session -d -s "$session" -n dev -c "$root"
+    tmux send-keys -t "$session" 'just dev-backend' Enter
+    tmux split-window -h -t "$session" -c "$root"
+    tmux send-keys -t "$session" 'just dev-frontend' Enter
+    tmux attach -t "$session"
+
+# Run backend only
+dev-backend *RTS_OPTS:
+    cabal run moe-cli -- +RTS -s {{RTS_OPTS}} -RTS
+
+# Run frontend dev server
+dev-frontend:
+    cd web && bun run dev
+
+# Build everything
+build:
+    cabal build
+    cd web && bun run build
+
+# Generate API client from OpenAPI spec
+gen-api:
+    cd web && bun run gen:api
+
 # Build and run local Docker image
 docker-run:
     docker build --load -t moe-bangumi .
