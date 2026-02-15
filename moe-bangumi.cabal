@@ -115,6 +115,7 @@ library
     Moe.Infra.Metadata.BangumiData.Types
     Moe.Infra.Database
     Moe.Infra.Database.Bangumi
+    Moe.Infra.Database.Embedded
     Moe.Infra.Database.Episode
     Moe.Infra.Database.Tracking
     Moe.Infra.Database.Types

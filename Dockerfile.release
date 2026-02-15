@@ -5,7 +5,6 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 
 COPY moe-bangumi /app/moe-bangumi
-COPY migrations /app/migrations
 
 RUN mkdir -p /app/data
 

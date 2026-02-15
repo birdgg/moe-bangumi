@@ -76,6 +76,7 @@ data Bangumi = Bangumi
   { titleChs :: Text,
     titleJap :: Maybe Text,
     airDate :: AirDate,
+    firstAirYear :: Maybe Year,
     season :: Maybe SeasonNumber,
     kind :: BangumiKind,
     mikanId :: Maybe MikanId,

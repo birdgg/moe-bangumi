@@ -94,7 +94,6 @@ jobs:
         run: |
           mkdir -p runtime-context
           cp moe-bangumi runtime-context/
-          cp -r migrations runtime-context/
           cp Dockerfile.release runtime-context/
 
       - name: Extract metadata (tags, labels)

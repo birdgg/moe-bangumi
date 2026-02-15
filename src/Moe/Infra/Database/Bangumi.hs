@@ -23,7 +23,7 @@ import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
 
 bangumiColumns :: Text
-bangumiColumns = "id, title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes, created_at, updated_at"
+bangumiColumns = "id, title_chs, title_jap, air_date, first_air_year, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes, created_at, updated_at"
 
 getBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -82,17 +82,19 @@ createBangumi ::
 createBangumi bangumi = do
   results <-
     query
-      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, created_at, updated_at"
-      ( bangumi.titleChs,
-        bangumi.titleJap,
-        bangumi.airDate,
-        bangumi.season,
-        bangumi.kind,
-        bangumi.mikanId,
-        bangumi.tmdbId,
-        bangumi.bgmtvId,
-        bangumi.posterUrl,
-        bangumi.totalEpisodes
+      "INSERT INTO bangumi (title_chs, title_jap, air_date, first_air_year, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, created_at, updated_at"
+      ( ( bangumi.titleChs,
+          bangumi.titleJap,
+          bangumi.airDate,
+          bangumi.firstAirYear,
+          bangumi.season,
+          bangumi.kind,
+          bangumi.mikanId,
+          bangumi.tmdbId,
+          bangumi.bgmtvId,
+          bangumi.posterUrl
+        )
+          :. Only bangumi.totalEpisodes
       )
   case results of
     [(bid, ts, uts)] -> pure (Id bid, ts, uts)
@@ -106,19 +108,19 @@ updateBangumi entity =
   let Id bid = entity.entityId
       b = entity.entityVal
    in execute
-        "UPDATE bangumi SET title_chs = ?, title_jap = ?, air_date = ?, season = ?, kind = ?, mikan_id = ?, tmdb_id = ?, bgmtv_id = ?, poster_url = ?, total_episodes = ?, updated_at = datetime('now') WHERE id = ?"
+        "UPDATE bangumi SET title_chs = ?, title_jap = ?, air_date = ?, first_air_year = ?, season = ?, kind = ?, mikan_id = ?, tmdb_id = ?, bgmtv_id = ?, poster_url = ?, total_episodes = ?, updated_at = datetime('now') WHERE id = ?"
         ( ( b.titleChs,
             b.titleJap,
             b.airDate,
+            b.firstAirYear,
             b.season,
             b.kind,
             b.mikanId,
             b.tmdbId,
             b.bgmtvId,
-            b.posterUrl,
-            b.totalEpisodes
+            b.posterUrl
           )
-            :. Only bid
+            :. (b.totalEpisodes, bid)
         )
 
 -- | Upsert a bangumi, deduplicating by bgmtv_id, tmdb_id + air_date, or title_chs + air_date.
@@ -179,12 +181,13 @@ upsertByBgmtvId ::
 upsertByBgmtvId bangumi = do
   results <-
     query
-      "INSERT INTO bangumi (title_chs, title_jap, air_date, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes) \
-      \VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+      "INSERT INTO bangumi (title_chs, title_jap, air_date, first_air_year, season, kind, mikan_id, tmdb_id, bgmtv_id, poster_url, total_episodes) \
+      \VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
       \ON CONFLICT (bgmtv_id) DO UPDATE SET \
       \title_chs = excluded.title_chs, \
       \title_jap = excluded.title_jap, \
       \air_date = excluded.air_date, \
+      \first_air_year = excluded.first_air_year, \
       \season = excluded.season, \
       \kind = excluded.kind, \
       \mikan_id = excluded.mikan_id, \
@@ -193,16 +196,18 @@ upsertByBgmtvId bangumi = do
       \total_episodes = excluded.total_episodes, \
       \updated_at = datetime('now') \
       \RETURNING id, created_at, updated_at"
-      ( bangumi.titleChs,
-        bangumi.titleJap,
-        bangumi.airDate,
-        bangumi.season,
-        bangumi.kind,
-        bangumi.mikanId,
-        bangumi.tmdbId,
-        bangumi.bgmtvId,
-        bangumi.posterUrl,
-        bangumi.totalEpisodes
+      ( ( bangumi.titleChs,
+          bangumi.titleJap,
+          bangumi.airDate,
+          bangumi.firstAirYear,
+          bangumi.season,
+          bangumi.kind,
+          bangumi.mikanId,
+          bangumi.tmdbId,
+          bangumi.bgmtvId,
+          bangumi.posterUrl
+        )
+          :. Only bangumi.totalEpisodes
       )
   case results of
     [(bid, ts, uts)] -> pure (Id bid, ts, uts)

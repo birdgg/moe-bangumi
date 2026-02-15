@@ -118,7 +118,7 @@ namingTests =
     testCase "with TMDB ID" $ do
       let meta = mkBangumi "Frieren" (Just 2023) (Just 12345)
           file = BangumiFile meta (Episode 1) "mkv"
-      generateFullPath file @?= "Frieren (2023)/Season 01/Frieren - S01E01.mkv",
+      generateFullPath file @?= "Frieren/Season 01/Frieren - S01E01.mkv",
     testCase "MP4 extension" $ do
       let meta = mkBangumi "Frieren" (Just 2023) Nothing
           file = BangumiFile meta (Episode 1) "mp4"

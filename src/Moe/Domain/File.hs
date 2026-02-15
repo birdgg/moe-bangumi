@@ -33,7 +33,7 @@ where
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import Data.Time.Calendar (Year)
-import Moe.Domain.Bangumi (Bangumi (..), SeasonNumber (..), TmdbId (..), extractYear)
+import Moe.Domain.Bangumi (Bangumi (..), SeasonNumber (..), TmdbId (..))
 import Moe.Domain.Episode (EpisodeNumber (..))
 import Moe.Domain.Episode qualified as Ep
 import Moe.Domain.Shared.Group (GroupName (..))
@@ -50,6 +50,7 @@ newtype ExtraIndex = ExtraIndex Word8
   deriving newtype (Num)
 
 -- | Content type of a bangumi file.
+-- TODO: define the Spacial Episode
 data BangumiContent
   = Episode EpisodeNumber
   | EpisodeSub EpisodeNumber Subtitle
@@ -82,12 +83,18 @@ data BangumiFile = BangumiFile
   }
   deriving stock (Eq, Show)
 
+-- | Extract subtitle from content, if present.
+contentSubtitle :: BangumiContent -> Maybe Subtitle
+contentSubtitle (EpisodeSub _ sub) = Just sub
+contentSubtitle (MovieSub _ sub) = Just sub
+contentSubtitle _ = Nothing
+
 -- | Convert a Bangumi to lightweight BangumiMeta for file naming.
 toBangumiMeta :: Bangumi -> BangumiMeta
 toBangumiMeta b =
   BangumiMeta
     { title = b.titleChs,
-      year = Just (extractYear b.airDate),
+      year = b.firstAirYear,
       tmdbId = b.tmdbId,
       season = b.season,
       group = [],
@@ -115,18 +122,20 @@ toBangumiFile b ep =
 -- "Frieren Movie (2025)"
 generatePath :: BangumiFile -> FilePath
 generatePath file = case file.content of
-  Movie y -> toString $ nameWithYear file.bangumi.title y
-  MovieSub y _ -> toString $ nameWithYear file.bangumi.title y
-  Episode {} -> showBaseName file.bangumi </> seasonDir s
-  EpisodeSub {} -> showBaseName file.bangumi </> seasonDir s
-  NCOP {} -> showBaseName file.bangumi </> withSeason featurettesDir
-  NCED {} -> showBaseName file.bangumi </> withSeason featurettesDir
-  PV {} -> showBaseName file.bangumi </> withSeason trailersDir
-  Preview {} -> showBaseName file.bangumi </> withSeason trailersDir
-  Trailer {} -> showBaseName file.bangumi </> withSeason trailersDir
-  _ -> showBaseName file.bangumi </> withSeason otherDir
+  Movie y -> movieDir y
+  MovieSub y _ -> movieDir y
+  Episode {} -> base </> seasonDir s
+  EpisodeSub {} -> base </> seasonDir s
+  NCOP {} -> base </> withSeason featurettesDir
+  NCED {} -> base </> withSeason featurettesDir
+  PV {} -> base </> withSeason trailersDir
+  Preview {} -> base </> withSeason trailersDir
+  Trailer {} -> base </> withSeason trailersDir
+  _ -> base </> withSeason otherDir
   where
+    base = showBaseName file.bangumi
     s = fromMaybe (SeasonNumber 1) file.bangumi.season
+    movieDir y = toString $ nameWithYear file.bangumi.title y
     withSeason dir = maybe dir (\sn -> seasonDir sn </> dir) file.bangumi.season
 
 -- | Generate file base name without extension.
@@ -147,10 +156,8 @@ generateBaseName file = toString $ contentBaseName file.bangumi file.content
 generateFileName :: BangumiFile -> FilePath
 generateFileName file = generateBaseName file <> toString extension
   where
-    extension = case file.content of
-      EpisodeSub _ sub -> "." <> toMediaCode sub <> "." <> file.ext
-      MovieSub _ sub -> "." <> toMediaCode sub <> "." <> file.ext
-      _ -> "." <> file.ext
+    subCode = foldMap (\sub -> toMediaCode sub <> ".") (contentSubtitle file.content)
+    extension = "." <> subCode <> file.ext
 
 -- | Generate complete path including directory and file name.
 --
@@ -174,7 +181,9 @@ sanitizeName = T.map replaceChar . T.filter (`notElem` forbiddenChars)
     replaceChar c = c
 
 showBaseName :: BangumiMeta -> FilePath
-showBaseName b = toString $ maybe (sanitizeName b.title) (nameWithYear b.title) b.year
+showBaseName b
+  | isJust b.tmdbId, isJust b.season = toString (sanitizeName b.title)
+  | otherwise = toString $ maybe (sanitizeName b.title) (nameWithYear b.title) b.year
 
 nameWithYear :: Text -> Year -> Text
 nameWithYear name y = sanitizeName name <> " (" <> toText y <> ")"

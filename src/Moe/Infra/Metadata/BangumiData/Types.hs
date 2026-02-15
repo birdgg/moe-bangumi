@@ -99,6 +99,7 @@ toBangumi item = do
     { titleChs = parsed.titleChs,
       titleJap = Just parsed.titleJap,
       airDate = date,
+      firstAirYear = Nothing,
       season = parsed.season,
       kind = item.itemType,
       mikanId = extractMikanId item.sites,

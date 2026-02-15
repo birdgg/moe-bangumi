@@ -95,28 +95,28 @@ testCases =
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> season2
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [26][Ma10p_1080p][x265_flac_aac].mkv",
-      Just "Re：从零开始的异世界生活 (2016)/Season 02/Re：从零开始的异世界生活 - S02E26 [VCB-Studio][BDRip].mkv"
+      Just "Re：从零开始的异世界生活/Season 02/Re：从零开始的异世界生活 - S02E26 [VCB-Studio][BDRip].mkv"
     ),
     ( "CD",
       True,
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> season2
         <> "/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/Scans/02.webp",
-      Just "Re：从零开始的异世界生活 (2016)/Season 02/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/Scans/02.webp"
+      Just "Re：从零开始的异世界生活/Season 02/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/Scans/02.webp"
     ),
     ( "CM in SPs",
       True,
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> season2
         <> "/Sps/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [CM01][Ma10p_1080p][x265_flac].mkv",
-      Just "Re：从零开始的异世界生活 (2016)/Season 02/Other/CM1.mkv"
+      Just "Re：从零开始的异世界生活/Season 02/Other/CM1.mkv"
     ),
     ( "SP",
       True,
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> season2
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [SP03_02][Ma10p_1080p][x265_flac].mkv",
-      Just "Re：从零开始的异世界生活 (2016)/Season 00/Re：从零开始的异世界生活 - S00E302 [VCB-Studio][BDRip].mkv"
+      Just "Re：从零开始的异世界生活/Season 00/Re：从零开始的异世界生活 - S00E302 [VCB-Studio][BDRip].mkv"
     ),
     ( "Movie",
       True,
@@ -144,21 +144,21 @@ testCases =
       [GroupName "VCB-Studio"],
       season3
         <> "/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [51][Ma10p_1080p][x265_flac_aac].CHS.ass",
-      Just "Re：从零开始的异世界生活 (2016)/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].zh-Hans.ass"
+      Just "Re：从零开始的异世界生活/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].zh-Hans.ass"
     ),
     ( "CD under torrent root",
       True,
       [GroupName "VCB-Studio"],
       season3
         <> "/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp",
-      Just "Re：从零开始的异世界生活 (2016)/Season 03/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp"
+      Just "Re：从零开始的异世界生活/Season 03/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp"
     ),
     ( "Mini Anime in SPs",
       True,
       [GroupName "VCB-Studio"],
       season3
         <> "/SPs/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [Mini Anime 60][Ma10p_1080p][x265_flac].CHT.ass",
-      Just "Re：从零开始的异世界生活 (2016)/Season 00/Re：从零开始的异世界生活 - S00E60 [VCB-Studio][BDRip].zh-Hant.ass"
+      Just "Re：从零开始的异世界生活/Season 00/Re：从零开始的异世界生活 - S00E60 [VCB-Studio][BDRip].zh-Hant.ass"
     )
   ]
 

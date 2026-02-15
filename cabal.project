@@ -22,7 +22,7 @@ package *
 source-repository-package
   type: git
   location: https://github.com/birdgg/effectful-sqlite.git
-  tag: main
+  tag: ac28c9a7c5d1e18daae9d5c7065ab7e9b35d506e
 
 source-repository-package
   type: git

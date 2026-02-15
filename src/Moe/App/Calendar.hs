@@ -86,5 +86,6 @@ applyTmdbDetail :: Bangumi -> Bangumi -> Bangumi
 applyTmdbDetail detail b =
   b
     { posterUrl = detail.posterUrl <|> b.posterUrl,
-      season = detail.season <|> b.season
+      season = detail.season <|> b.season,
+      firstAirYear = detail.firstAirYear <|> b.firstAirYear
     }

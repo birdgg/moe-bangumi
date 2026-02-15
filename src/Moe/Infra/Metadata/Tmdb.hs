@@ -9,7 +9,7 @@ module Moe.Infra.Metadata.Tmdb
 where
 
 import Effectful ((:>))
-import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonNumber (..), TmdbId (..))
+import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonNumber (..), TmdbId (..), extractYear)
 import Moe.Domain.Setting qualified as Setting
 import Moe.Infra.Setting.Effect (Setting, getSetting)
 import Moe.Prelude
@@ -46,6 +46,7 @@ tmdbResultToBangumi result = do
     { titleChs = fromMaybe "" (result.name <|> result.title),
       titleJap = result.originalName <|> result.originalTitle,
       airDate = date,
+      firstAirYear = Just (extractYear date),
       season = Nothing,
       kind = mediaTypeToKind result.mediaType,
       mikanId = Nothing,
@@ -69,6 +70,7 @@ tmdbTvDetailToBangumi detail = do
     { titleChs = detail.name,
       titleJap = Just detail.originalName,
       airDate = date,
+      firstAirYear = Just (extractYear date),
       season = Just $ SeasonNumber $ fromIntegral detail.numberOfSeasons,
       kind = Tv,
       mikanId = Nothing,
@@ -86,6 +88,7 @@ tmdbMovieDetailToBangumi detail = do
     { titleChs = detail.title,
       titleJap = Just detail.originalTitle,
       airDate = date,
+      firstAirYear = Just (extractYear date),
       season = Nothing,
       kind = Movie,
       mikanId = Nothing,

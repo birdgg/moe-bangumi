@@ -83,6 +83,7 @@ testBangumi =
           { titleChs = "金牌得主",
             titleJap = Just "メダリスト",
             airDate = fromGregorian 2025 1 5,
+            firstAirYear = Nothing,
             season = Nothing,
             kind = Tv,
             mikanId = Nothing,

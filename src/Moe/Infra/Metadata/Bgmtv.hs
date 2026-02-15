@@ -62,6 +62,7 @@ mkBgmtvBangumi maybeDate name nameCn platform subjectId imageUrl = do
     { titleChs = parsed.titleChs,
       titleJap = Just parsed.titleJap,
       airDate = date,
+      firstAirYear = Nothing,
       season = parsed.season,
       kind = platformToKind platform,
       mikanId = Nothing,
