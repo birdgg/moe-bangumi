@@ -117,9 +117,6 @@ WORKDIR /app
 # Copy the static binary from builder
 COPY --from=builder /build/moe-bangumi /app/moe-bangumi
 
-# Copy migrations directory (needed at runtime for database setup)
-COPY --from=builder /build/migrations /app/migrations
-
 # Create data directory for SQLite database
 RUN mkdir -p /app/data
 
