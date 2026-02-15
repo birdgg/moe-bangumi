@@ -3,13 +3,14 @@ services:
   moe-bangumi:
     image: ghcr.io/birdgg/moe-bangumi:latest
     container_name: moe-bangumi
-    user: "1000:1000"  # Run as specific UID:GID
+    user: "1000:1000"  
     environment:
       - TZ=Asia/Shanghai
       - DATA_FOLDER=/app/data
       - ENVIRONMENT=production
     volumes:
       - /share/CACHEDEV1_DATA/docker/moe-bangumi/data:/app/data
+      - /share/CACHEDEV1_DATA/Media:/Media # 番剧挂载路径，两侧须保持一致
     ports:
       - "3000:3000"
     restart: always

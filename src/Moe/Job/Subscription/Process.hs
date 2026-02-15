@@ -69,7 +69,6 @@ processFeed ::
   Eff es ()
 processFeed ctx = do
   pref <- getSetting
-  Log.logInfo_ $ "Fetching RSS: " <> ctx.bangumi.entityVal.titleChs <> " (" <> ctx.rssUrl <> ")"
   items <- fetchRss ctx.rssUrl
 
   let filtered = filterItems pref.filter ctx items
@@ -83,8 +82,6 @@ processFeed ctx = do
   let episodeMap = buildEpisodeMap episodes
       (toAdd, toDelete) = processWashing episodeMap pref.washing adjusted
 
-  unless (null toAdd) $
-    Log.logInfo "New episodes to add" $ object ["episodes" .= map (\ep -> object ["episode" .= ep.episodeNumber, "group" .= ep.group]) toAdd]
   deleteReplacedTorrents toDelete
   downloadAndSaveEpisodes ctx.bangumi toAdd
 

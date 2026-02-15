@@ -4,7 +4,8 @@
 module Supervisor (supervise) where
 
 import Control.Concurrent (threadDelay)
-import Control.Exception (bracket, try)
+import Control.Exception (bracket, try, tryJust)
+import System.IO.Error (isDoesNotExistError)
 import Moe.Prelude
 import System.Environment (getExecutablePath)
 import System.Exit (ExitCode (..))
@@ -31,14 +32,16 @@ supervise = do
   exePath <- getExecutablePath
   userArgs <- getArgs
 
-  -- Use IORef for atomic updates, avoiding race conditions
-  childRef <- newIORef Nothing
-  shutdownFlag <- newIORef False
+  -- Use MVar for thread-safe updates with proper synchronization
+  childRef <- newMVar Nothing
+  shutdownFlag <- newMVar False
 
   let shutdownHandler = do
-        atomicModifyIORef' shutdownFlag (const (True, ()))
-        mChild <- atomicModifyIORef' childRef (Nothing,)
-        whenJust mChild terminateProcess
+        void $ swapMVar shutdownFlag True
+        mChild <- swapMVar childRef Nothing
+        -- Ignore "process does not exist" errors when terminating
+        whenJust mChild $ \ph ->
+          void $ tryJust (guard . isDoesNotExistError) (terminateProcess ph)
 
   _ <- installHandler sigTERM (Catch shutdownHandler) Nothing
   _ <- installHandler sigINT (Catch shutdownHandler) Nothing
@@ -47,10 +50,10 @@ supervise = do
 
 -- | Main supervisor loop: spawn child, wait for exit, restart on code 0.
 -- Uses bracket to ensure process cleanup on exceptions.
-loop :: FilePath -> [String] -> IORef (Maybe ProcessHandle) -> IORef Bool -> IO ()
+loop :: FilePath -> [String] -> MVar (Maybe ProcessHandle) -> MVar Bool -> IO ()
 loop exePath args childRef shutdownFlag = do
   -- Check shutdown flag before starting new process
-  shouldStop <- readIORef shutdownFlag
+  shouldStop <- readMVar shutdownFlag
   when shouldStop $ exitWith (ExitFailure 130) -- Standard SIGINT exit code
 
   -- Note: Using putStrLn instead of Display instance because this is a standalone
@@ -63,15 +66,20 @@ loop exePath args childRef shutdownFlag = do
     (createProcess (proc exePath args){std_in = NoStream, std_out = Inherit, std_err = Inherit})
     (\(_, _, _, ph) -> cleanupProcess (Nothing, Nothing, Nothing, ph))
     $ \(_, _, _, ph) -> do
-      atomicModifyIORef' childRef (const (Just ph, ()))
+      void $ swapMVar childRef (Just ph)
 
-      -- Double-check: if shutdown happened after createProcess but before here,
-      -- terminate the new process immediately to avoid leaking it
-      isShuttingDown <- readIORef shutdownFlag
-      when isShuttingDown $ terminateProcess ph
+      -- Double-check shutdown after setting childRef: if shutdown happened
+      -- between createProcess and here, we need to terminate the new process.
+      -- Use swap to claim ownership - if signal handler already took it, we get Nothing.
+      isShuttingDown <- readMVar shutdownFlag
+      when isShuttingDown $ do
+        mChild <- swapMVar childRef Nothing
+        whenJust mChild terminateProcess  -- Only terminate if we successfully claimed it
 
+      -- Wait for process to exit (naturally or via termination above/from signal)
       exitCode <- waitForProcess ph
-      atomicModifyIORef' childRef (const (Nothing, ()))
+      -- Clear childRef if we still own it (signal handler might have cleared it already)
+      void $ swapMVar childRef Nothing
       pure exitCode
 
   case (result :: Either SomeException ExitCode) of
@@ -90,10 +98,10 @@ loop exePath args childRef shutdownFlag = do
       exitWith (ExitFailure code)
 
 -- | Interruptible delay: sleep for n * 100ms, checking shutdown flag between each interval.
-restartDelay :: Int -> IORef Bool -> IO ()
+restartDelay :: Int -> MVar Bool -> IO ()
 restartDelay 0 _ = pass
 restartDelay n shutdownFlag = do
-  shouldStop <- readIORef shutdownFlag
+  shouldStop <- readMVar shutdownFlag
   if shouldStop
     then exitWith (ExitFailure 130)
     else do
