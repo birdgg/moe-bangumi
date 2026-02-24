@@ -6,7 +6,7 @@ module Moe.Domain.Bangumi
     MikanId (..),
     AirSeason (..),
     Season (..),
-    SeasonNumber (..),
+    SeasonIndex (..),
     BangumiKind (..),
     Bangumi (..),
     airDateToAirSeason,
@@ -25,7 +25,7 @@ import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (
 import Data.Time.Calendar (Day, Year, toGregorian)
 import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..))
 import Moe.Domain.Shared.Metadata
-import Moe.Domain.Shared.Numbering (SeasonNumber (..))
+import Moe.Domain.Shared.Numbering (SeasonIndex (..))
 import Moe.Domain.Bangumi.Season
 import Moe.Domain.Shared.Entity (Id)
 import Moe.Orphans ()
@@ -77,7 +77,7 @@ data Bangumi = Bangumi
     titleJap :: Maybe Text,
     airDate :: AirDate,
     firstAirYear :: Maybe Year,
-    season :: Maybe SeasonNumber,
+    season :: Maybe SeasonIndex,
     kind :: BangumiKind,
     mikanId :: Maybe MikanId,
     tmdbId :: Maybe TmdbId,

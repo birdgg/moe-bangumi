@@ -12,7 +12,7 @@ where
 import Data.List (elemIndex, findIndex)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Moe.Domain.Episode (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Episode (Episode (..), EpisodeIndex (..))
 import Moe.Domain.Shared.Group (Group (..), GroupName (..))
 import Moe.Domain.Shared.Subtitle (SubtitleList)
 import Moe.Domain.Parser.RssTitle (RssTitleInfo (..), parseRssTitle)
@@ -25,7 +25,7 @@ import Moe.Prelude
 -- | Build a map from episode number to entity for lookup during washing.
 -- Uses Map.fromList which keeps last entry for duplicate keys;
 -- acceptable since DB returns unique episode numbers per bangumi.
-buildEpisodeMap :: [Entity Episode] -> Map EpisodeNumber (Entity Episode)
+buildEpisodeMap :: [Entity Episode] -> Map EpisodeIndex (Entity Episode)
 buildEpisodeMap = Map.fromList . map (\e -> (e.entityVal.episodeNumber, e))
 
 -- | Parse a raw item: validate required fields and parse RSS title into an Episode.
@@ -58,7 +58,7 @@ parseRawItem groups bangumi item = do
 -- For new episodes (not in DB), picks the best group per episode number.
 -- For existing episodes, upgrades only when group/subtitle priority is better.
 processWashing ::
-  Map EpisodeNumber (Entity Episode) ->
+  Map EpisodeIndex (Entity Episode) ->
   WashingConfig ->
   [Episode] ->
   ([Episode], [Entity Episode])

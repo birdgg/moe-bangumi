@@ -1,7 +1,7 @@
 module Moe.Domain.Parser.OriginalTitleSpec (tests) where
 
 import Data.Text qualified as T
-import Moe.Domain.Bangumi (SeasonNumber (..))
+import Moe.Domain.Bangumi (SeasonIndex (..))
 import Moe.Domain.Parser.OriginalTitle
 import Moe.Prelude
 import Test.Tasty
@@ -19,7 +19,7 @@ data TestCase = TestCase
     input :: (String, String),
     expectedChs :: String,
     expectedJap :: String,
-    expectedSeason :: Maybe SeasonNumber
+    expectedSeason :: Maybe SeasonIndex
   }
 
 testData :: [TestCase]
@@ -29,13 +29,13 @@ testData =
       ("葬送のフリーレン Season 2", "葬送的芙莉莲 第二季")
       "葬送的芙莉莲"
       "葬送のフリーレン"
-      (Just (SeasonNumber 2)),
+      (Just (SeasonIndex 2)),
     TestCase
       "Arabic numeral in Chinese title"
       ("無職転生 S02", "无职转生 第2季")
       "无职转生"
       "無職転生"
-      (Just (SeasonNumber 2)),
+      (Just (SeasonIndex 2)),
     TestCase
       "no season number"
       ("Test Anime", "测试动画")
@@ -47,7 +47,7 @@ testData =
       ("仙王的日常生活 第二季", "仙王的日常生活")
       "仙王的日常生活"
       "仙王的日常生活"
-      (Just (SeasonNumber 2))
+      (Just (SeasonIndex 2))
   ]
 
 mkTest :: TestCase -> TestTree

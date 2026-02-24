@@ -2,8 +2,8 @@
 
 -- | Shared numbering types for media organization.
 module Moe.Domain.Shared.Numbering
-  ( SeasonNumber (..),
-    EpisodeNumber (..),
+  ( SeasonIndex (..),
+    EpisodeIndex (..),
     applyEpisodeOffset,
   )
 where
@@ -24,22 +24,22 @@ newtype Padded a = Padded a
 instance (Integral a, Show a) => ToText (Padded a) where
   toText (Padded n) = paddingZero n
 
--- | Season number, zero-padded for display.
-newtype SeasonNumber = SeasonNumber {getSeason :: Word8}
+-- | Season index, zero-padded for display.
+newtype SeasonIndex = SeasonIndex {getSeason :: Word8}
   deriving stock (Eq, Ord, Show, Generic)
   deriving newtype (Num, ToJSON, FromJSON, ToSchema, FromField, ToField)
   deriving (ToText) via (Padded Word8)
 
--- | Episode number, zero-padded for display.
-newtype EpisodeNumber = EpisodeNumber {getEpisode :: Word32}
+-- | Episode index, zero-padded for display.
+newtype EpisodeIndex = EpisodeIndex {getEpisode :: Word32}
   deriving stock (Eq, Ord, Show, Generic)
   deriving newtype (Num, ToJSON, FromJSON, ToSchema, FromField, ToField)
   deriving (ToText) via (Padded Word32)
 
 -- | Subtract an offset from an episode number.
 -- Keeps the original number if it is not greater than the offset.
-applyEpisodeOffset :: Word32 -> EpisodeNumber -> EpisodeNumber
+applyEpisodeOffset :: Word32 -> EpisodeIndex -> EpisodeIndex
 applyEpisodeOffset 0 n = n
 applyEpisodeOffset offset n
-  | n.getEpisode > offset = EpisodeNumber (n.getEpisode - offset)
+  | n.getEpisode > offset = EpisodeIndex (n.getEpisode - offset)
   | otherwise = n

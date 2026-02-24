@@ -4,6 +4,7 @@ import Moe.Prelude
 import Moe.Web.API.Bangumi.Handler qualified as Bangumi
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Downloader.Handler (handleTestDownloader)
+import Moe.Web.API.Import.Handler (handleImportScan)
 import Moe.Web.API.Log.Handler (handleGetLogs)
 import Moe.Web.API.Notification.Handler (handleTestNotification)
 import Moe.Web.API.Routes qualified as API
@@ -37,5 +38,6 @@ apiServer =
       searchMikan = Bangumi.handleSearchMikan,
       updateBangumiTmdbId = \bid req -> Bangumi.handleUpdateBangumiTmdbId bid req >> pure NoContent,
       getBangumiEpisodeOffset = Bangumi.handleGetEpisodeOffset,
-      getLogs = handleGetLogs
+      getLogs = handleGetLogs,
+      importScan = handleImportScan
     }

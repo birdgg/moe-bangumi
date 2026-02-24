@@ -123,21 +123,21 @@ testCases =
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> movie
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Hyouketsu no Kizuna [Ma10p_1080p][x265_flac].mka",
-      Just "Re：从零开始的异世界生活 冰结之绊 (2019)/Re：从零开始的异世界生活 冰结之绊 (2019) [VCB-Studio][BDRip].mka"
+      Just "Re：从零开始的异世界生活 冰结之绊/Re：从零开始的异世界生活 冰结之绊 [VCB-Studio][BDRip].mka"
     ),
     ( "Movie 2",
       True,
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> "[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Memory Snow [Ma10p_1080p]"
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Memory Snow [Ma10p_1080p][x265_flac_aac].mkv",
-      Just "Re：从零开始的异世界生活 雪之回忆 (2018)/Re：从零开始的异世界生活 雪之回忆 (2018) [VCB-Studio][BDRip].mkv"
+      Just "Re：从零开始的异世界生活 雪之回忆/Re：从零开始的异世界生活 雪之回忆 [VCB-Studio][BDRip].mkv"
     ),
     ( "Movie CM",
       True,
       [GroupName "VCB-Studio"],
       multiRoot <> "/" <> movie
         <> "/[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Hyouketsu no Kizuna [CM01][Ma10p_1080p][x265_flac].mkv",
-      Just "Re：从零开始的异世界生活 冰结之绊 (2019)/Other/CM1.mkv"
+      Just "Re：从零开始的异世界生活 冰结之绊/Other/CM1.mkv"
     ),
     ( "Subtitle",
       True,

@@ -4,7 +4,7 @@ import Data.Text qualified as T
 import Data.Time (UTCTime (..))
 import Data.Time.Calendar (fromGregorian)
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..))
-import Moe.Domain.Episode (Episode (..), EpisodeNumber (..))
+import Moe.Domain.Episode (Episode (..), EpisodeIndex (..))
 import Moe.Domain.Rss (PubDate (..))
 import Moe.Domain.Setting (WashingConfig (..), defaultFilterConfig, defaultGroupPriority)
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
@@ -36,7 +36,7 @@ mkEp :: Word32 -> [GroupName] -> [Subtitle] -> Episode
 mkEp n grp subs =
   Episode
     { bangumiId = Id 1,
-      episodeNumber = EpisodeNumber n,
+      episodeNumber = EpisodeIndex n,
       group = grp,
       subtitleList = subs,
       resolution = Just "1080P",
@@ -136,7 +136,7 @@ filterParseTests =
           parsed = mapMaybe (parseRawItem defaultGroupPriority testBangumi) filtered
           jointEps = filter (\ep -> ep.group == loliHouseGroup) parsed
       length jointEps @?= 1
-      map (.episodeNumber) jointEps @?= [EpisodeNumber 1]
+      map (.episodeNumber) jointEps @?= [EpisodeIndex 1]
   ]
 
 -- -------------------------------------------------------------------
@@ -151,9 +151,9 @@ washingTests =
           newEps = [mkEp 1 loliHouseGroup []]
           (toAdd, toDelete) = processWashing episodeMap loliHouseConfig newEps
 
-      map (.episodeNumber) toAdd @?= [EpisodeNumber 1]
+      map (.episodeNumber) toAdd @?= [EpisodeIndex 1]
       map (.group) toAdd @?= [loliHouseGroup]
-      map (\e -> e.entityVal.episodeNumber) toDelete @?= [EpisodeNumber 1],
+      map (\e -> e.entityVal.episodeNumber) toDelete @?= [EpisodeIndex 1],
     testCase "no upgrade: same group is not re-added" $ do
       let existing = [mkExistingEp 1 1 loliHouseGroup []]
           episodeMap = buildEpisodeMap existing
@@ -197,9 +197,9 @@ washingTests =
 
       length toAdd @?= 3
       addMap
-        @?= [ (EpisodeNumber 1, loliHouseGroup),
-              (EpisodeNumber 2, loliHouseGroup),
-              (EpisodeNumber 3, soloNyaaGroup)
+        @?= [ (EpisodeIndex 1, loliHouseGroup),
+              (EpisodeIndex 2, loliHouseGroup),
+              (EpisodeIndex 3, soloNyaaGroup)
             ]
       toDelete @?= [],
     testCase "upgrade: multiple new eps for same existing produce no duplicate deletes" $ do

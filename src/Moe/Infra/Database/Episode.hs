@@ -13,7 +13,7 @@ import Data.Text qualified as T
 import Effectful
 import Effectful.Exception (throwIO)
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query)
-import Moe.Domain.Episode (Episode (..), EpisodeId, EpisodeNumber)
+import Moe.Domain.Episode (Episode (..), EpisodeId, EpisodeIndex)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Shared.Entity (Entity, Id (..))
 import Moe.Error (AppError (..))
@@ -26,7 +26,7 @@ episodeColumns = "id, bangumi_id, episode_number, \"group\", subtitle_list, reso
 getEpisode ::
   (SqliteTransaction :> es, IOE :> es) =>
   BangumiId ->
-  EpisodeNumber ->
+  EpisodeIndex ->
   Eff es (Maybe (Entity Episode))
 getEpisode (Id bid) epNum = do
   results <-
@@ -105,7 +105,7 @@ getEpisodesByInfoHashes hashes = do
 getNewerEpisode ::
   (SqliteTransaction :> es, IOE :> es) =>
   BangumiId ->
-  EpisodeNumber ->
+  EpisodeIndex ->
   Text ->
   Eff es (Maybe (Entity Episode))
 getNewerEpisode (Id bid) epNum oldHash = do

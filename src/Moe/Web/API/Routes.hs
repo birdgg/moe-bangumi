@@ -6,6 +6,7 @@ import Moe.Domain.Setting (UserPreference)
 import Moe.Prelude
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
 import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
+import Moe.Web.API.DTO.Import (ImportScanResponse)
 import Moe.Web.API.DTO.Log (LogsResponse)
 import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationResponse)
 import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
@@ -127,6 +128,11 @@ data Routes' mode = Routes'
           :> QueryParam' '[Required, Strict] "date" Day
           :> QueryParam "page" Word32
           :> QueryParam "pageSize" Word32
-          :> Get '[JSON] LogsResponse
+          :> Get '[JSON] LogsResponse,
+    importScan ::
+      mode
+        :- "import"
+          :> "scan"
+          :> Post '[JSON] ImportScanResponse
   }
   deriving stock (Generic)

@@ -5,14 +5,14 @@ module Moe.Domain.Parser.RssTitle
 where
 
 import Data.Text qualified as T
-import Moe.Domain.Episode (EpisodeNumber (..))
+import Moe.Domain.Episode (EpisodeIndex (..))
 import Moe.Domain.Shared.Group (Group, GroupName, splitGroupNames)
 import Moe.Domain.Shared.Subtitle (Subtitle (..), SubtitleList)
 import Moe.Domain.Parser.Internal.Pattern
 import Moe.Prelude
 
 data RssTitleInfo = RssTitleInfo
-  { episode :: Maybe EpisodeNumber,
+  { episode :: Maybe EpisodeIndex,
     group :: [GroupName],
     resolution :: Maybe Text,
     subtitleList :: SubtitleList
@@ -24,7 +24,7 @@ parseRssTitle groups rawInput =
   let processed = preProcess rawInput
       (rawGrp, grps) = extractSubtitleGroup groups processed
       withoutGroup = prefixProcess processed rawGrp
-      episodeNum = extractEpisodeNumber withoutGroup
+      episodeNum = extractEpisodeIndex withoutGroup
       (subs, res) = findTags processed
    in RssTitleInfo
         { episode = episodeNum,
@@ -67,8 +67,8 @@ prefixProcess :: Text -> Maybe Text -> Text
 prefixProcess input Nothing = input
 prefixProcess input (Just grp) = T.strip $ T.replace ("[" <> grp <> "]") "" input
 
-extractEpisodeNumber :: Text -> Maybe EpisodeNumber
-extractEpisodeNumber input =
+extractEpisodeIndex :: Text -> Maybe EpisodeIndex
+extractEpisodeIndex input =
   let patterns =
         [ mkPattern "第(\\d+)[话話集]",
           mkPattern " - (\\d{1,3})($|[^\\d])",
@@ -80,7 +80,7 @@ extractEpisodeNumber input =
           mkPattern "[Ee][Pp]?(\\d+)",
           mkPattern " (\\d{1,3})(完)?( |\\[|$)"
         ]
-   in EpisodeNumber <$> listToMaybe (mapMaybe tryExtract patterns)
+   in EpisodeIndex <$> listToMaybe (mapMaybe tryExtract patterns)
   where
     tryExtract pat = findPattern pat input >>= extractNumber
 

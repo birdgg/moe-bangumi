@@ -1,6 +1,6 @@
 module Moe.Domain.Episode
   ( EpisodeId,
-    EpisodeNumber (..),
+    EpisodeIndex (..),
     Episode (..),
   )
 where
@@ -9,7 +9,7 @@ import Effectful.Sqlite (FromRow, ToRow)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Rss (PubDate, TorrentUrl)
 import Moe.Domain.Shared.Entity (Id)
-import Moe.Domain.Shared.Numbering (EpisodeNumber (..))
+import Moe.Domain.Shared.Numbering (EpisodeIndex (..))
 import Moe.Domain.Shared.Group (GroupName (..))
 import Moe.Domain.Shared.Subtitle (SubtitleList)
 import Moe.Prelude
@@ -18,7 +18,7 @@ type EpisodeId = Id Episode
 
 data Episode = Episode
   { bangumiId :: BangumiId,
-    episodeNumber :: EpisodeNumber,
+    episodeNumber :: EpisodeIndex,
     group :: [GroupName],
     subtitleList :: SubtitleList,
     resolution :: Maybe Text,

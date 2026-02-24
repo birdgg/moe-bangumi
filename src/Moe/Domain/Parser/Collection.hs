@@ -17,8 +17,8 @@ where
 
 import Data.Char (isDigit)
 import Data.Text qualified as T
-import Moe.Domain.Bangumi (SeasonNumber (..))
-import Moe.Domain.Episode (EpisodeNumber (..))
+import Moe.Domain.Bangumi (SeasonIndex (..))
+import Moe.Domain.Episode (EpisodeIndex (..))
 import Moe.Domain.File (BangumiContent (..), ExtraIndex (..))
 import Moe.Domain.Parser.Internal.Pattern
 import Moe.Prelude
@@ -30,8 +30,8 @@ import Moe.Prelude
 -- | Result of parsing a video file name.
 data ParsedInfo = ParsedInfo
   { title :: Text,
-    season :: Maybe SeasonNumber,
-    episodeNumber :: Maybe EpisodeNumber,
+    season :: Maybe SeasonIndex,
+    episodeNumber :: Maybe EpisodeIndex,
     group :: Maybe Text
   }
   deriving stock (Eq, Show)
@@ -47,19 +47,19 @@ parseInfo input =
     }
 
 -- | Extract season number from text.
-extractSeason :: Text -> Maybe SeasonNumber
+extractSeason :: Text -> Maybe SeasonIndex
 extractSeason input = do
   matched <- findPattern seasonPattern input
-  SeasonNumber . fromIntegral <$> extractNumber matched
+  SeasonIndex . fromIntegral <$> extractNumber matched
 
 -- | Extract episode number from a bracket tag like @[29]@, @[01]@.
 --
 -- Only matches pure-digit brackets to avoid @[Ma10p_1080p]@ or @[x265_flac_aac]@.
-extractEpisode :: Text -> Maybe EpisodeNumber
+extractEpisode :: Text -> Maybe EpisodeIndex
 extractEpisode input = do
   matched <- findPattern bracketEpisodePattern input
   let digits = T.filter isDigit matched
-  EpisodeNumber <$> readMaybe (toString digits)
+  EpisodeIndex <$> readMaybe (toString digits)
 
 -- | Pattern for episode number in brackets: @[29]@, @[01]@.
 bracketEpisodePattern :: Pattern
@@ -79,7 +79,7 @@ extractGroup input = do
 data ParsedDirName = ParsedDirName
   { keyword :: Text,
     group :: Maybe Text,
-    season :: Maybe SeasonNumber
+    season :: Maybe SeasonIndex
   }
   deriving stock (Eq, Show)
 
@@ -129,7 +129,7 @@ data ParsedSpContent
   = -- | Extras/trailers content (NCOP, NCED, CM, PV, Menu, Trailer, Preview).
     ExtraContent BangumiContent
   | -- | Special episode, placed in Season 00.
-    SpecialEpisode EpisodeNumber
+    SpecialEpisode EpisodeIndex
   deriving stock (Eq, Show)
 
 -- | Parse SP content type from a video filename.
@@ -137,7 +137,7 @@ data ParsedSpContent
 -- >>> parseSpContent "[VCB-Studio] Anime [NCOP01][1080p].mkv"
 -- Just (ExtraContent (NCOP (Just (ExtraIndex 1))))
 -- >>> parseSpContent "[VCB-Studio] Anime [SP01_12][1080p].mkv"
--- Just (SpecialEpisode (EpisodeNumber 112))
+-- Just (SpecialEpisode (EpisodeIndex 112))
 -- >>> parseSpContent "[VCB-Studio] Anime [26][1080p].mkv"
 -- Nothing
 parseSpContent :: Text -> Maybe ParsedSpContent
@@ -156,7 +156,7 @@ parseSpContent input =
 
 -- | Match an extra content type with optional index and episode number (NCOP, NCED).
 matchExtraWithEp ::
-  (Maybe ExtraIndex -> Maybe EpisodeNumber -> BangumiContent) ->
+  (Maybe ExtraIndex -> Maybe EpisodeIndex -> BangumiContent) ->
   Pattern ->
   Text ->
   Text ->
@@ -182,12 +182,12 @@ matchExtraWith ctor pat prefix input = do
       idx = parseLeadingIndex (T.drop (T.length prefix) inner)
   pure $ ExtraContent (ctor idx)
 
--- | Parse @_EP\d+@ suffix as an EpisodeNumber.
-parseEpSuffix :: Text -> Maybe EpisodeNumber
+-- | Parse @_EP\d+@ suffix as an EpisodeIndex.
+parseEpSuffix :: Text -> Maybe EpisodeIndex
 parseEpSuffix t = case T.breakOn "_EP" t of
   (_, rest) | not (T.null rest) ->
     let digits = T.takeWhile isDigit (T.drop 3 rest)
-     in EpisodeNumber <$> readMaybe (toString digits)
+     in EpisodeIndex <$> readMaybe (toString digits)
   _ -> Nothing
 
 -- | Match PV bracket tag, defaulting index to 1.
@@ -201,13 +201,13 @@ matchPv input = do
 -- | Match Preview bracket tag, extracting optional episode number.
 --
 -- >>> matchPreview "[Web Preview 27][1080p].mkv"
--- Just (ExtraContent (Preview (Just (EpisodeNumber 27))))
+-- Just (ExtraContent (Preview (Just (EpisodeIndex 27))))
 matchPreview :: Text -> Maybe ParsedSpContent
 matchPreview input = do
   matched <- findPattern previewPat input
   let inner = stripBrackets matched
       digits = T.takeWhileEnd isDigit inner
-      ep = EpisodeNumber <$> readMaybe (toString digits)
+      ep = EpisodeIndex <$> readMaybe (toString digits)
   pure $ ExtraContent (Preview ep)
 
 -- | Match SP bracket tag for special episodes.
@@ -220,8 +220,8 @@ matchSp input = do
     [vol, track]
       | Just v <- readDigits vol,
         Just t <- readDigits track ->
-          EpisodeNumber (v * 100 + t)
-    _ -> EpisodeNumber (fromMaybe 1 (readDigits rest))
+          EpisodeIndex (v * 100 + t)
+    _ -> EpisodeIndex (fromMaybe 1 (readDigits rest))
 
 -- | Match Mini Anime bracket tag for special bonus episodes.
 matchMiniAnime :: Text -> Maybe ParsedSpContent
@@ -230,7 +230,7 @@ matchMiniAnime input = do
   let inner = stripBrackets matched
       digits = T.takeWhileEnd isDigit inner
   ep <- readMaybe (toString digits)
-  pure $ SpecialEpisode (EpisodeNumber ep)
+  pure $ SpecialEpisode (EpisodeIndex ep)
 
 -- | Parse leading digits as an ExtraIndex.
 parseLeadingIndex :: Text -> Maybe ExtraIndex

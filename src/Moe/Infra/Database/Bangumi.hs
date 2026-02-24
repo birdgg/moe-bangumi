@@ -2,6 +2,7 @@ module Moe.Infra.Database.Bangumi
   ( getBangumi,
     getBangumiByIds,
     findBangumiByTmdbId,
+    findExistingBangumi,
     listBangumi,
     listBangumiBySeason,
     createBangumi,

@@ -1,6 +1,9 @@
 import * as React from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { postApiDownloaderTest } from "@/client/sdk.gen";
+import { getApiTrackingBangumisQueryKey } from "@/client/@tanstack/react-query.gen";
+import { client } from "@/client/client.gen";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,6 +12,7 @@ import {
   IconEyeOff,
   IconFolder,
   IconPlugConnected,
+  IconSearch,
 } from "@tabler/icons-react";
 import { FormField } from "./shared";
 import { getErrorMessage, type SettingsFormInstance } from "../hooks";
@@ -17,8 +21,44 @@ export interface DownloaderSectionProps {
   form: SettingsFormInstance;
 }
 
+// TODO: replace with generated `postApiImportScan` from sdk.gen after running `just gen-api`
+interface ImportScanResponse {
+  imported: { bangumiId: number; title: string; posterUrl?: string; maxEpisode: number }[];
+  skipped: { folderName: string; reason: string }[];
+}
+
 export function DownloaderSection({ form }: DownloaderSectionProps) {
   const [showPassword, setShowPassword] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  const scanMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await client.post<ImportScanResponse, unknown, true>({
+        url: "/api/import/scan",
+        throwOnError: true,
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      const importedCount = data.imported.length;
+      const skippedCount = data.skipped.length;
+
+      if (importedCount > 0) {
+        queryClient.invalidateQueries({ queryKey: getApiTrackingBangumisQueryKey() });
+        toast.success(`导入了 ${importedCount} 部番剧`, {
+          description:
+            skippedCount > 0 ? `跳过了 ${skippedCount} 部` : undefined,
+        });
+      } else if (skippedCount > 0) {
+        toast.info(`跳过了 ${skippedCount} 部番剧（均已存在或无法识别）`);
+      } else {
+        toast.info("未发现任何番剧目录");
+      }
+    },
+    onError: () => {
+      toast.error("扫描失败");
+    },
+  });
 
   const testMutation = useMutation({
     mutationFn: async () => {
@@ -167,6 +207,25 @@ export function DownloaderSection({ form }: DownloaderSectionProps) {
                   <>
                     <IconPlugConnected className="size-4" />
                     <span>测试连接</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={scanMutation.isPending}
+                onClick={() => scanMutation.mutate()}
+              >
+                {scanMutation.isPending ? (
+                  <>
+                    <Spinner className="size-4" />
+                    <span>扫描中...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconSearch className="size-4" />
+                    <span>扫描并导入</span>
                   </>
                 )}
               </Button>

@@ -4,7 +4,7 @@ module Moe.Infra.Metadata.Mikan.Types
   )
 where
 
-import Moe.Domain.Bangumi (SeasonNumber)
+import Moe.Domain.Bangumi (SeasonIndex)
 import Moe.Domain.Shared.Metadata (MikanId)
 import Moe.Prelude
 
@@ -12,6 +12,6 @@ import Moe.Prelude
 data MikanSearchResult = MikanSearchResult
   { mikanId :: MikanId,
     title :: Text,
-    season :: Maybe SeasonNumber
+    season :: Maybe SeasonIndex
   }
   deriving stock (Eq, Show)

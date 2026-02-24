@@ -10,7 +10,7 @@ import Moe.Domain.Episode (Episode (..))
 import Moe.Domain.Parser.Internal.Pattern (Pattern, matchPattern, mkPattern)
 import Moe.Domain.Rss (PubDate)
 import Moe.Domain.Setting (FilterConfig (..))
-import Moe.Domain.Shared.Numbering (EpisodeNumber)
+import Moe.Domain.Shared.Numbering (EpisodeIndex)
 import Moe.Infra.Rss.Types (RawItem (..))
 import Moe.Job.Subscription.Types (RssContext (..))
 import Moe.Prelude
@@ -46,6 +46,6 @@ selectEpisodes :: Bool -> [Episode] -> [Episode]
 selectEpisodes True eps = eps
 selectEpisodes False [] = []
 selectEpisodes False (e : es) =
-  let maxNum :: EpisodeNumber
+  let maxNum :: EpisodeIndex
       maxNum = foldl' (\m x -> max m x.episodeNumber) e.episodeNumber es
    in [x | x <- e : es, x.episodeNumber == maxNum]

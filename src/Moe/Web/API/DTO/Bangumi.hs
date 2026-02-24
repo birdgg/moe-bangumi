@@ -13,7 +13,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Data.Time.Calendar (Day)
-import Moe.Domain.Bangumi (BangumiKind, SeasonNumber, extractYear)
+import Moe.Domain.Bangumi (BangumiKind, SeasonIndex, extractYear)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Infra.Metadata.Mikan.Types qualified as Mikan
@@ -24,7 +24,7 @@ data BangumiResponse = BangumiResponse
     titleChs :: Text,
     titleJap :: Maybe Text,
     airDate :: Day,
-    season :: Maybe SeasonNumber,
+    season :: Maybe SeasonIndex,
     kind :: BangumiKind,
     posterUrl :: Maybe Text,
     totalEpisodes :: Maybe Int,
@@ -83,7 +83,7 @@ toTmdbSearchResult b = do
 data MikanSearchResultDTO = MikanSearchResultDTO
   { mikanId :: Word32,
     title :: Text,
-    season :: Maybe SeasonNumber
+    season :: Maybe SeasonIndex
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)

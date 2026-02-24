@@ -11,7 +11,7 @@ import Effectful.Concurrent.QSem (newQSem, signalQSem, waitQSem)
 import Effectful.Exception (bracket_)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (transact)
-import Moe.Domain.Bangumi (AirSeason (..), Bangumi (..), BangumiKind (..), BgmtvId (..), SeasonNumber (..), TmdbId (..), seasonToMonths)
+import Moe.Domain.Bangumi (AirSeason (..), Bangumi (..), BangumiKind (..), BgmtvId (..), SeasonIndex (..), TmdbId (..), seasonToMonths)
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Metadata.Effect (Metadata, fetchBangumiDataByMonth, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
@@ -48,7 +48,7 @@ enrichWithDetails ::
   Eff es Bangumi
 enrichWithDetails bangumi = do
   result <- runMaybeT $ tryBgmtvEnrich <|> tryTmdbEnrich
-  pure $ defaultTvSeasonNumber $ fromMaybe bangumi result
+  pure $ defaultTvSeasonIndex $ fromMaybe bangumi result
   where
     -- Word32 -> Int64 widening is always safe, no truncation possible.
     tryBgmtvEnrich = do
@@ -66,9 +66,9 @@ enrichWithDetails bangumi = do
           detailResult <- MaybeT $ getTmdbTvDetail (TvShowId (fromIntegral tid))
           pure $ applyTmdbDetail detailResult bangumi
 
-defaultTvSeasonNumber :: Bangumi -> Bangumi
-defaultTvSeasonNumber b = case (b.kind, b.season) of
-  (Tv, Nothing) -> b {season = Just (SeasonNumber 1)}
+defaultTvSeasonIndex :: Bangumi -> Bangumi
+defaultTvSeasonIndex b = case (b.kind, b.season) of
+  (Tv, Nothing) -> b {season = Just (SeasonIndex 1)}
   _ -> b
 
 -- | Enrich a Bangumi with detail fields from Bgmtv.

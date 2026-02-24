@@ -1,6 +1,6 @@
 module Moe.Infra.Metadata.MikanSpec (tests) where
 
-import Moe.Domain.Bangumi (MikanId (..), SeasonNumber (..))
+import Moe.Domain.Bangumi (MikanId (..), SeasonIndex (..))
 import Moe.Infra.Metadata.Mikan (MikanSearchResult (..), parseSearchResults)
 import Moe.Prelude
 import Test.Tasty
@@ -19,7 +19,7 @@ tests =
         parseSearchResults sampleHtml
           @?= Right
             [ MikanSearchResult {mikanId = MikanId 3519, title = "\37329\29260\24471\20027", season = Nothing},
-              MikanSearchResult {mikanId = MikanId 3822, title = "\37329\29260\24471\20027", season = Just (SeasonNumber 2)}
+              MikanSearchResult {mikanId = MikanId 3822, title = "\37329\29260\24471\20027", season = Just (SeasonIndex 2)}
             ]
     ]
 

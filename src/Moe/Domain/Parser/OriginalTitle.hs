@@ -5,7 +5,7 @@ module Moe.Domain.Parser.OriginalTitle
 where
 
 import Data.Text qualified as T
-import Moe.Domain.Bangumi (SeasonNumber (..))
+import Moe.Domain.Bangumi (SeasonIndex (..))
 import Moe.Domain.Parser.Internal.Pattern
 import Moe.Prelude
 
@@ -13,7 +13,7 @@ import Moe.Prelude
 data ParsedTitle = ParsedTitle
   { titleChs :: Text,
     titleJap :: Text,
-    season :: Maybe SeasonNumber
+    season :: Maybe SeasonIndex
   }
   deriving stock (Eq, Show, Generic)
 
@@ -30,15 +30,15 @@ parseOriginalTitle (name, nameCn) =
           season = seasonFromNameCn <|> seasonFromName
         }
 
-parseTitle :: Text -> (Text, Maybe SeasonNumber)
+parseTitle :: Text -> (Text, Maybe SeasonIndex)
 parseTitle input =
   maybe
     (T.strip input, Nothing)
-    (bimap T.strip extractSeasonNumber)
+    (bimap T.strip extractSeasonIndex)
     (findPatternWithPosition seasonPattern input)
 
-extractSeasonNumber :: Text -> Maybe SeasonNumber
-extractSeasonNumber t =
-  SeasonNumber . fromIntegral <$> case extractNumber t of
+extractSeasonIndex :: Text -> Maybe SeasonIndex
+extractSeasonIndex t =
+  SeasonIndex . fromIntegral <$> case extractNumber t of
     Just n -> Just n
     Nothing -> chineseToNumber t
