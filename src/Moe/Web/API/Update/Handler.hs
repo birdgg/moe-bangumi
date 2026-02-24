@@ -24,7 +24,10 @@ handlePostUpdate = do
   about <- checkForUpdate
   if not about.needUpdate
     then pure UpdateResponse {success = False, message = "Already latest version"}
-    else do
-      performUpdate
-      -- Process exits in performUpdate; this is unreachable
-      pure UpdateResponse {success = True, message = "Updating..."}
+    else
+      if not about.autoUpdate
+        then pure UpdateResponse {success = False, message = "No download available for this platform"}
+        else do
+          performUpdate
+          -- Process exits in performUpdate; this is unreachable
+          pure UpdateResponse {success = True, message = "Updating..."}

@@ -43,7 +43,7 @@ import System.Directory
     setOwnerExecutable,
     setPermissions,
   )
-import System.FilePath (takeDirectory, (</>))
+import System.FilePath ((</>))
 import Data.ByteString qualified as BS
 import System.IO (hClose, openBinaryFile)
 import System.Process (callProcess)
@@ -87,6 +87,7 @@ instance Aeson.FromJSON GitHubAsset where
 -- | Opaque update environment with version cache.
 data UpdateEnv = UpdateEnv
   { currentVersion :: Text,
+    dataFolder :: FilePath,
     cachedAbout :: TVar (Maybe CachedAbout)
   }
 
@@ -96,10 +97,10 @@ data CachedAbout = CachedAbout
   }
 
 -- | Initialize update environment.
-initUpdateEnv :: (IOE :> es) => Text -> Eff es UpdateEnv
-initUpdateEnv currentVersion = do
+initUpdateEnv :: (IOE :> es) => Text -> FilePath -> Eff es UpdateEnv
+initUpdateEnv currentVersion dataFolder = do
   cachedAbout <- newTVarIO Nothing
-  pure UpdateEnv {currentVersion, cachedAbout}
+  pure UpdateEnv {currentVersion, dataFolder, cachedAbout}
 
 -- -------------------------------------------------------------------
 -- Constants
@@ -193,12 +194,13 @@ fetchAboutInfo env manager = do
               canAuto = sameMajorMinor latestVer currentVer
               mTarball = find (\a -> a.name == tarballName) release.assets
               mChecksum = find (\a -> a.name == "checksums.txt") release.assets
+              hasAssets = isJust mTarball && isJust mChecksum
           pure
             AboutInfo
               { currentVersion = currentVer,
                 latestVersion = latestVer,
                 needUpdate = newer,
-                autoUpdate = newer && canAuto,
+                autoUpdate = newer && canAuto && hasAssets,
                 downloadUrl = maybe "" (.browserDownloadUrl) mTarball,
                 checksumUrl = maybe "" (.browserDownloadUrl) mChecksum,
                 changelog = release.body,
@@ -224,11 +226,13 @@ performUpdateImpl env manager = do
   about <- checkForUpdateImpl env manager
   if not about.needUpdate
     then pass
-    else do
+    else
+      if T.null about.downloadUrl || T.null about.checksumUrl
+        then Log.logAttention_ "Update available but no download assets found for this platform"
+        else do
       Log.logInfo_ $ "Updating to version " <> about.latestVersion
       platformInfo <- liftIO detectPlatform
-      let exeDir = takeDirectory platformInfo.executablePath
-          tmpDir = exeDir </> ".update-tmp"
+      let tmpDir = env.dataFolder </> ".update-tmp"
           tarballPath = tmpDir </> toString (buildAssetName platformInfo)
           extractedBinary = tmpDir </> "moe-bangumi"
           targetPath = platformInfo.executablePath

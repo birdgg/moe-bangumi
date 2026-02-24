@@ -89,7 +89,7 @@ mkMoeEnv :: (IOE :> es, FileSystem :> es, Concurrent :> es) => MoeConfig -> Eff 
 mkMoeEnv config = do
   let settingPath = config.dataFolder </> "setting.json"
   settingEnv <- initSettingEnv settingPath
-  updateEnv <- initUpdateEnv (toText $ showVersion Meta.version)
+  updateEnv <- initUpdateEnv (toText $ showVersion Meta.version) config.dataFolder
   httpManager <- liftIO $ newManager tlsManagerSettings
   dbPool <- mkDbPool (getDatabasePath' config)
   downloaderEnv <- initDownloaderEnv
