@@ -1,4 +1,10 @@
 # Changelog
+## [1.5.1] - 2026-02-24
+
+### Bug Fixes
+
+- Normalize cabal version in Dockerfile to improve dependency layer caching
+
 ## [1.5.0] - 2026-02-24
 
 ### Bug Fixes
