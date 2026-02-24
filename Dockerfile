@@ -29,14 +29,17 @@ RUN apk add --no-cache \
     pcre2-dev
 
 # ============================================================================
-# Layer 1: Cabal configuration (cached unless .cabal or cabal.project changes)
+# Layer 1: Cabal configuration (cached unless dependencies change)
 # ============================================================================
 
 # Copy cabal files (cabal.project has source-repository-package deps)
 COPY moe-bangumi.cabal cabal.project ./
 
-# Remove test-suite from cabal file to avoid test dependencies
-RUN sed -i '/^test-suite/,$d' moe-bangumi.cabal
+# Normalize version to prevent cache invalidation on version bumps.
+# Remove test-suite to avoid test dependencies.
+# This ensures the dependency layer is only rebuilt when actual deps change.
+RUN sed -i -e 's/^version:.*/version: 0.0.0/' \
+           -e '/^test-suite/,$d' moe-bangumi.cabal
 
 # Explicitly disable tests and benchmarks for Docker build
 RUN echo "tests: False" > cabal.project.local && \
@@ -61,6 +64,10 @@ RUN cabal update && \
 # ============================================================================
 # Layer 3: Copy source code (invalidated on any code change)
 # ============================================================================
+
+# Re-copy the real cabal file with correct version for the application build
+COPY moe-bangumi.cabal ./
+RUN sed -i '/^test-suite/,$d' moe-bangumi.cabal
 
 # Copy application source code
 COPY app ./app
