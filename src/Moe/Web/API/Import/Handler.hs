@@ -28,8 +28,7 @@ toImportedDTO e =
   ImportedBangumiDTO
     { bangumiId = coerce e.bangumiId,
       title = e.title,
-      posterUrl = e.posterUrl,
-      maxEpisode = e.maxEpisode
+      posterUrl = e.posterUrl
     }
 
 toSkippedDTO :: SkippedEntry -> SkippedBangumiDTO

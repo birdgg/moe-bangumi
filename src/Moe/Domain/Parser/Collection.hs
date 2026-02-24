@@ -19,7 +19,7 @@ import Data.Char (isDigit)
 import Data.Text qualified as T
 import Moe.Domain.Bangumi (SeasonIndex (..))
 import Moe.Domain.Episode (EpisodeIndex (..))
-import Moe.Domain.File (BangumiContent (..), ExtraIndex (..))
+import Moe.Domain.File (ContentKind (..), ExtraIndex (..))
 import Moe.Domain.Parser.Internal.Pattern
 import Moe.Prelude
 
@@ -127,7 +127,7 @@ bracketTagPattern =
 -- | Result of parsing SP (special) content from a filename.
 data ParsedSpContent
   = -- | Extras/trailers content (NCOP, NCED, CM, PV, Menu, Trailer, Preview).
-    ExtraContent BangumiContent
+    ExtraContent ContentKind
   | -- | Special episode, placed in Season 00.
     SpecialEpisode EpisodeIndex
   deriving stock (Eq, Show)
@@ -156,7 +156,7 @@ parseSpContent input =
 
 -- | Match an extra content type with optional index and episode number (NCOP, NCED).
 matchExtraWithEp ::
-  (Maybe ExtraIndex -> Maybe EpisodeIndex -> BangumiContent) ->
+  (Maybe ExtraIndex -> Maybe EpisodeIndex -> ContentKind) ->
   Pattern ->
   Text ->
   Text ->
@@ -171,7 +171,7 @@ matchExtraWithEp ctor pat prefix input = do
 
 -- | Match an extra content type with optional index (CM, Menu).
 matchExtraWith ::
-  (Maybe ExtraIndex -> BangumiContent) ->
+  (Maybe ExtraIndex -> ContentKind) ->
   Pattern ->
   Text ->
   Text ->

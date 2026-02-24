@@ -22,8 +22,7 @@ data ImportScanResponse = ImportScanResponse
 data ImportedBangumiDTO = ImportedBangumiDTO
   { bangumiId :: Int64,
     title :: Text,
-    posterUrl :: Maybe Text,
-    maxEpisode :: Word32
+    posterUrl :: Maybe Text
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, ToSchema)

@@ -7,7 +7,10 @@ module Moe.Domain.File
     TmdbId (..),
     SeasonIndex (..),
     GroupName (..),
+    ContentKind (..),
     BangumiContent (..),
+    mkContent,
+    mkContentSub,
     BangumiMeta (..),
     BangumiFile (..),
     toBangumiMeta,
@@ -30,9 +33,6 @@ module Moe.Domain.File
     -- * Parsing (reverse: file paths -> metadata)
     parseFolderName,
     parseSeasonDir,
-    parseEpisodeFromFileName,
-    extractEpNumber,
-    extractMaxEpisode,
     isBangumiDir,
   )
 where
@@ -57,12 +57,10 @@ newtype ExtraIndex = ExtraIndex Word8
   deriving stock (Eq, Show)
   deriving newtype (Num)
 
--- | Content type of a bangumi file.
-data BangumiContent
+-- | The kind of content in a bangumi file.
+data ContentKind
   = Episode EpisodeIndex
-  | EpisodeSub EpisodeIndex Subtitle
   | Special EpisodeIndex
-  | SpecialSub EpisodeIndex Subtitle
   | NCOP (Maybe ExtraIndex) (Maybe EpisodeIndex)
   | NCED (Maybe ExtraIndex) (Maybe EpisodeIndex)
   | Menu (Maybe ExtraIndex)
@@ -71,8 +69,22 @@ data BangumiContent
   | Trailer (Maybe EpisodeIndex)
   | CM (Maybe ExtraIndex)
   | Movie
-  | MovieSub Subtitle
   deriving stock (Eq, Show)
+
+-- | Content type of a bangumi file, combining content kind with optional subtitle.
+data BangumiContent = BangumiContent
+  { kind :: ContentKind,
+    subtitle :: Maybe Subtitle
+  }
+  deriving stock (Eq, Show)
+
+-- | Create content without subtitle.
+mkContent :: ContentKind -> BangumiContent
+mkContent k = BangumiContent k Nothing
+
+-- | Create content with subtitle.
+mkContentSub :: ContentKind -> Subtitle -> BangumiContent
+mkContentSub k s = BangumiContent k (Just s)
 
 -- | Lightweight metadata for file naming on media servers.
 data BangumiMeta = BangumiMeta
@@ -91,13 +103,6 @@ data BangumiFile = BangumiFile
   }
   deriving stock (Eq, Show)
 
--- | Extract subtitle from content, if present.
-contentSubtitle :: BangumiContent -> Maybe Subtitle
-contentSubtitle (EpisodeSub _ sub) = Just sub
-contentSubtitle (SpecialSub _ sub) = Just sub
-contentSubtitle (MovieSub sub) = Just sub
-contentSubtitle _ = Nothing
-
 -- | Convert a Bangumi to lightweight BangumiMeta for file naming.
 toBangumiMeta :: Bangumi -> BangumiMeta
 toBangumiMeta b =
@@ -113,7 +118,7 @@ toBangumiMeta b =
 toBangumiFile :: Bangumi -> Ep.Episode -> BangumiFile
 toBangumiFile b ep =
   let meta = toBangumiMeta b
-      content = Episode ep.episodeNumber
+      content = mkContent (Episode ep.episodeNumber)
    in BangumiFile {bangumi = meta {group = ep.group}, content, ext = "mkv"}
 
 -- ---------------------------------------------------------------------
@@ -129,13 +134,10 @@ toBangumiFile b ep =
 -- >>> generatePath (BangumiFile meta Movie "mkv")
 -- "Frieren Movie"
 generatePath :: BangumiFile -> FilePath
-generatePath file = case file.content of
+generatePath file = case file.content.kind of
   Movie -> movieDir
-  MovieSub _ -> movieDir
   Special {} -> base </> seasonDir (SeasonIndex 0)
-  SpecialSub {} -> base </> seasonDir (SeasonIndex 0)
   Episode {} -> base </> seasonDir s
-  EpisodeSub {} -> base </> seasonDir s
   NCOP {} -> base </> withSeason featurettesDir
   NCED {} -> base </> withSeason featurettesDir
   PV {} -> base </> withSeason trailersDir
@@ -161,12 +163,12 @@ generateBaseName file = toString $ contentBaseName file.bangumi file.content
 --
 -- >>> generateFileName (BangumiFile meta (Episode 1 1) "mkv")
 -- "Frieren - S01E01.mkv"
--- >>> generateFileName (BangumiFile meta (EpisodeSub 1 1 CHS) "ass")
+-- >>> generateFileName (BangumiFile meta (mkContentSub (Episode 1) CHS) "ass")
 -- "Frieren - S01E01.chs.ass"
 generateFileName :: BangumiFile -> FilePath
 generateFileName file = generateBaseName file <> toString extension
   where
-    subCode = foldMap (\sub -> toMediaCode sub <> ".") (contentSubtitle file.content)
+    subCode = foldMap (\sub -> toMediaCode sub <> ".") file.content.subtitle
     extension = "." <> subCode <> file.ext
 
 -- | Generate complete path including directory and file name.
@@ -209,11 +211,9 @@ otherDir :: FilePath
 otherDir = "Other"
 
 contentBaseName :: BangumiMeta -> BangumiContent -> Text
-contentBaseName meta = \case
+contentBaseName meta content = case content.kind of
   Episode ep -> epBase ep
-  EpisodeSub ep _ -> epBase ep
   Special ep -> spBase ep
-  SpecialSub ep _ -> spBase ep
   NCOP idx mEp -> extraWithEp "NCOP" idx mEp
   NCED idx mEp -> extraWithEp "NCED" idx mEp
   Menu idx -> extraIdx "Menu" idx
@@ -222,7 +222,6 @@ contentBaseName meta = \case
   Trailer mEp -> "Trailer" <> epSuffix mEp
   CM idx -> extraIdx "CM" idx
   Movie -> withSuffixes $ sanitizeName meta.title
-  MovieSub _ -> withSuffixes $ sanitizeName meta.title
   where
     s = fromMaybe (SeasonIndex 1) meta.season
     groupSuffix = foldMap (\g -> " [" <> toText g <> "]") meta.group
@@ -287,33 +286,6 @@ parseSeasonDir :: Text -> Maybe SeasonIndex
 parseSeasonDir name = case T.stripPrefix "Season " name of
   Just rest -> SeasonIndex <$> readMaybe (toString rest)
   Nothing -> Nothing
-
--- | Parse episode number from a SxxExx-formatted filename.
---
--- Reverse of the SxxExx pattern in 'contentBaseName'.
---
--- >>> parseEpisodeFromFileName "Frieren - S01E05.mkv"
--- Just 5
--- >>> parseEpisodeFromFileName "NCOP.mkv"
--- Nothing
-parseEpisodeFromFileName :: Text -> Maybe Word32
-parseEpisodeFromFileName fileName =
-  let baseName = T.takeWhileEnd (/= '/') fileName
-   in extractEpNumber baseName
-
--- | Extract episode number from SxxExx pattern.
-extractEpNumber :: Text -> Maybe Word32
-extractEpNumber t = case T.breakOn "E" (snd $ T.breakOn "S" t) of
-  (_, rest)
-    | not (T.null rest) ->
-        let afterE = T.drop 1 rest
-            digits = T.takeWhile isDigit afterE
-         in if T.null digits then Nothing else readMaybe (toString digits)
-  _ -> Nothing
-
--- | Extract the maximum episode number from a list of video file names.
-extractMaxEpisode :: [Text] -> Word32
-extractMaxEpisode = foldl' (\acc f -> maybe acc (max acc) (parseEpisodeFromFileName f)) 0
 
 -- | Check if a directory name looks like a bangumi directory.
 --

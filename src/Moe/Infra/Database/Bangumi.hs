@@ -162,26 +162,28 @@ findExistingBangumi bangumi = runMaybeT $ byTmdbIdAndAirDate <|> byTitleAndAirDa
   where
     byTmdbIdAndAirDate = do
       tid <- MaybeT $ pure bangumi.tmdbId
-      MaybeT $ findBangumiByTmdbIdAndAirDate tid bangumi.airDate
+      MaybeT $ findBangumiByTmdbIdAndAirDate tid bangumi.airDate bangumi.season
     byTitleAndAirDate =
-      MaybeT $ findBangumiByTitleAndAirDate bangumi.titleChs bangumi.airDate
+      MaybeT $ findBangumiByTitleAndAirDate bangumi.titleChs bangumi.airDate bangumi.season
 
 findBangumiByTmdbIdAndAirDate ::
   (SqliteTransaction :> es, IOE :> es) =>
   TmdbId ->
   Types.AirDate ->
+  Maybe Types.SeasonIndex ->
   Eff es (Maybe (Entity Types.Bangumi))
-findBangumiByTmdbIdAndAirDate tmdbId airDate = do
-  results <- query (fromString $ "SELECT " <> toString bangumiColumns <> " FROM bangumi WHERE tmdb_id = ? AND air_date = ?") (tmdbId, airDate)
+findBangumiByTmdbIdAndAirDate tmdbId airDate season = do
+  results <- query (fromString $ "SELECT " <> toString bangumiColumns <> " FROM bangumi WHERE tmdb_id = ? AND air_date = ? AND season IS ?") (tmdbId, airDate, season)
   pure $ listToMaybe results
 
 findBangumiByTitleAndAirDate ::
   (SqliteTransaction :> es, IOE :> es) =>
   Text ->
   Types.AirDate ->
+  Maybe Types.SeasonIndex ->
   Eff es (Maybe (Entity Types.Bangumi))
-findBangumiByTitleAndAirDate titleChs airDate = do
-  results <- query (fromString $ "SELECT " <> toString bangumiColumns <> " FROM bangumi WHERE title_chs = ? AND air_date = ?") (titleChs, airDate)
+findBangumiByTitleAndAirDate titleChs airDate season = do
+  results <- query (fromString $ "SELECT " <> toString bangumiColumns <> " FROM bangumi WHERE title_chs = ? AND air_date = ? AND season IS ?") (titleChs, airDate, season)
   pure $ listToMaybe results
 
 -- | Upsert via SQL ON CONFLICT (bgmtv_id). Only valid when bgmtv_id is NOT NULL.

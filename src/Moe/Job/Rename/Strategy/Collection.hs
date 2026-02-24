@@ -21,7 +21,8 @@ import Effectful.Exception (try)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (transact)
 import Moe.Domain.File
-  ( BangumiContent (Episode, EpisodeSub, Special, SpecialSub, MovieSub),
+  ( ContentKind (..),
+    Subtitle,
     BangumiFile (..),
     BangumiMeta (..),
     EpisodeIndex (..),
@@ -29,12 +30,13 @@ import Moe.Domain.File
     generateFullPath,
     isSubtitleExt,
     isVideoExt,
+    mkContent,
+    mkContentSub,
     toBangumiMeta,
   )
-import Moe.Domain.Shared.Subtitle (Subtitle)
 import Moe.Domain.File qualified as File
 import Moe.Domain.Parser.Collection (ParsedDirName (..), ParsedInfo (..), ParsedSpContent (..), extractGroup, parseCollectionDirName, parseInfo, parseSpContent)
-import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonIndex (..))
+import Moe.Domain.Bangumi (Bangumi (..), SeasonIndex (..))
 import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Tracking qualified as Tracking
 import Moe.Infra.Database.Bangumi qualified as BangumiDB
@@ -55,7 +57,7 @@ data ParsedMediaInfo
   = ParsedSpecial EpisodeIndex
   | ParsedMovie
   | ParsedEpisode (Maybe SeasonIndex) EpisodeIndex
-  | ParsedExtra BangumiContent
+  | ParsedExtra ContentKind
 
 -- | Rename a collection torrent by traversing files and resolving metadata on demand.
 renameCollection ::
@@ -115,7 +117,7 @@ processFile bdrip grp bmap fileName = case findBangumiDir fileName of
     let meta = case resolved of
           Just nb -> (toBangumiMeta nb) {group = grp, isBDrip = bdrip}
           Nothing -> fallbackMeta parsed grp bdrip
-        isMovie = maybe False (\nb -> nb.kind == Movie) resolved
+        isMovie = maybe False (\nb -> nb.kind == Bangumi.Movie) resolved
         newPath = computeNewPath meta isMovie dirName fileName
     pure (bmap', Just newPath)
 
@@ -123,7 +125,7 @@ processFile bdrip grp bmap fileName = case findBangumiDir fileName of
 withSeason :: Maybe SeasonIndex -> Bangumi -> Bangumi
 withSeason parsedSeason nb =
   let s = case nb.kind of
-        Movie -> Nothing
+        Bangumi.Movie -> Nothing
         _ -> parsedSeason <|> Just (SeasonIndex 1)
    in nb {Bangumi.season = s}
 
@@ -194,9 +196,9 @@ buildVideoPath baseMeta isMovie fileName =
   let baseName = T.takeWhileEnd (/= '/') fileName
       ext = T.toLower $ T.takeWhileEnd (/= '.') baseName
       mkFile meta content = BangumiFile {bangumi = meta, content, ext}
-      mkPath meta content = toText $ generateFullPath (mkFile meta content)
+      mkPath meta kind = toText $ generateFullPath (mkFile meta (mkContent kind))
    in case parseMediaInfo fileName isMovie baseMeta of
-        ParsedExtra content -> mkPath baseMeta content
+        ParsedExtra kind -> mkPath baseMeta kind
         ParsedSpecial ep -> mkPath baseMeta (Special ep)
         ParsedMovie -> mkPath baseMeta File.Movie
         ParsedEpisode seasonNum ep ->
@@ -219,13 +221,13 @@ extractSubtitleInfo fileName =
 buildSubtitlePath :: BangumiMeta -> Bool -> Text -> Subtitle -> Text -> Text
 buildSubtitlePath baseMeta isMovie fileName sub subExt =
   let mkFile meta content = BangumiFile {bangumi = meta, content, ext = subExt}
-      mkPath meta content = toText $ generateFullPath (mkFile meta content)
+      mkPath meta kind = toText $ generateFullPath (mkFile meta (mkContentSub kind sub))
    in case parseMediaInfo fileName isMovie baseMeta of
-        ParsedSpecial ep -> mkPath baseMeta (SpecialSub ep sub)
-        ParsedMovie -> mkPath baseMeta (MovieSub sub)
+        ParsedSpecial ep -> mkPath baseMeta (Special ep)
+        ParsedMovie -> mkPath baseMeta File.Movie
         ParsedEpisode seasonNum ep ->
           let meta = baseMeta {File.season = seasonNum} :: BangumiMeta
-           in mkPath meta (EpisodeSub ep sub)
+           in mkPath meta (Episode ep)
         ParsedExtra _ ->
           buildNonVideoPath baseMeta (fileRelativePath (fromMaybe "" (findBangumiDir fileName)) fileName)
 
