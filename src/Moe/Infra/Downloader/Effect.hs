@@ -11,6 +11,7 @@ module Moe.Infra.Downloader.Effect
     addTorrent,
     getTorrentsByHashes,
     getRenameTorrents,
+    getMoeTorrents,
     getTorrentFiles,
     renameTorrentFile,
     renameTorrentFolder,
@@ -42,6 +43,8 @@ data Downloader :: Effect where
   GetTorrentsByHashes :: [Text] -> Downloader m [TorrentInfo]
   -- | Get all torrents with the Rename tag.
   GetRenameTorrents :: Downloader m [TorrentInfo]
+  -- | Get all torrents tagged with moe.
+  GetMoeTorrents :: Downloader m [TorrentInfo]
   -- | Get files within a torrent by its hash.
   GetTorrentFiles :: Text -> Downloader m [TorrentContent]
   -- | Rename a file within a torrent (hash, oldPath, newPath).

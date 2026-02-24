@@ -37,7 +37,7 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/birdgg/qbittorrent-hs.git
-  tag: 3e0dc2e5867e62b76dee887c93c9ae3657ea54e5
+  tag: aae1abeb8fe6c1c944bfc3663f2877540d8b0317
   subdir:
     qbittorrent
 

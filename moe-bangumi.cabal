@@ -177,6 +177,9 @@ library
     Moe.Job.CalendarSync
     Moe.Job.CalendarSync.Process
     Moe.Job.CalendarSync.Worker
+    Moe.Job.Cleanup
+    Moe.Job.Cleanup.Process
+    Moe.Job.Cleanup.Worker
 
   other-modules:
     Moe.Orphans

@@ -76,6 +76,7 @@ handleUnconfigured ::
   Eff es a
 handleUnconfigured err = \case
   GetRenameTorrents -> pure []
+  GetMoeTorrents -> pure []
   GetTorrentsByHashes _ -> pure []
   GetTorrentFiles _ -> pure []
   _ -> throwError (DownloaderError err)
@@ -176,6 +177,16 @@ handleDownloader cfg client = \case
                 filter_ = Nothing,
                 category = Nothing,
                 tag = Just renameTag,
+                hashes = Nothing
+              }
+      QB.getTorrents (Just req)
+  GetMoeTorrents ->
+    runQBAction client $ do
+      let req =
+            QB.TorrentInfoRequest
+              { filter_ = Nothing,
+                category = Nothing,
+                tag = Just moeTag,
                 hashes = Nothing
               }
       QB.getTorrents (Just req)

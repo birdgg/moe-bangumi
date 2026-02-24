@@ -12,6 +12,7 @@ import Moe.App.Bootstrap (bootstrap)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool)
 import Moe.App.Logging (makeLogger)
 import Moe.Job.CalendarSync (calendarSyncWorkerThread)
+import Moe.Job.Cleanup (cleanupWorkerThread)
 import Moe.Job.Rename (renameWorkerThread)
 import Moe.Job.Subscription (rssWorkerThread)
 import Moe.Prelude
@@ -41,7 +42,8 @@ runApp =
             withAsync (liftIO $ rssWorkerThread env appLogger) $ \_ ->
               withAsync (liftIO $ renameWorkerThread env appLogger) $ \_ ->
                 withAsync (liftIO $ calendarSyncWorkerThread env appLogger) $ \_ ->
-                  runServer appLogger env
+                  withAsync (liftIO $ cleanupWorkerThread env appLogger) $ \_ ->
+                    runServer appLogger env
     )
 
 shutdownMoe :: MoeEnv -> IO ()
