@@ -22,7 +22,6 @@ just dev                 # Run backend + frontend in tmux split panes
 just dev-backend         # Run backend only (cabal run moe-cli)
 just dev-frontend        # Run frontend dev server (bun run dev)
 just build               # Build backend + frontend
-just gen-api             # Generate API client from OpenAPI spec
 just release X.Y.Z       # Bump version, generate changelog, tag, and push
 ```
 
@@ -85,7 +84,6 @@ just release X.Y.Z       # Bump version, generate changelog, tag, and push
 - **TMDB** - Metadata lookup (poster, air date)
 - **BGM.tv / Mikan** - Bangumi search and RSS source
 - **qBittorrent** - Torrent download via WebAPI
-- **API docs** - Available at `/docs` (ScalarUI + OpenAPI)
 
 ## Frontend
 
@@ -93,8 +91,8 @@ just release X.Y.Z       # Bump version, generate changelog, tag, and push
 - **TanStack Router** for file-based routing (`web/src/routes/`)
 - **TanStack Query** for server state management
 - **Tailwind CSS v4** + **shadcn** components
-- Uses **bun** as package manager and runtime (`bun install`, `bun run dev`, `bun run gen:api`)
-- API client is auto-generated via `@hey-api/openapi-ts` from the backend OpenAPI spec
+- Uses **bun** as package manager and runtime (`bun install`, `bun run dev`)
+- API client in `web/src/client/` is manually maintained TypeScript
 
 ### TanStack Form
 

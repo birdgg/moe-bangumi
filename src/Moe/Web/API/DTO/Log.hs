@@ -6,7 +6,6 @@ module Moe.Web.API.DTO.Log
 where
 
 import Data.Aeson (FromJSON (..), ToJSON, (.:), (.:?), withObject)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Moe.Prelude
 
@@ -18,7 +17,7 @@ data LogEntry = LogEntry
     message :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 instance FromJSON LogEntry where
   parseJSON = withObject "LogEntry" $ \obj -> do
@@ -36,4 +35,4 @@ data LogsResponse = LogsResponse
     pageSize :: Word32
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)

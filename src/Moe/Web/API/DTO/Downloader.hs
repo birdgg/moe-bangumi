@@ -6,7 +6,6 @@ module Moe.Web.API.DTO.Downloader
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Moe.Prelude
 
 -- | Request to test a qBittorrent connection.
@@ -16,7 +15,7 @@ data TestDownloaderRequest = TestDownloaderRequest
     password :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)
 
 -- | Response from a qBittorrent connection test.
 data TestDownloaderResponse = TestDownloaderResponse
@@ -25,4 +24,4 @@ data TestDownloaderResponse = TestDownloaderResponse
     message :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)

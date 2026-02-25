@@ -6,7 +6,6 @@ module Moe.Domain.Tracking
 where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
-import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (..))
 import Effectful.Sqlite (FromField (..), FromRow, ToField (..), ToRow)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Rss (PubDate)
@@ -43,16 +42,6 @@ instance FromField TrackingType where
 
 instance ToField TrackingType where
   toField = toField . toText
-
-instance ToSchema TrackingType where
-  declareNamedSchema _ = do
-    let enumValues = map toJSON [minBound @TrackingType .. maxBound]
-    pure $
-      NamedSchema (Just "TrackingType") $
-        mempty
-          { _schemaType = Just OpenApiString,
-            _schemaEnum = Just enumValues
-          }
 
 data Tracking = Tracking
   { bangumiId :: BangumiId,

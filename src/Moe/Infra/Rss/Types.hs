@@ -5,7 +5,6 @@ module Moe.Infra.Rss.Types
 where
 
 import Data.Aeson (ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Text.Display (Display (..))
 import Moe.Domain.Rss (PubDate)
 import Moe.Prelude
@@ -17,7 +16,7 @@ data RawItem = RawItem
     infoHash :: Maybe Text
   }
   deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Structured RSS fetch errors.
 data RssFetchError

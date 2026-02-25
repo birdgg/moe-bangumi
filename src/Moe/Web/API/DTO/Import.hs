@@ -7,7 +7,6 @@ module Moe.Web.API.DTO.Import
 where
 
 import Data.Aeson (ToJSON)
-import Data.OpenApi (ToSchema)
 import Moe.Prelude
 
 -- | Response for the import scan endpoint.
@@ -16,7 +15,7 @@ data ImportScanResponse = ImportScanResponse
     skipped :: [SkippedBangumiDTO]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | A successfully imported bangumi.
 data ImportedBangumiDTO = ImportedBangumiDTO
@@ -25,7 +24,7 @@ data ImportedBangumiDTO = ImportedBangumiDTO
     posterUrl :: Maybe Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | A bangumi folder that was skipped during import.
 data SkippedBangumiDTO = SkippedBangumiDTO
@@ -33,4 +32,4 @@ data SkippedBangumiDTO = SkippedBangumiDTO
     reason :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)

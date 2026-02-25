@@ -9,7 +9,6 @@ module Moe.Domain.Bangumi.Season
 where
 
 import Data.Aeson (ToJSON (..))
-import Data.OpenApi (Schema (..), ToParamSchema (..), ToSchema (..))
 import Data.Text qualified as T
 import Data.Time (getCurrentTime, utctDay)
 import Data.Time.Calendar (Day, Year, toGregorian)
@@ -19,17 +18,12 @@ import Web.HttpApiData (FromHttpApiData (..))
 
 data Season = Winter | Spring | Summer | Fall
   deriving stock (Eq, Show, Ord, Enum, Bounded, Generic)
-  deriving anyclass (ToSchema, FromText)
+  deriving anyclass (FromText)
 
 instance FromHttpApiData Season where
   parseUrlPiece t = case fromText t of
     Just s -> Right s
     Nothing -> Left $ "Invalid season: " <> t
-
-instance ToParamSchema Season where
-  toParamSchema _ =
-    let base = toParamSchema (Proxy @Text)
-     in base {_schemaEnum = Just $ map toJSON [minBound @Season .. maxBound]}
 
 instance ToText Season where
   toText Winter = "Winter"
@@ -45,7 +39,7 @@ data AirSeason = AirSeason
     season :: Season
   }
   deriving stock (Eq, Show, Ord, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 instance FromHttpApiData AirSeason where
   parseUrlPiece t = case airSeasonFromText t of

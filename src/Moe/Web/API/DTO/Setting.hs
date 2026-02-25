@@ -10,7 +10,6 @@ module Moe.Web.API.DTO.Setting
 where
 
 import Data.Aeson (ToJSON)
-import Data.OpenApi (ToSchema)
 import Moe.Domain.Shared.Group (Group)
 import Moe.Domain.Shared.Subtitle (SubtitleList)
 import Moe.Domain.Setting qualified as Setting
@@ -24,7 +23,7 @@ data SettingResponse = SettingResponse
     tmdb :: Maybe TMDBConfigResponse
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data DownloaderConfigResponse = DownloaderConfigResponse
   { url :: Text,
@@ -32,32 +31,32 @@ data DownloaderConfigResponse = DownloaderConfigResponse
     savePath :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data FilterConfigResponse = FilterConfigResponse
   { globalRssFilter :: [Text]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data WashingConfigResponse = WashingConfigResponse
   { groupPriority :: [Group],
     subtitlePriority :: [SubtitleList]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data NotificationConfigResponse = NotificationConfigResponse
   { chatId :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data TMDBConfigResponse = TMDBConfigResponse
   { apiKeyConfigured :: Bool
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 toSettingResponse :: Setting.UserPreference -> SettingResponse
 toSettingResponse pref =

@@ -21,7 +21,6 @@ where
 
 import Data.Aeson (ToJSON (..))
 import Data.Text qualified as T
-import Data.OpenApi (NamedSchema (..), OpenApiType (..), Schema (..), ToSchema (..))
 import Data.Time.Calendar (Day, Year, toGregorian)
 import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..))
 import Moe.Domain.Shared.Metadata
@@ -41,16 +40,6 @@ data BangumiKind = Tv | Web | Movie | Ova
 
 instance FromText BangumiKind where
   fromText = inverseMap toText . T.toLower
-
-instance ToSchema BangumiKind where
-  declareNamedSchema _ = do
-    let enumValues = map toJSON [minBound @BangumiKind .. maxBound]
-    pure $
-      NamedSchema (Just "BangumiKind") $
-        mempty
-          { _schemaType = Just OpenApiString,
-            _schemaEnum = Just enumValues
-          }
 
 instance ToText BangumiKind where
   toText Tv = "tv"

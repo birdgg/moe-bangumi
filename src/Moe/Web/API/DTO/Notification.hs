@@ -6,7 +6,6 @@ module Moe.Web.API.DTO.Notification
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Moe.Prelude
 
 -- | Request to test a Telegram bot connection.
@@ -15,7 +14,7 @@ data TestNotificationRequest = TestNotificationRequest
     chatId :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)
 
 -- | Response from a Telegram bot connection test.
 data TestNotificationResponse = TestNotificationResponse
@@ -23,4 +22,4 @@ data TestNotificationResponse = TestNotificationResponse
     message :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)

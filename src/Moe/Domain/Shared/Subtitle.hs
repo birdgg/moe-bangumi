@@ -7,7 +7,6 @@ module Moe.Domain.Shared.Subtitle
 where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
-import Data.OpenApi (ToSchema)
 import Data.Text qualified as T
 import Data.Text.Display (Display (..))
 import Effectful.Sqlite (FromField (..), ToField (..))
@@ -19,7 +18,6 @@ data Subtitle
   | JPN
   | ENG
   deriving stock (Eq, Ord, Show, Enum, Bounded, Generic)
-  deriving anyclass (ToSchema)
 
 instance Display Subtitle where
   displayBuilder CHS = "简"

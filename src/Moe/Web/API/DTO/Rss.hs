@@ -6,7 +6,6 @@ module Moe.Web.API.DTO.Rss
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Moe.Domain.Rss (PubDate (..))
 import Moe.Infra.Rss.Types (RawItem (..))
@@ -21,14 +20,14 @@ data RssSearchResult = RssSearchResult
     pubDate :: Maybe UTCTime
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Request to download a torrent via the downloader.
 data DownloadTorrentRequest = DownloadTorrentRequest
   { torrentUrl :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)
 
 -- | Convert a 'RawItem' into a 'RssSearchResult', tagging it with the source name.
 toRssSearchResult :: Text -> RawItem -> Maybe RssSearchResult

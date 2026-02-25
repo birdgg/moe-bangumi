@@ -8,7 +8,6 @@ module Moe.Domain.Shared.Group
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Text qualified as T
 import Effectful.Sqlite (FromField (..), ToField (..))
 import Moe.Prelude
@@ -16,14 +15,14 @@ import Moe.Prelude
 -- | Subtitle group name
 newtype GroupName = GroupName Text
   deriving stock (Eq, Ord, Show)
-  deriving newtype (Hashable, FromJSON, ToJSON, ToSchema, ToText, FromField, ToField)
+  deriving newtype (Hashable, FromJSON, ToJSON, ToText, FromField, ToField)
 
 data Group = Group
   { name :: GroupName,
     aliases :: [Text]
   }
   deriving stock (Show, Eq, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 instance ToText Group where
   toText = toText . name

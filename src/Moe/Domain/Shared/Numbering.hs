@@ -9,7 +9,6 @@ module Moe.Domain.Shared.Numbering
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Effectful.Sqlite (FromField, ToField)
 import Moe.Prelude
 
@@ -27,13 +26,13 @@ instance (Integral a, Show a) => ToText (Padded a) where
 -- | Season index, zero-padded for display.
 newtype SeasonIndex = SeasonIndex {getSeason :: Word8}
   deriving stock (Eq, Ord, Show, Generic)
-  deriving newtype (Num, ToJSON, FromJSON, ToSchema, FromField, ToField)
+  deriving newtype (Num, ToJSON, FromJSON, FromField, ToField)
   deriving (ToText) via (Padded Word8)
 
 -- | Episode index, zero-padded for display.
 newtype EpisodeIndex = EpisodeIndex {getEpisode :: Word32}
   deriving stock (Eq, Ord, Show, Generic)
-  deriving newtype (Num, ToJSON, FromJSON, ToSchema, FromField, ToField)
+  deriving newtype (Num, ToJSON, FromJSON, FromField, ToField)
   deriving (ToText) via (Padded Word32)
 
 -- | Subtract an offset from an episode number.

@@ -3,13 +3,11 @@ module Moe.Web.Server
     mkServer,
     moeServer,
     naturalTransform,
-    openApiHandler,
   )
 where
 
 import Control.Monad.Except qualified as Except
 import Data.Aeson qualified as Aeson
-import Data.OpenApi (OpenApi)
 import Effectful
 import Effectful.Concurrent (runConcurrent)
 import Effectful.Dispatch.Static ()
@@ -29,7 +27,6 @@ import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Setting.Effect (runSetting, runSettingWriter)
 import Moe.Infra.Update.Adapter (runUpdateGitHub)
 import Moe.Prelude
-import Moe.Web.API.Routes qualified as API
 import Moe.Web.API.Server qualified as API
 import Moe.Web.Routers
 import Moe.Web.Types
@@ -52,8 +49,6 @@ import Servant
     err502,
     serveWithContextT,
   )
-import Servant.OpenApi
-import Servant.Scalar (scalarUIServer')
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Moe.Web.Embedded (embeddedFiles, indexHtml)
@@ -80,7 +75,6 @@ moeServer :: (RequireCallStack) => Routes (AsServerT ServerEff)
 moeServer =
   Routes
     { api = API.apiServer,
-      doc = scalarUIServer' (pure openApiHandler),
       spa = Tagged embeddedSpa
     }
 
@@ -145,6 +139,3 @@ jsonError base msg =
       errHeaders = [("Content-Type", "application/json")]
     }
 
-openApiHandler :: OpenApi
-openApiHandler =
-  toOpenApi (Proxy @API.Routes)

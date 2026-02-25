@@ -56,10 +56,6 @@ build:
     cabal build
     cd web && bun run build
 
-# Generate API client from OpenAPI spec
-gen-api:
-    cd web && bun run gen:api
-
 # Build and run local Docker image
 docker-run:
     docker build --load -t moe-bangumi .

@@ -18,7 +18,6 @@ module Moe.Domain.Setting
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Moe.Domain.Shared.Group (Group (..), GroupName (..))
 import Moe.Domain.Shared.Subtitle (Subtitle (..), SubtitleList)
 import Moe.Prelude
@@ -32,7 +31,7 @@ data DownloaderConfig = DownloaderConfig
     savePath :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- | Default downloader config with empty fields.
 defaultDownloaderConfig :: DownloaderConfig
@@ -48,7 +47,7 @@ data FilterConfig = FilterConfig
   { globalRssFilter :: [Regex]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 defaultFilterConfig :: FilterConfig
 defaultFilterConfig =
@@ -65,7 +64,7 @@ data WashingConfig = WashingConfig
     subtitlePriority :: [SubtitleList]
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 defaultWashingConfig :: WashingConfig
 defaultWashingConfig =
@@ -96,7 +95,7 @@ data NotificationConfig = NotificationConfig
     chatId :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- | Default notification config with empty fields.
 defaultNotificationConfig :: NotificationConfig
@@ -111,7 +110,7 @@ data TMDBConfig = TMDBConfig
     language :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 -- | Default TMDB config with empty fields.
 defaultTMDBConfig :: TMDBConfig
@@ -129,7 +128,7 @@ data UserPreference = UserPreference
     tmdb :: TMDBConfig
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON, ToSchema)
+  deriving anyclass (FromJSON, ToJSON)
 
 defaultUserPreference :: UserPreference
 defaultUserPreference =

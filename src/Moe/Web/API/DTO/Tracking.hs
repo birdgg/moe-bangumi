@@ -11,7 +11,6 @@ module Moe.Web.API.DTO.Tracking
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Rss (PubDate)
@@ -35,7 +34,7 @@ data TrackingResponse = TrackingResponse
     createdAt :: UTCTime
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 data CreateTrackingRequest = CreateTrackingRequest
   { bangumiId :: Int64,
@@ -46,7 +45,7 @@ data CreateTrackingRequest = CreateTrackingRequest
     episodeOffset :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)
 
 data UpdateTrackingRequest = UpdateTrackingRequest
   { trackingType :: Maybe TrackingType,
@@ -57,7 +56,7 @@ data UpdateTrackingRequest = UpdateTrackingRequest
     autoComplete :: Maybe Bool
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)
 
 {- HLINT ignore toTrackingResponse "Redundant id" -}
 toTrackingResponse :: Entity Tracking -> TrackingResponse
@@ -116,7 +115,7 @@ data TrackingWithBangumiResponse = TrackingWithBangumiResponse
     bangumi :: BangumiResponse
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 toTrackingWithBangumiResponse :: Entity Tracking -> Entity Bangumi.Bangumi -> TrackingWithBangumiResponse
 toTrackingWithBangumiResponse t b =

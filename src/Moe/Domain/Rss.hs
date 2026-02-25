@@ -7,7 +7,6 @@ module Moe.Domain.Rss
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime, defaultTimeLocale, parseTimeM)
 import Effectful.Sqlite (FromField, ToField)
 import Moe.Prelude
@@ -15,7 +14,7 @@ import Moe.Prelude
 -- | Publication date of an RSS item
 newtype PubDate = PubDate {unPubDate :: UTCTime}
   deriving stock (Eq, Ord, Show, Generic)
-  deriving newtype (FromJSON, ToJSON, ToSchema, FromField, ToField)
+  deriving newtype (FromJSON, ToJSON, FromField, ToField)
 
 -- | URL for a torrent resource.
 type TorrentUrl = Text

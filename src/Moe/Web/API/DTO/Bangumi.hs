@@ -10,7 +10,6 @@ module Moe.Web.API.DTO.Bangumi
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Data.Time.Calendar (Day)
 import Moe.Domain.Bangumi (BangumiKind, SeasonIndex, extractYear)
@@ -34,7 +33,7 @@ data BangumiResponse = BangumiResponse
     createdAt :: UTCTime
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 {- HLINT ignore toBangumiResponse "Redundant id" -}
 toBangumiResponse :: Entity Types.Bangumi -> BangumiResponse
@@ -64,7 +63,7 @@ data TmdbSearchResult = TmdbSearchResult
     posterUrl :: Maybe Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Convert domain Bangumi to TmdbSearchResult.
 toTmdbSearchResult :: Types.Bangumi -> Maybe TmdbSearchResult
@@ -86,7 +85,7 @@ data MikanSearchResultDTO = MikanSearchResultDTO
     season :: Maybe SeasonIndex
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Convert domain MikanSearchResult to DTO.
 toMikanSearchResultDTO :: Mikan.MikanSearchResult -> MikanSearchResultDTO
@@ -102,4 +101,4 @@ data UpdateBangumiTmdbIdRequest = UpdateBangumiTmdbIdRequest
   { tmdbId :: Maybe Word32
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON, ToSchema)
+  deriving anyclass (FromJSON)

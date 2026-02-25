@@ -7,7 +7,6 @@ module Moe.Web.API.DTO.Update
 where
 
 import Data.Aeson (ToJSON)
-import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Moe.Infra.Update.Types (AboutInfo (..), PlatformInfo (..))
 import Moe.Prelude
@@ -24,7 +23,7 @@ data AboutResponse = AboutResponse
     arch :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Update operation response.
 data UpdateResponse = UpdateResponse
@@ -32,7 +31,7 @@ data UpdateResponse = UpdateResponse
     message :: Text
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, ToSchema)
+  deriving anyclass (ToJSON)
 
 -- | Convert internal AboutInfo + PlatformInfo to API response.
 toAboutResponse :: AboutInfo -> PlatformInfo -> AboutResponse
