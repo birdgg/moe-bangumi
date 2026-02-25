@@ -7,7 +7,7 @@ module Moe.Job.Subscription.Worker
 where
 
 import Data.Aeson (object, (.=))
-import Data.Text.Display (display)
+import Data.Text.Display (Display, display)
 import Effectful
 import Effectful.Concurrent (threadDelay)
 import Effectful.Concurrent.STM qualified as STM
@@ -17,10 +17,11 @@ import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Moe.Domain.Bangumi (Bangumi (..))
 import Moe.Domain.Shared.Entity (Entity (..))
-import Moe.Error (AppError)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
-import Moe.Infra.Downloader.Effect (Downloader)
-import Moe.Infra.Rss.Effect (Rss, runRss)
+import Moe.Infra.Downloader.Types (DownloaderClientError)
+import Moe.Infra.Rss.Effect (runRss)
+import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Setting.Effect (Setting, runSetting)
 import Moe.Job.Effect (runBaseEffects)
 import Moe.Job.Subscription.Process (getSubscriptionContexts, processFeed)
@@ -32,19 +33,17 @@ rssWorkerThread :: MoeEnv -> Logger -> IO ()
 rssWorkerThread env logger =
   runBaseEffects env logger "Subscription" $
     runSetting env.settingEnv $
-      runRss env.httpManager $
-        runDownloaderQBittorrent env.downloaderEnv env.httpManager $
-          rssWorkerLoop env.rssQueue
+      rssWorkerLoop env
 
 -- | Main worker loop: poll on timer, process queue items in between.
 rssWorkerLoop ::
-  (Rss :> es, Downloader :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
-  STM.TQueue RssContext ->
+  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  MoeEnv ->
   Eff es ()
-rssWorkerLoop queue = do
+rssWorkerLoop env = do
   Log.logInfo_ "RSS worker started"
   -- Initial poll on startup
-  pollAndProcessAll queue
+  pollAndProcessAll env env.rssQueue
   -- Main loop
   void $ infinitely $ do
     timerVar <- STM.registerDelay thirtyMinutes
@@ -52,15 +51,15 @@ rssWorkerLoop queue = do
     fix $ \go -> do
       action <-
         STM.atomically $
-          (QueueItem <$> STM.readTQueue queue)
+          (QueueItem <$> STM.readTQueue env.rssQueue)
             `STM.orElse` (TimerExpired <$ (STM.readTVar timerVar >>= STM.check))
       case action of
         QueueItem ctx -> do
-          processSingleFeed ctx
+          processSingleFeed env ctx
           go
         TimerExpired -> pass
     -- Timer expired: full poll
-    pollAndProcessAll queue
+    pollAndProcessAll env env.rssQueue
 
 -- -------------------------------------------------------------------
 -- Internal
@@ -70,29 +69,36 @@ data WorkerAction
   = QueueItem RssContext
   | TimerExpired
 
--- | Process a single feed from the queue, logging errors without propagating.
+-- | Process a single feed, introducing Rss/Downloader interpreters per-feed
+-- for natural error isolation.
 processSingleFeed ::
-  (Rss :> es, Downloader :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  MoeEnv ->
   RssContext ->
   Eff es ()
-processSingleFeed ctx =
-  runErrorWith (logFeedError ctx) $ processFeed ctx
+processSingleFeed env ctx =
+  runErrorWith @RssFetchError (logFeedError ctx) $
+    runRss env.httpManager $
+      runErrorWith @DownloaderClientError (logFeedError ctx) $
+        runDownloaderQBittorrent env.downloaderEnv env.httpManager $
+          processFeed ctx
 
 -- | Poll all subscription contexts and process them, then drain the queue.
 pollAndProcessAll ::
-  (Rss :> es, Downloader :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  MoeEnv ->
   STM.TQueue RssContext ->
   Eff es ()
-pollAndProcessAll queue = do
+pollAndProcessAll env queue = do
   contexts <- getSubscriptionContexts
   for_ contexts $ \ctx -> do
-    runErrorWith (logFeedError ctx) $ processFeed ctx
+    processSingleFeed env ctx
     threadDelay 500_000
   -- Drain queue to avoid processing duplicates after full poll
   void $ STM.atomically $ STM.flushTQueue queue
 
 -- | Log an error with bangumi title and RSS URL context.
-logFeedError :: (Log :> es) => RssContext -> a -> AppError -> Eff es ()
+logFeedError :: (Display e, Log :> es) => RssContext -> a -> e -> Eff es ()
 logFeedError ctx _ err =
   Log.logAttention "RSS processing failed" $
     object

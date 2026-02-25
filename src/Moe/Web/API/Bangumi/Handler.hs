@@ -11,7 +11,7 @@ import Effectful.Sqlite (notransact, transact)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (BgmtvId (..), TmdbId (..))
-import Moe.Error (AppError (..))
+import Moe.Web.Error (throwNotFound)
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset, searchMikan, searchTmdb)
 import Moe.Prelude
@@ -44,7 +44,7 @@ handleUpdateBangumiTmdbId :: Int64 -> UpdateBangumiTmdbIdRequest -> ServerEff ()
 handleUpdateBangumiTmdbId bid req = do
   mEntity <- notransact $ DB.getBangumi (Id bid)
   case mEntity of
-    Nothing -> throwError $ NotFound "Bangumi not found"
+    Nothing -> throwNotFound "Bangumi not found"
     Just entity -> do
       let b = entity.entityVal
           newTmdbId = TmdbId <$> req.tmdbId
@@ -56,7 +56,7 @@ handleGetEpisodeOffset :: Int64 -> ServerEff Word32
 handleGetEpisodeOffset bid = do
   mEntity <- notransact $ DB.getBangumi (Id bid)
   case mEntity of
-    Nothing -> throwError $ NotFound "Bangumi not found"
+    Nothing -> throwNotFound "Bangumi not found"
     Just entity -> case entity.entityVal.bgmtvId of
       Just (BgmtvId bgmId) -> do
         offset <- getBangumiEpisodeOffset (SubjectId (fromIntegral bgmId))

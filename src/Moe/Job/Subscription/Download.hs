@@ -12,12 +12,13 @@ import Moe.Domain.Episode (Episode (..))
 import Moe.Domain.File (generateBaseName, generatePath, toBangumiFile)
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Episode qualified as EpisodeDB
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect
 import Moe.Prelude
 
 -- | Download torrents and save episodes to database.
 downloadAndSaveEpisodes ::
-  (Downloader :> es, Sqlite :> es, Concurrent :> es, Log :> es,  IOE :> es) =>
+  (Downloader :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Entity Bangumi ->
   [Episode] ->
   Eff es ()

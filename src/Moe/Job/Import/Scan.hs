@@ -20,6 +20,7 @@ import Effectful
 import Effectful.FileSystem (doesDirectoryExist, listDirectory)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (SqliteTransaction, transact)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Data.Time.Calendar (Year)
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonIndex (..))
 import Moe.Domain.File (TmdbId (..), isBangumiDir, isVideoExt, parseFolderName, parseSeasonDir)
@@ -84,7 +85,7 @@ data ResolvedDir
 
 -- | Scan the save path and import untracked bangumi.
 importExistingBangumi ::
-  (Setting :> es, Metadata :> es, Sqlite :> es, FileSystem :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Setting :> es, Metadata :> es, Sqlite :> es, Error DatabaseExecError :> es, FileSystem :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ImportResult
 importExistingBangumi = do
   pref <- getSetting
@@ -131,7 +132,7 @@ resolveDirectory savePath (cache, results) dirName = do
 
 -- | Persist a resolved directory result within a transaction.
 persistResolved ::
-  (SqliteTransaction :> es, Log :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, Log :> es, IOE :> es) =>
   ImportResult ->
   ResolvedDir ->
   Eff es ImportResult
@@ -154,7 +155,7 @@ persistResolved result (DirReady folderText bangumi) = do
 
 -- | Create a bangumi and its tracking record within a transaction.
 createBangumiAndTracking ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Bangumi ->
   Eff es ImportedEntry
 createBangumiAndTracking bangumi = do
@@ -163,7 +164,7 @@ createBangumiAndTracking bangumi = do
 
 -- | Create a tracking record for an existing bangumi.
 createTrackingForExisting ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Id Bangumi ->
   Bangumi ->
   Eff es ImportedEntry

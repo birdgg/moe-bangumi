@@ -12,24 +12,34 @@ import Effectful.Log (Log)
 import Effectful.Reader.Static (Reader)
 import Effectful.Sqlite (Sqlite)
 import Moe.App.Env (MoeEnv)
-import Moe.Error (AppError)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect (Downloader)
+import Moe.Infra.Downloader.Types (DownloaderClientError)
 import Moe.Infra.Metadata.Effect (Metadata)
+import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Infra.Rss.Effect (Rss)
+import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Setting.Effect (Setting, SettingWriter)
 import Moe.Infra.Update.Effect (Update)
+import Moe.Infra.Update.Types (UpdateClientError)
+import Moe.Web.Error (WebError)
 
 type ServerEff = Eff ServerEffects
 
 type ServerEffects =
   '[ Update,
+     Error UpdateClientError,
      Downloader,
+     Error DownloaderClientError,
      Rss,
+     Error RssFetchError,
      Metadata,
+     Error MetadataFetchError,
      Setting,
      SettingWriter,
      Sqlite,
-     Error AppError,
+     Error DatabaseExecError,
+     Error WebError,
      Log,
      Reader MoeEnv,
      Concurrent,

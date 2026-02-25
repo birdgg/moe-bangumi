@@ -22,6 +22,7 @@ import Moe.Domain.Setting (UserPreference (..), WashingConfig (..))
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Domain.Shared.Numbering (applyEpisodeOffset)
 import Moe.Infra.Database.Episode qualified as EpisodeDB
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Database.Tracking qualified as TrackingDB
 import Moe.Infra.Downloader.Effect (Downloader)
 import Moe.Infra.Rss.Effect (Rss, fetchRss)
@@ -64,7 +65,7 @@ getSubscriptionContexts = do
 
 -- | Process a single RSS feed: fetch, filter, wash, and download.
 processFeed ::
-  (Rss :> es, Downloader :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Rss :> es, Downloader :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   RssContext ->
   Eff es ()
 processFeed ctx = do

@@ -14,6 +14,9 @@ import Effectful.Exception (throwIO, try)
 import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
+import Data.Text.Display (display)
+import Effectful.Error.Static (runErrorWith)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infra.Setting.Effect (Setting, runSetting)
 import Moe.Job.CalendarSync.Process (runCalendarSync)
@@ -25,12 +28,13 @@ calendarSyncWorkerThread :: MoeEnv -> Logger -> IO ()
 calendarSyncWorkerThread env logger =
   runBaseEffects env logger "CalendarSync" $
     runSetting env.settingEnv $
-      runMetadataHttp env.httpManager calendarSyncWorkerLoop
+      runErrorWith (\_ err -> Log.logAttention_ $ display err) $
+        runMetadataHttp env.httpManager calendarSyncWorkerLoop
 
 -- | Main worker loop: runs sync on startup, then every 24 hours.
 -- Only performs sync on days 1-10 of the month.
 calendarSyncWorkerLoop ::
-  (Metadata :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Metadata :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ()
 calendarSyncWorkerLoop = do
   safeRunCalendarSync
@@ -41,7 +45,7 @@ calendarSyncWorkerLoop = do
 
 -- | Run calendar sync with day-of-month check and error recovery.
 safeRunCalendarSync ::
-  (Metadata :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Metadata :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ()
 safeRunCalendarSync = do
   (_, _, day) <- liftIO $ toGregorian . utctDay <$> getCurrentTime

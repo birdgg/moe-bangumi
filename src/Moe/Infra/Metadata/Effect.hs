@@ -17,12 +17,11 @@ import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.TH (makeEffect)
 import Moe.Domain.Bangumi (AirDate, Bangumi (..))
-import Moe.Error (AppError (..))
 import Moe.Infra.Metadata.BangumiData
 import Moe.Infra.Metadata.Bgmtv
 import Moe.Infra.Metadata.Mikan qualified as Mikan
 import Moe.Infra.Metadata.Mikan.Types (MikanSearchResult)
-import Moe.Infra.Metadata.Types (Keyword, classifyProviderError)
+import Moe.Infra.Metadata.Types (Keyword, MetadataFetchError, classifyProviderError)
 import Moe.Infra.Metadata.Tmdb
 import Moe.Infra.Setting.Effect (Setting)
 import Moe.Prelude
@@ -49,7 +48,7 @@ data Metadata :: Effect where
 makeEffect ''Metadata
 
 runMetadataHttp ::
-  (Concurrent :> es, IOE :> es, Error AppError :> es, Setting :> es) =>
+  (Concurrent :> es, IOE :> es, Error MetadataFetchError :> es, Setting :> es) =>
   Manager ->
   Eff (Metadata : es) a ->
   Eff es a
@@ -57,17 +56,17 @@ runMetadataHttp manager = interpret $ \_ -> \case
   SearchBgmtv keyword maybeYear -> do
     let req = buildBgmtvRequest keyword
     result <- liftIO $ bgmtvClient.searchSubjects req
-    resp <- liftEitherWith (MetadataError . classifyProviderError) result
+    resp <- liftEitherWith classifyProviderError result
     let filtered = filterByAirDate maybeYear getDate resp.data_
     pure $ mapMaybe bgmtvSubjectToBangumi filtered
     where
       getDate s = s.date
   SearchMikan keyword -> do
     result <- liftIO $ Mikan.searchMikan manager keyword
-    liftEitherWith MetadataError result
+    liftEither result
   SearchTmdb keyword maybeYear -> withTmdbClient manager [] $ \client -> do
     result <- liftIO $ client.searchMulti keyword
-    resp <- liftEitherWith (MetadataError . classifyProviderError) result
+    resp <- liftEitherWith classifyProviderError result
     let filtered = filterByAirDate maybeYear getDate resp.results
     pure $ mapMaybe tmdbResultToBangumi filtered
     where
@@ -90,7 +89,7 @@ runMetadataHttp manager = interpret $ \_ -> \case
       pure $ rightToMaybe result >>= tmdbMovieDetailToBangumi
   FetchBangumiDataByMonth month -> do
     result <- fetchBangumiDataMonth manager month
-    items <- liftEitherWith MetadataError result
+    items <- liftEither result
     pure $ mapMaybe toBangumi items
 
   where

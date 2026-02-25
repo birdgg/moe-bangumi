@@ -18,11 +18,11 @@ import Effectful.Log qualified as Log
 import Effectful.Sqlite (SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (LogConfig (..), runLog)
-import Moe.Error (AppError (..))
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Prelude
 
 type BaseEffects =
-  '[ Error AppError,
+  '[ Error DatabaseExecError,
      Log,
      Sqlite,
      Concurrent,
@@ -43,4 +43,3 @@ runBaseEffects env logger jobName action =
     & runConcurrent
     & withUnliftStrategy (ConcUnlift Ephemeral Unlimited)
     & runEff
-

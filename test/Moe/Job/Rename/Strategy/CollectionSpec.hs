@@ -9,7 +9,7 @@ import Effectful.Error.Static (runErrorWith)
 import Effectful.Log (LogLevel (..))
 import Moe.App.Logging (makeLogger, runLog)
 import Moe.Domain.File (GroupName (..))
-import Moe.Error (AppError)
+import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Domain.Setting (UserPreference (..), TMDBConfig (..), defaultUserPreference, defaultTMDBConfig)
 import Moe.Infra.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infra.Setting.Effect (Setting (..))
@@ -29,7 +29,7 @@ runTestSetting apiKey = interpret $ \_ -> \case
   GetSetting -> pure defaultUserPreference {tmdb = defaultTMDBConfig {apiKey}}
 
 -- | Run an action with real HTTP metadata + test Setting/Log.
-runIntegrationEffects :: Text -> Eff '[Metadata, Error AppError, Setting, Log, Concurrent, IOE] a -> IO a
+runIntegrationEffects :: Text -> Eff '[Metadata, Error MetadataFetchError, Setting, Log, Concurrent, IOE] a -> IO a
 runIntegrationEffects apiKey action = do
   manager <- newTlsManager
   runEff

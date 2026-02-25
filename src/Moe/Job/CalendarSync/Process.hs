@@ -6,6 +6,7 @@ where
 
 import Effectful
 import Moe.App.Calendar (syncAirSeason)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Domain.Bangumi (getCurrentAirSeason)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Setting.Effect (Setting)
@@ -13,7 +14,7 @@ import Moe.Prelude
 
 -- | Get the current air season and sync it.
 runCalendarSync ::
-  (Metadata :> es, Setting :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Metadata :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ()
 runCalendarSync = do
   season <- liftIO getCurrentAirSeason

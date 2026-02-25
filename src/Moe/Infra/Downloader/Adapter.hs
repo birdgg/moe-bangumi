@@ -18,7 +18,6 @@ import Data.Text.Read qualified as TR
 import Effectful ((:>))
 import Effectful.Dispatch.Dynamic (interpret)
 import Moe.Domain.Setting (DownloaderConfig (..), UserPreference (..))
-import Moe.Error (AppError (..))
 import Moe.Infra.Downloader.Effect
 import Moe.Infra.Setting.Effect (Setting, getSetting)
 import Moe.Prelude
@@ -50,7 +49,7 @@ classifyQBError = \case
 -- 'TestConnection' is handled independently of saved config since it
 -- provides its own credentials.
 runDownloaderQBittorrent ::
-  (Setting :> es, Error AppError :> es, IOE :> es) =>
+  (Setting :> es, Error DownloaderClientError :> es, IOE :> es) =>
   DownloaderEnv ->
   Manager ->
   Eff (Downloader : es) a ->
@@ -70,7 +69,7 @@ runDownloaderQBittorrent dlEnv manager =
 -- | Handle operations when downloader is not configured.
 -- Query operations return empty defaults; mutations still throw.
 handleUnconfigured ::
-  (Error AppError :> es) =>
+  (Error DownloaderClientError :> es) =>
   DownloaderClientError ->
   Downloader (Eff localEs) a ->
   Eff es a
@@ -79,7 +78,7 @@ handleUnconfigured err = \case
   GetMoeTorrents -> pure []
   GetTorrentsByHashes _ -> pure []
   GetTorrentFiles _ -> pure []
-  _ -> throwError (DownloaderError err)
+  _ -> throwError err
 
 -- | Validate that all required fields in DownloaderConfig are non-empty.
 validateConfig :: DownloaderConfig -> Maybe DownloaderClientError
@@ -93,7 +92,7 @@ validateConfig cfg =
 
 -- | Return a cached client or create and authenticate a new one.
 getOrCreateClient ::
-  (Error AppError :> es, IOE :> es) =>
+  (Error DownloaderClientError :> es, IOE :> es) =>
   DownloaderEnv ->
   Manager ->
   DownloaderConfig ->
@@ -135,7 +134,7 @@ handleTestConnection manager url username password = do
 
 -- | Handle a single Downloader operation using a pre-authenticated client.
 handleDownloader ::
-  (Error AppError :> es, IOE :> es) =>
+  (Error DownloaderClientError :> es, IOE :> es) =>
   DownloaderConfig ->
   QB.QBClient ->
   Downloader (Eff localEs) a ->
@@ -211,14 +210,14 @@ handleDownloader cfg client = \case
 
 -- | Run a single qBittorrent action on a pre-authenticated client.
 runQBAction ::
-  (Error AppError :> es, IOE :> es) =>
+  (Error DownloaderClientError :> es, IOE :> es) =>
   QB.QBClient ->
   QB.ClientM a ->
   Eff es a
 runQBAction client action = do
   result <- liftIO $ QB.runQB client action
   case result of
-    Left e -> throwError $ DownloaderError $ classifyQBError (QB.clientErrorToQBClientError e)
+    Left e -> throwError $ classifyQBError (QB.clientErrorToQBClientError e)
     Right a -> pure a
 
 -- | Convert DownloaderConfig to QBConfig.

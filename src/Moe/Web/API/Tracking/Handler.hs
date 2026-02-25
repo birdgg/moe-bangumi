@@ -13,7 +13,7 @@ import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (BgmtvId (..))
 import Moe.Domain.Bangumi (Bangumi (..))
 import Moe.Domain.Tracking (Tracking (..), TrackingType (..))
-import Moe.Error (AppError (..))
+import Moe.Web.Error (throwNotFound)
 import Moe.Infra.Database.Bangumi qualified as BangumiDB
 import Moe.Infra.Database.Tracking qualified as DB
 import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset)
@@ -48,7 +48,7 @@ handleGetTracking tid = do
   mTracking <- notransact $ DB.getTracking (Id tid)
   case mTracking of
     Just entity -> pure $ toTrackingResponse entity
-    Nothing -> throwError $ NotFound "Tracking not found"
+    Nothing -> throwNotFound "Tracking not found"
 
 handleCreateTracking :: CreateTrackingRequest -> ServerEff TrackingResponse
 handleCreateTracking req = do
@@ -78,7 +78,7 @@ handleUpdateTracking :: Int64 -> UpdateTrackingRequest -> ServerEff TrackingResp
 handleUpdateTracking tid req = do
   mTracking <- notransact $ DB.getTracking (Id tid)
   case mTracking of
-    Nothing -> throwError $ NotFound "Tracking not found"
+    Nothing -> throwNotFound "Tracking not found"
     Just entity -> do
       let updated = applyUpdateRequest req entity
       transact $ DB.updateTracking updated

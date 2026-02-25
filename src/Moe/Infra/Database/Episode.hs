@@ -11,12 +11,10 @@ where
 
 import Data.Text qualified as T
 import Effectful
-import Effectful.Exception (throwIO)
 import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query)
 import Moe.Domain.Episode (Episode (..), EpisodeId, EpisodeIndex)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Shared.Entity (Entity, Id (..))
-import Moe.Error (AppError (..))
 import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
 
@@ -45,7 +43,7 @@ listEpisodesByBangumi (Id bid) =
     (Only bid)
 
 upsertEpisode ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Episode ->
   Eff es EpisodeId
 upsertEpisode ep = do
@@ -73,7 +71,7 @@ upsertEpisode ep = do
       )
   case results of
     [Only eid] -> pure $ Id eid
-    _ -> throwIO $ DatabaseError (DbUnexpectedResult "upsertEpisode: unexpected result")
+    _ -> throwError (DbUnexpectedResult "upsertEpisode: unexpected result")
 
 deleteEpisode ::
   (SqliteTransaction :> es, IOE :> es) =>

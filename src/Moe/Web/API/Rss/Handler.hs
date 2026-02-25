@@ -7,7 +7,7 @@ where
 import Effectful ((:>))
 import Effectful.Concurrent.Async (forConcurrently)
 import Effectful.Error.Static (catchError)
-import Moe.Error (AppError)
+import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Downloader.Effect (addTorrent, AddTorrentParams (..), collectionTag)
 import Moe.Infra.Rss.Effect (Rss, fetchRss)
 import Moe.Infra.Rss.Source (AcgRip, Nyaa, searchUrlFor)
@@ -33,9 +33,9 @@ buildSources keyword =
     ]
 
 -- | Fetch and convert results from a single source, returning [] on error.
-searchSource :: (Rss :> es, Error AppError :> es) => Text -> Text -> Eff es [RssSearchResult]
+searchSource :: (Rss :> es, Error RssFetchError :> es) => Text -> Text -> Eff es [RssSearchResult]
 searchSource sourceName url = do
-  items <- fetchRss url `catchError` \_ (_ :: AppError) -> pure []
+  items <- fetchRss url `catchError` \_ (_ :: RssFetchError) -> pure []
   pure $ mapMaybe (toRssSearchResult sourceName) items
 
 -- | Download a torrent directly to the downloader with collection tag.

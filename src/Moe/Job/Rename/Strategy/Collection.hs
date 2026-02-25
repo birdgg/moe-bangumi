@@ -20,6 +20,7 @@ import Effectful
 import Effectful.Exception (try)
 import Effectful.Log qualified as Log
 import Effectful.Sqlite (transact)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Domain.File
   ( ContentKind (..),
     Subtitle,
@@ -61,7 +62,7 @@ data ParsedMediaInfo
 
 -- | Rename a collection torrent by traversing files and resolving metadata on demand.
 renameCollection ::
-  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   TorrentInfo ->
   Text ->
   Eff es ()
@@ -131,7 +132,7 @@ withSeason parsedSeason nb =
 
 -- | Persist resolved bangumi and create Collection tracking records.
 persistBangumiMap ::
-  (Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Bool ->
   BangumiMap ->
   Eff es ()

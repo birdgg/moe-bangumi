@@ -109,7 +109,7 @@ library
     Moe.Domain.Shared.Subtitle
     Moe.Domain.Shared.Entity
     Moe.Domain.Tracking
-    Moe.Error
+    Moe.Web.Error
     Moe.Infra.Metadata
     Moe.Infra.Metadata.BangumiData
     Moe.Infra.Metadata.BangumiData.API

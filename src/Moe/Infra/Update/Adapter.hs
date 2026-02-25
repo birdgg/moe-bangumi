@@ -18,7 +18,6 @@ import Data.Time (NominalDiffTime, UTCTime, addUTCTime, getCurrentTime)
 import Effectful ((:>))
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Log qualified as Log
-import Moe.Error (AppError (..))
 import Moe.Infra.Update.Effect
 import Moe.Prelude
 import Network.HTTP.Client
@@ -121,7 +120,7 @@ cacheTTL = 1200
 
 -- | Run Update effect using GitHub releases API.
 runUpdateGitHub ::
-  (Log :> es, Error AppError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff (Update : es) a ->
@@ -136,7 +135,7 @@ runUpdateGitHub env manager =
 -- -------------------------------------------------------------------
 
 checkForUpdateImpl ::
-  (Log :> es, Error AppError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es AboutInfo
@@ -217,7 +216,7 @@ fetchAboutInfo env manager = do
 -- -------------------------------------------------------------------
 
 performUpdateImpl ::
-  (Log :> es, Error AppError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es ()
@@ -248,13 +247,13 @@ performUpdateImpl env manager = do
       expectedHash <- downloadAndParseChecksum about.checksumUrl (buildAssetName platformInfo) manager
       actualHash <- liftIO $ sha256File tarballPath
       when (T.toLower expectedHash /= T.toLower actualHash) $
-        throwError $ UpdateError $ UpdateChecksumMismatch expectedHash actualHash
+        throwError $ UpdateChecksumMismatch expectedHash actualHash
 
       -- Extract binary from tarball
       extractResult <- liftIO $ tryAny $
         callProcess "tar" ["xzf", tarballPath, "-C", tmpDir]
       case extractResult of
-        Left err -> throwError $ UpdateError $ UpdateExtractionFailed $ "tar extraction failed: " <> show err
+        Left err -> throwError $ UpdateExtractionFailed $ "tar extraction failed: " <> show err
         Right () -> pass
 
       -- Set executable permission
@@ -281,7 +280,7 @@ buildAssetName p = "moe-bangumi-" <> toText p.platform <> "-" <> toText p.arch <
 
 -- | Download a file from URL to local path using streaming to avoid memory spikes.
 downloadFile ::
-  (Error AppError :> es, IOE :> es) =>
+  (Error UpdateClientError :> es, IOE :> es) =>
   Text ->
   FilePath ->
   Manager ->
@@ -302,12 +301,12 @@ downloadFile url dest manager = do
               loop
       loop `finally` hClose h
   case result of
-    Left err -> throwError $ UpdateError $ UpdateNetworkError $ "Download failed: " <> show err
+    Left err -> throwError $ UpdateNetworkError $ "Download failed: " <> show err
     Right () -> pass
 
 -- | Download checksums.txt and extract hash for the target asset.
 downloadAndParseChecksum ::
-  (Error AppError :> es, IOE :> es) =>
+  (Error UpdateClientError :> es, IOE :> es) =>
   Text ->
   Text ->
   Manager ->
@@ -322,11 +321,11 @@ downloadAndParseChecksum url assetName manager = do
       fail $ "HTTP " <> show status <> " downloading checksums"
     pure $ decodeUtf8 (responseBody resp)
   case result of
-    Left err -> throwError $ UpdateError $ UpdateNetworkError $ "Checksum download failed: " <> show err
+    Left err -> throwError $ UpdateNetworkError $ "Checksum download failed: " <> show err
     Right content -> do
       let mHash = findChecksumForAsset assetName content
       case mHash of
-        Nothing -> throwError $ UpdateError $ UpdateNetworkError $ "Checksum not found for " <> assetName
+        Nothing -> throwError $ UpdateNetworkError $ "Checksum not found for " <> assetName
         Just h -> pure h
 
 -- | Parse checksums.txt to find hash for a specific file.
@@ -371,7 +370,7 @@ atomicRenameOrCopy src dst = do
 --
 -- On failure, automatically rollback using backup.
 safeReplaceFile ::
-  (IOE :> es, Error AppError :> es, Log :> es) =>
+  (IOE :> es, Error UpdateClientError :> es, Log :> es) =>
   FilePath -> -- ^ Source file (new binary)
   FilePath -> -- ^ Target file (current binary)
   Eff es ()
@@ -403,9 +402,9 @@ safeReplaceFile source target = do
           atomicRenameOrCopy backupPath target
       case rollbackResult of
         Left rollbackErr ->
-          throwError $ UpdateError $ UpdateFileError $
+          throwError $ UpdateFileError $
             "Failed to replace binary and rollback failed: " <> show err <> ", rollback: " <> show rollbackErr
         Right () ->
-          throwError $ UpdateError $ UpdateFileError $
+          throwError $ UpdateFileError $
             "Failed to replace binary (rolled back): " <> show err
     Right () -> pass

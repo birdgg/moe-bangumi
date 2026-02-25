@@ -10,6 +10,7 @@ import Control.Exception (SomeAsyncException (..))
 import Effectful
 import Effectful.Exception (throwIO, try)
 import Effectful.Log qualified as Log
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Notification.Effect (Notification)
@@ -19,7 +20,7 @@ import Moe.Prelude
 
 -- | Run the rename process for all torrents with rename tag.
 runRename ::
-  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ()
 runRename = do
   torrents <- getRenameTorrents

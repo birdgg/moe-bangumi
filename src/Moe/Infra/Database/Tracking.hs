@@ -14,12 +14,10 @@ module Moe.Infra.Database.Tracking
 where
 
 import Effectful
-import Effectful.Exception (throwIO)
 import Effectful.Sqlite (FromRow (..), Only (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Tracking qualified as Types
-import Moe.Error (AppError (..))
 import Moe.Infra.Database.Bangumi (bangumiColumnsAs)
 import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
@@ -110,7 +108,7 @@ listEnabledRssTrackingWithBangumiByWeekday weekday = do
   pure $ map unRow rows
 
 createTracking ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Types.Tracking ->
   Eff es Types.TrackingId
 createTracking tracking = do
@@ -129,7 +127,7 @@ createTracking tracking = do
       )
   case results of
     [Only tid] -> pure $ Id tid
-    _ -> throwIO $ DatabaseError (DbUnexpectedResult "createTracking: unexpected result")
+    _ -> throwError (DbUnexpectedResult "createTracking: unexpected result")
 
 updateTracking ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -153,7 +151,7 @@ updateTracking entity =
         )
 
 upsertTracking ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Types.Tracking ->
   Eff es Types.TrackingId
 upsertTracking tracking = do
@@ -184,7 +182,7 @@ upsertTracking tracking = do
       )
   case results of
     [Only tid] -> pure $ Id tid
-    _ -> throwIO $ DatabaseError (DbUnexpectedResult "upsertTracking: unexpected result")
+    _ -> throwError (DbUnexpectedResult "upsertTracking: unexpected result")
 
 deleteTracking ::
   (SqliteTransaction :> es, IOE :> es) =>

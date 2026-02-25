@@ -16,12 +16,10 @@ where
 import Data.Text qualified as T
 import Data.Time (UTCTime)
 import Effectful
-import Effectful.Exception (throwIO)
 import Effectful.Sqlite (Only (..), (:.) (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (TmdbId)
-import Moe.Error (AppError (..))
 import Moe.Infra.Database.Types (DatabaseExecError (..))
 import Moe.Prelude
 
@@ -87,7 +85,7 @@ listBangumiBySeason (Types.AirSeason year season) = do
   query (fromString sql) params
 
 createBangumi ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Types.Bangumi ->
   Eff es (Types.BangumiId, UTCTime, UTCTime)
 createBangumi bangumi = do
@@ -109,7 +107,7 @@ createBangumi bangumi = do
       )
   case results of
     [(bid, ts, uts)] -> pure (Id bid, ts, uts)
-    _ -> throwIO $ DatabaseError (DbUnexpectedResult "createBangumi: unexpected RETURNING result")
+    _ -> throwError (DbUnexpectedResult "createBangumi: unexpected RETURNING result")
 
 updateBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>
@@ -140,7 +138,7 @@ updateBangumi entity =
 -- does not trigger when bgmtv_id is NULL. This function falls back to application-level
 -- lookups when bgmtv_id is absent.
 upsertBangumi ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Types.Bangumi ->
   Eff es (Types.BangumiId, UTCTime, UTCTime)
 upsertBangumi bangumi = case bangumi.bgmtvId of
@@ -188,7 +186,7 @@ findBangumiByTitleAndAirDate titleChs airDate season = do
 
 -- | Upsert via SQL ON CONFLICT (bgmtv_id). Only valid when bgmtv_id is NOT NULL.
 upsertByBgmtvId ::
-  (SqliteTransaction :> es, IOE :> es) =>
+  (SqliteTransaction :> es, Error DatabaseExecError :> es, IOE :> es) =>
   Types.Bangumi ->
   Eff es (Types.BangumiId, UTCTime, UTCTime)
 upsertByBgmtvId bangumi = do
@@ -224,7 +222,7 @@ upsertByBgmtvId bangumi = do
       )
   case results of
     [(bid, ts, uts)] -> pure (Id bid, ts, uts)
-    _ -> throwIO $ DatabaseError (DbUnexpectedResult "upsertByBgmtvId: unexpected RETURNING result")
+    _ -> throwError (DbUnexpectedResult "upsertByBgmtvId: unexpected RETURNING result")
 
 deleteBangumi ::
   (SqliteTransaction :> es, IOE :> es) =>

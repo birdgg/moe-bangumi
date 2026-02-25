@@ -7,6 +7,7 @@ where
 import Data.Time.Calendar.Month qualified as Month
 import Effectful (type (:>))
 import Effectful.Concurrent.Async (forConcurrently)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Effectful.Concurrent.QSem (newQSem, signalQSem, waitQSem)
 import Effectful.Exception (bracket_)
 import Effectful.Log qualified as Log
@@ -23,6 +24,7 @@ import Web.Bgmtv.Types.Id (SubjectId (..))
 syncAirSeason ::
   ( Metadata :> es,
     Sqlite :> es,
+    Error DatabaseExecError :> es,
     Concurrent :> es,
     Log :> es,
     IOE :> es

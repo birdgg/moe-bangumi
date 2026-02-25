@@ -9,7 +9,6 @@ where
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.TH (makeEffect)
-import Moe.Error (AppError (..))
 import Moe.Infra.Rss.Client qualified as Client
 import Moe.Infra.Rss.Types
 import Moe.Prelude
@@ -21,11 +20,11 @@ data Rss :: Effect where
 makeEffect ''Rss
 
 runRss ::
-  (IOE :> es, Error AppError :> es) =>
+  (IOE :> es, Error RssFetchError :> es) =>
   Manager ->
   Eff (Rss : es) a ->
   Eff es a
 runRss manager = interpret $ \_ -> \case
   FetchRss url -> do
     result <- liftIO $ Client.fetchRss manager url
-    liftEitherWith RssError result
+    liftEither result

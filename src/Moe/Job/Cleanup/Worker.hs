@@ -11,6 +11,8 @@ import Effectful.Exception (throwIO, try)
 import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
+import Data.Text.Display (display)
+import Effectful.Error.Static (runErrorWith)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
 import Moe.Infra.Downloader.Effect (Downloader)
 import Moe.Infra.Setting.Effect (runSetting)
@@ -23,8 +25,9 @@ cleanupWorkerThread :: MoeEnv -> Logger -> IO ()
 cleanupWorkerThread env logger =
   runBaseEffects env logger "Cleanup" $
     runSetting env.settingEnv $
-      runDownloaderQBittorrent env.downloaderEnv env.httpManager
-        cleanupWorkerLoop
+      runErrorWith (\_ err -> Log.logAttention_ $ display err) $
+        runDownloaderQBittorrent env.downloaderEnv env.httpManager
+          cleanupWorkerLoop
 
 -- | Main worker loop: runs cleanup on startup, then every 5 minutes.
 cleanupWorkerLoop ::
