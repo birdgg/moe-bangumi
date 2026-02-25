@@ -1,5 +1,15 @@
 # Changelog
+## [1.6.1] - 2026-02-25
+
+### Bug Fixes
+
+- Remove minor version restriction from auto-update
+
 ## [1.6.0] - 2026-02-25
+
+### Bug Fixes
+
+- Update bun lockfile to match dependencies
 
 ### Features
 
