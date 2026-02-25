@@ -8,7 +8,7 @@ import Effectful.Sqlite (Migration (..), parseMigrationFilename, runMigrationsFr
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), mkMoeEnv, parseMoeConfig)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.Infra.Database.Embedded (embeddedMigrations)
-import Moe.Prelude
+import Moe.Prelude hiding (createDirectoryIfMissing)
 import System.Directory (createDirectoryIfMissing)
 
 bootstrap :: (IOE :> es, Concurrent :> es, FileSystem :> es) => Eff es MoeEnv

@@ -18,7 +18,7 @@ import Data.Time.Clock (diffUTCTime, getCurrentTime, nominalDiffTimeToSeconds, u
 import Effectful.Log qualified as Log
 import Log.Internal.Logger (withLogger)
 import Log.Logger (mkLogger)
-import Moe.Prelude
+import Moe.Prelude hiding (createDirectoryIfMissing)
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath ((</>))
 

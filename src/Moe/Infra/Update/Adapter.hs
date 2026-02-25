@@ -10,14 +10,15 @@ module Moe.Infra.Update.Adapter
 where
 
 import "crypton" Crypto.Hash (Digest, SHA256, hash)
-import Control.Exception.Safe (finally, try, tryAny)
+import Control.Exception.Safe (finally, tryAny)
 import Data.Aeson qualified as Aeson
 import Data.Aeson ((.:), (.:?), (.!=))
 import Data.Text qualified as T
 import Data.Time (NominalDiffTime, UTCTime, addUTCTime, getCurrentTime)
+import Effectful.Exception qualified as EE
 import Effectful.Log qualified as Log
 import Moe.Infra.Update.Effect
-import Moe.Prelude hiding (try, doesFileExist)
+import Moe.Prelude
 import Network.HTTP.Client
   ( Manager,
     Request (..),
@@ -29,17 +30,7 @@ import Network.HTTP.Client
     withResponse,
   )
 import Network.HTTP.Types.Status (statusCode)
-import System.Directory
-  ( copyFileWithMetadata,
-    createDirectoryIfMissing,
-    doesFileExist,
-    getPermissions,
-    removeFile,
-    removePathForcibly,
-    renameFile,
-    setOwnerExecutable,
-    setPermissions,
-  )
+import System.Directory (setOwnerExecutable)
 import System.FilePath ((</>))
 import Data.ByteString qualified as BS
 import System.IO (hClose, openBinaryFile)
@@ -118,7 +109,7 @@ cacheTTL = 1200
 
 -- | Run Update effect using GitHub releases API.
 runUpdateGitHub ::
-  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateClientError :> es, FileSystem :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff (Update : es) a ->
@@ -214,7 +205,7 @@ fetchAboutInfo env manager = do
 -- -------------------------------------------------------------------
 
 performUpdateImpl ::
-  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateClientError :> es, FileSystem :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es ()
@@ -234,9 +225,8 @@ performUpdateImpl env manager = do
           targetPath = platformInfo.executablePath
 
       -- Prepare temp directory
-      liftIO $ do
-        removePathForcibly tmpDir
-        createDirectoryIfMissing True tmpDir
+      removePathForcibly tmpDir
+      createDirectoryIfMissing True tmpDir
 
       -- Download tarball
       downloadFile about.downloadUrl tarballPath manager
@@ -255,15 +245,14 @@ performUpdateImpl env manager = do
         Right () -> pass
 
       -- Set executable permission
-      liftIO $ do
-        perms <- getPermissions extractedBinary
-        setPermissions extractedBinary (setOwnerExecutable True perms)
+      perms <- getPermissions extractedBinary
+      setPermissions extractedBinary (setOwnerExecutable True perms)
 
       -- Replace binary using safe atomic replacement with backup and rollback
       safeReplaceFile extractedBinary targetPath
 
       -- Cleanup
-      liftIO $ removePathForcibly tmpDir
+      removePathForcibly tmpDir
 
       Log.logInfo_ $ "Updated to " <> about.latestVersion <> ", exiting for restart"
       liftIO exitSuccess
@@ -349,9 +338,9 @@ sha256File path = do
 --
 -- First tries renameFile (atomic on same filesystem).
 -- If that fails, falls back to copyFileWithMetadata + removeFile.
-atomicRenameOrCopy :: FilePath -> FilePath -> IO ()
+atomicRenameOrCopy :: (FileSystem :> es, IOE :> es) => FilePath -> FilePath -> Eff es ()
 atomicRenameOrCopy src dst = do
-  renameResult <- try (renameFile src dst) :: IO (Either SomeException ())
+  renameResult <- EE.try @SomeException (renameFile src dst)
   case renameResult of
     Right () -> pass
     Left _ -> do
@@ -368,7 +357,7 @@ atomicRenameOrCopy src dst = do
 --
 -- On failure, automatically rollback using backup.
 safeReplaceFile ::
-  (IOE :> es, Error UpdateClientError :> es, Log :> es) =>
+  (IOE :> es, FileSystem :> es, Error UpdateClientError :> es, Log :> es) =>
   FilePath -> -- ^ Source file (new binary)
   FilePath -> -- ^ Target file (current binary)
   Eff es ()
@@ -376,30 +365,23 @@ safeReplaceFile source target = do
   let backupPath = target <> ".backup"
       newPath = target <> ".new"
 
-  result <- liftIO $ tryAny $ do
-    -- Step 1: Backup current binary
+  result <- EE.try $ do
     atomicRenameOrCopy target backupPath
-
-    -- Step 2: Move new binary to .new location
     atomicRenameOrCopy source newPath
-
-    -- Step 3: Atomic replace
     atomicRenameOrCopy newPath target
-
-    -- Step 4: Remove backup
     removePathForcibly backupPath
 
   case result of
-    Left err -> do
+    Left (err :: SomeException) -> do
       Log.logAttention_ $ "Binary replacement failed, attempting rollback: " <> show err
-      rollbackResult <- liftIO $ tryAny $ do
+      rollbackResult <- EE.try $ do
         backupExists <- doesFileExist backupPath
         when backupExists $ do
           whenM (doesFileExist target) $ removeFile target
           whenM (doesFileExist newPath) $ removeFile newPath
           atomicRenameOrCopy backupPath target
       case rollbackResult of
-        Left rollbackErr ->
+        Left (rollbackErr :: SomeException) ->
           throwError $ UpdateFileError $
             "Failed to replace binary and rollback failed: " <> show err <> ", rollback: " <> show rollbackErr
         Right () ->

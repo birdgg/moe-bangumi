@@ -46,6 +46,13 @@ module Moe.Prelude
     doesDirectoryExist,
     doesFileExist,
     listDirectory,
+    removeFile,
+    renameFile,
+    createDirectoryIfMissing,
+    removePathForcibly,
+    copyFileWithMetadata,
+    getPermissions,
+    setPermissions,
     -- Effectful.Sqlite
     Sqlite,
     SqliteTransaction,
@@ -84,7 +91,7 @@ import Effectful.Concurrent.Async (forConcurrently, withAsync)
 import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Error.Static (Error, catchError, runErrorWith, throwError)
 import Effectful.Exception (bracket_, throwIO, try)
-import Effectful.FileSystem (FileSystem, doesDirectoryExist, doesFileExist, listDirectory, runFileSystem)
+import Effectful.FileSystem (FileSystem, copyFileWithMetadata, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, getPermissions, listDirectory, removeFile, removePathForcibly, renameFile, runFileSystem, setPermissions)
 import Effectful.Log (Log, LogLevel (..), Logger)
 import Effectful.Reader.Static (Reader, ask, runReader)
 import Effectful.Sqlite (FromField (..), FromRow (..), Only (..), Sqlite, SqliteDb (..), SqlitePool (..), SqliteTransaction, ToField (..), ToRow (..), execute, field, notransact, query, query_, runSqlite, transact, type (:.)(..))
