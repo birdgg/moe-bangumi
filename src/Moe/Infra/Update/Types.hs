@@ -7,7 +7,6 @@ module Moe.Infra.Update.Types
     PlatformInfo (..),
     detectPlatform,
     isNewer,
-    sameMajorMinor,
   )
 where
 
@@ -96,13 +95,6 @@ isNewer :: Text -> Text -> Bool
 isNewer remote current =
   case (parseVersion remote, parseVersion current) of
     (Just r, Just c) -> r > c
-    _ -> False
-
--- | Check if two versions share the same major.minor.
-sameMajorMinor :: Text -> Text -> Bool
-sameMajorMinor a b =
-  case (parseVersion a, parseVersion b) of
-    (Just (ma : mia : _), Just (mb : mib : _)) -> ma == mb && mia == mib
     _ -> False
 
 -- | Parse "v1.2.3" or "1.2.3-beta" into [1, 2, 3].

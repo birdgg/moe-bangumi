@@ -191,7 +191,6 @@ fetchAboutInfo env manager = do
         Right (release :: GitHubRelease) -> do
           let latestVer = T.dropWhile (== 'v') release.tagName
               newer = isNewer latestVer currentVer
-              canAuto = sameMajorMinor latestVer currentVer
               mTarball = find (\a -> a.name == tarballName) release.assets
               mChecksum = find (\a -> a.name == "checksums.txt") release.assets
               hasAssets = isJust mTarball && isJust mChecksum
@@ -200,7 +199,7 @@ fetchAboutInfo env manager = do
               { currentVersion = currentVer,
                 latestVersion = latestVer,
                 needUpdate = newer,
-                autoUpdate = newer && canAuto && hasAssets,
+                autoUpdate = newer && hasAssets,
                 downloadUrl = maybe "" (.browserDownloadUrl) mTarball,
                 checksumUrl = maybe "" (.browserDownloadUrl) mChecksum,
                 changelog = release.body,
