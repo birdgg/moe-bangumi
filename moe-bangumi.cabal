@@ -64,7 +64,7 @@ common common-rts-options
   ghc-options:
     -rtsopts
     -threaded
-    "-with-rtsopts=-N -T"
+    "-with-rtsopts=-N2 -A16m -T"
 
 library
   import: common-extensions, common-ghc-options
@@ -237,6 +237,7 @@ executable moe-cli
   main-is: Main.hs
   other-modules: Supervisor
   hs-source-dirs: app
+  ghc-options: -O2
   build-depends:
     base ^>=4.22.0.0,
     effectful,
