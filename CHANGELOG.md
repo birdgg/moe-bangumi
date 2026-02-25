@@ -1,4 +1,10 @@
 # Changelog
+## [1.6.0] - 2026-02-25
+
+### Features
+
+- Add tracking delete button and update settings tabs
+
 ## [1.5.1] - 2026-02-24
 
 ### Bug Fixes
