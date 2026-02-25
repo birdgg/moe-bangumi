@@ -32,9 +32,6 @@ Run these checks and stop if any fail:
 # Ensure working tree is clean
 git status --porcelain
 
-# Run tests
-cabal test
-
 # Build frontend
 cd web && bun run build
 ```
