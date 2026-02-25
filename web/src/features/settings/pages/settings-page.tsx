@@ -6,7 +6,7 @@ import {
   MetadataSection,
   DownloaderSection,
   FilterSection,
-  ProxySection,
+
   NotificationSection,
   PrioritySection,
   SystemSection,
@@ -66,8 +66,6 @@ export function SettingsPage() {
         return <PrioritySection form={form} />
       case "filter":
         return <FilterSection form={form} />
-      case "proxy":
-        return <ProxySection form={form} />
       case "notification":
         return <NotificationSection form={form} />
       case "system":

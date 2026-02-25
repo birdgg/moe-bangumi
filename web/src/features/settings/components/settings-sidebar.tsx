@@ -2,14 +2,14 @@ import { cn } from "@/lib/utils";
 import {
   IconDownload,
   IconFilter,
-  IconWorld,
+
   IconBrandTelegram,
   IconSortDescending,
   IconMovie,
   IconInfoCircle,
 } from "@tabler/icons-react";
 
-export type SettingsSection = "general" | "downloader" | "filter" | "proxy" | "notification" | "priority" | "system";
+export type SettingsSection = "general" | "downloader" | "filter" | "notification" | "priority" | "system";
 
 interface SettingsSidebarItem {
   id: SettingsSection;
@@ -39,11 +39,7 @@ const sidebarItems: SettingsSidebarItem[] = [
     label: "过滤器",
     icon: <IconFilter className="size-4" />,
   },
-  {
-    id: "proxy",
-    label: "代理",
-    icon: <IconWorld className="size-4" />,
-  },
+
   {
     id: "notification",
     label: "通知",
@@ -51,7 +47,7 @@ const sidebarItems: SettingsSidebarItem[] = [
   },
   {
     id: "system",
-    label: "系统",
+    label: "更新",
     icon: <IconInfoCircle className="size-4" />,
   },
 ];

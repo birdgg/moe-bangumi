@@ -6,7 +6,7 @@ const searchSchema = z.object({
     "general",
     "downloader",
     "filter",
-    "proxy",
+
     "notification",
     "priority",
     "system",

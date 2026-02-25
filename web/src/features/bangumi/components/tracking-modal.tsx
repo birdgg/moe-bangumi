@@ -4,6 +4,7 @@ import {
   postApiTrackingMutation,
   putApiTrackingByIdMutation,
   putApiBangumiByIdTmdbIdMutation,
+  deleteApiTrackingByIdMutation,
   getApiTrackingQueryKey,
   getApiTrackingBangumisQueryKey,
 } from "@/client/@tanstack/react-query.gen";
@@ -25,8 +26,20 @@ import {
   IconMovie,
   IconSearch,
   IconRefresh,
+  IconTrash,
 } from "@tabler/icons-react";
 import { client } from "@/client/client.gen";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { TmdbPanel } from "./tmdb-selector";
 import { MikanPanel } from "./mikan-selector";
 import { SeasonTag } from "./season-tag";
@@ -161,10 +174,21 @@ function TrackingForm({
     ...putApiBangumiByIdTmdbIdMutation(),
   });
 
+  const deleteMutation = useMutation({
+    ...deleteApiTrackingByIdMutation(),
+    onSuccess: () => {
+      invalidateTracking();
+      toast.success("删除成功");
+      onClose();
+    },
+    onError: () => toast.error("删除失败"),
+  });
+
   const isPending =
     createMutation.isPending ||
     updateMutation.isPending ||
-    tmdbMutation.isPending;
+    tmdbMutation.isPending ||
+    deleteMutation.isPending;
 
   const handleSubmit = () => {
     const ep = parseInt(episodeOffset, 10) || 0;
@@ -390,7 +414,54 @@ function TrackingForm({
 
       {/* Footer */}
       <div className="h-px bg-linear-to-r from-transparent via-border/40 to-transparent" />
-      <div className="flex items-center justify-end gap-2 px-4 py-3 sm:px-5">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-5">
+        {isEditing && tracking ? (
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isPending}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                />
+              }
+            >
+              <IconTrash className="size-3.5" />
+              <span>删除</span>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>确认删除</AlertDialogTitle>
+                <AlertDialogDescription>
+                  确定要删除「{bangumi.titleChs}」的追番记录吗？此操作无法撤销。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel size="sm">取消</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteMutation.isPending}
+                  onClick={() =>
+                    deleteMutation.mutate({ path: { id: tracking.id } })
+                  }
+                >
+                  {deleteMutation.isPending ? (
+                    <>
+                      <Spinner className="size-3.5" />
+                      <span>删除中...</span>
+                    </>
+                  ) : (
+                    <span>删除</span>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <div />
+        )}
         <Button
           size="sm"
           disabled={isPending || !isMikanValid}
