@@ -27,7 +27,6 @@ module Moe.Infra.Downloader.Effect
   )
 where
 
-import Effectful
 import Effectful.TH (makeEffect)
 import Moe.Infra.Downloader.Types
 import Moe.Prelude

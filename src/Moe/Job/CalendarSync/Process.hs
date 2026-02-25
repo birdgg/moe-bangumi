@@ -4,7 +4,6 @@ module Moe.Job.CalendarSync.Process
   )
 where
 
-import Effectful
 import Moe.App.Calendar (syncAirSeason)
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Domain.Bangumi (getCurrentAirSeason)

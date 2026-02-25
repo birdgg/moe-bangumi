@@ -8,14 +8,10 @@ where
 import Control.Exception (SomeAsyncException (..))
 import Data.Time.Calendar (toGregorian)
 import Data.Time.Clock (getCurrentTime, utctDay)
-import Effectful
 import Effectful.Concurrent.STM qualified as STM
-import Effectful.Exception (throwIO, try)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Data.Text.Display (display)
-import Effectful.Error.Static (runErrorWith)
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infra.Setting.Effect (Setting, runSetting)

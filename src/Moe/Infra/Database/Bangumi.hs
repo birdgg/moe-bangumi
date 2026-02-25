@@ -15,8 +15,6 @@ where
 
 import Data.Text qualified as T
 import Data.Time (UTCTime)
-import Effectful
-import Effectful.Sqlite (Only (..), (:.) (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (TmdbId)

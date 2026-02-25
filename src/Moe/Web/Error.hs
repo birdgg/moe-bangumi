@@ -10,7 +10,6 @@ where
 
 import Data.Aeson qualified as Aeson
 import Data.Text.Display (Display (..))
-import Effectful ((:>))
 import Moe.Prelude
 import Servant (ServerError (..), err400, err404)
 

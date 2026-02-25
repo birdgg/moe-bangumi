@@ -5,14 +5,10 @@ module Moe.Job.Cleanup.Worker
 where
 
 import Control.Exception (SomeAsyncException (..))
-import Effectful
 import Effectful.Concurrent.STM qualified as STM
-import Effectful.Exception (throwIO, try)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Data.Text.Display (display)
-import Effectful.Error.Static (runErrorWith)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
 import Moe.Infra.Downloader.Effect (Downloader)
 import Moe.Infra.Setting.Effect (runSetting)

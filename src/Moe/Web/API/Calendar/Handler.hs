@@ -6,7 +6,6 @@ where
 import Data.Map.Strict qualified as Map
 import Data.Time.Calendar (Day, Year)
 import Data.Time.Calendar.WeekDate (toWeekDate)
-import Effectful.Sqlite (notransact)
 import Moe.Domain.Bangumi (AirSeason (..), Bangumi (..), Season)
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Bangumi qualified as DB

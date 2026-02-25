@@ -11,15 +11,8 @@ import Data.Map.Strict qualified as Map
 import Data.Tagged (Tagged (..))
 import Data.Text qualified as T
 import Data.Text.Display (Display, display)
-import Effectful
-import Effectful.Concurrent (runConcurrent)
 import Effectful.Dispatch.Static ()
-import Effectful.Error.Static (runErrorWith)
-import Effectful.FileSystem (runFileSystem)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
-import Effectful.Reader.Static (runReader)
-import Effectful.Sqlite (SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
@@ -27,7 +20,7 @@ import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Setting.Effect (runSetting, runSettingWriter)
 import Moe.Infra.Update.Adapter (runUpdateGitHub)
-import Moe.Prelude
+import Moe.Prelude hiding (type (:.)(..))
 import Moe.Web.API.Server qualified as API
 import Moe.Web.Error (jsonError, webErrorToServerError)
 import Moe.Web.Embedded (embeddedFiles, indexHtml)

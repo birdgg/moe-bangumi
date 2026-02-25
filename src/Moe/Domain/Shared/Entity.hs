@@ -7,7 +7,6 @@ where
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text.Display (Display (..))
 import Data.Time (UTCTime)
-import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), field)
 import Moe.Prelude
 
 -- | Phantom-typed database primary key.

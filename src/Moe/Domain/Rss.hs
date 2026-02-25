@@ -8,7 +8,6 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Time (UTCTime, defaultTimeLocale, parseTimeM)
-import Effectful.Sqlite (FromField, ToField)
 import Moe.Prelude
 
 -- | Publication date of an RSS item

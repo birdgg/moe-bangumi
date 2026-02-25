@@ -5,13 +5,9 @@ module Moe.App.Calendar
 where
 
 import Data.Time.Calendar.Month qualified as Month
-import Effectful (type (:>))
-import Effectful.Concurrent.Async (forConcurrently)
-import Moe.Infra.Database.Types (DatabaseExecError)
 import Effectful.Concurrent.QSem (newQSem, signalQSem, waitQSem)
-import Effectful.Exception (bracket_)
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (transact)
+import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Domain.Bangumi (AirSeason (..), Bangumi (..), BangumiKind (..), BgmtvId (..), SeasonIndex (..), TmdbId (..), seasonToMonths)
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Bangumi qualified as DB

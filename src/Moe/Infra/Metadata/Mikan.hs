@@ -13,7 +13,7 @@ import Moe.Domain.Parser.OriginalTitle (ParsedTitle (..), parseOriginalTitle)
 import Moe.Domain.Shared.Metadata (MikanId (..))
 import Moe.Infra.Metadata.Mikan.Types
 import Moe.Infra.Metadata.Types (Keyword, MetadataFetchError (..))
-import Moe.Prelude
+import Moe.Prelude hiding (try)
 import Network.HTTP.Client
 import Network.HTTP.Types (urlEncode)
 import Network.HTTP.Types.Status qualified as Status

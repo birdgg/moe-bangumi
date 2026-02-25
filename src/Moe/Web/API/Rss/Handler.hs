@@ -4,9 +4,6 @@ module Moe.Web.API.Rss.Handler
   )
 where
 
-import Effectful ((:>))
-import Effectful.Concurrent.Async (forConcurrently)
-import Effectful.Error.Static (catchError)
 import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Downloader.Effect (addTorrent, AddTorrentParams (..), collectionTag)
 import Moe.Infra.Rss.Effect (Rss, fetchRss)

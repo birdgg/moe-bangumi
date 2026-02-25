@@ -15,8 +15,6 @@ import Data.ByteString.Char8 qualified as BS
 import Data.Text.IO qualified as TIO
 import Data.Time.Calendar (Day, showGregorian)
 import Data.Time.Clock (diffUTCTime, getCurrentTime, nominalDiffTimeToSeconds, utctDay)
-import Effectful
-import Effectful.Log (LogLevel (..), Logger)
 import Effectful.Log qualified as Log
 import Log.Internal.Logger (withLogger)
 import Log.Logger (mkLogger)

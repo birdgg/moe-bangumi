@@ -3,7 +3,7 @@ module Moe.App.Monad
   )
 where
 
-import Effectful
+import Moe.Prelude
 import RequireCallStack (RequireCallStack)
 
 type MoeM es a = RequireCallStack => Eff es a

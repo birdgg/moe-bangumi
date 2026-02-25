@@ -9,7 +9,6 @@ module Moe.Domain.Shared.Numbering
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Effectful.Sqlite (FromField, ToField)
 import Moe.Prelude
 
 -- | Zero-pad a number to at least two digits.

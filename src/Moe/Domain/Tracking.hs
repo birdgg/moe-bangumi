@@ -6,7 +6,6 @@ module Moe.Domain.Tracking
 where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
-import Effectful.Sqlite (FromField (..), FromRow, ToField (..), ToRow)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Rss (PubDate)
 import Moe.Domain.Shared.Entity (Id)

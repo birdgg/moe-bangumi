@@ -22,7 +22,6 @@ where
 import Data.Aeson (ToJSON (..))
 import Data.Text qualified as T
 import Data.Time.Calendar (Day, Year, toGregorian)
-import Effectful.Sqlite (FromField (..), FromRow (..), ToField (..), ToRow (..))
 import Moe.Domain.Shared.Metadata
 import Moe.Domain.Shared.Numbering (SeasonIndex (..))
 import Moe.Domain.Bangumi.Season

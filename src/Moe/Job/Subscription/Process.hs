@@ -10,11 +10,8 @@ where
 import Data.Aeson (object, (.=))
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Data.Time.Clock (getCurrentTime, utctDay)
-import Effectful
 import Effectful.Concurrent.STM qualified as STM
 import Effectful.Log qualified as Log
-import Effectful.Reader.Static (ask)
-import Effectful.Sqlite (transact)
 import Moe.App.Env (MoeEnv (..))
 import Moe.Domain.Bangumi (Bangumi (..))
 import Moe.Domain.Episode (Episode (..))

@@ -4,14 +4,8 @@ module Moe.Web.Types
   )
 where
 
-import Effectful
-import Effectful.Concurrent (Concurrent)
-import Effectful.Error.Static (Error)
-import Effectful.FileSystem (FileSystem)
-import Effectful.Log (Log)
-import Effectful.Reader.Static (Reader)
-import Effectful.Sqlite (Sqlite)
 import Moe.App.Env (MoeEnv)
+import Moe.Prelude
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect (Downloader)
 import Moe.Infra.Downloader.Types (DownloaderClientError)

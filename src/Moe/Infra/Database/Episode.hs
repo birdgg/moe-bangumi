@@ -10,8 +10,6 @@ module Moe.Infra.Database.Episode
 where
 
 import Data.Text qualified as T
-import Effectful
-import Effectful.Sqlite (Only (..), SqliteTransaction, execute, query)
 import Moe.Domain.Episode (Episode (..), EpisodeId, EpisodeIndex)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Shared.Entity (Entity, Id (..))

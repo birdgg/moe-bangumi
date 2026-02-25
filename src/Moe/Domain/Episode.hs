@@ -5,7 +5,6 @@ module Moe.Domain.Episode
   )
 where
 
-import Effectful.Sqlite (FromRow, ToRow)
 import Moe.Domain.Bangumi (BangumiId)
 import Moe.Domain.Rss (PubDate, TorrentUrl)
 import Moe.Domain.Shared.Entity (Id)

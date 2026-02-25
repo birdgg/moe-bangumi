@@ -8,11 +8,7 @@ where
 
 import Data.Aeson (object, (.=))
 import Data.Text.Display (Display, display)
-import Effectful
-import Effectful.Concurrent (threadDelay)
 import Effectful.Concurrent.STM qualified as STM
-import Effectful.Error.Static (runErrorWith)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Moe.Domain.Bangumi (Bangumi (..))

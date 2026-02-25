@@ -8,9 +8,7 @@ module Moe.Job.Rename.Strategy.Subscription
   )
 where
 
-import Effectful
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (transact)
 import Moe.Domain.Bangumi (Bangumi (..))
 import Moe.Domain.Episode (Episode (..))
 import Moe.Domain.Shared.Entity (Entity (..))

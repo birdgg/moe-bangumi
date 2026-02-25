@@ -7,7 +7,6 @@ module Moe.Web.API.Bangumi.Handler
 where
 
 import Data.Time.Calendar (Year)
-import Effectful.Sqlite (notransact, transact)
 import Moe.Domain.Bangumi qualified as Types
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (BgmtvId (..), TmdbId (..))

@@ -15,8 +15,6 @@ where
 import Control.Exception.Safe (tryAny)
 import Data.Text qualified as T
 import Data.Text.Read qualified as TR
-import Effectful ((:>))
-import Effectful.Dispatch.Dynamic (interpret)
 import Moe.Domain.Setting (DownloaderConfig (..), UserPreference (..))
 import Moe.Infra.Downloader.Effect
 import Moe.Infra.Setting.Effect (Setting, getSetting)

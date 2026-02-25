@@ -4,8 +4,6 @@ module Moe.Job.Rename.Util
   )
 where
 
-import Effectful
-import Effectful.Exception (try)
 import Effectful.Log qualified as Log
 import Moe.Infra.Notification.Effect (Notification, sendNotification)
 import Moe.Prelude

@@ -5,7 +5,6 @@ module Moe.Domain.Shared.Metadata
   )
 where
 
-import Effectful.Sqlite (FromField, ToField)
 import Moe.Prelude
 
 newtype TmdbId = TmdbId Word32

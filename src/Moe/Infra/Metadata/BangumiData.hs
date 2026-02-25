@@ -8,7 +8,6 @@ where
 import Data.Text qualified as T
 import Data.Time.Calendar.Month (Month)
 import Data.Time.Calendar.Month qualified as Month
-import Effectful
 import Moe.Infra.Metadata.BangumiData.API (BangumiDataAPI, MonthFile (..))
 import Moe.Infra.Metadata.BangumiData.Types
 import Moe.Infra.Metadata.Types (MetadataFetchError (..), classifyClientError)

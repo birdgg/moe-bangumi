@@ -3,7 +3,7 @@ module Moe.Web.API.Routes where
 import Data.Time.Calendar (Day, Year)
 import Moe.Domain.Bangumi (Season)
 import Moe.Domain.Setting (UserPreference)
-import Moe.Prelude
+import Moe.Prelude hiding ((:>))
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
 import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
 import Moe.Web.API.DTO.Import (ImportScanResponse)

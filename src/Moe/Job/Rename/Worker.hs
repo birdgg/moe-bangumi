@@ -7,11 +7,7 @@ where
 
 import Control.Exception (SomeAsyncException (..))
 import Data.Text.Display (display)
-import Effectful
 import Effectful.Concurrent.STM qualified as STM
-import Effectful.Error.Static (runErrorWith)
-import Effectful.Exception (throwIO, try)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Moe.Infra.Database.Types (DatabaseExecError)

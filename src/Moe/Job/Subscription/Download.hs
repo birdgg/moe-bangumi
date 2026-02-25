@@ -5,8 +5,6 @@ module Moe.Job.Subscription.Download
   )
 where
 
-import Effectful
-import Effectful.Sqlite (transact)
 import Moe.Domain.Bangumi (Bangumi)
 import Moe.Domain.Episode (Episode (..))
 import Moe.Domain.File (generateBaseName, generatePath, toBangumiFile)

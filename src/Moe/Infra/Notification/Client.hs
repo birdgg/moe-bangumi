@@ -8,11 +8,10 @@ module Moe.Infra.Notification.Client
 where
 
 import Data.Aeson (encode)
-import Effectful ((:>))
+import Control.Exception (try)
 import Moe.Infra.Notification.API (SendMessageRequest (..), SendPhotoRequest (..))
 import Moe.Infra.Notification.Types (NotificationSendError (..))
-import Moe.Prelude
-import Control.Exception (try)
+import Moe.Prelude hiding (try)
 import Network.HTTP.Client (Manager, HttpException, RequestBody (..), httpLbs, method, parseRequest, requestBody, requestHeaders, responseStatus)
 import Network.HTTP.Types.Status (statusCode, statusIsSuccessful)
 

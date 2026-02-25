@@ -7,8 +7,6 @@ module Moe.Job.Rename.Process
 where
 
 import Control.Exception (SomeAsyncException (..))
-import Effectful
-import Effectful.Exception (throwIO, try)
 import Effectful.Log qualified as Log
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect

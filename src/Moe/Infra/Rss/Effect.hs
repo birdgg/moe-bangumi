@@ -6,8 +6,6 @@ module Moe.Infra.Rss.Effect
   )
 where
 
-import Effectful
-import Effectful.Dispatch.Dynamic
 import Effectful.TH (makeEffect)
 import Moe.Infra.Rss.Client qualified as Client
 import Moe.Infra.Rss.Types

@@ -4,7 +4,6 @@ module Moe.Job.Cleanup.Process
   )
 where
 
-import Effectful
 import Effectful.Log qualified as Log
 import Moe.Infra.Downloader.Effect
 import Moe.Prelude

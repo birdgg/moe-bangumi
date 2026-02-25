@@ -13,8 +13,6 @@ module Moe.Infra.Database.Tracking
   )
 where
 
-import Effectful
-import Effectful.Sqlite (FromRow (..), Only (..), SqliteTransaction, execute, query, query_)
 import Moe.Domain.Bangumi qualified as Bangumi
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Tracking qualified as Types

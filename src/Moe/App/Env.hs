@@ -14,10 +14,8 @@ where
 import Data.Pool qualified as Pool
 import Data.Text.Display (Display (..))
 import Database.SQLite.Simple qualified as Sqlite
-import Effectful
-import Effectful.Sqlite (SqlitePool (..))
-import GHC.Conc (getNumCapabilities)
 import Effectful.Concurrent.STM (TQueue, newTQueueIO)
+import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), defaultLogConfig)
 import Moe.Infra.Downloader.Adapter (DownloaderEnv, initDownloaderEnv)
 import Moe.Infra.Setting.Effect (SettingEnv, initSettingEnv)

@@ -11,7 +11,6 @@ module Moe.Infra.Notification.Effect
   )
 where
 
-import Effectful
 import Effectful.TH (makeEffect)
 import Moe.Prelude
 

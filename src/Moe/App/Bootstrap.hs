@@ -3,9 +3,8 @@ module Moe.App.Bootstrap
   )
 where
 
-import Effectful
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (Migration (..), SqliteDb (..), notransact, parseMigrationFilename, runMigrationsFromList, runSqlite)
+import Effectful.Sqlite (Migration (..), parseMigrationFilename, runMigrationsFromList)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), mkMoeEnv, parseMoeConfig)
 import Moe.App.Logging (LogConfig (..), makeLogger, runLog)
 import Moe.Infra.Database.Embedded (embeddedMigrations)

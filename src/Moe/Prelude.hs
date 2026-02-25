@@ -11,15 +11,66 @@ module Moe.Prelude
     Eff,
     IOE,
     Effect,
+    (:>),
     runEff,
+    DispatchOf,
+    Dispatch (..),
+    withUnliftStrategy,
+    UnliftStrategy (..),
+    Persistence (..),
+    Limit (..),
+    withRunInIO,
+    -- Effectful.Error.Static
     Error,
     throwError,
-    -- Effectful effects
-    Concurrent,
-    FileSystem,
-    Log,
+    catchError,
+    runErrorWith,
+    -- Effectful.Reader.Static
     Reader,
+    ask,
+    runReader,
+    -- Effectful.Log
+    Log,
+    Logger,
+    LogLevel (..),
+    -- Effectful.Concurrent
+    Concurrent,
+    runConcurrent,
+    threadDelay,
+    -- Effectful.Concurrent.Async
+    forConcurrently,
+    withAsync,
+    -- Effectful.FileSystem
+    FileSystem,
+    runFileSystem,
+    doesDirectoryExist,
+    doesFileExist,
+    listDirectory,
+    -- Effectful.Sqlite
     Sqlite,
+    SqliteTransaction,
+    transact,
+    notransact,
+    FromField (..),
+    ToField (..),
+    FromRow (..),
+    ToRow (..),
+    field,
+    Only (..),
+    type (:.)(..),
+    execute,
+    query,
+    query_,
+    SqliteDb (..),
+    SqlitePool (..),
+    runSqlite,
+    -- Effectful.Exception
+    try,
+    throwIO,
+    bracket_,
+    -- Effectful.Dispatch.Dynamic
+    interpret,
+    -- Validation
     Validation,
     failureToMaybe,
     failureUnless,
@@ -27,13 +78,16 @@ module Moe.Prelude
 where
 
 import Data.Text qualified as T
-import Effectful (Eff, Effect, IOE, runEff, (:>))
-import Effectful.Concurrent (Concurrent)
-import Effectful.Error.Static (Error, throwError)
-import Effectful.FileSystem (FileSystem)
-import Effectful.Log (Log)
-import Effectful.Reader.Static (Reader)
-import Effectful.Sqlite (Sqlite)
+import Effectful (Dispatch (..), DispatchOf, Eff, Effect, IOE, Limit (..), Persistence (..), UnliftStrategy (..), runEff, withRunInIO, withUnliftStrategy, (:>))
+import Effectful.Concurrent (Concurrent, runConcurrent, threadDelay)
+import Effectful.Concurrent.Async (forConcurrently, withAsync)
+import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Error.Static (Error, catchError, runErrorWith, throwError)
+import Effectful.Exception (bracket_, throwIO, try)
+import Effectful.FileSystem (FileSystem, doesDirectoryExist, doesFileExist, listDirectory, runFileSystem)
+import Effectful.Log (Log, LogLevel (..), Logger)
+import Effectful.Reader.Static (Reader, ask, runReader)
+import Effectful.Sqlite (FromField (..), FromRow (..), Only (..), Sqlite, SqliteDb (..), SqlitePool (..), SqliteTransaction, ToField (..), ToRow (..), execute, field, notransact, query, query_, runSqlite, transact, type (:.)(..))
 import Relude hiding (MonadReader, Reader, ReaderT, ask, asks, local, runReader, runReaderT)
 import Validation (Validation (..), failureToMaybe, failureUnless)
 

@@ -4,10 +4,6 @@ module Main (main) where
 import Control.Exception (bracket)
 import Control.Exception.Backtrace (BacktraceMechanism (..), setBacktraceMechanismState)
 import Data.Text.Display (display)
-import Effectful
-import Effectful.Concurrent (runConcurrent)
-import Effectful.Concurrent.Async (withAsync)
-import Effectful.FileSystem (runFileSystem)
 import Moe.App.Bootstrap (bootstrap)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool)
 import Moe.App.Logging (makeLogger)

@@ -9,7 +9,7 @@ where
 import Control.Exception (try)
 import Data.ByteString.Lazy qualified as LBS
 import Data.Text qualified as T
-import Moe.Prelude
+import Moe.Prelude hiding (try)
 import Moe.Infra.Rss.Source (SomeRssSource (..), parseItemFor, selectRssSource)
 import Moe.Infra.Rss.Types
 import Network.HTTP.Client

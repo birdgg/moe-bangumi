@@ -9,8 +9,6 @@ module Moe.Infra.Notification.Adapter
 where
 
 import Data.Text.Display (display)
-import Effectful
-import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Log qualified as Log
 import Moe.Domain.Setting (NotificationConfig (..), UserPreference (..))
 import Moe.Infra.Notification.Client qualified as Client

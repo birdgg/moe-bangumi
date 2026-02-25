@@ -8,7 +8,6 @@ module Moe.Infra.Metadata.Tmdb
   )
 where
 
-import Effectful ((:>))
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonIndex (..), TmdbId (..), extractYear)
 import Moe.Domain.Setting qualified as Setting
 import Moe.Infra.Setting.Effect (Setting, getSetting)

@@ -10,12 +10,7 @@ module Moe.Job.Effect
 where
 
 import Data.Text.Display (display)
-import Effectful
-import Effectful.Concurrent (runConcurrent)
-import Effectful.Error.Static (runErrorWith)
-import Effectful.Log (Logger)
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (SqliteDb (..), runSqlite)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Infra.Database.Types (DatabaseExecError)

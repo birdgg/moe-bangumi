@@ -9,7 +9,6 @@ where
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
 import Data.Text qualified as T
 import Data.Text.Display (Display (..))
-import Effectful.Sqlite (FromField (..), ToField (..))
 import Moe.Prelude
 
 data Subtitle

@@ -12,10 +12,7 @@ where
 
 import Data.Aeson (Result (..), Value (..), decode, eitherDecode, encode, fromJSON, toJSON)
 import Data.Aeson.KeyMap qualified as KeyMap
-import Effectful
 import Effectful.Concurrent.STM qualified as STM
-import Effectful.Dispatch.Dynamic (interpret)
-import Effectful.FileSystem (doesFileExist)
 import Effectful.FileSystem.IO.ByteString.Lazy qualified as LBS
 import Effectful.TH (makeEffect)
 import Moe.Domain.Setting (UserPreference, defaultUserPreference)

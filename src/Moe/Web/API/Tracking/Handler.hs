@@ -8,7 +8,6 @@ module Moe.Web.API.Tracking.Handler
   )
 where
 
-import Effectful.Sqlite (notransact, transact)
 import Moe.Domain.Shared.Entity (Entity (..), Id (..))
 import Moe.Domain.Shared.Metadata (BgmtvId (..))
 import Moe.Domain.Bangumi (Bangumi (..))

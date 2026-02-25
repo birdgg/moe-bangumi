@@ -6,7 +6,7 @@ where
 
 import Data.Aeson (FromJSON, eitherDecode)
 import Moe.Infra.Metadata.BangumiData.Types (BangumiDataItem)
-import Moe.Prelude
+import Moe.Prelude hiding ((:>))
 import Network.HTTP.Media ((//))
 import Servant.API
 import Text.Printf (printf)

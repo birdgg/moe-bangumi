@@ -16,10 +16,7 @@ import Data.Char (isDigit)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Data.Text qualified as T
-import Effectful
-import Effectful.Exception (try)
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (transact)
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Domain.File
   ( ContentKind (..),

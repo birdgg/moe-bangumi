@@ -2,11 +2,6 @@ module Moe.Job.Rename.Strategy.CollectionSpec (tests) where
 
 import Control.Monad (foldM)
 import Data.Map.Strict qualified as Map
-import Effectful
-import Effectful.Concurrent (runConcurrent)
-import Effectful.Dispatch.Dynamic (interpret)
-import Effectful.Error.Static (runErrorWith)
-import Effectful.Log (LogLevel (..))
 import Moe.App.Logging (makeLogger, runLog)
 import Moe.Domain.File (GroupName (..))
 import Moe.Infra.Metadata.Types (MetadataFetchError)
@@ -16,7 +11,7 @@ import Moe.Infra.Setting.Effect (Setting (..))
 import Moe.Job.Rename.Strategy.Collection (processFile)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
-import Moe.Prelude
+import Moe.Prelude hiding (doesFileExist)
 import System.Directory (doesFileExist)
 import System.Environment (setEnv)
 import Network.HTTP.Client.TLS (newTlsManager)

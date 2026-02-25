@@ -4,10 +4,9 @@ module Moe.Web.API.Log.Handler (handleGetLogs) where
 import Data.Aeson qualified as Aeson
 import Data.ByteString.Char8 qualified as BS
 import Data.Time.Calendar (Day)
-import Effectful.Reader.Static (ask)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (logFilePath)
-import Moe.Prelude
+import Moe.Prelude hiding (doesFileExist)
 import Moe.Web.API.DTO.Log (LogEntry, LogsResponse (..))
 import Moe.Web.Types (ServerEff)
 import System.Directory (doesFileExist)

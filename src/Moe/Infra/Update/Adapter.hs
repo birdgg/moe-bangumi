@@ -15,11 +15,9 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson ((.:), (.:?), (.!=))
 import Data.Text qualified as T
 import Data.Time (NominalDiffTime, UTCTime, addUTCTime, getCurrentTime)
-import Effectful ((:>))
-import Effectful.Dispatch.Dynamic (interpret)
 import Effectful.Log qualified as Log
 import Moe.Infra.Update.Effect
-import Moe.Prelude
+import Moe.Prelude hiding (try, doesFileExist)
 import Network.HTTP.Client
   ( Manager,
     Request (..),

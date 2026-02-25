@@ -16,10 +16,7 @@ import Control.Monad (foldM)
 import Data.Text.Display (Display (..), display)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Effectful
-import Effectful.FileSystem (doesDirectoryExist, listDirectory)
 import Effectful.Log qualified as Log
-import Effectful.Sqlite (SqliteTransaction, transact)
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Data.Time.Calendar (Year)
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonIndex (..))
