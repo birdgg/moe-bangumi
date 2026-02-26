@@ -1,7 +1,7 @@
 -- | Domain types for download/torrent management.
 module Moe.Infra.Downloader.Types
   ( AddTorrentParams (..),
-    DownloaderClientError (..),
+    DownloaderError (..),
     isCompleted,
 
     -- * Tags
@@ -20,13 +20,13 @@ module Moe.Infra.Downloader.Types
   )
 where
 
-import Data.Text.Display (Display (..))
+import Data.Text.Display (Display (..), display)
 import Moe.Domain.Rss (TorrentUrl)
 import Network.QBittorrent.Types (InfoHash (..), Tag (..), TorrentContent (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | Structured downloader client errors.
-data DownloaderClientError
+data DownloaderError
   = DlNetworkError Text
   | DlAuthError Text
   | DlApiError Int Text
@@ -35,7 +35,10 @@ data DownloaderClientError
   | DlConfigError Text
   deriving stock (Show, Eq)
 
-instance Display DownloaderClientError where
+instance Exception DownloaderError where
+  displayException = toString . display
+
+instance Display DownloaderError where
   displayBuilder = \case
     DlNetworkError msg -> "Downloader connection failed: " <> displayBuilder msg
     DlAuthError msg -> "Downloader auth failed: " <> displayBuilder msg

@@ -34,7 +34,7 @@ initDownloaderEnv = do
   pure DownloaderEnv {cachedClient}
 
 -- | Classify qBittorrent error into structured error type.
-classifyQBError :: QB.QBClientError -> DownloaderClientError
+classifyQBError :: QB.QBClientError -> DownloaderError
 classifyQBError = \case
   QB.ServantError err -> DlNetworkError (show err)
   QB.QBApiError err
@@ -47,7 +47,7 @@ classifyQBError = \case
 -- 'TestConnection' is handled independently of saved config since it
 -- provides its own credentials.
 runDownloaderQBittorrent ::
-  (Setting :> es, Error DownloaderClientError :> es, IOE :> es) =>
+  (Setting :> es, Error DownloaderError :> es, IOE :> es) =>
   DownloaderEnv ->
   Manager ->
   Eff (Downloader : es) a ->
@@ -67,8 +67,8 @@ runDownloaderQBittorrent dlEnv manager =
 -- | Handle operations when downloader is not configured.
 -- Query operations return empty defaults; mutations still throw.
 handleUnconfigured ::
-  (Error DownloaderClientError :> es) =>
-  DownloaderClientError ->
+  (Error DownloaderError :> es) =>
+  DownloaderError ->
   Downloader (Eff localEs) a ->
   Eff es a
 handleUnconfigured err = \case
@@ -79,7 +79,7 @@ handleUnconfigured err = \case
   _ -> throwError err
 
 -- | Validate that all required fields in DownloaderConfig are non-empty.
-validateConfig :: DownloaderConfig -> Maybe DownloaderClientError
+validateConfig :: DownloaderConfig -> Maybe DownloaderError
 validateConfig cfg =
   DlConfigError <$> fmtErrors "qBittorrent"
     ( validateField "url" cfg.url
@@ -90,7 +90,7 @@ validateConfig cfg =
 
 -- | Return a cached client or create and authenticate a new one.
 getOrCreateClient ::
-  (Error DownloaderClientError :> es, IOE :> es) =>
+  (Error DownloaderError :> es, IOE :> es) =>
   DownloaderEnv ->
   Manager ->
   DownloaderConfig ->
@@ -132,7 +132,7 @@ handleTestConnection manager url username password = do
 
 -- | Handle a single Downloader operation using a pre-authenticated client.
 handleDownloader ::
-  (Error DownloaderClientError :> es, IOE :> es) =>
+  (Error DownloaderError :> es, IOE :> es) =>
   DownloaderConfig ->
   QB.QBClient ->
   Downloader (Eff localEs) a ->
@@ -210,7 +210,7 @@ handleDownloader cfg client = \case
 
 -- | Run a single qBittorrent action on a pre-authenticated client.
 runQBAction ::
-  (Error DownloaderClientError :> es, IOE :> es) =>
+  (Error DownloaderError :> es, IOE :> es) =>
   QB.QBClient ->
   QB.ClientM a ->
   Eff es a

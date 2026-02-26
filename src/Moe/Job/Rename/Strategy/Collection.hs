@@ -67,6 +67,7 @@ renameCollection torrent hash = do
   let bdrip = T.isInfixOf "bdrip" (T.toLower torrent.name)
       grp = maybeToList $ GroupName <$> extractGroup torrent.name
   files <- getTorrentFiles hash
+  let wantedFiles = filter (\f -> f.priority /= 0) files
   bmap <- foldM (\bmap file -> do
     (bmap', mNewPath) <- processFile bdrip grp bmap file.name
     forM_ mNewPath $ \newPath -> do
@@ -75,7 +76,7 @@ renameCollection torrent hash = do
         Left ex -> Log.logAttention_ $ "rename: failed " <> file.name <> " -> " <> newPath <> " - " <> toText (displayException ex)
         Right () -> pass
     pure bmap'
-    ) Map.empty files
+    ) Map.empty wantedFiles
   when (Map.null bmap) $
     Log.logAttention_ $ "collection: no bangumi dirs found in " <> torrent.name
 

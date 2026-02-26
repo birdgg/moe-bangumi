@@ -8,7 +8,7 @@ import Moe.App.Env (MoeEnv)
 import Moe.Prelude
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect (Downloader)
-import Moe.Infra.Downloader.Types (DownloaderClientError)
+import Moe.Infra.Downloader.Types (DownloaderError)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Infra.Rss.Effect (Rss)
@@ -24,7 +24,7 @@ type ServerEffects =
   '[ Update,
      Error UpdateClientError,
      Downloader,
-     Error DownloaderClientError,
+     Error DownloaderError,
      Rss,
      Error RssFetchError,
      Metadata,

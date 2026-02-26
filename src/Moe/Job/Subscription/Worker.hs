@@ -15,7 +15,7 @@ import Moe.Domain.Bangumi (Bangumi (..))
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
-import Moe.Infra.Downloader.Types (DownloaderClientError)
+import Moe.Infra.Downloader.Types (DownloaderError)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Setting.Effect (Setting, runSetting)
@@ -75,7 +75,7 @@ processSingleFeed ::
 processSingleFeed env ctx =
   runErrorWith @RssFetchError (logFeedError ctx) $
     runRss env.httpManager $
-      runErrorWith @DownloaderClientError (logFeedError ctx) $
+      runErrorWith @DownloaderError (logFeedError ctx) $
         runDownloaderQBittorrent env.downloaderEnv env.httpManager $
           processFeed ctx
 
