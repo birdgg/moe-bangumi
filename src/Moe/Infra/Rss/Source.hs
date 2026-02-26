@@ -4,7 +4,6 @@ module Moe.Infra.Rss.Source
   ( RssSource (..),
     SomeRssSource (..),
     Nyaa,
-    AcgRip,
     Mikan,
     StandardRss,
     selectRssSource,
@@ -39,8 +38,6 @@ data SomeRssSource = forall s. (RssSource s) => SomeRssSource (Proxy s)
 
 data Nyaa
 
-data AcgRip
-
 data Mikan
 
 data StandardRss
@@ -48,7 +45,6 @@ data StandardRss
 selectRssSource :: Text -> SomeRssSource
 selectRssSource url
   | "nyaa.si" `T.isInfixOf` url = SomeRssSource (Proxy @Nyaa)
-  | "acg.rip" `T.isInfixOf` url = SomeRssSource (Proxy @AcgRip)
   | "mikanani.me" `T.isInfixOf` url = SomeRssSource (Proxy @Mikan)
   | otherwise = SomeRssSource (Proxy @StandardRss)
 
@@ -64,13 +60,6 @@ mikanIdToRssUrl mid = "https://mikanani.me/RSS/Bangumi?bangumiId=" <> show mid
 
 instance RssSource StandardRss where
   parseItemFor _ = parseStandardRssItem
-
-instance RssSource AcgRip where
-  baseUrlFor _ = Just "https://acg.rip"
-  parseItemFor _ = parseStandardRssItem
-  searchUrlFor p keyword = do
-    base <- baseUrlFor p
-    Just $ base <> "/.xml?term=" <> encodeUrlParam keyword
 
 parseStandardRssItem :: Cursor -> RawItem
 parseStandardRssItem cursor =

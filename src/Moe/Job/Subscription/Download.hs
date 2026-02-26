@@ -30,7 +30,7 @@ downloadAndSaveEpisodes bangumi episodes = do
             { url = ep.torrentUrl,
               savePath = Just $ toText $ generatePath file,
               rename = Just $ toText $ generateBaseName file,
-              tags = Just [subscriptionTag]
+              tags = Just [subscriptionTag, renameTag]
             }
     addTorrent params
 

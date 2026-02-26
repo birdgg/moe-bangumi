@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeColorSelector } from "@/components/theme-color-selector";
 import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { AppSidebar } from "@/components/app-sidebar";
-import { RssSearchModal } from "@/features/rss-search/components/rss-search-modal";
+import { TorrentSearchModal } from "@/features/torrent-search/components/torrent-search-modal";
 import { IconSearch, IconBrandGithub } from "@tabler/icons-react";
 
 interface AppLayoutProps {
@@ -38,8 +38,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="glass-pill group inline-flex items-center gap-2 rounded-lg px-2 py-1.5 bg-foreground/[0.03] text-foreground/40 transition-all hover:bg-foreground/[0.06] hover:text-foreground/60"
-              aria-label="Search RSS"
+              className="glass-pill group inline-flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 bg-foreground/[0.03] text-foreground/40 transition-all hover:bg-foreground/[0.06] hover:text-foreground/60"
+              aria-label="Search Torrent"
             >
               <IconSearch className="size-3.5" />
               <span className="text-[11px] transition-colors hidden sm:inline">
@@ -67,7 +67,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1 overflow-auto">{children}</main>
       </SidebarInset>
 
-      <RssSearchModal open={searchOpen} onOpenChange={setSearchOpen} />
+      <TorrentSearchModal open={searchOpen} onOpenChange={setSearchOpen} />
     </SidebarProvider>
   );
 }

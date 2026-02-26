@@ -141,7 +141,7 @@ handleDownloader cfg client = \case
   TestConnection {} -> error "unreachable: handled in runDownloaderQBittorrent"
   AddTorrent params ->
     runQBAction client $ do
-      let baseTags = [moeTag, renameTag]
+      let baseTags = [moeTag]
           allTags = case params.tags of
             Nothing -> baseTags
             Just ts -> ordNub $ baseTags <> ts
@@ -189,6 +189,8 @@ handleDownloader cfg client = \case
       QB.getTorrents (Just req)
   GetTorrentFiles hash ->
     runQBAction client $ QB.getTorrentContents (QB.InfoHash hash)
+  SetFilePriority hash fileIds priority ->
+    runQBAction client $ void $ QB.setFilePriority (QB.InfoHash hash) fileIds priority
   RenameTorrentFile hash oldPath newPath ->
     runQBAction client $ void $ QB.renameFile (QB.InfoHash hash) oldPath newPath
   RenameTorrentFolder hash oldPath newPath ->

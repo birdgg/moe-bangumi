@@ -3,12 +3,13 @@ module Moe.Web.API.Server where
 import Moe.Prelude
 import Moe.Web.API.Bangumi.Handler qualified as Bangumi
 import Moe.Web.API.Calendar.Handler (handleCalendar)
+import Moe.Web.API.Collection.Handler qualified as Collection
 import Moe.Web.API.Downloader.Handler (handleTestDownloader)
 import Moe.Web.API.Import.Handler (handleImportScan)
 import Moe.Web.API.Log.Handler (handleGetLogs)
 import Moe.Web.API.Notification.Handler (handleTestNotification)
 import Moe.Web.API.Routes qualified as API
-import Moe.Web.API.Rss.Handler (handleDownloadTorrent, handleSearchRss)
+import Moe.Web.API.Torrent.Handler (handleDownloadTorrent, handleSearchTorrent)
 import Moe.Web.API.Setting.Handler (handleGetSetting, handleUpdateSetting)
 import Moe.Web.API.Tracking.Handler qualified as Tracking
 import Moe.Web.API.Update.Handler qualified as Update
@@ -30,7 +31,7 @@ apiServer =
       createTracking = Tracking.handleCreateTracking,
       updateTracking = Tracking.handleUpdateTracking,
       deleteTracking = Tracking.handleDeleteTracking,
-      searchRss = handleSearchRss,
+      searchTorrent = handleSearchTorrent,
       downloadTorrent = handleDownloadTorrent,
       testDownloader = handleTestDownloader,
       testNotification = handleTestNotification,
@@ -39,5 +40,9 @@ apiServer =
       updateBangumiTmdbId = \bid req -> Bangumi.handleUpdateBangumiTmdbId bid req >> pure NoContent,
       getBangumiEpisodeOffset = Bangumi.handleGetEpisodeOffset,
       getLogs = handleGetLogs,
-      importScan = handleImportScan
+      importScan = handleImportScan,
+      collectionAdd = Collection.handleCollectionAdd,
+      collectionFiles = Collection.handleCollectionFiles,
+      collectionConfirm = Collection.handleCollectionConfirm,
+      collectionCancel = Collection.handleCollectionCancel
     }

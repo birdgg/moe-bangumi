@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteApiTrackingById, getApiAbout, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiHealth, getApiLogs, getApiRssSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiDownloaderTest, postApiNotificationTest, postApiRssDownload, postApiTracking, postApiUpdate, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
-import type { DeleteApiTrackingByIdData, GetApiAboutData, GetApiAboutResponse, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiRssSearchData, GetApiRssSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiRssDownloadData, PostApiTrackingData, PostApiTrackingResponse, PostApiUpdateData, PostApiUpdateResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
+import { deleteApiCollectionByHash, deleteApiTrackingById, getApiAbout, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiCollectionFilesByHash, getApiHealth, getApiLogs, getApiTorrentSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiCollectionAdd, postApiCollectionConfirm, postApiDownloaderTest, postApiNotificationTest, postApiTorrentDownload, postApiTracking, postApiUpdate, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
+import type { DeleteApiCollectionByHashData, DeleteApiTrackingByIdData, GetApiAboutData, GetApiAboutResponse, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiCollectionFilesByHashData, GetApiCollectionFilesByHashResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiTorrentSearchData, GetApiTorrentSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiCollectionAddData, PostApiCollectionAddResponse, PostApiCollectionConfirmData, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiTorrentDownloadData, PostApiTrackingData, PostApiTrackingResponse, PostApiUpdateData, PostApiUpdateResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -214,11 +214,11 @@ export const putApiTrackingByIdMutation = (options?: Partial<Options<PutApiTrack
     return mutationOptions;
 };
 
-export const getApiRssSearchQueryKey = (options: Options<GetApiRssSearchData>) => createQueryKey('getApiRssSearch', options);
+export const getApiTorrentSearchQueryKey = (options: Options<GetApiTorrentSearchData>) => createQueryKey('getApiTorrentSearch', options);
 
-export const getApiRssSearchOptions = (options: Options<GetApiRssSearchData>) => queryOptions<GetApiRssSearchResponse, DefaultError, GetApiRssSearchResponse, ReturnType<typeof getApiRssSearchQueryKey>>({
+export const getApiTorrentSearchOptions = (options: Options<GetApiTorrentSearchData>) => queryOptions<GetApiTorrentSearchResponse, DefaultError, GetApiTorrentSearchResponse, ReturnType<typeof getApiTorrentSearchQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getApiRssSearch({
+        const { data } = await getApiTorrentSearch({
             ...options,
             ...queryKey[0],
             signal,
@@ -226,13 +226,13 @@ export const getApiRssSearchOptions = (options: Options<GetApiRssSearchData>) =>
         });
         return data;
     },
-    queryKey: getApiRssSearchQueryKey(options)
+    queryKey: getApiTorrentSearchQueryKey(options)
 });
 
-export const postApiRssDownloadMutation = (options?: Partial<Options<PostApiRssDownloadData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiRssDownloadData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiRssDownloadData>> = {
+export const postApiTorrentDownloadMutation = (options?: Partial<Options<PostApiTorrentDownloadData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiTorrentDownloadData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiTorrentDownloadData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postApiRssDownload({
+            const { data } = await postApiTorrentDownload({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -397,3 +397,60 @@ export const getApiLogsInfiniteOptions = (options: Options<GetApiLogsData>) => i
     },
     queryKey: getApiLogsInfiniteQueryKey(options)
 });
+
+export const postApiCollectionAddMutation = (options?: Partial<Options<PostApiCollectionAddData>>): UseMutationOptions<PostApiCollectionAddResponse, DefaultError, Options<PostApiCollectionAddData>> => {
+    const mutationOptions: UseMutationOptions<PostApiCollectionAddResponse, DefaultError, Options<PostApiCollectionAddData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiCollectionAdd({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getApiCollectionFilesByHashQueryKey = (options: Options<GetApiCollectionFilesByHashData>) => createQueryKey('getApiCollectionFilesByHash', options);
+
+export const getApiCollectionFilesByHashOptions = (options: Options<GetApiCollectionFilesByHashData>) => queryOptions<GetApiCollectionFilesByHashResponse, DefaultError, GetApiCollectionFilesByHashResponse, ReturnType<typeof getApiCollectionFilesByHashQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getApiCollectionFilesByHash({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getApiCollectionFilesByHashQueryKey(options)
+});
+
+export const postApiCollectionConfirmMutation = (options?: Partial<Options<PostApiCollectionConfirmData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiCollectionConfirmData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiCollectionConfirmData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiCollectionConfirm({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteApiCollectionByHashMutation = (options?: Partial<Options<DeleteApiCollectionByHashData>>): UseMutationOptions<unknown, DefaultError, Options<DeleteApiCollectionByHashData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiCollectionByHashData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteApiCollectionByHash({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};

@@ -6,15 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 moe-bangumi is a Bangumi (anime) management tool written in Haskell. It handles file naming and organization for media servers (Plex, Emby, Jellyfin). This is a single-user application.It deployed on NAS.
 
-## Build Commands
-
-```bash
-cabal build              # Build the project
-cabal run moe-cli        # Run the executable
-cabal test               # Run all tests
-cabal repl               # Start GHCi with project loaded
-```
-
 ### Justfile (recommended for development)
 
 ```bash
@@ -26,11 +17,8 @@ just release X.Y.Z       # Bump version, generate changelog, tag, and push
 ```
 
 ## Code Style
-- add simple haddoc
 - when refer to `anime` use the word `bangumi`
 - No suffix for field names (use `name` not `nameField`)
-- Use `Display` instance for logging
-- Do not add statistical/counting logs (e.g., "Found N items", "Processed N records")
 - Regex patterns (`Pattern` from `Moe.Domain.Parser.Internal.Pattern`) should be defined as top-level constants via `mkPattern`; for dynamic patterns (e.g., user config), build them once before iteration (see `filterItems` in `Subscription.hs`)
 
 ## Database Migrations
@@ -100,10 +88,3 @@ just release X.Y.Z       # Bump version, generate changelog, tag, and push
 - Reading `form.state.values` directly does NOT trigger re-renders
 - Use `form.Subscribe` with `selector` to reactively read form values outside of `form.Field`
 - `form.Field` already handles subscriptions for its own field value
-
-## Release
-
-- Use `just release X.Y.Z` (or `/release` skill) - handles version bump, changelog, tag, and push
-- Follows semver: major (breaking), minor (feature), patch (fix)
-- Pushing a `vX.Y.Z` tag triggers CI to build Linux binary and create GitHub Release
-- Frontend assets are embedded in the binary via `web/dist/` (file-embed)

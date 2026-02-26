@@ -13,6 +13,7 @@ module Moe.Infra.Downloader.Effect
     getRenameTorrents,
     getMoeTorrents,
     getTorrentFiles,
+    setFilePriority,
     renameTorrentFile,
     renameTorrentFolder,
     setTorrentLocation,
@@ -46,6 +47,9 @@ data Downloader :: Effect where
   GetMoeTorrents :: Downloader m [TorrentInfo]
   -- | Get files within a torrent by its hash.
   GetTorrentFiles :: Text -> Downloader m [TorrentContent]
+  -- | Set file priority within a torrent (hash, fileIndices, priority).
+  --   Priority: 0 = do not download, 1 = normal, 6 = high, 7 = maximal.
+  SetFilePriority :: Text -> [Int] -> Int -> Downloader m ()
   -- | Rename a file within a torrent (hash, oldPath, newPath).
   RenameTorrentFile :: Text -> Text -> Text -> Downloader m ()
   -- | Rename a folder within a torrent (hash, oldPath, newPath).

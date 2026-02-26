@@ -126,7 +126,7 @@ export type UpdateTrackingRequest = {
     trackingType?: TrackingType;
 };
 
-export type RssSearchResult = {
+export type TorrentSearchResult = {
     infoHash?: string;
     pubDate?: UtcTime;
     source: string;
@@ -401,43 +401,43 @@ export type PutApiTrackingByIdResponses = {
 
 export type PutApiTrackingByIdResponse = PutApiTrackingByIdResponses[keyof PutApiTrackingByIdResponses];
 
-export type GetApiRssSearchData = {
+export type GetApiTorrentSearchData = {
     body?: never;
     path?: never;
     query: {
         keyword: string;
     };
-    url: '/api/rss/search';
+    url: '/api/torrent/search';
 };
 
-export type GetApiRssSearchErrors = {
+export type GetApiTorrentSearchErrors = {
     /**
      * Invalid `keyword`
      */
     400: unknown;
 };
 
-export type GetApiRssSearchResponses = {
-    200: Array<RssSearchResult>;
+export type GetApiTorrentSearchResponses = {
+    200: Array<TorrentSearchResult>;
 };
 
-export type GetApiRssSearchResponse = GetApiRssSearchResponses[keyof GetApiRssSearchResponses];
+export type GetApiTorrentSearchResponse = GetApiTorrentSearchResponses[keyof GetApiTorrentSearchResponses];
 
-export type PostApiRssDownloadData = {
+export type PostApiTorrentDownloadData = {
     body?: DownloadTorrentRequest;
     path?: never;
     query?: never;
-    url: '/api/rss/download';
+    url: '/api/torrent/download';
 };
 
-export type PostApiRssDownloadErrors = {
+export type PostApiTorrentDownloadErrors = {
     /**
      * Invalid `body`
      */
     400: unknown;
 };
 
-export type PostApiRssDownloadResponses = {
+export type PostApiTorrentDownloadResponses = {
     200: unknown;
 };
 
@@ -595,3 +595,91 @@ export type GetApiLogsResponses = {
 };
 
 export type GetApiLogsResponse = GetApiLogsResponses[keyof GetApiLogsResponses];
+
+export type CollectionAddRequest = {
+    infoHash?: string;
+    torrentUrl: string;
+};
+
+export type CollectionAddResponse = {
+    hash: string;
+};
+
+export type CollectionFilesResponse = {
+    files: Array<TorrentFileDTO>;
+};
+
+export type TorrentFileDTO = {
+    index: number;
+    name: string;
+    size: number;
+};
+
+export type CollectionConfirmRequest = {
+    hash: string;
+    unwantedIndices: Array<number>;
+};
+
+export type PostApiCollectionAddData = {
+    body?: CollectionAddRequest;
+    path?: never;
+    query?: never;
+    url: '/api/collection/add';
+};
+
+export type PostApiCollectionAddErrors = {
+    400: unknown;
+};
+
+export type PostApiCollectionAddResponses = {
+    200: CollectionAddResponse;
+};
+
+export type PostApiCollectionAddResponse = PostApiCollectionAddResponses[keyof PostApiCollectionAddResponses];
+
+export type GetApiCollectionFilesByHashData = {
+    body?: never;
+    path: {
+        hash: string;
+    };
+    query?: never;
+    url: '/api/collection/files/{hash}';
+};
+
+export type GetApiCollectionFilesByHashResponses = {
+    200: CollectionFilesResponse;
+};
+
+export type GetApiCollectionFilesByHashResponse = GetApiCollectionFilesByHashResponses[keyof GetApiCollectionFilesByHashResponses];
+
+export type PostApiCollectionConfirmData = {
+    body?: CollectionConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/collection/confirm';
+};
+
+export type PostApiCollectionConfirmErrors = {
+    400: unknown;
+};
+
+export type PostApiCollectionConfirmResponses = {
+    200: unknown;
+};
+
+export type DeleteApiCollectionByHashData = {
+    body?: never;
+    path: {
+        hash: string;
+    };
+    query?: never;
+    url: '/api/collection/{hash}';
+};
+
+export type DeleteApiCollectionByHashErrors = {
+    404: unknown;
+};
+
+export type DeleteApiCollectionByHashResponses = {
+    200: unknown;
+};

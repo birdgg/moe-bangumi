@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiTrackingByIdData, DeleteApiTrackingByIdErrors, DeleteApiTrackingByIdResponses, GetApiAboutData, GetApiAboutResponses, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetErrors, GetApiBangumiByIdEpisodeOffsetResponses, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanErrors, GetApiBangumiSearchMikanResponses, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbErrors, GetApiBangumiSearchTmdbResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiHealthData, GetApiHealthResponses, GetApiLogsData, GetApiLogsErrors, GetApiLogsResponses, GetApiRssSearchData, GetApiRssSearchErrors, GetApiRssSearchResponses, GetApiSettingsData, GetApiSettingsResponses, GetApiTrackingBangumisData, GetApiTrackingBangumisResponses, GetApiTrackingByIdData, GetApiTrackingByIdErrors, GetApiTrackingByIdResponses, GetApiTrackingData, GetApiTrackingResponses, PostApiDownloaderTestData, PostApiDownloaderTestErrors, PostApiDownloaderTestResponses, PostApiNotificationTestData, PostApiNotificationTestErrors, PostApiNotificationTestResponses, PostApiRssDownloadData, PostApiRssDownloadErrors, PostApiRssDownloadResponses, PostApiTrackingData, PostApiTrackingErrors, PostApiTrackingResponses, PostApiUpdateData, PostApiUpdateResponses, PutApiBangumiByIdTmdbIdData, PutApiBangumiByIdTmdbIdErrors, PutApiBangumiByIdTmdbIdResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses, PutApiTrackingByIdData, PutApiTrackingByIdErrors, PutApiTrackingByIdResponses } from './types.gen';
+import type { DeleteApiCollectionByHashData, DeleteApiCollectionByHashErrors, DeleteApiCollectionByHashResponses, DeleteApiTrackingByIdData, DeleteApiTrackingByIdErrors, DeleteApiTrackingByIdResponses, GetApiAboutData, GetApiAboutResponses, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetErrors, GetApiBangumiByIdEpisodeOffsetResponses, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanErrors, GetApiBangumiSearchMikanResponses, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbErrors, GetApiBangumiSearchTmdbResponses, GetApiCalendarData, GetApiCalendarErrors, GetApiCalendarResponses, GetApiCollectionFilesByHashData, GetApiCollectionFilesByHashResponses, GetApiHealthData, GetApiHealthResponses, GetApiLogsData, GetApiLogsErrors, GetApiLogsResponses, GetApiTorrentSearchData, GetApiTorrentSearchErrors, GetApiTorrentSearchResponses, GetApiSettingsData, GetApiSettingsResponses, GetApiTrackingBangumisData, GetApiTrackingBangumisResponses, GetApiTrackingByIdData, GetApiTrackingByIdErrors, GetApiTrackingByIdResponses, GetApiTrackingData, GetApiTrackingResponses, PostApiCollectionAddData, PostApiCollectionAddErrors, PostApiCollectionAddResponses, PostApiCollectionConfirmData, PostApiCollectionConfirmErrors, PostApiCollectionConfirmResponses, PostApiDownloaderTestData, PostApiDownloaderTestErrors, PostApiDownloaderTestResponses, PostApiNotificationTestData, PostApiNotificationTestErrors, PostApiNotificationTestResponses, PostApiTorrentDownloadData, PostApiTorrentDownloadErrors, PostApiTorrentDownloadResponses, PostApiTrackingData, PostApiTrackingErrors, PostApiTrackingResponses, PostApiUpdateData, PostApiUpdateResponses, PutApiBangumiByIdTmdbIdData, PutApiBangumiByIdTmdbIdErrors, PutApiBangumiByIdTmdbIdResponses, PutApiSettingsData, PutApiSettingsErrors, PutApiSettingsResponses, PutApiTrackingByIdData, PutApiTrackingByIdErrors, PutApiTrackingByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -63,10 +63,10 @@ export const putApiTrackingById = <ThrowOnError extends boolean = false>(options
     }
 });
 
-export const getApiRssSearch = <ThrowOnError extends boolean = false>(options: Options<GetApiRssSearchData, ThrowOnError>) => (options.client ?? client).get<GetApiRssSearchResponses, GetApiRssSearchErrors, ThrowOnError>({ url: '/api/rss/search', ...options });
+export const getApiTorrentSearch = <ThrowOnError extends boolean = false>(options: Options<GetApiTorrentSearchData, ThrowOnError>) => (options.client ?? client).get<GetApiTorrentSearchResponses, GetApiTorrentSearchErrors, ThrowOnError>({ url: '/api/torrent/search', ...options });
 
-export const postApiRssDownload = <ThrowOnError extends boolean = false>(options?: Options<PostApiRssDownloadData, ThrowOnError>) => (options?.client ?? client).post<PostApiRssDownloadResponses, PostApiRssDownloadErrors, ThrowOnError>({
-    url: '/api/rss/download',
+export const postApiTorrentDownload = <ThrowOnError extends boolean = false>(options?: Options<PostApiTorrentDownloadData, ThrowOnError>) => (options?.client ?? client).post<PostApiTorrentDownloadResponses, PostApiTorrentDownloadErrors, ThrowOnError>({
+    url: '/api/torrent/download',
     ...options,
     headers: {
         'Content-Type': 'application/json;charset=utf-8',
@@ -108,3 +108,25 @@ export const putApiBangumiByIdTmdbId = <ThrowOnError extends boolean = false>(op
 export const getApiBangumiByIdEpisodeOffset = <ThrowOnError extends boolean = false>(options: Options<GetApiBangumiByIdEpisodeOffsetData, ThrowOnError>) => (options.client ?? client).get<GetApiBangumiByIdEpisodeOffsetResponses, GetApiBangumiByIdEpisodeOffsetErrors, ThrowOnError>({ url: '/api/bangumi/{id}/episode-offset', ...options });
 
 export const getApiLogs = <ThrowOnError extends boolean = false>(options: Options<GetApiLogsData, ThrowOnError>) => (options.client ?? client).get<GetApiLogsResponses, GetApiLogsErrors, ThrowOnError>({ url: '/api/logs', ...options });
+
+export const postApiCollectionAdd = <ThrowOnError extends boolean = false>(options?: Options<PostApiCollectionAddData, ThrowOnError>) => (options?.client ?? client).post<PostApiCollectionAddResponses, PostApiCollectionAddErrors, ThrowOnError>({
+    url: '/api/collection/add',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+        ...options?.headers
+    }
+});
+
+export const getApiCollectionFilesByHash = <ThrowOnError extends boolean = false>(options: Options<GetApiCollectionFilesByHashData, ThrowOnError>) => (options.client ?? client).get<GetApiCollectionFilesByHashResponses, unknown, ThrowOnError>({ url: '/api/collection/files/{hash}', ...options });
+
+export const postApiCollectionConfirm = <ThrowOnError extends boolean = false>(options?: Options<PostApiCollectionConfirmData, ThrowOnError>) => (options?.client ?? client).post<PostApiCollectionConfirmResponses, PostApiCollectionConfirmErrors, ThrowOnError>({
+    url: '/api/collection/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json;charset=utf-8',
+        ...options?.headers
+    }
+});
+
+export const deleteApiCollectionByHash = <ThrowOnError extends boolean = false>(options: Options<DeleteApiCollectionByHashData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiCollectionByHashResponses, DeleteApiCollectionByHashErrors, ThrowOnError>({ url: '/api/collection/{hash}', ...options });

@@ -151,22 +151,24 @@ library
     Moe.Web.API.Calendar.Handler
     Moe.Web.API.DTO.Bangumi
     Moe.Web.API.DTO.Calendar
+    Moe.Web.API.DTO.Collection
     Moe.Web.API.DTO.Downloader
     Moe.Web.API.DTO.Log
     Moe.Web.API.DTO.Notification
-    Moe.Web.API.DTO.Rss
+    Moe.Web.API.DTO.Torrent
     Moe.Web.API.DTO.Setting
     Moe.Web.API.DTO.Tracking
     Moe.Web.API.DTO.Import
     Moe.Web.API.DTO.Update
     Moe.Web.API.Bangumi.Handler
+    Moe.Web.API.Collection.Handler
     Moe.Web.API.Downloader.Handler
     Moe.Web.API.Import.Handler
     Moe.Web.API.Log.Handler
     Moe.Web.API.Notification.Handler
     Moe.Web.API.Update.Handler
     Moe.Web.API.Routes
-    Moe.Web.API.Rss.Handler
+    Moe.Web.API.Torrent.Handler
     Moe.Web.API.Server
     Moe.Web.API.Setting.Handler
     Moe.Web.API.Tracking.Handler

@@ -5,11 +5,12 @@ import Moe.Domain.Bangumi (Season)
 import Moe.Domain.Setting (UserPreference)
 import Moe.Prelude hiding ((:>))
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
+import Moe.Web.API.DTO.Collection (CollectionAddRequest, CollectionAddResponse, CollectionConfirmRequest, CollectionFilesResponse)
 import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
 import Moe.Web.API.DTO.Import (ImportScanResponse)
 import Moe.Web.API.DTO.Log (LogsResponse)
 import Moe.Web.API.DTO.Notification (TestNotificationRequest, TestNotificationResponse)
-import Moe.Web.API.DTO.Rss (DownloadTorrentRequest, RssSearchResult)
+import Moe.Web.API.DTO.Torrent (DownloadTorrentRequest, TorrentSearchResult)
 import Moe.Web.API.DTO.Bangumi (MikanSearchResultDTO, TmdbSearchResult, UpdateBangumiTmdbIdRequest)
 import Moe.Web.API.DTO.Tracking (CreateTrackingRequest, TrackingResponse, TrackingWithBangumiResponse, UpdateTrackingRequest)
 import Moe.Web.API.DTO.Update (AboutResponse, UpdateResponse)
@@ -72,15 +73,15 @@ data Routes' mode = Routes'
         :- "tracking"
           :> Capture "id" Int64
           :> Delete '[JSON] NoContent,
-    searchRss ::
+    searchTorrent ::
       mode
-        :- "rss"
+        :- "torrent"
           :> "search"
           :> QueryParam' '[Required, Strict] "keyword" Text
-          :> Get '[JSON] [RssSearchResult],
+          :> Get '[JSON] [TorrentSearchResult],
     downloadTorrent ::
       mode
-        :- "rss"
+        :- "torrent"
           :> "download"
           :> ReqBody '[JSON] DownloadTorrentRequest
           :> Post '[JSON] NoContent,
@@ -133,6 +134,29 @@ data Routes' mode = Routes'
       mode
         :- "import"
           :> "scan"
-          :> Post '[JSON] ImportScanResponse
+          :> Post '[JSON] ImportScanResponse,
+    collectionAdd ::
+      mode
+        :- "collection"
+          :> "add"
+          :> ReqBody '[JSON] CollectionAddRequest
+          :> Post '[JSON] CollectionAddResponse,
+    collectionFiles ::
+      mode
+        :- "collection"
+          :> "files"
+          :> Capture "hash" Text
+          :> Get '[JSON] CollectionFilesResponse,
+    collectionConfirm ::
+      mode
+        :- "collection"
+          :> "confirm"
+          :> ReqBody '[JSON] CollectionConfirmRequest
+          :> Post '[JSON] NoContent,
+    collectionCancel ::
+      mode
+        :- "collection"
+          :> Capture "hash" Text
+          :> Delete '[JSON] NoContent
   }
   deriving stock (Generic)

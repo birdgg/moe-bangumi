@@ -1,6 +1,6 @@
-module Moe.Web.API.DTO.Rss
-  ( RssSearchResult (..),
-    toRssSearchResult,
+module Moe.Web.API.DTO.Torrent
+  ( TorrentSearchResult (..),
+    toTorrentSearchResult,
     DownloadTorrentRequest (..),
   )
 where
@@ -11,8 +11,8 @@ import Moe.Domain.Rss (PubDate (..))
 import Moe.Infra.Rss.Types (RawItem (..))
 import Moe.Prelude
 
--- | A single RSS search result with source attribution.
-data RssSearchResult = RssSearchResult
+-- | A single torrent search result with source attribution.
+data TorrentSearchResult = TorrentSearchResult
   { title :: Text,
     source :: Text,
     torrentUrl :: Maybe Text,
@@ -29,14 +29,14 @@ data DownloadTorrentRequest = DownloadTorrentRequest
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON)
 
--- | Convert a 'RawItem' into a 'RssSearchResult', tagging it with the source name.
-toRssSearchResult :: Text -> RawItem -> Maybe RssSearchResult
-toRssSearchResult sourceName item =
+-- | Convert a 'RawItem' into a 'TorrentSearchResult', tagging it with the source name.
+toTorrentSearchResult :: Text -> RawItem -> Maybe TorrentSearchResult
+toTorrentSearchResult sourceName item =
   case item.title of
     Nothing -> Nothing
     Just t ->
       Just
-        RssSearchResult
+        TorrentSearchResult
           { title = t,
             source = sourceName,
             torrentUrl = item.torrentUrl,
