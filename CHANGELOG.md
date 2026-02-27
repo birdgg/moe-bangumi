@@ -1,4 +1,10 @@
 # Changelog
+## [1.6.3] - 2026-02-27
+
+### Bug Fixes
+
+- Use writable tmpDir for update backup to fix Docker permission denied
+
 ## [1.6.1] - 2026-02-25
 
 ### Bug Fixes
