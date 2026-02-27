@@ -7,7 +7,7 @@ module Moe.Infra.Update
 
     -- * Types
     AboutInfo (..),
-    UpdateClientError (..),
+    UpdateError (..),
     PlatformInfo (..),
     Platform (..),
     Arch (..),

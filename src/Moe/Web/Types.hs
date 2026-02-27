@@ -15,14 +15,14 @@ import Moe.Infra.Rss.Effect (Rss)
 import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Setting.Effect (Setting, SettingWriter)
 import Moe.Infra.Update.Effect (Update)
-import Moe.Infra.Update.Types (UpdateClientError)
+import Moe.Infra.Update.Types (UpdateError)
 import Moe.Web.Error (WebError)
 
 type ServerEff = Eff ServerEffects
 
 type ServerEffects =
   '[ Update,
-     Error UpdateClientError,
+     Error UpdateError,
      Downloader,
      Error DownloaderError,
      Rss,

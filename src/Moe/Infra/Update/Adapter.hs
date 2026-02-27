@@ -109,7 +109,7 @@ cacheTTL = 1200
 
 -- | Run Update effect using GitHub releases API.
 runUpdateGitHub ::
-  (Log :> es, Error UpdateClientError :> es, FileSystem :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, FileSystem :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff (Update : es) a ->
@@ -124,7 +124,7 @@ runUpdateGitHub env manager =
 -- -------------------------------------------------------------------
 
 checkForUpdateImpl ::
-  (Log :> es, Error UpdateClientError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es AboutInfo
@@ -205,7 +205,7 @@ fetchAboutInfo env manager = do
 -- -------------------------------------------------------------------
 
 performUpdateImpl ::
-  (Log :> es, Error UpdateClientError :> es, FileSystem :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, FileSystem :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es ()
@@ -248,8 +248,8 @@ performUpdateImpl env manager = do
       perms <- getPermissions extractedBinary
       setPermissions extractedBinary (setOwnerExecutable True perms)
 
-      -- Replace binary using safe atomic replacement with backup and rollback
-      safeReplaceFile extractedBinary targetPath
+      -- Replace binary using safe replacement with backup in writable tmpDir
+      safeReplaceFile tmpDir extractedBinary targetPath
 
       -- Cleanup
       removePathForcibly tmpDir
@@ -267,7 +267,7 @@ buildAssetName p = "moe-bangumi-" <> toText p.platform <> "-" <> toText p.arch <
 
 -- | Download a file from URL to local path using streaming to avoid memory spikes.
 downloadFile ::
-  (Error UpdateClientError :> es, IOE :> es) =>
+  (Error UpdateError :> es, IOE :> es) =>
   Text ->
   FilePath ->
   Manager ->
@@ -293,7 +293,7 @@ downloadFile url dest manager = do
 
 -- | Download checksums.txt and extract hash for the target asset.
 downloadAndParseChecksum ::
-  (Error UpdateClientError :> es, IOE :> es) =>
+  (Error UpdateError :> es, IOE :> es) =>
   Text ->
   Text ->
   Manager ->
@@ -334,57 +334,54 @@ sha256File path = do
   let digest = hash content :: Digest SHA256
   pure $ show digest
 
--- | Atomic rename with copy fallback for cross-filesystem compatibility.
+-- | Safe file replacement with backup in a writable temp directory.
 --
--- First tries renameFile (atomic on same filesystem).
--- If that fails, falls back to copyFileWithMetadata + removeFile.
-atomicRenameOrCopy :: (FileSystem :> es, IOE :> es) => FilePath -> FilePath -> Eff es ()
-atomicRenameOrCopy src dst = do
-  renameResult <- EE.try @SomeException (renameFile src dst)
-  case renameResult of
-    Right () -> pass
-    Left _ -> do
-      copyFileWithMetadata src dst
-      removeFile src
-
--- | Safe atomic file replacement with backup and rollback.
+-- Stores the backup in tmpDir (e.g. dataFolder) to avoid creating files
+-- in potentially read-only directories like /app/ in Docker containers.
 --
 -- Steps:
--- 1. Backup: target → target.backup
--- 2. Prepare: source → target.new
--- 3. Replace: target.new → target (atomic)
--- 4. Cleanup: remove target.backup
+-- 1. Backup: copy target → tmpDir/backup
+-- 2. Replace: rename or copy source → target
+-- 3. Cleanup: remove backup on success
 --
 -- On failure, automatically rollback using backup.
 safeReplaceFile ::
-  (IOE :> es, FileSystem :> es, Error UpdateClientError :> es, Log :> es) =>
+  (IOE :> es, FileSystem :> es, Error UpdateError :> es, Log :> es) =>
+  FilePath -> -- ^ Writable temp directory for backup
   FilePath -> -- ^ Source file (new binary)
   FilePath -> -- ^ Target file (current binary)
   Eff es ()
-safeReplaceFile source target = do
-  let backupPath = target <> ".backup"
-      newPath = target <> ".new"
+safeReplaceFile tmpDir source target = do
+  let backupPath = tmpDir </> "moe-bangumi.backup"
 
-  result <- EE.try $ do
-    atomicRenameOrCopy target backupPath
-    atomicRenameOrCopy source newPath
-    atomicRenameOrCopy newPath target
-    removePathForcibly backupPath
+  -- Backup current binary to writable temp directory
+  backupResult <- EE.try @SomeException $ copyFile target backupPath
+
+  -- Replace binary: try rename first (atomic, same filesystem),
+  -- fall back to copy (cross-filesystem or restricted directory)
+  result <- EE.try @SomeException $ do
+    renameResult <- EE.try @SomeException $ renameFile source target
+    case renameResult of
+      Right () -> pass
+      Left _ -> do
+        copyFile source target
+        removeFile source
 
   case result of
-    Left (err :: SomeException) -> do
+    Right () ->
+      whenM (doesFileExist backupPath) $ removeFile backupPath
+    Left err -> do
       Log.logAttention_ $ "Binary replacement failed, attempting rollback: " <> show err
-      rollbackResult <- EE.try $ do
-        backupExists <- doesFileExist backupPath
-        when backupExists $ do
-          whenM (doesFileExist target) $ removeFile target
-          whenM (doesFileExist newPath) $ removeFile newPath
-          atomicRenameOrCopy backupPath target
-      case rollbackResult of
-        Left (rollbackErr :: SomeException) ->
+      case backupResult of
+        Right () -> do
+          rollbackResult <- EE.try @SomeException $ copyFile backupPath target
+          case rollbackResult of
+            Right () ->
+              throwError $ UpdateFileError $
+                "Failed to replace binary (rolled back): " <> show err
+            Left rollbackErr ->
+              throwError $ UpdateFileError $
+                "Failed to replace binary and rollback failed: " <> show err <> ", rollback: " <> show rollbackErr
+        Left _ ->
           throwError $ UpdateFileError $
-            "Failed to replace binary and rollback failed: " <> show err <> ", rollback: " <> show rollbackErr
-        Right () ->
-          throwError $ UpdateFileError $
-            "Failed to replace binary (rolled back): " <> show err
-    Right () -> pass
+            "Failed to replace binary (no backup available): " <> show err

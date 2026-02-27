@@ -1,6 +1,6 @@
 -- | Domain types for self-update system.
 module Moe.Infra.Update.Types
-  ( UpdateClientError (..),
+  ( UpdateError (..),
     AboutInfo (..),
     Platform (..),
     Arch (..),
@@ -19,7 +19,7 @@ import System.Environment (getExecutablePath)
 import System.Info qualified as SysInfo
 
 -- | Structured update client errors.
-data UpdateClientError
+data UpdateError
   = UpdateNetworkError Text
   | UpdateChecksumMismatch Text Text
   | UpdateUnsupportedPlatform Text
@@ -27,7 +27,7 @@ data UpdateClientError
   | UpdateFileError Text
   deriving stock (Show, Eq)
 
-instance Display UpdateClientError where
+instance Display UpdateError where
   displayBuilder = \case
     UpdateNetworkError msg -> "Update network error: " <> displayBuilder msg
     UpdateChecksumMismatch expected actual ->

@@ -112,7 +112,7 @@ tarball 命名格式: `moe-bangumi-{platform}-{arch}.tar.gz`
 
 ## 错误处理
 
-所有更新错误统一为 `UpdateClientError` 类型：
+所有更新错误统一为 `UpdateError` 类型：
 
 | 错误类型 | 场景 |
 |----------|------|
@@ -134,7 +134,7 @@ Effect 定义:  src/Moe/Infra/Update/Effect.hs
   └─ PerformUpdate  :: Update m ()
 
 类型定义:    src/Moe/Infra/Update/Types.hs
-  ├─ AboutInfo, PlatformInfo, UpdateClientError
+  ├─ AboutInfo, PlatformInfo, UpdateError
   └─ detectPlatform, isNewer, sameMajorMinor
 
 解释器:      src/Moe/Infra/Update/Adapter.hs
