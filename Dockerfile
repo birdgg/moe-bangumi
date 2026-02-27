@@ -133,4 +133,4 @@ ENV DATA_FOLDER=/app/data \
     PORT=3000 \
     ENV=production
 
-ENTRYPOINT ["/app/moe-bangumi"]
+ENTRYPOINT ["/app/moe-bangumi", "--supervised"]

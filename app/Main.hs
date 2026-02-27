@@ -7,6 +7,7 @@ import Data.Text.Display (display)
 import Moe.App.Bootstrap (bootstrap)
 import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool)
 import Moe.App.Logging (makeLogger)
+import Moe.App.MemoryMonitor (memoryMonitorThread)
 import Moe.Job.CalendarSync (calendarSyncWorkerThread)
 import Moe.Job.Cleanup (cleanupWorkerThread)
 import Moe.Job.Rename (renameWorkerThread)
@@ -39,7 +40,8 @@ runApp =
               withAsync (liftIO $ renameWorkerThread env appLogger) $ \_ ->
                 withAsync (liftIO $ calendarSyncWorkerThread env appLogger) $ \_ ->
                   withAsync (liftIO $ cleanupWorkerThread env appLogger) $ \_ ->
-                    runServer appLogger env
+                    withAsync (liftIO $ memoryMonitorThread env appLogger) $ \_ ->
+                      runServer appLogger env
     )
 
 shutdownMoe :: MoeEnv -> IO ()

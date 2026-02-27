@@ -64,7 +64,7 @@ common common-rts-options
   ghc-options:
     -rtsopts
     -threaded
-    "-with-rtsopts=-N2 -A16m -T"
+    "-with-rtsopts=-N2 -A16m -T -M512m"
 
 library
   import: common-extensions, common-ghc-options
@@ -75,6 +75,7 @@ library
     Moe.Job.Effect
     Moe.App.Env
     Moe.App.Logging
+    Moe.App.MemoryMonitor
     Moe.App.Monad
     Moe.Job.Rename
     Moe.Job.Rename.Process
