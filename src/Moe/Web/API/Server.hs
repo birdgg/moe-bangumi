@@ -31,6 +31,7 @@ apiServer =
       createTracking = Tracking.handleCreateTracking,
       updateTracking = Tracking.handleUpdateTracking,
       deleteTracking = Tracking.handleDeleteTracking,
+      refreshTracking = Tracking.handleRefreshTracking,
       searchTorrent = handleSearchTorrent,
       downloadTorrent = handleDownloadTorrent,
       testDownloader = handleTestDownloader,

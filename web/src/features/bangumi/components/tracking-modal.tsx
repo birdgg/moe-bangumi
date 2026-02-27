@@ -5,6 +5,7 @@ import {
   putApiTrackingByIdMutation,
   putApiBangumiByIdTmdbIdMutation,
   deleteApiTrackingByIdMutation,
+  postApiTrackingByIdRefreshMutation,
   getApiTrackingQueryKey,
   getApiTrackingBangumisQueryKey,
 } from "@/client/@tanstack/react-query.gen";
@@ -184,11 +185,21 @@ function TrackingForm({
     onError: () => toast.error("删除失败"),
   });
 
+  const refreshMutation = useMutation({
+    ...postApiTrackingByIdRefreshMutation(),
+    onSuccess: () => {
+      invalidateTracking();
+      toast.success("已触发 RSS 刷新");
+    },
+    onError: () => toast.error("刷新失败"),
+  });
+
   const isPending =
     createMutation.isPending ||
     updateMutation.isPending ||
     tmdbMutation.isPending ||
-    deleteMutation.isPending;
+    deleteMutation.isPending ||
+    refreshMutation.isPending;
 
   const handleSubmit = () => {
     const ep = parseInt(episodeOffset, 10) || 0;
@@ -416,49 +427,68 @@ function TrackingForm({
       <div className="h-px bg-linear-to-r from-transparent via-border/40 to-transparent" />
       <div className="flex items-center justify-between px-4 py-3 sm:px-5">
         {isEditing && tracking ? (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={isPending}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                />
-              }
-            >
-              <IconTrash className="size-3.5" />
-              <span>删除</span>
-            </AlertDialogTrigger>
-            <AlertDialogContent size="sm">
-              <AlertDialogHeader>
-                <AlertDialogTitle>确认删除</AlertDialogTitle>
-                <AlertDialogDescription>
-                  确定要删除「{bangumi.titleChs}」的追番记录吗？此操作无法撤销。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel size="sm">取消</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  size="sm"
-                  disabled={deleteMutation.isPending}
-                  onClick={() =>
-                    deleteMutation.mutate({ path: { id: tracking.id } })
-                  }
-                >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <Spinner className="size-3.5" />
-                      <span>删除中...</span>
-                    </>
-                  ) : (
-                    <span>删除</span>
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex items-center gap-1.5">
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isPending}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  />
+                }
+              >
+                <IconTrash className="size-3.5" />
+                <span>删除</span>
+              </AlertDialogTrigger>
+              <AlertDialogContent size="sm">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认删除</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    确定要删除「{bangumi.titleChs}」的追番记录吗？此操作无法撤销。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel size="sm">取消</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleteMutation.isPending}
+                    onClick={() =>
+                      deleteMutation.mutate({ path: { id: tracking.id } })
+                    }
+                  >
+                    {deleteMutation.isPending ? (
+                      <>
+                        <Spinner className="size-3.5" />
+                        <span>删除中...</span>
+                      </>
+                    ) : (
+                      <span>删除</span>
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            {tracking.rssUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={isPending}
+                onClick={() =>
+                  refreshMutation.mutate({ path: { id: tracking.id } })
+                }
+              >
+                {refreshMutation.isPending ? (
+                  <Spinner className="size-3.5" />
+                ) : (
+                  <IconRefresh className="size-3.5" />
+                )}
+                <span>刷新</span>
+              </Button>
+            )}
+          </div>
         ) : (
           <div />
         )}

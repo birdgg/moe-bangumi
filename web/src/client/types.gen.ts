@@ -401,6 +401,26 @@ export type PutApiTrackingByIdResponses = {
 
 export type PutApiTrackingByIdResponse = PutApiTrackingByIdResponses[keyof PutApiTrackingByIdResponses];
 
+export type PostApiTrackingByIdRefreshData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/tracking/{id}/refresh';
+};
+
+export type PostApiTrackingByIdRefreshErrors = {
+    /**
+     * `id` not found
+     */
+    404: unknown;
+};
+
+export type PostApiTrackingByIdRefreshResponses = {
+    200: unknown;
+};
+
 export type GetApiTorrentSearchData = {
     body?: never;
     path?: never;

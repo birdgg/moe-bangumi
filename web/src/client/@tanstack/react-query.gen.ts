@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteApiCollectionByHash, deleteApiTrackingById, getApiAbout, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiCollectionFilesByHash, getApiHealth, getApiLogs, getApiTorrentSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiCollectionAdd, postApiCollectionConfirm, postApiDownloaderTest, postApiNotificationTest, postApiTorrentDownload, postApiTracking, postApiUpdate, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
-import type { DeleteApiCollectionByHashData, DeleteApiTrackingByIdData, GetApiAboutData, GetApiAboutResponse, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiCollectionFilesByHashData, GetApiCollectionFilesByHashResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiTorrentSearchData, GetApiTorrentSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiCollectionAddData, PostApiCollectionAddResponse, PostApiCollectionConfirmData, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiTorrentDownloadData, PostApiTrackingData, PostApiTrackingResponse, PostApiUpdateData, PostApiUpdateResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
+import { deleteApiCollectionByHash, deleteApiTrackingById, getApiAbout, getApiBangumiByIdEpisodeOffset, getApiBangumiSearchMikan, getApiBangumiSearchTmdb, getApiCalendar, getApiCollectionFilesByHash, getApiHealth, getApiLogs, getApiTorrentSearch, getApiSettings, getApiTracking, getApiTrackingBangumis, getApiTrackingById, type Options, postApiCollectionAdd, postApiCollectionConfirm, postApiDownloaderTest, postApiNotificationTest, postApiTorrentDownload, postApiTracking, postApiTrackingByIdRefresh, postApiUpdate, putApiBangumiByIdTmdbId, putApiSettings, putApiTrackingById } from '../sdk.gen';
+import type { DeleteApiCollectionByHashData, DeleteApiTrackingByIdData, GetApiAboutData, GetApiAboutResponse, GetApiBangumiByIdEpisodeOffsetData, GetApiBangumiByIdEpisodeOffsetResponse, GetApiBangumiSearchMikanData, GetApiBangumiSearchMikanResponse, GetApiBangumiSearchTmdbData, GetApiBangumiSearchTmdbResponse, GetApiCalendarData, GetApiCalendarResponse, GetApiCollectionFilesByHashData, GetApiCollectionFilesByHashResponse, GetApiHealthData, GetApiHealthResponse, GetApiLogsData, GetApiLogsResponse, GetApiTorrentSearchData, GetApiTorrentSearchResponse, GetApiSettingsData, GetApiSettingsResponse, GetApiTrackingBangumisData, GetApiTrackingBangumisResponse, GetApiTrackingByIdData, GetApiTrackingByIdResponse, GetApiTrackingData, GetApiTrackingResponse, PostApiCollectionAddData, PostApiCollectionAddResponse, PostApiCollectionConfirmData, PostApiDownloaderTestData, PostApiDownloaderTestResponse, PostApiNotificationTestData, PostApiNotificationTestResponse, PostApiTorrentDownloadData, PostApiTrackingByIdRefreshData, PostApiTrackingData, PostApiTrackingResponse, PostApiUpdateData, PostApiUpdateResponse, PutApiBangumiByIdTmdbIdData, PutApiSettingsData, PutApiSettingsResponse, PutApiTrackingByIdData, PutApiTrackingByIdResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -175,6 +175,20 @@ export const deleteApiTrackingByIdMutation = (options?: Partial<Options<DeleteAp
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DeleteApiTrackingByIdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deleteApiTrackingById({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const postApiTrackingByIdRefreshMutation = (options?: Partial<Options<PostApiTrackingByIdRefreshData>>): UseMutationOptions<unknown, DefaultError, Options<PostApiTrackingByIdRefreshData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<PostApiTrackingByIdRefreshData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postApiTrackingByIdRefresh({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

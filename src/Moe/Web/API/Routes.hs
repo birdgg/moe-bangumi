@@ -73,6 +73,12 @@ data Routes' mode = Routes'
         :- "tracking"
           :> Capture "id" Int64
           :> Delete '[JSON] NoContent,
+    refreshTracking ::
+      mode
+        :- "tracking"
+          :> Capture "id" Int64
+          :> "refresh"
+          :> Post '[JSON] NoContent,
     searchTorrent ::
       mode
         :- "torrent"

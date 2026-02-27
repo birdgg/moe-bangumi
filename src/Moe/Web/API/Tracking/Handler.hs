@@ -5,6 +5,7 @@ module Moe.Web.API.Tracking.Handler
     handleCreateTracking,
     handleUpdateTracking,
     handleDeleteTracking,
+    handleRefreshTracking,
   )
 where
 
@@ -92,3 +93,17 @@ handleDeleteTracking :: Int64 -> ServerEff NoContent
 handleDeleteTracking tid = do
   transact $ DB.deleteTracking (Id tid)
   pure NoContent
+
+handleRefreshTracking :: Int64 -> ServerEff NoContent
+handleRefreshTracking tid = do
+  mTracking <- notransact $ DB.getTracking (Id tid)
+  case mTracking of
+    Nothing -> throwNotFound "Tracking not found"
+    Just entity -> do
+      let cleared = entity {entityVal = entity.entityVal {lastPubdate = Nothing}}
+      transact $ DB.updateTracking cleared
+      whenJust entity.entityVal.rssUrl $ \url -> do
+        mBangumi <- notransact $ BangumiDB.getBangumi entity.entityVal.bangumiId
+        whenJust mBangumi $ \bangumi ->
+          triggerSingleSubscription bangumi url entity.entityVal.episodeOffset
+      pure NoContent
