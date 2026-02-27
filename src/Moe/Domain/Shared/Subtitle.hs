@@ -45,6 +45,8 @@ instance FromText Subtitle where
     "eng" -> Just ENG
     "zh-hans" -> Just CHS
     "zh-hant" -> Just CHT
+    "jpsc" -> Just CHS
+    "jptc" -> Just CHT
     _ -> Nothing
 
 instance FromJSON Subtitle where

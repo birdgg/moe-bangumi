@@ -148,6 +148,13 @@ testCases =
         <> "/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp",
       Just "Re：从零开始的异世界生活/Season 03/CDs/[200826] ｢Realize｣／鈴木このみ (flac+webp)/02.webp"
     ),
+    ( "JPSC subtitle",
+      True,
+      [GroupName "VCB-Studio"],
+      season3
+        <> "/[hyakuhuyu&VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season [51][Ma10p_1080p][x265_flac_aac].JPSC.ass",
+      Just "Re：从零开始的异世界生活/Season 03/Re：从零开始的异世界生活 - S03E51 [VCB-Studio][BDRip].zh-Hans.ass"
+    ),
     ( "Mini Anime in SPs",
       True,
       [GroupName "VCB-Studio"],

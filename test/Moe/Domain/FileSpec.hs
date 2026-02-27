@@ -90,6 +90,9 @@ namingTests =
     checkPath "subtitle file JPN"
       (BangumiFile frieren (mkContentSub (Episode 1) JPN) "srt")
       "Frieren/Season 01/Frieren - S01E01.jpn.srt",
+    checkPath "subtitle file JPSC mapped to CHS"
+      (BangumiFile frieren (mkContentSub (Episode 1) CHS) "ass")
+      "Frieren/Season 01/Frieren - S01E01.zh-Hans.ass",
     checkPath "with TMDB ID"
       (BangumiFile frieren {tmdbId = Just 12345} (mkContent (Episode 1)) "mkv")
       "Frieren/Season 01/Frieren - S01E01.mkv",
