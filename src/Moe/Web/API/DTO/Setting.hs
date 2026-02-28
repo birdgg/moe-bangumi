@@ -6,6 +6,7 @@ module Moe.Web.API.DTO.Setting
     WashingConfigResponse (..),
     NotificationConfigResponse (..),
     TMDBConfigResponse (..),
+    MediaConfigResponse (..),
   )
 where
 
@@ -20,7 +21,8 @@ data SettingResponse = SettingResponse
     filter :: FilterConfigResponse,
     washing :: WashingConfigResponse,
     notification :: Maybe NotificationConfigResponse,
-    tmdb :: Maybe TMDBConfigResponse
+    tmdb :: Maybe TMDBConfigResponse,
+    media :: Maybe MediaConfigResponse
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON)
@@ -58,6 +60,12 @@ data TMDBConfigResponse = TMDBConfigResponse
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON)
 
+data MediaConfigResponse = MediaConfigResponse
+  { plexConfigured :: Bool
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (ToJSON)
+
 toSettingResponse :: Setting.UserPreference -> SettingResponse
 toSettingResponse pref =
   SettingResponse
@@ -71,7 +79,11 @@ toSettingResponse pref =
       tmdb =
         if pref.tmdb.apiKey == ""
           then Nothing
-          else Just $ toTMDBResponse pref.tmdb
+          else Just $ toTMDBResponse pref.tmdb,
+      media =
+        if pref.media.plexUrl == ""
+          then Nothing
+          else Just $ toMediaResponse pref.media
     }
 
 toDownloaderResponse :: Setting.DownloaderConfig -> DownloaderConfigResponse
@@ -105,4 +117,10 @@ toTMDBResponse :: Setting.TMDBConfig -> TMDBConfigResponse
 toTMDBResponse cfg =
   TMDBConfigResponse
     { apiKeyConfigured = cfg.apiKey /= ""
+    }
+
+toMediaResponse :: Setting.MediaConfig -> MediaConfigResponse
+toMediaResponse cfg =
+  MediaConfigResponse
+    { plexConfigured = cfg.plexUrl /= "" && cfg.plexToken /= ""
     }

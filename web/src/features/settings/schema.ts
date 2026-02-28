@@ -101,6 +101,11 @@ export const aiSchema = z.object({
   confidenceThreshold: z.string(),
 });
 
+export const mediaSchema = z.object({
+  plexUrl: z.string(),
+  plexToken: z.string(),
+});
+
 export const settingsFormSchema = z.object({
   downloader: downloaderSchema,
   filter_: filterSchema,
@@ -108,6 +113,7 @@ export const settingsFormSchema = z.object({
   priority: prioritySchema,
   tmdb: tmdbSchema,
   ai: aiSchema,
+  media: mediaSchema,
 });
 
 export type DownloaderFormData = z.infer<typeof downloaderSchema>;
@@ -118,6 +124,7 @@ export type GroupFormData = z.infer<typeof groupSchema>;
 export type PriorityFormData = z.infer<typeof prioritySchema>;
 export type TmdbFormData = z.infer<typeof tmdbSchema>;
 export type AiFormData = z.infer<typeof aiSchema>;
+export type MediaFormData = z.infer<typeof mediaSchema>;
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
 /** Shape of the UserPreference payload sent to/from the API.
@@ -128,6 +135,7 @@ export interface ApiUserPreference {
   washing?: { groupPriority: GroupFormData[]; subtitlePriority: SubtitlePattern[] };
   notification?: { botToken: string; chatId: string };
   tmdb?: { apiKey: string; language?: string };
+  media?: { plexUrl: string; plexToken: string };
 }
 
 /** Convert API UserPreference to form data. */
@@ -162,6 +170,10 @@ export function fromUserPreference(pref: ApiUserPreference): SettingsFormData {
       model: "xiaomi/mimo-v2-flash:free",
       confidenceThreshold: "0.8",
     },
+    media: {
+      plexUrl: pref.media?.plexUrl ?? "",
+      plexToken: pref.media?.plexToken ?? "",
+    },
   };
 }
 
@@ -188,6 +200,10 @@ export function toUserPreference(data: SettingsFormData): ApiUserPreference {
     tmdb: {
       apiKey: data.tmdb.apiKey,
       language: "zh-CN",
+    },
+    media: {
+      plexUrl: data.media.plexUrl,
+      plexToken: data.media.plexToken,
     },
   };
 }

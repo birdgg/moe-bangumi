@@ -8,6 +8,7 @@ import Data.Text.Display (display)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
+import Moe.Infra.Media.Adapter (runMediaDynamic)
 import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Notification.Adapter (runNotificationDynamic)
 import Moe.Infra.Setting.Effect (runSetting)
@@ -23,6 +24,7 @@ torrentWorkerThread env logger =
       runErrorWith (\_ err -> Log.logAttention_ $ display err) $
         runDownloaderQBittorrent env.downloaderEnv env.httpManager $
           runNotificationDynamic env.httpManager $
-            runErrorWith (\_ err -> Log.logAttention_ $ display err) $
-              runMetadataHttp env.httpManager $
-                periodicWorker "Torrent" (5 * 60 * 1_000_000) runTorrentJob
+            runMediaDynamic env.httpManager $
+              runErrorWith (\_ err -> Log.logAttention_ $ display err) $
+                runMetadataHttp env.httpManager $
+                  periodicWorker "Torrent" (5 * 60 * 1_000_000) runTorrentJob

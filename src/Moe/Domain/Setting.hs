@@ -5,6 +5,7 @@ module Moe.Domain.Setting
     WashingConfig (..),
     NotificationConfig (..),
     TMDBConfig (..),
+    MediaConfig (..),
     Regex,
     defaultUserPreference,
     defaultDownloaderConfig,
@@ -12,6 +13,7 @@ module Moe.Domain.Setting
     defaultWashingConfig,
     defaultNotificationConfig,
     defaultTMDBConfig,
+    defaultMediaConfig,
     defaultSubtitlePriority,
     defaultGroupPriority,
   )
@@ -120,12 +122,28 @@ defaultTMDBConfig =
       language = "zh-CN"
     }
 
+data MediaConfig = MediaConfig
+  { plexUrl :: Text,
+    plexToken :: Text
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
+
+-- | Default media config with empty fields.
+defaultMediaConfig :: MediaConfig
+defaultMediaConfig =
+  MediaConfig
+    { plexUrl = "",
+      plexToken = ""
+    }
+
 data UserPreference = UserPreference
   { downloader :: DownloaderConfig,
     filter :: FilterConfig,
     washing :: WashingConfig,
     notification :: NotificationConfig,
-    tmdb :: TMDBConfig
+    tmdb :: TMDBConfig,
+    media :: MediaConfig
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -137,5 +155,6 @@ defaultUserPreference =
       filter = defaultFilterConfig,
       washing = defaultWashingConfig,
       notification = defaultNotificationConfig,
-      tmdb = defaultTMDBConfig
+      tmdb = defaultTMDBConfig,
+      media = defaultMediaConfig
     }

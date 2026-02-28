@@ -4,6 +4,7 @@ export { DownloaderSection, type DownloaderSectionProps } from "./downloader-sec
 export { FilterSection, type FilterSectionProps } from "./filter-section";
 
 export { NotificationSection, type NotificationSectionProps } from "./notification-section";
+export { MediaSection, type MediaSectionProps } from "./media-section";
 export { PrioritySection, type PrioritySectionProps } from "./priority-section";
 export { SystemSection } from "./system-section";
 export { SettingsSidebar, type SettingsSection } from "./settings-sidebar";

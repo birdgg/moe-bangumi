@@ -7,9 +7,10 @@ import {
   IconSortDescending,
   IconMovie,
   IconInfoCircle,
+  IconServer,
 } from "@tabler/icons-react";
 
-export type SettingsSection = "general" | "downloader" | "filter" | "notification" | "priority" | "system";
+export type SettingsSection = "general" | "downloader" | "filter" | "notification" | "priority" | "media" | "system";
 
 interface SettingsSidebarItem {
   id: SettingsSection;
@@ -44,6 +45,11 @@ const sidebarItems: SettingsSidebarItem[] = [
     id: "notification",
     label: "通知",
     icon: <IconBrandTelegram className="size-4" />,
+  },
+  {
+    id: "media",
+    label: "媒体库",
+    icon: <IconServer className="size-4" />,
   },
   {
     id: "system",

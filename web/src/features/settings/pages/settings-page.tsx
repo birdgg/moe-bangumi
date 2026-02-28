@@ -8,6 +8,7 @@ import {
   FilterSection,
 
   NotificationSection,
+  MediaSection,
   PrioritySection,
   SystemSection,
   SettingsSidebar,
@@ -68,6 +69,8 @@ export function SettingsPage() {
         return <FilterSection form={form} />
       case "notification":
         return <NotificationSection form={form} />
+      case "media":
+        return <MediaSection form={form} />
       case "system":
         return <SystemSection />
       default:

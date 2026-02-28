@@ -40,6 +40,10 @@ function getDefaultFormData(): SettingsFormData {
       model: "xiaomi/mimo-v2-flash:free",
       confidenceThreshold: "0.8",
     },
+    media: {
+      plexUrl: "",
+      plexToken: "",
+    },
   };
 }
 

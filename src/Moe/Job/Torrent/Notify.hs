@@ -8,12 +8,13 @@ import Effectful.Log qualified as Log
 import Moe.Infra.Database.PendingNotification (PendingNotification (..))
 import Moe.Infra.Database.PendingNotification qualified as PendingNotificationDB
 import Moe.Infra.Downloader.Effect
+import Moe.Infra.Media.Effect (Media, refreshLibrary)
 import Moe.Infra.Notification.Effect (Notification, sendNotification)
 import Moe.Prelude
 
 -- | Send notifications for completed torrents that have pending notifications.
 runNotify ::
-  (Notification :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Notification :> es, Media :> es, Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   [TorrentInfo] ->
   Eff es ()
 runNotify [] = pass
@@ -27,5 +28,6 @@ runNotify completed = do
         Log.logAttention_ $ "notify: notification failed - " <> toText (displayException ex)
       Right () -> pass
   let notifiedHashes = map (.infoHash) pending
-  when (not $ null notifiedHashes) $
+  when (not $ null notifiedHashes) $ do
     transact $ PendingNotificationDB.deletePendingNotificationsByHashes notifiedHashes
+    refreshLibrary

@@ -137,6 +137,10 @@ library
     Moe.Infra.Metadata.Mikan.Types
     Moe.Infra.Metadata.Tmdb
     Moe.Infra.Metadata.Types
+    Moe.Infra.Media
+    Moe.Infra.Media.Adapter
+    Moe.Infra.Media.Client
+    Moe.Infra.Media.Effect
     Moe.Infra.Notification
     Moe.Infra.Notification.API
     Moe.Infra.Notification.Adapter

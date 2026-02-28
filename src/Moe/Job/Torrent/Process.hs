@@ -7,6 +7,7 @@ where
 
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect
+import Moe.Infra.Media.Effect (Media)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Notification.Effect (Notification)
 import Moe.Job.Torrent.Cleanup (runCleanup)
@@ -16,7 +17,7 @@ import Moe.Prelude
 
 -- | Run all torrent management jobs with a single fetch.
 runTorrentJob ::
-  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Downloader :> es, Metadata :> es, Notification :> es, Media :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   Eff es ()
 runTorrentJob = do
   torrents <- getMoeTorrents
