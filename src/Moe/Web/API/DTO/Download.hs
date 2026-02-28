@@ -56,6 +56,8 @@ stateToText = \case
   ForcedDL -> "forcedDL"
   CheckingResumeData -> "checkingResumeData"
   Moving -> "moving"
+  StoppedUP -> "stoppedUP"
+  StoppedDL -> "stoppedDL"
   StateUnknown -> "unknown"
 
 -- | Convert a 'TorrentInfo' into a 'DownloadItem'.

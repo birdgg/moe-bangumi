@@ -70,21 +70,21 @@ function DownloadRow({
         </p>
       </div>
 
-      <span className="text-xs text-muted-foreground text-right tabular-nums">
+      <span className="text-xs text-muted-foreground tabular-nums">
         {formatBytes(item.size)}
       </span>
 
       <ProgressBar value={item.progress} />
 
-      <div className="flex justify-center">
+      <div>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
 
-      <span className="text-xs text-muted-foreground text-right tabular-nums">
+      <span className="text-xs text-muted-foreground tabular-nums">
         {item.ratio.toFixed(2)}
       </span>
 
-      <div className="text-right">
+      <div>
         <span className="text-xs text-muted-foreground tabular-nums">
           {item.dlspeed > 0
             ? formatSpeed(item.dlspeed)
@@ -148,11 +148,11 @@ export function DownloadTable({
       <div className="px-4 py-2.5 border-b border-foreground/[0.06]">
         <div className="grid grid-cols-[1fr_80px_140px_80px_72px_80px_36px] items-center gap-3 text-xs font-medium text-muted-foreground">
           <span>名称</span>
-          <span className="text-right">大小</span>
+          <span>大小</span>
           <span>进度</span>
-          <span className="text-center">状态</span>
-          <span className="text-right">比率</span>
-          <span className="text-right">速度/ETA</span>
+          <span>状态</span>
+          <span>比率</span>
+          <span>下载速度</span>
           <span />
         </div>
       </div>

@@ -55,16 +55,8 @@ export function DownloadsPage() {
 
   return (
     <div className="min-h-full">
-      <div className="px-6 py-8 md:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-lg font-semibold">下载</h1>
-            {data && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {data.length} 个任务
-              </p>
-            )}
-          </div>
+      <div className="px-6 py-4 md:px-8">
+        <div>
 
           <div className="liquid-glass-card rounded-2xl overflow-hidden relative">
             <div className="liquid-glass-refraction" />

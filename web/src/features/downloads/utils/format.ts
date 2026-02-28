@@ -38,9 +38,11 @@ export function getStatusInfo(state: string): StatusInfo {
     case "stalledUP":
       return { label: "已完成", variant: "secondary" }
     case "pausedDL":
+    case "stoppedDL":
       return { label: "已暂停", variant: "outline" }
     case "pausedUP":
-      return { label: "已暂停", variant: "outline" }
+    case "stoppedUP":
+      return { label: "完成", variant: "secondary" }
     case "queuedDL":
     case "queuedUP":
       return { label: "排队中", variant: "outline" }
@@ -57,13 +59,14 @@ export function getStatusInfo(state: string): StatusInfo {
     case "error":
     case "missingFiles":
       return { label: "错误", variant: "destructive" }
+    case "unknown":
     default:
-      return { label: state, variant: "outline" }
+      return { label: "未知", variant: "outline" }
   }
 }
 
 export function isPaused(state: string): boolean {
-  return state === "pausedDL" || state === "pausedUP"
+  return state === "pausedDL" || state === "pausedUP" || state === "stoppedDL" || state === "stoppedUP"
 }
 
 export function isActive(state: string): boolean {
