@@ -6,6 +6,7 @@ import Moe.Domain.Setting (UserPreference)
 import Moe.Prelude hiding ((:>))
 import Moe.Web.API.DTO.Calendar (CalendarEntry)
 import Moe.Web.API.DTO.Collection (CollectionAddRequest, CollectionAddResponse, CollectionConfirmRequest, CollectionFilesResponse)
+import Moe.Web.API.DTO.Download (DownloadItem, TorrentActionRequest)
 import Moe.Web.API.DTO.Downloader (TestDownloaderRequest, TestDownloaderResponse)
 import Moe.Web.API.DTO.Import (ImportScanResponse)
 import Moe.Web.API.DTO.Log (LogsResponse)
@@ -157,6 +158,28 @@ data Routes' mode = Routes'
       mode
         :- "collection"
           :> Capture "hash" Text
-          :> Delete '[JSON] NoContent
+          :> Delete '[JSON] NoContent,
+    listDownloads ::
+      mode
+        :- "download"
+          :> Get '[JSON] [DownloadItem],
+    pauseDownloads ::
+      mode
+        :- "download"
+          :> "pause"
+          :> ReqBody '[JSON] TorrentActionRequest
+          :> Post '[JSON] NoContent,
+    resumeDownloads ::
+      mode
+        :- "download"
+          :> "resume"
+          :> ReqBody '[JSON] TorrentActionRequest
+          :> Post '[JSON] NoContent,
+    deleteDownloads ::
+      mode
+        :- "download"
+          :> "delete"
+          :> ReqBody '[JSON] TorrentActionRequest
+          :> Post '[JSON] NoContent
   }
   deriving stock (Generic)

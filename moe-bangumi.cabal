@@ -152,6 +152,7 @@ library
     Moe.Web.API.DTO.Bangumi
     Moe.Web.API.DTO.Calendar
     Moe.Web.API.DTO.Collection
+    Moe.Web.API.DTO.Download
     Moe.Web.API.DTO.Downloader
     Moe.Web.API.DTO.Log
     Moe.Web.API.DTO.Notification
@@ -162,6 +163,7 @@ library
     Moe.Web.API.DTO.Update
     Moe.Web.API.Bangumi.Handler
     Moe.Web.API.Collection.Handler
+    Moe.Web.API.Download.Handler
     Moe.Web.API.Downloader.Handler
     Moe.Web.API.Import.Handler
     Moe.Web.API.Log.Handler
