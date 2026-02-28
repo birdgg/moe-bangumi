@@ -77,12 +77,14 @@ library
     Moe.App.Logging
     Moe.App.MemoryMonitor
     Moe.App.Monad
-    Moe.Job.Rename
-    Moe.Job.Rename.Process
-    Moe.Job.Rename.Strategy.Collection
-    Moe.Job.Rename.Strategy.Subscription
-    Moe.Job.Rename.Util
-    Moe.Job.Rename.Worker
+    Moe.Job.Torrent
+    Moe.Job.Torrent.Cleanup
+    Moe.Job.Torrent.Notify
+    Moe.Job.Torrent.Process
+    Moe.Job.Torrent.Rename
+    Moe.Job.Torrent.Rename.Collection
+    Moe.Job.Torrent.Rename.Subscription
+    Moe.Job.Torrent.Worker
     Moe.Job.Subscription
     Moe.Job.Subscription.Download
     Moe.Job.Subscription.Filter
@@ -179,12 +181,10 @@ library
     Moe.Web.Routers
     Moe.Web.Server
     Moe.Web.Types
+    Moe.Infra.Database.PendingNotification
     Moe.Job.CalendarSync
     Moe.Job.CalendarSync.Process
     Moe.Job.CalendarSync.Worker
-    Moe.Job.Cleanup
-    Moe.Job.Cleanup.Process
-    Moe.Job.Cleanup.Worker
 
   other-modules:
     Moe.Orphans
@@ -266,7 +266,7 @@ test-suite moe-bangumi-test
     Moe.Domain.Parser.RssTitleSpec
     Moe.Infra.Metadata.BangumiData.TypesSpec
     Moe.Infra.Metadata.MikanSpec
-    Moe.Job.Rename.Strategy.CollectionSpec
+    Moe.Job.Torrent.Rename.CollectionSpec
 
   build-depends:
     base ^>=4.22.0.0,

@@ -1,4 +1,4 @@
-module Moe.Job.Rename.Strategy.CollectionSpec (tests) where
+module Moe.Job.Torrent.Rename.CollectionSpec (tests) where
 
 import Control.Monad (foldM)
 import Data.Map.Strict qualified as Map
@@ -8,7 +8,7 @@ import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Domain.Setting (UserPreference (..), TMDBConfig (..), defaultUserPreference, defaultTMDBConfig)
 import Moe.Infra.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infra.Setting.Effect (Setting (..))
-import Moe.Job.Rename.Strategy.Collection (processFile)
+import Moe.Job.Torrent.Rename.Collection (processFile)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Moe.Prelude hiding (doesFileExist)
@@ -42,7 +42,7 @@ runIntegrationEffects apiKey action = do
 tests :: TestTree
 tests =
   testGroup
-    "Moe.Job.Rename.Strategy.Collection"
+    "Moe.Job.Torrent.Rename.Collection"
     [ testGroup "processFile" processFileTests
     ]
 

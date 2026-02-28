@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Moe.Job.Rename.Strategy.CollectionSpec qualified as CollectionSpec
+import Moe.Job.Torrent.Rename.CollectionSpec qualified as CollectionSpec
 import Moe.Job.Subscription.WashingSpec qualified as WashingSpec
 import Moe.Domain.FileSpec qualified as FileSpec
 import Moe.Domain.Parser.OriginalTitleSpec qualified as OriginalTitleSpec

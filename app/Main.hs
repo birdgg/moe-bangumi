@@ -9,9 +9,8 @@ import Moe.App.Env (MoeConfig (..), MoeEnv (..), destroyDbPool)
 import Moe.App.Logging (makeLogger)
 import Moe.App.MemoryMonitor (memoryMonitorThread)
 import Moe.Job.CalendarSync (calendarSyncWorkerThread)
-import Moe.Job.Cleanup (cleanupWorkerThread)
-import Moe.Job.Rename (renameWorkerThread)
 import Moe.Job.Subscription (rssWorkerThread)
+import Moe.Job.Torrent (torrentWorkerThread)
 import Moe.Prelude
 import Moe.Web.Server (runServer)
 import RequireCallStack (provideCallStack)
@@ -37,11 +36,10 @@ runApp =
           let withLogger = makeLogger env.config.dataFolder
           withLogger $ \appLogger -> provideCallStack $ do
             withAsync (liftIO $ rssWorkerThread env appLogger) $ \_ ->
-              withAsync (liftIO $ renameWorkerThread env appLogger) $ \_ ->
+              withAsync (liftIO $ torrentWorkerThread env appLogger) $ \_ ->
                 withAsync (liftIO $ calendarSyncWorkerThread env appLogger) $ \_ ->
-                  withAsync (liftIO $ cleanupWorkerThread env appLogger) $ \_ ->
-                    withAsync (liftIO $ memoryMonitorThread env appLogger) $ \_ ->
-                      runServer appLogger env
+                  withAsync (liftIO $ memoryMonitorThread env appLogger) $ \_ ->
+                    runServer appLogger env
     )
 
 shutdownMoe :: MoeEnv -> IO ()

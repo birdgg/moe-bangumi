@@ -3,7 +3,7 @@
 -- Traverses torrent files once, resolves metadata via BangumiMap cache,
 -- renames all files to media server naming conventions, then persists
 -- resolved bangumi and tracking records to the database.
-module Moe.Job.Rename.Strategy.Collection
+module Moe.Job.Torrent.Rename.Collection
   ( renameCollection,
 
     -- * Exported for testing
@@ -41,8 +41,8 @@ import Moe.Infra.Database.Bangumi qualified as BangumiDB
 import Moe.Infra.Database.Tracking qualified as TrackingDB
 import Moe.Infra.Downloader.Effect
 import Moe.Infra.Metadata.Effect (Metadata, searchTmdb)
-import Moe.Infra.Notification.Effect (Notification)
-import Moe.Job.Rename.Util (notifySafe)
+import Moe.Infra.Database.PendingNotification (PendingNotification (..))
+import Moe.Infra.Database.PendingNotification qualified as PendingNotificationDB
 import Moe.Prelude
 
 type BangumiFolder = Text
@@ -59,7 +59,7 @@ data ParsedMediaInfo
 
 -- | Rename a collection torrent by traversing files and resolving metadata on demand.
 renameCollection ::
-  (Downloader :> es, Metadata :> es, Notification :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Downloader :> es, Metadata :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   TorrentInfo ->
   Text ->
   Eff es ()
@@ -83,10 +83,15 @@ renameCollection torrent hash = do
   persistBangumiMap bdrip bmap
   removeTagsFromTorrents [hash] [renameTag]
   startTorrents [hash]
-  forM_ (Map.elems bmap) $ \case
+  transact $ forM_ (Map.elems bmap) $ \case
     Just nb -> do
       let suffix = if bdrip then " BDRip" else ""
-      notifySafe (nb.titleChs <> suffix) nb.posterUrl
+      PendingNotificationDB.insertPendingNotification
+        PendingNotification
+          { infoHash = hash,
+            title = nb.titleChs <> suffix,
+            posterUrl = nb.posterUrl
+          }
     Nothing -> pass
   Log.logInfo_ $ "Renamed collection: " <> torrent.name
 
@@ -277,4 +282,3 @@ fileRelativePath bangumiDir fileName =
   case dropWhile (/= bangumiDir) (T.splitOn "/" fileName) of
     (_ : rest) -> T.intercalate "/" rest
     _ -> fileName
-

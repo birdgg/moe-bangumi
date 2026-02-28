@@ -1,6 +1,6 @@
--- | Rename worker thread: periodically processes completed torrents for renaming.
-module Moe.Job.Rename.Worker
-  ( renameWorkerThread,
+-- | Torrent worker thread: unified worker for rename, notify, and cleanup.
+module Moe.Job.Torrent.Worker
+  ( torrentWorkerThread,
   )
 where
 
@@ -12,17 +12,17 @@ import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Notification.Adapter (runNotificationDynamic)
 import Moe.Infra.Setting.Effect (runSetting)
 import Moe.Job.Effect (periodicWorker, runBaseEffects)
-import Moe.Job.Rename.Process (runRename)
+import Moe.Job.Torrent.Process (runTorrentJob)
 import Moe.Prelude
 
--- | Entry point for the rename worker thread.
-renameWorkerThread :: MoeEnv -> Logger -> IO ()
-renameWorkerThread env logger =
-  runBaseEffects env logger "Rename" $
+-- | Entry point for the unified torrent worker thread.
+torrentWorkerThread :: MoeEnv -> Logger -> IO ()
+torrentWorkerThread env logger =
+  runBaseEffects env logger "Torrent" $
     runSetting env.settingEnv $
       runErrorWith (\_ err -> Log.logAttention_ $ display err) $
         runDownloaderQBittorrent env.downloaderEnv env.httpManager $
           runNotificationDynamic env.httpManager $
             runErrorWith (\_ err -> Log.logAttention_ $ display err) $
               runMetadataHttp env.httpManager $
-                periodicWorker "Rename" (10 * 1_000_000) runRename
+                periodicWorker "Torrent" (5 * 60 * 1_000_000) runTorrentJob
