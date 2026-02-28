@@ -1,4 +1,15 @@
 # Changelog
+## [1.8.0] - 2026-02-28
+
+### Bug Fixes
+
+- Use direct file overwrite for self-update in Docker containers
+
+### Features
+
+- Auto-detect release version from conventional commits
+- Defer notifications to download completion and unify torrent workers
+
 ## [1.7.0] - 2026-02-28
 
 ### Bug Fixes
