@@ -358,23 +358,23 @@ safeReplaceFile tmpDir source target = do
   backupResult <- EE.try @SomeException $ copyFile target backupPath
 
   -- Replace binary: try rename first (atomic, same filesystem),
-  -- fall back to copy (cross-filesystem or restricted directory)
+  -- fall back to direct overwrite (cross-filesystem or restricted directory)
   result <- EE.try @SomeException $ do
     renameResult <- EE.try @SomeException $ renameFile source target
     case renameResult of
       Right () -> pass
-      Left _ -> do
-        copyFile source target
-        removeFile source
+      Left _ -> liftIO $ copyFileDirect source target
 
   case result of
-    Right () ->
+    Right () -> do
+      -- Clean up source and backup only after successful replacement
+      whenM (doesFileExist source) $ removeFile source
       whenM (doesFileExist backupPath) $ removeFile backupPath
     Left err -> do
       Log.logAttention_ $ "Binary replacement failed, attempting rollback: " <> show err
       case backupResult of
         Right () -> do
-          rollbackResult <- EE.try @SomeException $ copyFile backupPath target
+          rollbackResult <- EE.try @SomeException $ liftIO $ copyFileDirect backupPath target
           case rollbackResult of
             Right () ->
               throwError $ UpdateFileError $
@@ -385,3 +385,12 @@ safeReplaceFile tmpDir source target = do
         Left _ ->
           throwError $ UpdateFileError $
             "Failed to replace binary (no backup available): " <> show err
+
+-- | Copy file by reading and writing directly, without creating
+-- temporary files in the target directory. This is needed for
+-- Docker containers where the target directory is read-only for
+-- new file creation, but existing files can be overwritten.
+copyFileDirect :: FilePath -> FilePath -> IO ()
+copyFileDirect src dst = do
+  content <- BS.readFile src
+  BS.writeFile dst content
