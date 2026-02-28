@@ -1,7 +1,6 @@
 ---
 name: release
 description: Create a new release version. Validates, tests, builds, and pushes a tagged release. Use when asked to "release", "publish", "bump version", or "create a new version".
-disable-model-invocation: true
 ---
 
 # Release
@@ -10,19 +9,37 @@ Create a new release for moe-bangumi.
 
 ## Usage
 
-The user provides a version number (e.g., `/release 1.4.0`). If no version is provided, ask the user.
+`/release` — auto-detect version from conventional commits.
+`/release 1.8.0` — use the specified version directly (skip auto-detection).
 
 ## Workflow
 
-### Step 1: Validate Version
+### Step 1: Determine Version
 
+#### If version is provided as argument:
 1. Parse the version from the user's input
 2. Verify it follows semver format: `X.Y.Z`
 3. Check that the tag `vX.Y.Z` does not already exist:
    ```bash
    git tag -l "vX.Y.Z"
    ```
-4. Check the current version in `moe-bangumi.cabal` and confirm the bump makes sense
+
+#### If no version is provided (auto-detect):
+1. Get the current version from `moe-bangumi.cabal`:
+   ```bash
+   grep '^version:' moe-bangumi.cabal | awk '{print $2}'
+   ```
+2. Get commits since the last tag:
+   ```bash
+   git log $(git describe --tags --abbrev=0)..HEAD --oneline
+   ```
+3. If there are no `feat:` or `fix:` commits, warn the user and stop.
+4. Determine the bump type:
+   - If any commit message contains `BREAKING CHANGE` in the body or uses `!:` (e.g., `feat!:`) → **major** bump (X+1.0.0)
+   - If any commit starts with `feat` → **minor** bump (X.Y+1.0)
+   - If only `fix` commits → **patch** bump (X.Y.Z+1)
+5. Calculate the next version and present it to the user along with the commit summary.
+6. Proceed with the detected version (no need to ask for confirmation).
 
 ### Step 2: Pre-release Checks
 
