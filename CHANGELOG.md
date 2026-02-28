@@ -1,4 +1,18 @@
 # Changelog
+## [1.7.0] - 2026-02-28
+
+### Bug Fixes
+
+- Correct qBittorrent filePrio API endpoint to fix 404 on qB 5.1.3
+
+### Features
+
+- Add tracking refresh to clear RSS pubdate and re-trigger subscription job
+- Add GC memory monitor thread and RTS memory cap
+- Support JPSC/JPTC subtitle language tags in collection rename
+- Add download manager page
+- Support qBittorrent v5 stopped states and polish download UI
+
 ## [1.6.3] - 2026-02-27
 
 ### Bug Fixes
