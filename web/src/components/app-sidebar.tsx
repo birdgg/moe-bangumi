@@ -15,6 +15,7 @@ import {
 import {
   IconDeviceTv,
   IconCalendarWeek,
+  IconDownload,
   IconFileText,
   IconSettings,
 } from "@tabler/icons-react";
@@ -25,7 +26,7 @@ interface SidebarItem {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  path: "/" | "/settings" | "/schedule" | "/logs";
+  path: "/" | "/settings" | "/schedule" | "/logs" | "/downloads";
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -36,6 +37,7 @@ const sidebarItems: SidebarItem[] = [
     icon: IconCalendarWeek,
     path: "/schedule",
   },
+  { id: "downloads", label: "下载", icon: IconDownload, path: "/downloads" },
   { id: "logs", label: "日志", icon: IconFileText, path: "/logs" },
   { id: "settings", label: "设置", icon: IconSettings, path: "/settings" },
 ];
@@ -127,6 +129,7 @@ export function AppSidebar() {
   const getActiveItem = () => {
     if (location.pathname === "/settings") return "settings";
     if (location.pathname === "/schedule") return "schedule";
+    if (location.pathname === "/downloads") return "downloads";
     if (location.pathname === "/logs") return "logs";
     return "anime";
   };

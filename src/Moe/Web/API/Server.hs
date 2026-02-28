@@ -4,6 +4,7 @@ import Moe.Prelude
 import Moe.Web.API.Bangumi.Handler qualified as Bangumi
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Collection.Handler qualified as Collection
+import Moe.Web.API.Download.Handler qualified as Download
 import Moe.Web.API.Downloader.Handler (handleTestDownloader)
 import Moe.Web.API.Import.Handler (handleImportScan)
 import Moe.Web.API.Log.Handler (handleGetLogs)
@@ -45,5 +46,9 @@ apiServer =
       collectionAdd = Collection.handleCollectionAdd,
       collectionFiles = Collection.handleCollectionFiles,
       collectionConfirm = Collection.handleCollectionConfirm,
-      collectionCancel = Collection.handleCollectionCancel
+      collectionCancel = Collection.handleCollectionCancel,
+      listDownloads = Download.handleListDownloads,
+      pauseDownloads = Download.handlePauseDownloads,
+      resumeDownloads = Download.handleResumeDownloads,
+      deleteDownloads = Download.handleDeleteDownloads
     }
