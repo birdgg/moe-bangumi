@@ -6,6 +6,8 @@ module Moe.Web.API.DTO.Log
 where
 
 import Data.Aeson (FromJSON (..), ToJSON, (.:), (.:?), withObject)
+import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as KM
 import Data.Time (UTCTime)
 import Moe.Prelude
 
@@ -24,7 +26,11 @@ instance FromJSON LogEntry where
     time <- obj .: "time"
     level <- obj .: "level"
     component <- obj .:? "component" <&> fromMaybe ""
-    message <- obj .:? "message" <&> fromMaybe ""
+    baseMessage <- obj .:? "message" <&> fromMaybe ""
+    let message = case KM.lookup "data" obj of
+          Just (Aeson.Object d) | not (KM.null d) ->
+            baseMessage <> " " <> decodeUtf8 (toStrict (Aeson.encode (Aeson.Object d)))
+          _ -> baseMessage
     pure LogEntry {time, level, component, message}
 
 -- | Paginated log query response.
