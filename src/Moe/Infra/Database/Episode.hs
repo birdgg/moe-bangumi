@@ -4,6 +4,7 @@ module Moe.Infra.Database.Episode
     upsertEpisode,
     deleteEpisode,
     deleteEpisodeByInfoHash,
+    deleteEpisodesByBangumi,
     getEpisodesByInfoHashes,
     getNewerEpisode,
   )
@@ -85,6 +86,13 @@ deleteEpisodeByInfoHash ::
   Eff es ()
 deleteEpisodeByInfoHash infoHash =
   execute "DELETE FROM episode WHERE info_hash = ?" (Only infoHash)
+
+deleteEpisodesByBangumi ::
+  (SqliteTransaction :> es, IOE :> es) =>
+  BangumiId ->
+  Eff es ()
+deleteEpisodesByBangumi (Id bid) =
+  execute "DELETE FROM episode WHERE bangumi_id = ?" (Only bid)
 
 -- | Get episodes by info hashes
 getEpisodesByInfoHashes ::

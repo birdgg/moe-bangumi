@@ -17,6 +17,7 @@ import Moe.Web.Error (throwNotFound)
 import Moe.Infra.Database.Bangumi qualified as BangumiDB
 import Moe.Infra.Database.Tracking qualified as DB
 import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset)
+import Moe.Infra.Database.Episode qualified as EpisodeDB
 import Moe.Job.Subscription.Process (triggerSingleSubscription)
 import Moe.Prelude
 import Moe.Web.API.DTO.Tracking
@@ -100,6 +101,7 @@ handleRefreshTracking tid = do
   case mTracking of
     Nothing -> throwNotFound "Tracking not found"
     Just entity -> do
+      transact $ EpisodeDB.deleteEpisodesByBangumi entity.entityVal.bangumiId
       let cleared = entity {entityVal = entity.entityVal {lastPubdate = Nothing}}
       transact $ DB.updateTracking cleared
       whenJust entity.entityVal.rssUrl $ \url -> do
