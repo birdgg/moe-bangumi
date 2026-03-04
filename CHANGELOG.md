@@ -1,4 +1,15 @@
 # Changelog
+## [1.9.0] - 2026-03-04
+
+### Bug Fixes
+
+- Include structured data field in log API response
+
+### Features
+
+- Integrate Plex media library refresh on download completion
+- Clear episode records before RSS refresh re-fetch
+
 ## [1.8.0] - 2026-02-28
 
 ### Bug Fixes
