@@ -1,4 +1,10 @@
 # Changelog
+## [1.10.1] - 2026-03-06
+
+### Bug Fixes
+
+- Self-update binary replacement in Docker + adopt effectful patterns
+
 ## [1.10.0] - 2026-03-06
 
 ### Features
