@@ -140,6 +140,52 @@ export const itemVariants = {
   },
 };
 
+const QUICK_TOGGLE_FOLDER_RE = /^(cds|scans)$/i;
+
+export interface QuickToggleFolder {
+  name: string;
+  indices: number[];
+}
+
+export function findQuickToggleFolders(
+  tree: FileTreeNode[],
+): QuickToggleFolder[] {
+  const results: QuickToggleFolder[] = [];
+  const walk = (nodes: FileTreeNode[]) => {
+    for (const node of nodes) {
+      if (!node.file && QUICK_TOGGLE_FOLDER_RE.test(node.name)) {
+        results.push({ name: node.name, indices: collectFileIndices(node) });
+      } else if (!node.file) {
+        walk(node.children);
+      }
+    }
+  };
+  walk(tree);
+  return results;
+}
+
+const QUICK_TOGGLE_CONTENT_RE = /\b(ncop|nced|menu|pv|preview|trailer|cm)\b/i;
+
+export function findQuickToggleContent(
+  tree: FileTreeNode[],
+): QuickToggleFolder | null {
+  const indices: number[] = [];
+  const walk = (nodes: FileTreeNode[]) => {
+    for (const node of nodes) {
+      if (node.file) {
+        const name = getFileName(node.file.name);
+        if (QUICK_TOGGLE_CONTENT_RE.test(name)) {
+          indices.push(node.file.index);
+        }
+      } else {
+        walk(node.children);
+      }
+    }
+  };
+  walk(tree);
+  return indices.length > 0 ? { name: "特典", indices } : null;
+}
+
 export const collapseVariants = {
   open: { height: "auto", opacity: 1 },
   collapsed: { height: 0, opacity: 0 },

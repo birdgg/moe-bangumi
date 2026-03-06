@@ -14,6 +14,8 @@ import {
   buildFileTree,
   collectFileIndices,
   collectTreeSize,
+  findQuickToggleFolders,
+  findQuickToggleContent,
   listVariants,
   itemVariants,
   collapseVariants,
@@ -241,6 +243,11 @@ export function FilePanel({
     [preview],
   );
 
+  const quickToggles = useMemo(() => {
+    const content = findQuickToggleContent(fileTree);
+    return [...findQuickToggleFolders(fileTree), ...(content ? [content] : [])];
+  }, [fileTree]);
+
   const isLoading = isConfirming || isCancelling;
   const allSelected = preview
     ? selectedIndices.size === preview.files.length
@@ -304,6 +311,38 @@ export function FilePanel({
           {selectedIndices.size}/{preview.files.length}
         </span>
       </div>
+
+      {/* Quick toggles */}
+      {quickToggles.length > 0 && (
+        <div className="flex items-center gap-1.5 mx-3 px-3 pt-1 flex-wrap">
+          {quickToggles.map((folder) => {
+            const selectedCount = folder.indices.filter((i) =>
+              selectedIndices.has(i),
+            ).length;
+            const allSelected =
+              folder.indices.length > 0 &&
+              selectedCount === folder.indices.length;
+            const someSelected = selectedCount > 0 && !allSelected;
+
+            return (
+              <button
+                key={folder.name}
+                type="button"
+                onClick={() => onToggleIndices(folder.indices)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
+                  allSelected
+                    ? "bg-foreground/10 text-foreground/70"
+                    : someSelected
+                      ? "bg-foreground/5 text-foreground/50"
+                      : "bg-foreground/3 text-foreground/30 hover:bg-foreground/6 hover:text-foreground/50"
+                }`}
+              >
+                {folder.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Divider */}
       <div className="relative h-px mx-4 mt-2">

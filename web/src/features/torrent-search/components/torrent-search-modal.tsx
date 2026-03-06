@@ -12,7 +12,7 @@ import {
 } from "@/client/@tanstack/react-query.gen";
 import { getApiCollectionFilesByHash } from "@/client/sdk.gen";
 import type { FileTreeNode } from "./file-tree-utils";
-import { buildFileTree } from "./file-tree-utils";
+import { buildFileTree, findQuickToggleFolders, findQuickToggleContent } from "./file-tree-utils";
 import { SearchPanel } from "./search-panel";
 import { FilePanel, type PreviewState } from "./file-panel";
 
@@ -97,8 +97,14 @@ export function TorrentSearchModal({ open, onOpenChange }: TorrentSearchModalPro
 
         if (data.files.length > 0) {
           setPreviewState({ status: "loaded", hash, data });
-          setSelectedIndices(new Set(data.files.map((f) => f.index)));
           const tree = buildFileTree(data.files);
+          const excludedIndices = new Set([
+            ...findQuickToggleFolders(tree).flatMap((f) => f.indices),
+            ...(findQuickToggleContent(tree)?.indices ?? []),
+          ]);
+          setSelectedIndices(
+            new Set(data.files.map((f) => f.index).filter((i) => !excludedIndices.has(i))),
+          );
           const deepPaths = new Set<string>();
           const collectDeep = (nodes: FileTreeNode[], depth: number) => {
             for (const node of nodes) {
