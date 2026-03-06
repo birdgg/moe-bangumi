@@ -1,4 +1,11 @@
 # Changelog
+## [1.10.0] - 2026-03-06
+
+### Features
+
+- Add quick toggle tags for special folders and extras in torrent file panel
+- Split homepage into current season and historical bangumi sections
+
 ## [1.9.0] - 2026-03-04
 
 ### Bug Fixes
