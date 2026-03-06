@@ -72,11 +72,11 @@ formatLogMessage val = case val of
 runLog :: (IOE :> es) => Text -> Logger -> LogLevel -> Eff (Log : es) a -> Eff es a
 runLog = Log.runLog
 
-timeAction :: (Log :> es, IOE :> es) => Text -> Eff es a -> Eff es a
+timeAction :: (Log :> es, Time :> es) => Text -> Eff es a -> Eff es a
 timeAction label action = do
-  start <- liftIO getCurrentTime
+  start <- currentTime
   result <- action
-  end <- liftIO getCurrentTime
+  end <- currentTime
   let elapsed = realToFrac (nominalDiffTimeToSeconds (diffUTCTime end start)) * 1000 :: Double
   Log.logInfo_ $ label <> " took " <> show elapsed <> "ms"
   pure result

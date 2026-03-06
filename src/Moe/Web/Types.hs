@@ -38,5 +38,7 @@ type ServerEffects =
      Reader MoeEnv,
      Concurrent,
      FileSystem,
+     Environment,
+     Time,
      IOE
    ]

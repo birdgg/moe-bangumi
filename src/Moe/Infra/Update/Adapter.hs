@@ -14,7 +14,7 @@ import Control.Exception.Safe (finally, tryAny)
 import Data.Aeson qualified as Aeson
 import Data.Aeson ((.:), (.:?), (.!=))
 import Data.Text qualified as T
-import Data.Time (NominalDiffTime, UTCTime, addUTCTime, getCurrentTime)
+import Data.Time (NominalDiffTime, UTCTime, addUTCTime)
 import Effectful.Exception qualified as EE
 import Effectful.Log qualified as Log
 import Moe.Infra.Update.Effect
@@ -30,7 +30,7 @@ import Network.HTTP.Client
     withResponse,
   )
 import Network.HTTP.Types.Status (statusCode)
-import System.Directory (setOwnerExecutable)
+import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Data.ByteString qualified as BS
 import System.IO (hClose, openBinaryFile)
@@ -109,7 +109,7 @@ cacheTTL = 1200
 
 -- | Run Update effect using GitHub releases API.
 runUpdateGitHub ::
-  (Log :> es, Error UpdateError :> es, FileSystem :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, FileSystem :> es, Environment :> es, Time :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff (Update : es) a ->
@@ -124,12 +124,12 @@ runUpdateGitHub env manager =
 -- -------------------------------------------------------------------
 
 checkForUpdateImpl ::
-  (Log :> es, Error UpdateError :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, Environment :> es, Time :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es AboutInfo
 checkForUpdateImpl env manager = do
-  now <- liftIO getCurrentTime
+  now <- currentTime
   mCached <- atomically $ do
     cached <- readTVar env.cachedAbout
     case cached of
@@ -145,7 +145,7 @@ checkForUpdateImpl env manager = do
 
 -- | Fetch version info from GitHub releases API.
 fetchAboutInfo ::
-  (Log :> es, IOE :> es) =>
+  (Log :> es, Environment :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es AboutInfo
@@ -163,7 +163,7 @@ fetchAboutInfo env manager = do
             publishedAt = Nothing
           }
 
-  platformInfo <- liftIO detectPlatform
+  platformInfo <- detectPlatform
   let tarballName = buildAssetName platformInfo
 
   result <- liftIO $ tryAny $ do
@@ -205,7 +205,7 @@ fetchAboutInfo env manager = do
 -- -------------------------------------------------------------------
 
 performUpdateImpl ::
-  (Log :> es, Error UpdateError :> es, FileSystem :> es, IOE :> es) =>
+  (Log :> es, Error UpdateError :> es, FileSystem :> es, Environment :> es, Time :> es, IOE :> es) =>
   UpdateEnv ->
   Manager ->
   Eff es ()
@@ -218,7 +218,7 @@ performUpdateImpl env manager = do
         then Log.logAttention_ "Update available but no download assets found for this platform"
         else do
       Log.logInfo_ $ "Updating to version " <> about.latestVersion
-      platformInfo <- liftIO detectPlatform
+      platformInfo <- detectPlatform
       let tmpDir = env.dataFolder </> ".update-tmp"
           tarballPath = tmpDir </> toString (buildAssetName platformInfo)
           extractedBinary = tmpDir </> "moe-bangumi"
@@ -246,7 +246,7 @@ performUpdateImpl env manager = do
 
       -- Set executable permission
       perms <- getPermissions extractedBinary
-      setPermissions extractedBinary (setOwnerExecutable True perms)
+      setPermissions extractedBinary (Dir.setOwnerExecutable True perms)
 
       -- Replace binary using safe replacement with backup in writable tmpDir
       safeReplaceFile tmpDir extractedBinary targetPath
@@ -363,7 +363,7 @@ safeReplaceFile tmpDir source target = do
     renameResult <- EE.try @SomeException $ renameFile source target
     case renameResult of
       Right () -> pass
-      Left _ -> liftIO $ copyFileDirect source target
+      Left _ -> copyFileDirect source target
 
   case result of
     Right () -> do
@@ -374,7 +374,7 @@ safeReplaceFile tmpDir source target = do
       Log.logAttention_ $ "Binary replacement failed, attempting rollback: " <> show err
       case backupResult of
         Right () -> do
-          rollbackResult <- EE.try @SomeException $ liftIO $ copyFileDirect backupPath target
+          rollbackResult <- EE.try @SomeException $ copyFileDirect backupPath target
           case rollbackResult of
             Right () ->
               throwError $ UpdateFileError $
@@ -386,11 +386,14 @@ safeReplaceFile tmpDir source target = do
           throwError $ UpdateFileError $
             "Failed to replace binary (no backup available): " <> show err
 
--- | Copy file by reading and writing directly, without creating
--- temporary files in the target directory. This is needed for
--- Docker containers where the target directory is read-only for
--- new file creation, but existing files can be overwritten.
-copyFileDirect :: FilePath -> FilePath -> IO ()
+-- | Copy file by reading content, unlinking the target, then writing a new file.
+-- On Linux, a running executable cannot be opened for writing (ETXTBSY),
+-- but it can be unlinked. The old inode stays alive for the running process,
+-- and a new file is created at the same path.
+copyFileDirect :: (IOE :> es, FileSystem :> es) => FilePath -> FilePath -> Eff es ()
 copyFileDirect src dst = do
-  content <- BS.readFile src
-  BS.writeFile dst content
+  content <- readFileBS src
+  EE.catch @SomeException (removeFile dst) (\_ -> pass)
+  writeFileBS dst content
+  perms <- getPermissions dst
+  setPermissions dst (Dir.setOwnerExecutable True perms)

@@ -120,7 +120,8 @@ WORKDIR /app
 COPY --from=builder /build/moe-bangumi /app/moe-bangumi
 
 # Create data directory for SQLite database
-RUN mkdir -p /app/data
+# Make /app writable so self-update can replace the binary with any UID
+RUN mkdir -p /app/data && chmod a+w /app
 
 # Expose the default port
 EXPOSE 3000

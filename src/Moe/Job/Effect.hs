@@ -25,6 +25,7 @@ type BaseEffects =
      Log,
      Sqlite,
      Concurrent,
+     Time,
      IOE
    ]
 
@@ -41,6 +42,7 @@ runBaseEffects env logger jobName action =
     & runSqlite (DbPool env.dbPool)
     & runConcurrent
     & withUnliftStrategy (ConcUnlift Ephemeral Unlimited)
+    & runTime
     & runEff
 
 -- | Periodic worker: run action once immediately, then repeat on a fixed interval.

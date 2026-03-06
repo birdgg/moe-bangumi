@@ -216,6 +216,7 @@ library
     http-media,
     http-types,
     mime-types,
+    monad-time-effectful,
     log-base,
     log-effectful,
     mtl,

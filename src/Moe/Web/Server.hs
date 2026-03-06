@@ -108,6 +108,8 @@ naturalTransform env logger app = do
         & runReader env
         & runConcurrent
         & runFileSystem
+        & runEnvironment
+        & runTime
         & runEff
   either Except.throwError pure result
 

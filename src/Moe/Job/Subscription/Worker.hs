@@ -33,7 +33,7 @@ rssWorkerThread env logger =
 
 -- | Main worker loop: poll on timer, process queue items in between.
 rssWorkerLoop ::
-  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
   MoeEnv ->
   Eff es ()
 rssWorkerLoop env = do
@@ -81,7 +81,7 @@ processSingleFeed env ctx =
 
 -- | Poll all subscription contexts and process them, then drain the queue.
 pollAndProcessAll ::
-  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
   MoeEnv ->
   STM.TQueue RssContext ->
   Eff es ()

@@ -9,7 +9,7 @@ where
 
 import Data.Aeson (object, (.=))
 import Data.Time.Calendar.WeekDate (toWeekDate)
-import Data.Time.Clock (getCurrentTime, utctDay)
+import Data.Time.Clock (utctDay)
 import Effectful.Concurrent.STM qualified as STM
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
@@ -52,10 +52,10 @@ triggerSingleSubscription bangumi rssUrl episodeOffset = do
 
 -- | Query DB for today's enabled RSS trackings.
 getSubscriptionContexts ::
-  (Sqlite :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Sqlite :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
   Eff es [RssContext]
 getSubscriptionContexts = do
-  today <- liftIO $ utctDay <$> getCurrentTime
+  today <- utctDay <$> currentTime
   let (_, _, wd) = toWeekDate today
       sqliteWd = wd `mod` 7
   toRssContexts <$> transact (TrackingDB.listEnabledRssTrackingWithBangumiByWeekday sqliteWd)

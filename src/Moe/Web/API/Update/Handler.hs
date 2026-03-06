@@ -15,7 +15,7 @@ import Moe.Web.Types (ServerEff)
 handleGetAbout :: ServerEff DTO.AboutResponse
 handleGetAbout = do
   about <- checkForUpdate
-  platformInfo <- liftIO detectPlatform
+  platformInfo <- detectPlatform
   pure $ toAboutResponse about platformInfo
 
 -- | POST /api/update - trigger self-update.

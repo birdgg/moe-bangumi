@@ -15,7 +15,6 @@ import Data.Text qualified as T
 import Data.Text.Display (Display (..))
 import Data.Time (UTCTime)
 import Moe.Prelude
-import System.Environment (getExecutablePath)
 import System.Info qualified as SysInfo
 
 -- | Structured update client errors.
@@ -73,7 +72,7 @@ data PlatformInfo = PlatformInfo
   deriving stock (Eq, Show)
 
 -- | Detect current OS, architecture, and executable path.
-detectPlatform :: IO PlatformInfo
+detectPlatform :: (Environment :> es) => Eff es PlatformInfo
 detectPlatform = do
   executablePath <- getExecutablePath
   pure PlatformInfo {platform = detectOS, arch = detectArch, executablePath}

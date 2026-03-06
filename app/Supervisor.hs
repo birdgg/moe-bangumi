@@ -6,7 +6,7 @@ module Supervisor (supervise) where
 import Control.Concurrent (threadDelay)
 import Control.Exception (bracket, try, tryJust)
 import System.IO.Error (isDoesNotExistError)
-import Moe.Prelude hiding (try, threadDelay, bracket_)
+import Moe.Prelude hiding (try, threadDelay, bracket_, getExecutablePath)
 import System.Environment (getExecutablePath)
 import System.Exit (ExitCode (..))
 import System.Posix.Signals

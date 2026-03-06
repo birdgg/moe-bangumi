@@ -40,6 +40,14 @@ module Moe.Prelude
     -- Effectful.Concurrent.Async
     forConcurrently,
     withAsync,
+    -- Effectful.Environment
+    Environment,
+    runEnvironment,
+    getExecutablePath,
+    -- Effectful.Time
+    Time,
+    runTime,
+    currentTime,
     -- Effectful.FileSystem
     FileSystem,
     runFileSystem,
@@ -90,6 +98,8 @@ import Effectful (Dispatch (..), DispatchOf, Eff, Effect, IOE, Limit (..), Persi
 import Effectful.Concurrent (Concurrent, runConcurrent, threadDelay)
 import Effectful.Concurrent.Async (forConcurrently, withAsync)
 import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Environment (Environment, getExecutablePath, runEnvironment)
+import Effectful.Time (Time, currentTime, runTime)
 import Effectful.Error.Static (Error, catchError, runErrorWith, throwError)
 import Effectful.Exception (bracket_, throwIO, try)
 import Effectful.FileSystem (FileSystem, copyFile, copyFileWithMetadata, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, getPermissions, listDirectory, removeFile, removePathForcibly, renameFile, runFileSystem, setPermissions)

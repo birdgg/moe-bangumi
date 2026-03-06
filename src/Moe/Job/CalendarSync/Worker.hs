@@ -7,7 +7,7 @@ where
 
 import Data.Text.Display (display)
 import Data.Time.Calendar (toGregorian)
-import Data.Time.Clock (getCurrentTime, utctDay)
+import Data.Time.Clock (utctDay)
 import Effectful.Log qualified as Log
 import Moe.App.Env (MoeEnv (..))
 import Moe.Infra.Metadata.Effect (runMetadataHttp)
@@ -26,5 +26,5 @@ calendarSyncWorkerThread env logger =
           periodicWorker "CalendarSync" (24 * 60 * 60 * 1_000_000) guardedSync
  where
   guardedSync = do
-    (_, _, day) <- liftIO $ toGregorian . utctDay <$> getCurrentTime
+    (_, _, day) <- toGregorian . utctDay <$> currentTime
     when (day >= 1 && day <= 10) runCalendarSync
