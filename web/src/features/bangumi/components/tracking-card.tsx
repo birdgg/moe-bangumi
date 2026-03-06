@@ -16,6 +16,11 @@ export function TrackingCard({
       ? Math.min(tracking.currentEpisode / bangumi.totalEpisodes, 1)
       : null;
 
+  const isCompleted =
+    bangumi.totalEpisodes != null &&
+    bangumi.totalEpisodes > 0 &&
+    tracking.currentEpisode >= bangumi.totalEpisodes;
+
   return (
     <div
       className="group relative w-52 cursor-pointer transition-transform duration-200 ease-out hover:-translate-y-1.5 active:scale-[0.97]"
@@ -34,14 +39,20 @@ export function TrackingCard({
           </div>
         )}
 
-        {/* Subscription badge */}
-        {tracking.trackingType === "subscription" && (
+        {/* Status badges */}
+        {isCompleted ? (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="inline-flex items-center rounded-full bg-green-600/60 px-2 py-1 text-xs font-medium text-white/90 ring-1 ring-white/10 backdrop-blur-sm">
+              已完结
+            </span>
+          </div>
+        ) : tracking.trackingType === "subscription" ? (
           <div className="absolute top-2 right-2 z-10">
             <span className="inline-flex items-center rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white/90 ring-1 ring-white/10 backdrop-blur-sm">
               订阅中
             </span>
           </div>
-        )}
+        ) : null}
 
         {/* Cinematic gradient scrim */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/85 via-black/40 to-transparent" />
@@ -73,7 +84,7 @@ export function TrackingCard({
         {progress !== null && (
           <div className="absolute inset-x-0 bottom-0 h-0.75 bg-white/5">
             <div
-              className="from-chart-1 to-chart-2 h-full bg-linear-to-r transition-[width] duration-500 ease-out"
+              className={`h-full bg-linear-to-r transition-[width] duration-500 ease-out ${isCompleted ? "from-green-500 to-green-400" : "from-chart-1 to-chart-2"}`}
               style={{ width: `${progress * 100}%` }}
             />
           </div>

@@ -82,13 +82,6 @@ export function SettingsPage() {
     <div className="min-h-full">
       <div className="px-6 py-8 md:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight">设置</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              管理应用程序配置和偏好设置
-            </p>
-          </div>
-
           <div className="flex gap-8">
             <SettingsSidebar
               activeSection={activeSection}

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTrackedBangumis } from "../hooks/use-tracked-bangumis";
+import { getCurrentSeason, getSeasonFromDate } from "@/features/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrackingCard } from "./tracking-card";
 import { TrackingModal } from "./tracking-modal";
+import type { TrackingWithBangumiResponse } from "@/client/types.gen";
 
 function PosterWallSkeleton() {
   return (
@@ -41,10 +43,47 @@ function EmptyState() {
   );
 }
 
+function BangumiGrid({
+  items,
+  onSelect,
+}: {
+  items: TrackingWithBangumiResponse[];
+  onSelect: (id: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-4">
+      {items.map((item, i) => (
+        <TrackingCard
+          key={item.tracking.id}
+          item={item}
+          index={i}
+          onClick={() => onSelect(item.tracking.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function PosterWall() {
   const { data: trackings, isLoading, error } = useTrackedBangumis();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = trackings?.find((t) => t.tracking.id === selectedId) ?? null;
+
+  const { current, historical } = useMemo(() => {
+    if (!trackings) return { current: [], historical: [] };
+    const { year, season } = getCurrentSeason();
+    const cur: TrackingWithBangumiResponse[] = [];
+    const hist: TrackingWithBangumiResponse[] = [];
+    for (const item of trackings) {
+      const s = getSeasonFromDate(item.bangumi.airDate);
+      if (s.year === year && s.season === season) {
+        cur.push(item);
+      } else {
+        hist.push(item);
+      }
+    }
+    return { current: cur, historical: hist };
+  }, [trackings]);
 
   if (isLoading) {
     return <PosterWallSkeleton />;
@@ -62,18 +101,27 @@ export function PosterWall() {
     return <EmptyState />;
   }
 
+  const handleSelect = (id: number) => setSelectedId(id);
+
   return (
     <>
-      <div className="flex flex-wrap gap-4">
-        {trackings.map((item, i) => (
-          <TrackingCard
-            key={item.tracking.id}
-            item={item}
-            index={i}
-            onClick={() => setSelectedId(item.tracking.id)}
-          />
-        ))}
-      </div>
+      {current.length > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-foreground/80 mb-4">
+            当季追番
+          </h2>
+          <BangumiGrid items={current} onSelect={handleSelect} />
+        </section>
+      )}
+
+      {historical.length > 0 && (
+        <section className={current.length > 0 ? "mt-8" : ""}>
+          <h2 className="text-base font-semibold text-foreground/80 mb-4">
+            历史番剧
+          </h2>
+          <BangumiGrid items={historical} onSelect={handleSelect} />
+        </section>
+      )}
 
       {selected && (
         <TrackingModal

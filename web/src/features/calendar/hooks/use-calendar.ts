@@ -8,6 +8,17 @@ interface SeasonParams {
   season: Season
 }
 
+export function getSeasonFromDate(airDate: string): SeasonParams {
+  const date = new Date(airDate)
+  const month = date.getMonth() + 1
+  const year = date.getFullYear()
+
+  if (month >= 1 && month <= 3) return { year, season: "Winter" }
+  if (month >= 4 && month <= 6) return { year, season: "Spring" }
+  if (month >= 7 && month <= 9) return { year, season: "Summer" }
+  return { year, season: "Fall" }
+}
+
 export function getCurrentSeason(): SeasonParams {
   const now = new Date()
   const month = now.getMonth() + 1
