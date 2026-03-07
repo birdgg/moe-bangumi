@@ -1,4 +1,3 @@
-import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteApiTrackingByIdMutation,
@@ -153,19 +152,13 @@ export function CalendarCard({ bangumi, onOpenTrackingModal }: CalendarCardProps
 }
 
 function PosterImage({ url, alt }: { url: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false);
-  const onLoad = useCallback(() => setLoaded(true), []);
-
   return (
     <img
       src={url}
       alt={alt}
       loading="lazy"
       decoding="async"
-      onLoad={onLoad}
-      className={`size-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.04] ${
-        loaded ? "opacity-100" : "opacity-0"
-      }`}
+      className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04]"
     />
   );
 }

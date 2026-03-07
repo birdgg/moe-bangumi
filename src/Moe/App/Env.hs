@@ -7,7 +7,6 @@ module Moe.App.Env
     mkMoeEnv,
     mkDbPool,
     destroyDbPool,
-    getDatabasePath,
   )
 where
 
@@ -90,7 +89,7 @@ mkMoeEnv config = do
   settingEnv <- initSettingEnv settingPath
   updateEnv <- initUpdateEnv (toText $ showVersion Meta.version) config.dataFolder
   httpEnv <- initHttpEnv <$> liftIO (newManager tlsManagerSettings)
-  dbPool <- mkDbPool (getDatabasePath' config)
+  dbPool <- mkDbPool (config.dataFolder </> "moe-bangumi.db")
   downloaderEnv <- initDownloaderEnv
   rssQueue <- newTQueueIO
   pure MoeEnv {config, settingEnv, updateEnv, httpEnv, dbPool, downloaderEnv, rssQueue}
@@ -114,10 +113,3 @@ openDb dbPath = do
 
 destroyDbPool :: MoeEnv -> IO ()
 destroyDbPool env = Pool.destroyAllResources (getPool env.dbPool)
-
-
-getDatabasePath :: MoeEnv -> FilePath
-getDatabasePath env = getDatabasePath' env.config
-
-getDatabasePath' :: MoeConfig -> FilePath
-getDatabasePath' cfg = cfg.dataFolder </> "moe-bangumi.db"
