@@ -123,6 +123,7 @@ library
     Moe.Infra.Database.Episode
     Moe.Infra.Database.Tracking
     Moe.Infra.Database.Types
+    Moe.Infra.Http.Effect
     Moe.Infra.Downloader
     Moe.Infra.Downloader.Adapter
     Moe.Infra.Downloader.Effect

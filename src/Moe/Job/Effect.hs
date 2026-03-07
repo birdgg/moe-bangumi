@@ -18,11 +18,13 @@ import Effectful.Log qualified as Log
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Infra.Database.Types (DatabaseExecError)
+import Moe.Infra.Http.Effect (Http, runHttp)
 import Moe.Prelude
 
 type BaseEffects =
   '[ Error DatabaseExecError,
      Log,
+     Http,
      Sqlite,
      Concurrent,
      Time,
@@ -39,6 +41,7 @@ runBaseEffects env logger jobName action =
   action
     & runErrorWith (\_ err -> Log.logAttention_ $ display err)
     & runLog jobName logger env.config.logConfig.logLevel
+    & runHttp env.httpEnv
     & runSqlite (DbPool env.dbPool)
     & runConcurrent
     & withUnliftStrategy (ConcUnlift Ephemeral Unlimited)

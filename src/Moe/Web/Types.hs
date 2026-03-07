@@ -8,6 +8,7 @@ import Moe.App.Env (MoeEnv)
 import Moe.Prelude
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Effect (Downloader)
+import Moe.Infra.Http.Effect (Http)
 import Moe.Infra.Downloader.Types (DownloaderError)
 import Moe.Infra.Metadata.Effect (Metadata)
 import Moe.Infra.Metadata.Types (MetadataFetchError)
@@ -35,6 +36,7 @@ type ServerEffects =
      Error DatabaseExecError,
      Error WebError,
      Log,
+     Http,
      Reader MoeEnv,
      Concurrent,
      FileSystem,

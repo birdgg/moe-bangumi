@@ -16,6 +16,7 @@ import Effectful.Log qualified as Log
 import Moe.App.Env (MoeConfig (..), MoeEnv (..))
 import Moe.App.Logging (LogConfig (..), runLog)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
+import Moe.Infra.Http.Effect (runHttp)
 import Moe.Infra.Metadata.Effect (runMetadataHttp)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Setting.Effect (runSetting, runSettingWriter)
@@ -87,13 +88,13 @@ naturalTransform env logger app = do
     liftIO $
       Right
         <$> app
-        & runUpdateGitHub env.updateEnv env.httpManager
+        & runUpdateGitHub env.updateEnv
         & resolveInfraError err500
-        & runDownloaderQBittorrent env.downloaderEnv env.httpManager
+        & runDownloaderQBittorrent env.downloaderEnv
         & resolveInfraError err502
-        & runRss env.httpManager
+        & runRss
         & resolveInfraError err502
-        & runMetadataHttp env.httpManager
+        & runMetadataHttp
         & resolveInfraError err502
         & runSetting env.settingEnv
         & runSettingWriter env.settingEnv
@@ -105,6 +106,7 @@ naturalTransform env logger app = do
               pure . Left $ webErrorToServerError webErr
           )
         & runLog "moe-server" logger env.config.logConfig.logLevel
+        & runHttp env.httpEnv
         & runReader env
         & runConcurrent
         & runFileSystem

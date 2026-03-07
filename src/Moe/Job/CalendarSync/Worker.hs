@@ -22,7 +22,7 @@ calendarSyncWorkerThread env logger =
   runBaseEffects env logger "CalendarSync" $
     runSetting env.settingEnv $
       runErrorWith (\_ err -> Log.logAttention_ $ display err) $
-        runMetadataHttp env.httpManager $
+        runMetadataHttp $
           periodicWorker "CalendarSync" (24 * 60 * 60 * 1_000_000) guardedSync
  where
   guardedSync = do

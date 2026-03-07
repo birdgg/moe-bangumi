@@ -17,6 +17,7 @@ import Data.Text qualified as T
 import Data.Time (NominalDiffTime, UTCTime, addUTCTime)
 import Effectful.Exception qualified as EE
 import Effectful.Log qualified as Log
+import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Update.Effect
 import Moe.Prelude
 import Network.HTTP.Client
@@ -109,15 +110,18 @@ cacheTTL = 1200
 
 -- | Run Update effect using GitHub releases API.
 runUpdateGitHub ::
-  (Log :> es, Error UpdateError :> es, FileSystem :> es, Environment :> es, Time :> es, IOE :> es) =>
+  (Http :> es, Log :> es, Error UpdateError :> es, FileSystem :> es, Environment :> es, Time :> es, IOE :> es) =>
   UpdateEnv ->
-  Manager ->
   Eff (Update : es) a ->
   Eff es a
-runUpdateGitHub env manager =
+runUpdateGitHub env =
   interpret $ \_ -> \case
-    CheckForUpdate -> checkForUpdateImpl env manager
-    PerformUpdate -> performUpdateImpl env manager
+    CheckForUpdate -> do
+      mgr <- getHttpManager
+      checkForUpdateImpl env mgr
+    PerformUpdate -> do
+      mgr <- getHttpManager
+      performUpdateImpl env mgr
 
 -- -------------------------------------------------------------------
 -- CheckForUpdate implementation

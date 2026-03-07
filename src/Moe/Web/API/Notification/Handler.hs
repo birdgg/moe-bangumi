@@ -5,8 +5,7 @@ module Moe.Web.API.Notification.Handler
 where
 
 import Data.Text.Display (display)
-import Effectful.Reader.Static qualified as Reader
-import Moe.App.Env (MoeEnv (..))
+import Moe.Infra.Http.Effect (getHttpManager)
 import Moe.Infra.Notification.Client (sendTelegramMessage)
 import Moe.Prelude
 import Moe.Web.API.DTO.Notification (TestNotificationRequest (..), TestNotificationResponse (..))
@@ -15,8 +14,8 @@ import Moe.Web.Types (ServerEff)
 -- | Test a Telegram bot connection by sending a test message.
 handleTestNotification :: TestNotificationRequest -> ServerEff TestNotificationResponse
 handleTestNotification req = do
-  env <- Reader.ask @MoeEnv
-  result <- sendTelegramMessage env.httpManager req.botToken req.chatId "Moe Bangumi test notification"
+  mgr <- getHttpManager
+  result <- sendTelegramMessage mgr req.botToken req.chatId "Moe Bangumi test notification"
   pure $ case result of
     Left err ->
       TestNotificationResponse

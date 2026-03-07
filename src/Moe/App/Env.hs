@@ -18,12 +18,13 @@ import Effectful.Concurrent.STM (TQueue, newTQueueIO)
 import GHC.Conc (getNumCapabilities)
 import Moe.App.Logging (LogConfig (..), defaultLogConfig)
 import Moe.Infra.Downloader.Adapter (DownloaderEnv, initDownloaderEnv)
+import Moe.Infra.Http.Effect (HttpEnv, initHttpEnv)
 import Moe.Infra.Setting.Effect (SettingEnv, initSettingEnv)
 import Moe.Infra.Update.Adapter (UpdateEnv, initUpdateEnv)
 import Moe.Job.Subscription.Types (RssContext)
 import Data.Version (showVersion)
 import Moe.Prelude
-import Network.HTTP.Client (Manager, newManager)
+import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Paths_moe_bangumi qualified as Meta
 import System.FilePath ((</>))
@@ -49,7 +50,7 @@ data MoeEnv = MoeEnv
   { config :: MoeConfig,
     settingEnv :: SettingEnv,
     updateEnv :: UpdateEnv,
-    httpManager :: Manager,
+    httpEnv :: HttpEnv,
     dbPool :: SqlitePool,
     downloaderEnv :: DownloaderEnv,
     rssQueue :: TQueue RssContext
@@ -88,11 +89,11 @@ mkMoeEnv config = do
   let settingPath = config.dataFolder </> "setting.json"
   settingEnv <- initSettingEnv settingPath
   updateEnv <- initUpdateEnv (toText $ showVersion Meta.version) config.dataFolder
-  httpManager <- liftIO $ newManager tlsManagerSettings
+  httpEnv <- initHttpEnv <$> liftIO (newManager tlsManagerSettings)
   dbPool <- mkDbPool (getDatabasePath' config)
   downloaderEnv <- initDownloaderEnv
   rssQueue <- newTQueueIO
-  pure MoeEnv {config, settingEnv, updateEnv, httpManager, dbPool, downloaderEnv, rssQueue}
+  pure MoeEnv {config, settingEnv, updateEnv, httpEnv, dbPool, downloaderEnv, rssQueue}
 
 mkDbPool :: (IOE :> es) => FilePath -> Eff es SqlitePool
 mkDbPool dbPath = liftIO $ do

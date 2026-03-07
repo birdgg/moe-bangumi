@@ -6,6 +6,7 @@ import Moe.App.Logging (makeLogger, runLog)
 import Moe.Domain.File (GroupName (..))
 import Moe.Infra.Metadata.Types (MetadataFetchError)
 import Moe.Domain.Setting (UserPreference (..), TMDBConfig (..), defaultUserPreference, defaultTMDBConfig)
+import Moe.Infra.Http.Effect (Http, initHttpEnv, runHttp)
 import Moe.Infra.Metadata.Effect (Metadata, runMetadataHttp)
 import Moe.Infra.Setting.Effect (Setting (..))
 import Moe.Job.Torrent.Rename.Collection (processFile)
@@ -24,18 +25,19 @@ runTestSetting apiKey = interpret $ \_ -> \case
   GetSetting -> pure defaultUserPreference {tmdb = defaultTMDBConfig {apiKey}}
 
 -- | Run an action with real HTTP metadata + test Setting/Log.
-runIntegrationEffects :: Text -> Eff '[Metadata, Error MetadataFetchError, Setting, Log, Concurrent, IOE] a -> IO a
+runIntegrationEffects :: Text -> Eff '[Metadata, Error MetadataFetchError, Setting, Log, Http, Concurrent, IOE] a -> IO a
 runIntegrationEffects apiKey action = do
   manager <- newTlsManager
   runEff
     $ withUnliftStrategy (ConcUnlift Ephemeral Unlimited)
     $ runConcurrent
+    $ runHttp (initHttpEnv manager)
     $ makeLogger "/tmp/moe-bangumi-test"
     $ \logger ->
       runLog "test" logger LogInfo
         $ runTestSetting apiKey
         $ runErrorWith (\_ err -> error $ "Unexpected error: " <> show err)
-        $ runMetadataHttp manager action
+        $ runMetadataHttp action
 
 -- | Tests
 

@@ -16,6 +16,7 @@ import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Types (DatabaseExecError)
 import Moe.Infra.Downloader.Adapter (runDownloaderQBittorrent)
 import Moe.Infra.Downloader.Types (DownloaderError)
+import Moe.Infra.Http.Effect (Http)
 import Moe.Infra.Rss.Effect (runRss)
 import Moe.Infra.Rss.Types (RssFetchError)
 import Moe.Infra.Setting.Effect (Setting, runSetting)
@@ -33,7 +34,7 @@ rssWorkerThread env logger =
 
 -- | Main worker loop: poll on timer, process queue items in between.
 rssWorkerLoop ::
-  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
+  (Http :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
   MoeEnv ->
   Eff es ()
 rssWorkerLoop env = do
@@ -68,20 +69,20 @@ data WorkerAction
 -- | Process a single feed, introducing Rss/Downloader interpreters per-feed
 -- for natural error isolation.
 processSingleFeed ::
-  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
+  (Http :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, IOE :> es) =>
   MoeEnv ->
   RssContext ->
   Eff es ()
 processSingleFeed env ctx =
   runErrorWith @RssFetchError (logFeedError ctx) $
-    runRss env.httpManager $
+    runRss $
       runErrorWith @DownloaderError (logFeedError ctx) $
-        runDownloaderQBittorrent env.downloaderEnv env.httpManager $
+        runDownloaderQBittorrent env.downloaderEnv $
           processFeed ctx
 
 -- | Poll all subscription contexts and process them, then drain the queue.
 pollAndProcessAll ::
-  (Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
+  (Http :> es, Setting :> es, Sqlite :> es, Error DatabaseExecError :> es, Concurrent :> es, Log :> es, Time :> es, IOE :> es) =>
   MoeEnv ->
   STM.TQueue RssContext ->
   Eff es ()

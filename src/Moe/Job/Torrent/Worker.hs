@@ -22,9 +22,9 @@ torrentWorkerThread env logger =
   runBaseEffects env logger "Torrent" $
     runSetting env.settingEnv $
       runErrorWith (\_ err -> Log.logAttention_ $ display err) $
-        runDownloaderQBittorrent env.downloaderEnv env.httpManager $
-          runNotificationDynamic env.httpManager $
-            runMediaDynamic env.httpManager $
+        runDownloaderQBittorrent env.downloaderEnv $
+          runNotificationDynamic $
+            runMediaDynamic $
               runErrorWith (\_ err -> Log.logAttention_ $ display err) $
-                runMetadataHttp env.httpManager $
+                runMetadataHttp $
                   periodicWorker "Torrent" (5 * 60 * 1_000_000) runTorrentJob

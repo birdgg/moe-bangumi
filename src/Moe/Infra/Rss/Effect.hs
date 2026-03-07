@@ -7,10 +7,10 @@ module Moe.Infra.Rss.Effect
 where
 
 import Effectful.TH (makeEffect)
+import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Rss.Client qualified as Client
 import Moe.Infra.Rss.Types
 import Moe.Prelude
-import Network.HTTP.Client (Manager)
 
 data Rss :: Effect where
   FetchRss :: Text -> Rss m [RawItem]
@@ -18,11 +18,11 @@ data Rss :: Effect where
 makeEffect ''Rss
 
 runRss ::
-  (IOE :> es, Error RssFetchError :> es) =>
-  Manager ->
+  (Http :> es, IOE :> es, Error RssFetchError :> es) =>
   Eff (Rss : es) a ->
   Eff es a
-runRss manager = interpret $ \_ -> \case
+runRss = interpret $ \_ -> \case
   FetchRss url -> do
-    result <- liftIO $ Client.fetchRss manager url
+    mgr <- getHttpManager
+    result <- liftIO $ Client.fetchRss mgr url
     liftEither result

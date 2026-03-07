@@ -17,6 +17,7 @@ import Data.Text qualified as T
 import Data.Text.Read qualified as TR
 import Moe.Domain.Setting (DownloaderConfig (..), UserPreference (..))
 import Moe.Infra.Downloader.Effect
+import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Setting.Effect (Setting, getSetting)
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
@@ -47,21 +48,22 @@ classifyQBError = \case
 -- 'TestConnection' is handled independently of saved config since it
 -- provides its own credentials.
 runDownloaderQBittorrent ::
-  (Setting :> es, Error DownloaderError :> es, IOE :> es) =>
+  (Http :> es, Setting :> es, Error DownloaderError :> es, IOE :> es) =>
   DownloaderEnv ->
-  Manager ->
   Eff (Downloader : es) a ->
   Eff es a
-runDownloaderQBittorrent dlEnv manager =
+runDownloaderQBittorrent dlEnv =
   interpret $ \_ -> \case
-    TestConnection url username password ->
-      handleTestConnection manager url username password
+    TestConnection url username password -> do
+      mgr <- getHttpManager
+      handleTestConnection mgr url username password
     op -> do
+      mgr <- getHttpManager
       cfg <- (.downloader) <$> getSetting
       case validateConfig cfg of
         Just err -> handleUnconfigured err op
         Nothing -> do
-          client <- getOrCreateClient dlEnv manager cfg
+          client <- getOrCreateClient dlEnv mgr cfg
           handleDownloader cfg client op
 
 -- | Handle operations when downloader is not configured.

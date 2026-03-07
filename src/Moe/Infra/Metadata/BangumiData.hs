@@ -8,20 +8,20 @@ where
 import Data.Text qualified as T
 import Data.Time.Calendar.Month (Month)
 import Data.Time.Calendar.Month qualified as Month
+import Moe.Infra.Http.Effect (Http, runServantClient)
 import Moe.Infra.Metadata.BangumiData.API (BangumiDataAPI, MonthFile (..))
 import Moe.Infra.Metadata.BangumiData.Types
 import Moe.Infra.Metadata.Types (MetadataFetchError (..), classifyClientError)
 import Moe.Prelude
-import Network.HTTP.Client (Manager)
 import Network.HTTP.Types.Status (statusCode)
-import Servant.Client
+import Servant.Client (BaseUrl (..), ClientError (..), ClientM, Scheme (..), client)
+import Servant.Client.Core (ResponseF (..))
 
 -- | Fetch bangumi-data items for a single month.
-fetchBangumiDataMonth :: (IOE :> es) => Manager -> Month -> Eff es (Either MetadataFetchError [BangumiDataItem])
-fetchBangumiDataMonth manager month = do
+fetchBangumiDataMonth :: (Http :> es, IOE :> es) => Month -> Eff es (Either MetadataFetchError [BangumiDataItem])
+fetchBangumiDataMonth month = do
   let monthFile = toMonthFile month
-      env = mkClientEnv manager bangumiDataBaseUrl
-  result <- liftIO $ runClientM (fetchMonthItems monthFile) env
+  result <- runServantClient bangumiDataBaseUrl (fetchMonthItems monthFile)
   pure $ handleBangumiDataResult result
 
 toMonthFile :: Month -> MonthFile
