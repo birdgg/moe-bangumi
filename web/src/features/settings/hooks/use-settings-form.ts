@@ -27,6 +27,9 @@ function getDefaultFormData(): SettingsFormData {
         botToken: "",
         chatId: "",
       },
+      discord: {
+        webhookUrl: "",
+      },
     },
     priority: {
       groups: [],

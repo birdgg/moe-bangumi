@@ -49,7 +49,8 @@ data WashingConfigResponse = WashingConfigResponse
   deriving anyclass (ToJSON)
 
 data NotificationConfigResponse = NotificationConfigResponse
-  { chatId :: Text
+  { chatId :: Text,
+    discordConfigured :: Bool
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON)
@@ -73,7 +74,7 @@ toSettingResponse pref =
       filter = toFilterResponse pref.filter,
       washing = toWashingResponse pref.washing,
       notification =
-        if pref.notification.botToken == ""
+        if pref.notification.botToken == "" && pref.notification.discordWebhookUrl == ""
           then Nothing
           else Just $ toNotificationResponse pref.notification,
       tmdb =
@@ -110,7 +111,8 @@ toWashingResponse cfg =
 toNotificationResponse :: Setting.NotificationConfig -> NotificationConfigResponse
 toNotificationResponse cfg =
   NotificationConfigResponse
-    { chatId = cfg.chatId
+    { chatId = cfg.chatId,
+      discordConfigured = cfg.discordWebhookUrl /= ""
     }
 
 toTMDBResponse :: Setting.TMDBConfig -> TMDBConfigResponse

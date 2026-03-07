@@ -156,8 +156,10 @@ export type TestNotificationResponse = {
 };
 
 export type TestNotificationRequest = {
-    botToken: string;
-    chatId: string;
+    provider: string;
+    botToken?: string;
+    chatId?: string;
+    webhookUrl?: string;
 };
 
 export type TmdbSearchResult = {

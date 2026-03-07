@@ -14,6 +14,7 @@ module Moe.Infra.Http.Effect
   )
 where
 
+import Effectful.Internal.Monad (unsafeEff_)
 import Effectful.TH (makeEffect)
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
@@ -36,12 +37,12 @@ initHttpEnv :: Manager -> HttpEnv
 initHttpEnv = HttpEnv
 
 -- | Run the Http effect with the given environment.
-runHttp :: (IOE :> es) => HttpEnv -> Eff (Http : es) a -> Eff es a
+runHttp :: HttpEnv -> Eff (Http : es) a -> Eff es a
 runHttp (HttpEnv mgr) = interpret $ \_ -> \case
   GetHttpManager -> pure mgr
   RunServantClient baseUrl clientAction -> do
     let env = mkClientEnv mgr baseUrl
-    liftIO $ Servant.runClientM clientAction env
+    unsafeEff_ $ Servant.runClientM clientAction env
 
 mkClientEnv :: Manager -> BaseUrl -> ClientEnv
 mkClientEnv = Servant.mkClientEnv

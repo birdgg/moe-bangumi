@@ -143,10 +143,9 @@ library
     Moe.Infra.Media.Client
     Moe.Infra.Media.Effect
     Moe.Infra.Notification
-    Moe.Infra.Notification.API
-    Moe.Infra.Notification.Adapter
-    Moe.Infra.Notification.Client
     Moe.Infra.Notification.Effect
+    Moe.Infra.Notification.Discord.API
+    Moe.Infra.Notification.Telegram.API
     Moe.Infra.Notification.Types
     Moe.Infra.Rss
     Moe.Infra.Rss.Client

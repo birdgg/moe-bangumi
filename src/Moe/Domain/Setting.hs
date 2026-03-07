@@ -94,7 +94,8 @@ defaultGroupPriority =
 
 data NotificationConfig = NotificationConfig
   { botToken :: Text,
-    chatId :: Text
+    chatId :: Text,
+    discordWebhookUrl :: Text
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -104,7 +105,8 @@ defaultNotificationConfig :: NotificationConfig
 defaultNotificationConfig =
   NotificationConfig
     { botToken = "",
-      chatId = ""
+      chatId = "",
+      discordWebhookUrl = ""
     }
 
 data TMDBConfig = TMDBConfig

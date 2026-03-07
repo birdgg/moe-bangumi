@@ -8,15 +8,17 @@ where
 import Data.Aeson (FromJSON, ToJSON)
 import Moe.Prelude
 
--- | Request to test a Telegram bot connection.
+-- | Request to test a notification provider connection.
 data TestNotificationRequest = TestNotificationRequest
-  { botToken :: Text,
-    chatId :: Text
+  { provider :: Text,
+    botToken :: Maybe Text,
+    chatId :: Maybe Text,
+    webhookUrl :: Maybe Text
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON)
 
--- | Response from a Telegram bot connection test.
+-- | Response from a notification provider connection test.
 data TestNotificationResponse = TestNotificationResponse
   { success :: Bool,
     message :: Text

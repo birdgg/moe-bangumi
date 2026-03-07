@@ -77,8 +77,13 @@ export const telegramConfigSchema = z.object({
   chatId: z.string(),
 });
 
+export const discordConfigSchema = z.object({
+  webhookUrl: z.string(),
+});
+
 export const notificationSchema = z.object({
   telegram: telegramConfigSchema,
+  discord: discordConfigSchema,
 });
 
 export const groupSchema = z.object({
@@ -119,6 +124,7 @@ export const settingsFormSchema = z.object({
 export type DownloaderFormData = z.infer<typeof downloaderSchema>;
 export type FilterFormData = z.infer<typeof filterSchema>;
 export type TelegramConfigFormData = z.infer<typeof telegramConfigSchema>;
+export type DiscordConfigFormData = z.infer<typeof discordConfigSchema>;
 export type NotificationFormData = z.infer<typeof notificationSchema>;
 export type GroupFormData = z.infer<typeof groupSchema>;
 export type PriorityFormData = z.infer<typeof prioritySchema>;
@@ -133,7 +139,7 @@ export interface ApiUserPreference {
   downloader?: { url: string; username: string; password: string; savePath: string };
   filter?: { globalRssFilter: string[] };
   washing?: { groupPriority: GroupFormData[]; subtitlePriority: SubtitlePattern[] };
-  notification?: { botToken: string; chatId: string };
+  notification?: { botToken: string; chatId: string; discordWebhookUrl: string };
   tmdb?: { apiKey: string; language?: string };
   media?: { plexUrl: string; plexToken: string };
 }
@@ -154,6 +160,9 @@ export function fromUserPreference(pref: ApiUserPreference): SettingsFormData {
       telegram: {
         botToken: pref.notification?.botToken ?? "",
         chatId: pref.notification?.chatId ?? "",
+      },
+      discord: {
+        webhookUrl: pref.notification?.discordWebhookUrl ?? "",
       },
     },
     priority: {
@@ -196,6 +205,7 @@ export function toUserPreference(data: SettingsFormData): ApiUserPreference {
     notification: {
       botToken: data.notification.telegram.botToken,
       chatId: data.notification.telegram.chatId,
+      discordWebhookUrl: data.notification.discord.webhookUrl,
     },
     tmdb: {
       apiKey: data.tmdb.apiKey,
