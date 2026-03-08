@@ -13,7 +13,6 @@ where
 
 import Data.Text.Display (display)
 import Effectful.Log qualified as Log
-import Effectful.TH (makeEffect)
 import Moe.Domain.Setting (NotificationConfig (..), UserPreference (..))
 import Moe.Infra.Http.Effect (Http)
 import Moe.Infra.Notification.Discord.API qualified as Discord

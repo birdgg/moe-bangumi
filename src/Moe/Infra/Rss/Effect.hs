@@ -6,7 +6,6 @@ module Moe.Infra.Rss.Effect
   )
 where
 
-import Effectful.TH (makeEffect)
 import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Rss.Client qualified as Client
 import Moe.Infra.Rss.Types

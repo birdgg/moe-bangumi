@@ -13,7 +13,6 @@ module Moe.Infra.Metadata.Effect
 where
 
 import Data.Time.Calendar.Month (Month)
-import Effectful.TH (makeEffect)
 import Moe.Domain.Bangumi (AirDate, Bangumi (..))
 import Moe.Infra.Metadata.BangumiData
 import Moe.Infra.Metadata.Bgmtv

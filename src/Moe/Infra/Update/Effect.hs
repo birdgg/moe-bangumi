@@ -12,7 +12,6 @@ module Moe.Infra.Update.Effect
   )
 where
 
-import Effectful.TH (makeEffect)
 import Moe.Infra.Update.Types
 import Moe.Prelude
 

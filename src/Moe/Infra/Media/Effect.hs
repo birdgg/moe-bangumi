@@ -8,7 +8,6 @@ module Moe.Infra.Media.Effect
   )
 where
 
-import Effectful.TH (makeEffect)
 import Moe.Prelude
 
 -- | Abstract media library effect.

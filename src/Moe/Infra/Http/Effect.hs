@@ -15,7 +15,6 @@ module Moe.Infra.Http.Effect
 where
 
 import Effectful.Internal.Monad (unsafeEff_)
-import Effectful.TH (makeEffect)
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
 import Servant.Client (BaseUrl, ClientEnv, ClientError, ClientM)

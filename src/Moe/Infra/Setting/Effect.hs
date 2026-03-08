@@ -14,7 +14,6 @@ import Data.Aeson (Result (..), Value (..), decode, eitherDecode, encode, fromJS
 import Data.Aeson.KeyMap qualified as KeyMap
 import Effectful.Concurrent.STM qualified as STM
 import Effectful.FileSystem.IO.ByteString.Lazy qualified as LBS
-import Effectful.TH (makeEffect)
 import Moe.Domain.Setting (UserPreference, defaultUserPreference)
 import Moe.Prelude
 

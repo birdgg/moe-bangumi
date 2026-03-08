@@ -86,6 +86,8 @@ module Moe.Prelude
     bracket_,
     -- Effectful.Dispatch.Dynamic
     interpret,
+    -- Effectful.TH
+    makeEffect,
     -- Validation
     Validation,
     failureToMaybe,
@@ -98,6 +100,7 @@ import Effectful (Dispatch (..), DispatchOf, Eff, Effect, IOE, Limit (..), Persi
 import Effectful.Concurrent (Concurrent, runConcurrent, threadDelay)
 import Effectful.Concurrent.Async (forConcurrently, withAsync)
 import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.TH (makeEffect)
 import Effectful.Environment (Environment, getExecutablePath, runEnvironment)
 import Effectful.Time (Time, currentTime, runTime)
 import Effectful.Error.Static (Error, catchError, runErrorWith, throwError)
