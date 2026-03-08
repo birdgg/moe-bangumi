@@ -71,6 +71,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check registry cache
+        run: |
+          echo "Checking cache manifest for ghcr.io/${{ env.IMAGE_NAME }}:cache-${{ matrix.arch }}"
+          docker buildx imagetools inspect ghcr.io/${{ env.IMAGE_NAME }}:cache-${{ matrix.arch }} 2>&1 || echo "No cache found in registry"
+
       - name: Build builder stage
         uses: docker/build-push-action@v6
         with:

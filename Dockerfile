@@ -33,7 +33,7 @@ RUN apk add --no-cache \
 # ============================================================================
 
 # Copy cabal files (cabal.project has source-repository-package deps)
-COPY moe-bangumi.cabal cabal.project ./
+COPY moe-bangumi.cabal cabal.project cabal.project.freeze ./
 
 # Normalize version to prevent cache invalidation on version bumps.
 # Remove test-suite to avoid test dependencies.
