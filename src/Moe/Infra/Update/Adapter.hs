@@ -390,14 +390,16 @@ safeReplaceFile tmpDir source target = do
           throwError $ UpdateFileError $
             "Failed to replace binary (no backup available): " <> show err
 
--- | Copy file by reading content, unlinking the target, then writing a new file.
+-- | Copy file by writing to a temp file, unlinking the target, then renaming.
 -- On Linux, a running executable cannot be opened for writing (ETXTBSY),
 -- but it can be unlinked. The old inode stays alive for the running process,
 -- and a new file is created at the same path.
 copyFileDirect :: (IOE :> es, FileSystem :> es) => FilePath -> FilePath -> Eff es ()
 copyFileDirect src dst = do
   content <- readFileBS src
-  EE.catch @SomeException (removeFile dst) (\_ -> pass)
-  writeFileBS dst content
-  perms <- getPermissions dst
-  setPermissions dst (Dir.setOwnerExecutable True perms)
+  let tmpDst = dst <> ".new"
+  writeFileBS tmpDst content
+  perms <- getPermissions tmpDst
+  setPermissions tmpDst (Dir.setOwnerExecutable True perms)
+  removeFile dst
+  renameFile tmpDst dst
