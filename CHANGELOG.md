@@ -1,4 +1,11 @@
 # Changelog
+## [1.11.0] - 2026-03-08
+
+### Features
+
+- Add Discord webhook notification support
+- Support multi-file subscription torrents with subtitles
+
 ## [1.10.1] - 2026-03-06
 
 ### Bug Fixes
