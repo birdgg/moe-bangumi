@@ -170,6 +170,7 @@ library
     Moe.Web.API.DTO.Update
     Moe.Web.API.Bangumi.Handler
     Moe.Web.API.Collection.Handler
+    Moe.Web.API.Database.Handler
     Moe.Web.API.Download.Handler
     Moe.Web.API.Downloader.Handler
     Moe.Web.API.Import.Handler

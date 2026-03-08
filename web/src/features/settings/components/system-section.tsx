@@ -10,6 +10,7 @@ import {
   IconAlertCircle,
   IconChevronDown,
   IconChevronUp,
+  IconDatabase,
 } from "@tabler/icons-react";
 
 export function SystemSection() {
@@ -139,6 +140,20 @@ export function SystemSection() {
             <span className="text-xs text-emerald-600">已是最新版本</span>
           </div>
         )}
+      </div>
+
+      {/* 数据管理 */}
+      <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
+        <p className="text-xs text-muted-foreground">数据管理</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => window.open("/api/database/download", "_blank")}
+        >
+          <IconDatabase className="size-4" />
+          <span>下载数据库</span>
+        </Button>
       </div>
 
       {/* 更新日志 */}

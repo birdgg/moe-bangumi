@@ -21,6 +21,11 @@ type Routes = "api" :> NamedRoutes Routes'
 
 data Routes' mode = Routes'
   { health :: mode :- "health" :> Get '[JSON] Text,
+    downloadDatabase ::
+      mode
+        :- "database"
+          :> "download"
+          :> Get '[OctetStream] (Headers '[Header "Content-Disposition" Text] ByteString),
     about ::
       mode
         :- "about"

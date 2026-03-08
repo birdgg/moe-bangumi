@@ -4,6 +4,7 @@ import Moe.Prelude
 import Moe.Web.API.Bangumi.Handler qualified as Bangumi
 import Moe.Web.API.Calendar.Handler (handleCalendar)
 import Moe.Web.API.Collection.Handler qualified as Collection
+import Moe.Web.API.Database.Handler (handleDownloadDatabase)
 import Moe.Web.API.Download.Handler qualified as Download
 import Moe.Web.API.Downloader.Handler (handleTestDownloader)
 import Moe.Web.API.Import.Handler (handleImportScan)
@@ -21,6 +22,7 @@ apiServer :: ServerT API.Routes ServerEff
 apiServer =
   API.Routes'
     { health = pure "ok",
+      downloadDatabase = handleDownloadDatabase,
       about = Update.handleGetAbout,
       update = Update.handlePostUpdate,
       calendar = handleCalendar,
