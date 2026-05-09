@@ -22,10 +22,8 @@ import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Metadata.Types (Keyword, MetadataFetchError, classifyProviderError)
 import Moe.Infra.Metadata.Tmdb
 import Moe.Infra.Setting.Effect (Setting)
+import Moe.Libs.Tmdb (MovieId, MultiSearchResult (..), PaginatedResponse (..), TmdbApi (..), TvShowId)
 import Moe.Prelude
-import Network.Tmdb (MovieId, TvShowId)
-import Network.Tmdb qualified as Tmdb
-import Network.Tmdb.Types.Search (MultiSearchResult (..))
 import Web.Bgmtv.Client qualified as Bgmtv
 import Web.Bgmtv.Types.Episode (Episode (..), EpisodesResponse (..))
 import Web.Bgmtv.Types.Id (SubjectId)
@@ -103,4 +101,3 @@ runMetadataHttp = interpret $ \_ -> \case
 filterByAirDate :: Maybe AirDate -> (a -> Maybe AirDate) -> [a] -> [a]
 filterByAirDate Nothing _ results = results
 filterByAirDate (Just d) getDate results = filter ((Just d ==) . getDate) results
-

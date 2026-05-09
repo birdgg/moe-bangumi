@@ -11,13 +11,10 @@ where
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), SeasonIndex (..), TmdbId (..), extractYear)
 import Moe.Domain.Setting qualified as Setting
 import Moe.Infra.Setting.Effect (Setting, getSetting)
+import Moe.Libs.Tmdb (MediaType (..), MovieDetail (..), MultiSearchResult (..), TvDetail (..))
+import Moe.Libs.Tmdb qualified as Tmdb
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
-import Network.Tmdb qualified as Tmdb
-import Network.Tmdb.Types.Image qualified as TmdbImage
-import Network.Tmdb.Types.Movie (MovieDetail (..))
-import Network.Tmdb.Types.Search (MediaType (..), MultiSearchResult (..))
-import Network.Tmdb.Types.Tv (TvDetail (..))
 
 -- | Run a TMDB action with a configured client, returning fallback if API key is empty.
 withTmdbClient ::
@@ -51,7 +48,7 @@ tmdbResultToBangumi result = do
       mikanId = Nothing,
       tmdbId = Just (TmdbId (fromIntegral result.id)),
       bgmtvId = Nothing,
-      posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> result.posterPath,
+      posterUrl = Tmdb.posterUrl Tmdb.PosterW500 <$> result.posterPath,
       totalEpisodes = Nothing
     }
 
@@ -75,7 +72,7 @@ tmdbTvDetailToBangumi detail = do
       mikanId = Nothing,
       tmdbId = Just (TmdbId (fromIntegral detail.id.unTvShowId)),
       bgmtvId = Nothing,
-      posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> detail.posterPath,
+      posterUrl = Tmdb.posterUrl Tmdb.PosterW500 <$> detail.posterPath,
       totalEpisodes = Just $ fromIntegral detail.numberOfEpisodes
     }
 
@@ -93,9 +90,8 @@ tmdbMovieDetailToBangumi detail = do
       mikanId = Nothing,
       tmdbId = Just (TmdbId (fromIntegral detail.id.unMovieId)),
       bgmtvId = Nothing,
-      posterUrl = TmdbImage.posterUrl TmdbImage.PosterW500 <$> detail.posterPath,
+      posterUrl = Tmdb.posterUrl Tmdb.PosterW500 <$> detail.posterPath,
       totalEpisodes = Nothing
     }
-
 
 

@@ -12,8 +12,8 @@ import Moe.Domain.Bangumi (AirSeason (..), Bangumi (..), BangumiKind (..), Bgmtv
 import Moe.Domain.Shared.Entity (Entity (..))
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Metadata.Effect (Metadata, fetchBangumiDataByMonth, getBgmtvDetail, getTmdbMovieDetail, getTmdbTvDetail)
+import Moe.Libs.Tmdb (MovieId (..), TvShowId (..))
 import Moe.Prelude
-import Network.Tmdb (MovieId (..), TvShowId (..))
 import Web.Bgmtv.Types.Id (SubjectId (..))
 
 -- | Fetch bangumi data for a season, enrich with metadata, and store in database.

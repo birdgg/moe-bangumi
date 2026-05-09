@@ -27,8 +27,8 @@ import Moe.Domain.Tracking qualified as Tracking
 import Moe.Infra.Database.Bangumi qualified as BangumiDB
 import Moe.Infra.Database.Tracking qualified as TrackingDB
 import Moe.Infra.Metadata.Effect (Metadata, getTmdbMovieDetail, getTmdbTvDetail, searchTmdb)
-import Network.Tmdb (MovieId (..), TvShowId (..))
 import Moe.Infra.Setting.Effect (Setting, getSetting)
+import Moe.Libs.Tmdb (MovieId (..), TvShowId (..))
 import Moe.Prelude
 import System.FilePath (takeExtension, (</>))
 

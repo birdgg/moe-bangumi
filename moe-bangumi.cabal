@@ -138,6 +138,9 @@ library
     Moe.Infra.Metadata.Mikan.Types
     Moe.Infra.Metadata.Tmdb
     Moe.Infra.Metadata.Types
+    Moe.Libs.Tmdb
+    Moe.Libs.Tmdb.API
+    Moe.Libs.Tmdb.Types
     Moe.Infra.Media
     Moe.Infra.Media.Adapter
     Moe.Infra.Media.Client
@@ -237,7 +240,6 @@ library
     text-display,
     validation-selective,
     time,
-    tmdb,
     wai,
     warp,
     html-conduit,
