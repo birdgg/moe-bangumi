@@ -144,6 +144,10 @@ library
     Moe.Libs.QBittorrent
     Moe.Libs.QBittorrent.API
     Moe.Libs.QBittorrent.Types
+    Moe.Libs.Sqlite
+    Moe.Libs.Sqlite.Effect
+    Moe.Libs.Sqlite.Migration
+    Moe.Libs.Sqlite.Types
     Moe.Libs.Tmdb
     Moe.Libs.Tmdb.API
     Moe.Libs.Tmdb.Types
@@ -210,12 +214,12 @@ library
     bytestring,
     containers,
     crypton,
+    direct-sqlite,
     directory,
     effectful,
     effectful-core,
     effectful-plugin,
     file-embed,
-    effectful-sqlite,
     effectful-th,
     filepath,
     http-api-data >= 0.7,
@@ -230,6 +234,7 @@ library
     mtl,
     pcre2,
     process,
+    random,
     relude,
     require-callstack,
     resource-pool,

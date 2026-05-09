@@ -62,7 +62,7 @@ module Moe.Prelude
     copyFileWithMetadata,
     getPermissions,
     setPermissions,
-    -- Effectful.Sqlite
+    -- Moe.Libs.Sqlite
     Sqlite,
     SqliteTransaction,
     transact,
@@ -108,7 +108,7 @@ import Effectful.Exception (bracket_, throwIO, try)
 import Effectful.FileSystem (FileSystem, copyFile, copyFileWithMetadata, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, getPermissions, listDirectory, removeFile, removePathForcibly, renameFile, runFileSystem, setPermissions)
 import Effectful.Log (Log, LogLevel (..), Logger)
 import Effectful.Reader.Static (Reader, ask, runReader)
-import Effectful.Sqlite (FromField (..), FromRow (..), Only (..), Sqlite, SqliteDb (..), SqlitePool (..), SqliteTransaction, ToField (..), ToRow (..), execute, field, notransact, query, query_, runSqlite, transact, type (:.)(..))
+import Moe.Libs.Sqlite (FromField (..), FromRow (..), Only (..), Sqlite, SqliteDb (..), SqlitePool (..), SqliteTransaction, ToField (..), ToRow (..), execute, field, notransact, query, query_, runSqlite, transact, type (:.)(..))
 import Relude hiding (MonadReader, Reader, ReaderT, ask, asks, local, runReader, runReaderT)
 import Validation (Validation (..), failureToMaybe, failureUnless)
 
