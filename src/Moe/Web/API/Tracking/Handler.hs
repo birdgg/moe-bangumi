@@ -19,6 +19,7 @@ import Moe.Infra.Database.Tracking qualified as DB
 import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset)
 import Moe.Infra.Database.Episode qualified as EpisodeDB
 import Moe.Job.Subscription.Process (triggerSingleSubscription)
+import Moe.Libs.Bgmtv (SubjectId (..))
 import Moe.Prelude
 import Moe.Web.API.DTO.Tracking
   ( CreateTrackingRequest (..),
@@ -32,7 +33,6 @@ import Moe.Web.API.DTO.Tracking
   )
 import Moe.Web.Types (ServerEff)
 import Servant (NoContent (..))
-import Web.Bgmtv.Types.Id (SubjectId (..))
 
 handleListTracking :: ServerEff [TrackingResponse]
 handleListTracking = do

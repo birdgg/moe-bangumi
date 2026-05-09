@@ -10,13 +10,10 @@ where
 import Data.Time.Calendar (Day)
 import Moe.Domain.Bangumi (Bangumi (..), BangumiKind (..), BgmtvId (..))
 import Moe.Domain.Parser (ParsedTitle (..), parseOriginalTitle)
+import Moe.Libs.Bgmtv (Subject (..), SubjectDetail (..), SubjectId (..), SubjectImages (..))
+import Moe.Libs.Bgmtv qualified as Bgmtv
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
-import Web.Bgmtv.Client qualified as Bgmtv
-import Web.Bgmtv.Types.Id (SubjectId (..))
-import Web.Bgmtv.Types.Subject (Subject (..), SubjectDetail (..), SubjectImages (..))
-import Web.Bgmtv.Types.Enums qualified as Bgmtv
-import Web.Bgmtv.Types.Search qualified as Bgmtv
 
 bgmtvUserAgent :: Text
 bgmtvUserAgent = "moe-bangumi/0.1.0"

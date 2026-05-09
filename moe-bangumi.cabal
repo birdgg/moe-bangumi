@@ -138,6 +138,9 @@ library
     Moe.Infra.Metadata.Mikan.Types
     Moe.Infra.Metadata.Tmdb
     Moe.Infra.Metadata.Types
+    Moe.Libs.Bgmtv
+    Moe.Libs.Bgmtv.API
+    Moe.Libs.Bgmtv.Types
     Moe.Libs.QBittorrent
     Moe.Libs.QBittorrent.API
     Moe.Libs.QBittorrent.Types
@@ -204,7 +207,6 @@ library
   build-depends:
     aeson ^>=2.2,
     base ^>=4.22.0.0,
-    bgmtv,
     bytestring,
     containers,
     crypton,

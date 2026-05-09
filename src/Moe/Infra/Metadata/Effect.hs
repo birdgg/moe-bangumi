@@ -22,13 +22,10 @@ import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Metadata.Types (Keyword, MetadataFetchError, classifyProviderError)
 import Moe.Infra.Metadata.Tmdb
 import Moe.Infra.Setting.Effect (Setting)
+import Moe.Libs.Bgmtv qualified as Bgmtv
+import Moe.Libs.Bgmtv (Episode (..), EpisodesResponse (..), SearchResponse (..), Subject (..), SubjectId)
 import Moe.Libs.Tmdb (MovieId, MultiSearchResult (..), PaginatedResponse (..), TmdbApi (..), TvShowId)
 import Moe.Prelude
-import Web.Bgmtv.Client qualified as Bgmtv
-import Web.Bgmtv.Types.Episode (Episode (..), EpisodesResponse (..))
-import Web.Bgmtv.Types.Id (SubjectId)
-import Web.Bgmtv.Types.Search (SearchResponse (..))
-import Web.Bgmtv.Types.Subject (Subject (..))
 
 data Metadata :: Effect where
   SearchBgmtv :: Keyword -> Maybe AirDate -> Metadata m [Bangumi]

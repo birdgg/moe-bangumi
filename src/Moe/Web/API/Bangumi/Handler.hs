@@ -13,6 +13,7 @@ import Moe.Domain.Shared.Metadata (BgmtvId (..), TmdbId (..))
 import Moe.Web.Error (throwNotFound)
 import Moe.Infra.Database.Bangumi qualified as DB
 import Moe.Infra.Metadata.Effect (getBangumiEpisodeOffset, searchMikan, searchTmdb)
+import Moe.Libs.Bgmtv (SubjectId (..))
 import Moe.Prelude
 import Moe.Web.API.DTO.Bangumi
   ( MikanSearchResultDTO,
@@ -22,7 +23,6 @@ import Moe.Web.API.DTO.Bangumi
     toTmdbSearchResult,
   )
 import Moe.Web.Types (ServerEff)
-import Web.Bgmtv.Types.Id (SubjectId (..))
 
 -- | Search TMDB by keyword. The year parameter is accepted but not used for
 -- filtering, since filterByAirDate does exact Day matching which is too strict

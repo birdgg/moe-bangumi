@@ -1,7 +1,6 @@
 packages:
   .
   vendor/effectful-sqlite
-  vendor/bgmtv-hs
 
 with-compiler: ghc-9.14.1
 
