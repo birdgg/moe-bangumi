@@ -19,9 +19,9 @@ import Moe.Domain.Setting (DownloaderConfig (..), UserPreference (..))
 import Moe.Infra.Downloader.Effect
 import Moe.Infra.Http.Effect (Http, getHttpManager)
 import Moe.Infra.Setting.Effect (Setting, getSetting)
+import Moe.Libs.QBittorrent qualified as QB
 import Moe.Prelude
 import Network.HTTP.Client (Manager)
-import Network.QBittorrent.Client qualified as QB
 
 -- | Opaque downloader environment caching an authenticated QBClient.
 newtype DownloaderEnv = DownloaderEnv

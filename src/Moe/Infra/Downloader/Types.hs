@@ -22,7 +22,7 @@ where
 
 import Data.Text.Display (Display (..), display)
 import Moe.Domain.Rss (TorrentUrl)
-import Network.QBittorrent.Types (InfoHash (..), Tag (..), TorrentContent (..), TorrentInfo (..), TorrentState (..))
+import Moe.Libs.QBittorrent (InfoHash (..), Tag (..), TorrentContent (..), TorrentInfo (..), TorrentState (..))
 import Moe.Prelude
 
 -- | Structured downloader client errors.

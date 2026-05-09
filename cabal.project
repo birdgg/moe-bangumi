@@ -2,7 +2,6 @@ packages:
   .
   vendor/effectful-sqlite
   vendor/bgmtv-hs
-  vendor/qbittorrent-hs
 
 with-compiler: ghc-9.14.1
 

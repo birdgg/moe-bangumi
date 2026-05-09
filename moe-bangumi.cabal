@@ -138,6 +138,9 @@ library
     Moe.Infra.Metadata.Mikan.Types
     Moe.Infra.Metadata.Tmdb
     Moe.Infra.Metadata.Types
+    Moe.Libs.QBittorrent
+    Moe.Libs.QBittorrent.API
+    Moe.Libs.QBittorrent.Types
     Moe.Libs.Tmdb
     Moe.Libs.Tmdb.API
     Moe.Libs.Tmdb.Types
@@ -210,7 +213,6 @@ library
     effectful-core,
     effectful-plugin,
     file-embed,
-    qbittorrent,
     effectful-sqlite,
     effectful-th,
     filepath,
