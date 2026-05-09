@@ -1,0 +1,18 @@
+{
+  "id": "ws_8eea8d49",
+  "name": "moe-bangumi",
+  "slug": "moe-bangumi",
+  "defaults": {
+    "permissionMode": "safe",
+    "cyclablePermissionModes": [
+      "safe",
+      "allow-all"
+    ],
+    "enabledSourceSlugs": []
+  },
+  "localMcpServers": {
+    "enabled": true
+  },
+  "createdAt": 1778259812316,
+  "updatedAt": 1778259812317
+}
